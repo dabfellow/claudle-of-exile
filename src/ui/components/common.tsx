@@ -75,6 +75,8 @@ export interface TabDef<T extends string> {
   /** highlight the count (e.g. unspent points) */
   hot?: boolean;
   disabled?: boolean;
+  /** non-clickable lock message shown in hover tooltip + lock icon */
+  locked?: string;
   title?: string;
 }
 
@@ -82,12 +84,25 @@ export interface TabDef<T extends string> {
 export function Tabs<T extends string>({ tabs, value, onChange, compact }: { tabs: TabDef<T>[]; value: T; onChange: (id: T) => void; compact?: boolean }) {
   return (
     <div className={`tabs ${compact ? 'compact' : ''}`} role="tablist">
-      {tabs.map((t) => (
-        <button key={t.id} role="tab" aria-selected={value === t.id} className={`tab ${value === t.id ? 'active' : ''}`} disabled={t.disabled} title={t.title} onClick={() => onChange(t.id)}>
-          {t.label}
-          {t.count !== undefined && <span className={`nav-badge ${t.hot ? 'hot' : ''}`}>{t.hot ? `+${t.count}` : t.count}</span>}
-        </button>
-      ))}
+      {tabs.map((t) => {
+        const isLocked = !!t.locked;
+        const isDisabled = !!(t.disabled || isLocked);
+        return (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={value === t.id}
+            className={`tab ${value === t.id ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
+            disabled={isDisabled}
+            title={t.locked ?? t.title}
+            onClick={() => { if (!isDisabled) onChange(t.id); }}
+          >
+            {isLocked && <GameIcon name="lock" size={12} />}
+            {t.label}
+            {t.count !== undefined && <span className={`nav-badge ${t.hot ? 'hot' : ''}`}>{t.hot ? `+${t.count}` : t.count}</span>}
+          </button>
+        );
+      })}
     </div>
   );
 }

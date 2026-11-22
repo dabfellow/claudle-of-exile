@@ -6,7 +6,7 @@ import {
 import { formChapter, scriptDef, SECRET_CHAPTERS } from '../../data/deciphering';
 import { materialDef } from '../../data/materials';
 import { affixDef } from '../../data/affixes';
-import { baseDef } from '../../data/bases';
+import { baseDef, type BaseDef } from '../../data/bases';
 import { RELIC_FORMS, RELIC_ILVL, RELIC_SLOTS, relicForm, type RelicForm } from '../../data/relics';
 import {
   artifactsPerDig, buyWare, exchangeFragments, expeditionOpen, hasPassport, passportReason,
@@ -14,15 +14,20 @@ import {
   warePrice, wareLeft, wareReason, type RelicLine,
 } from '../../engine/expedition';
 import { relicFormUnlocked } from '../../engine/deciphering';
-import { actionBlocker, actionIntervalMs, skillLevel, startSkillAction, stopAction } from '../../engine/skills';
+import { professionAccessReason } from '../../engine/professions';
+import { actionBlocker, actionIntervalMs, skillLevel, startSkillAction, stationLevelFor, stopAction } from '../../engine/skills';
+import { skillTreeStats } from '../../engine/skillTree';
 import { relicFragment } from '../../data/archaeology';
-import { actionDef } from '../../data/skills';
+import { actionDef, actionsFor, type SkillAction } from '../../data/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameState, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Badge, fmt, fmtTime, MatIcon, ProgressBar } from './common';
+import { Art, Badge, Cost, fmt, fmtTime, MatIcon, ProgressBar } from './common';
+import { Icon } from './Icon';
 import { ItemTip } from './ItemView';
 import { ChaptersView, CodexView, DeskView } from './ScholarsDesk';
+import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
+import { SkillMinigame } from './SkillMinigame';
 import '../archaeology.css';
 
 function siteArtifacts(site: SiteDef) {
@@ -35,11 +40,11 @@ function digging(s: GameState, id: string): boolean {
 
 // ---------- the trail ----------
 
-function TrailMap({ s, selected, onSelect }: { s: GameState; selected: string; onSelect: (id: string) => void }) {
+function TrailMap({ s, trail, selected, onSelect }: { s: GameState; trail: string[]; selected: string; onSelect: (id: string) => void }) {
   const level = skillLevel(s, 'archaeology');
   return (
     <div className="trail-map" role="tablist" aria-label="Expedition trail">
-      {TRAIL.map((id, i) => {
+      {trail.map((id, i) => {
         const site = siteOf(id)!;
         const stamped = hasPassport(s, id);
         const leveled = level >= site.level;
@@ -56,7 +61,7 @@ function TrailMap({ s, selected, onSelect }: { s: GameState; selected: string; o
               onClick={() => onSelect(id)}
               title={stamped ? (leveled ? site.name : `${site.name}: Archaeology ${site.level}`) : passportReason(id)}
             >
-              <span className="trail-pin">{site.relic ? '✦' : stamped ? i + 1 : '🔒︎'}</span>
+              <span className="trail-pin">{site.relic ? '✦' : stamped ? TRAIL.indexOf(id) + 1 : '🔒︎'}</span>
               <span className="trail-name">{site.name}</span>
               <span className="trail-meta num">
                 Lv {site.level}
@@ -155,11 +160,17 @@ function SitePanel({ s, site }: { s: GameState; site: SiteDef }) {
   );
 }
 
-function TrailView({ s }: { s: GameState }) {
+export function TrailView({ s }: { s: GameState }) {
+  const level = skillLevel(s, 'archaeology');
   const current = s.action?.kind === 'skill' ? siteOfAction(s.action.actionId)?.id : undefined;
-  const furthest = [...TRAIL].reverse().find((id) => hasPassport(s, id) && skillLevel(s, 'archaeology') >= siteOf(id)!.level) ?? TRAIL[0];
+  const furthest = [...TRAIL].reverse().find((id) => hasPassport(s, id) && level >= siteOf(id)!.level) ?? TRAIL[0];
+  const lastOpenIdx = TRAIL.reduce((best, id, idx) => (hasPassport(s, id) && level >= siteOf(id)!.level ? idx : best), 0);
+  const [showFuture, setShowFuture] = useState(false);
+  const visibleTrail = showFuture ? TRAIL : TRAIL.slice(0, Math.min(TRAIL.length, lastOpenIdx + 3));
+  const hiddenCount = TRAIL.length - visibleTrail.length;
   const [picked, setPicked] = useState<string | undefined>();
-  const selected = picked ?? current ?? furthest;
+  const rawSelected = picked ?? current ?? furthest;
+  const selected = visibleTrail.includes(rawSelected) ? rawSelected : furthest;
   const stamped = TRAIL.filter((id) => hasPassport(s, id)).length;
   const found = SITES.reduce((a, x) => a + siteStratum(s, x), 0);
   return (
@@ -167,16 +178,21 @@ function TrailView({ s }: { s: GameState }) {
       <div className="expedition-banner">
         <div>
           <div className="dig-kicker">The Hollow Peaks</div>
-          <h3 className="expedition-title">Expedition Trail</h3>
+          <h3 className="expedition-title">Dig Sites & Expedition Trail</h3>
         </div>
         <div className="expedition-stats">
           <Stat label="Passports" value={`${stamped}/${TRAIL.length}`} />
           <Stat label="Finds" value={`${found}/${SITES.length * FIND_HOURS.length}`} />
           <Stat label="Ancient Data" value={fmt(s.storage.bank[ANCIENT_DATA] ?? 0)} icon={ANCIENT_DATA} />
           <Stat label="Sealed Relics" value={fmt(s.storage.bank[SEALED_RELIC] ?? 0)} icon={SEALED_RELIC} />
+          {(hiddenCount > 0 || showFuture) && (
+            <button className="btn sm ghost" onClick={() => setShowFuture((v) => !v)}>
+              {showFuture ? 'Hide future sites' : `Show future sites (+${hiddenCount})`}
+            </button>
+          )}
         </div>
       </div>
-      <TrailMap s={s} selected={selected} onSelect={setPicked} />
+      <TrailMap s={s} trail={visibleTrail} selected={selected} onSelect={setPicked} />
       <SitePanel s={s} site={siteOf(selected)!} />
     </section>
   );
@@ -299,12 +315,35 @@ function ForgeBench({ s, form }: { s: GameState; form: RelicForm }) {
   );
 }
 
+function slotLabel(base: BaseDef): string {
+  if (base.slot === 'offhand') return base.tags.includes('shield') ? 'Shield (Offhand)' : 'Offhand';
+  if (base.slot === 'body') return 'Body Armour';
+  return base.slot.charAt(0).toUpperCase() + base.slot.slice(1);
+}
+
+function baseStatLines(base: BaseDef): string[] {
+  const lines: string[] = [];
+  if (base.armour) lines.push(`Armour: ${base.armour}`);
+  if (base.evasion) lines.push(`Evasion: ${base.evasion}`);
+  if (base.energyShield) lines.push(`Energy Shield: ${base.energyShield}`);
+  for (const imp of base.implicits ?? []) {
+    if (imp.text) lines.push(imp.text);
+  }
+  return lines;
+}
+
 function ForgeView({ s }: { s: GameState }) {
   const job = s.expedition.forge;
   const sealed = s.storage.bank[SEALED_RELIC] ?? 0;
   const form = job ? relicForm(job.formId) : undefined;
+  const [hideLocked, setHideLocked] = useState(false);
+  const lockedCount = RELIC_FORMS.filter((f) => !relicFormUnlocked(s, f.id)).length;
+  const forms = hideLocked ? RELIC_FORMS.filter((f) => relicFormUnlocked(s, f.id)) : RELIC_FORMS;
   return (
     <section className="expedition">
+      <SkillIntro step="Custom ilvl 80 Relics">
+        Use a Sealed Relic from the Reliquary + Ancient Data to hand-build custom ilvl 80 rare gear
+      </SkillIntro>
       <div className="expedition-banner forge">
         <div>
           <div className="dig-kicker">Relic Restoration</div>
@@ -314,6 +353,11 @@ function ForgeView({ s }: { s: GameState }) {
           <Stat label="Sealed Relics" value={fmt(sealed)} icon={SEALED_RELIC} />
           <Stat label="Ancient Data" value={fmt(s.storage.bank[ANCIENT_DATA] ?? 0)} icon={ANCIENT_DATA} />
           <Stat label="Restored" value={fmt(s.expedition.relicsRestored ?? 0)} />
+          {!form && lockedCount > 0 && (
+            <button className="btn sm ghost" onClick={() => setHideLocked((v) => !v)}>
+              {hideLocked ? `Show locked (${lockedCount})` : 'Hide locked'}
+            </button>
+          )}
         </div>
       </div>
       {form ? (
@@ -331,30 +375,224 @@ function ForgeView({ s }: { s: GameState }) {
               </p>
             )}
           </div>
-          <div className="relic-forms">
-            {RELIC_FORMS.map((f) => {
-              const open = relicFormUnlocked(s, f.id);
-              const from = formChapter(f.id);
-              const glow = !!from && !!s.archaeology.secret[from.script];
-              return (
-                <div key={f.id} className={`relic-form ${open ? '' : 'locked'} ${glow ? 'glow' : ''}`} style={{ ['--site' as string]: f.culture === 'all' ? '#e0b25c' : cultureDef(f.culture).color }}>
-                  <div className="relic-form-kicker">{f.culture === 'all' ? 'All three peoples' : cultureDef(f.culture).name} · {baseDef(f.baseId).name}</div>
-                  <b className="relic-form-name">{f.name}</b>
-                  <p className="relic-form-lore">{f.lore}</p>
-                  {glow && from && <p className="small dim">Glowing: {SECRET_CHAPTERS[from.script].title}</p>}
-                  {open ? (
-                    <button className="btn sm" disabled={!sealed} onClick={() => game.act((st, ctx) => unsealRelic(st, ctx, f.id))}>
-                      Break the seal
-                    </button>
-                  ) : (
-                    <p className="lock-note small">Locked: translate {from ? `${scriptDef(from.script).name} chapter ${from.n}` : 'more of the story'}</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          {forms.length === 0 ? (
+            <div className="dig-card">
+              <p className="small dim">No Relic Forms unlocked yet. Translate story chapters to unlock Relic Forge forms.</p>
+              <button className="btn sm" onClick={() => setHideLocked(false)}>Show locked forms ({lockedCount})</button>
+            </div>
+          ) : (
+            <div className="relic-forms">
+              {forms.map((f) => {
+                const open = relicFormUnlocked(s, f.id);
+                const from = formChapter(f.id);
+                const glow = !!from && !!s.archaeology.secret[from.script];
+                const base = baseDef(f.baseId);
+                const stats = baseStatLines(base);
+                return (
+                  <div key={f.id} className={`relic-form ${open ? '' : 'locked'} ${glow ? 'glow' : ''}`} style={{ ['--site' as string]: f.culture === 'all' ? '#e0b25c' : cultureDef(f.culture).color }}>
+                    <div className="relic-form-top">
+                      <div className="relic-form-kicker">{f.culture === 'all' ? 'All three peoples' : cultureDef(f.culture).name} · {slotLabel(base)}</div>
+                      {!open && <LockedBadge reason={from ? `${scriptDef(from.script).name} Ch. ${from.n}` : 'Story'} />}
+                    </div>
+                    <b className="relic-form-name">{f.name}</b>
+                    <div className="relic-form-base">
+                      <b>{base.name}</b> <span className="dim small">· Lv {base.reqLevel} {slotLabel(base)}</span>
+                    </div>
+                    {stats.length > 0 && (
+                      <ul className="relic-form-stats">
+                        {stats.map((line) => <li key={line}>{line}</li>)}
+                      </ul>
+                    )}
+                    <p className="relic-form-lore">{f.lore}</p>
+                    {glow && from && <p className="small dim">Glowing: {SECRET_CHAPTERS[from.script].title}</p>}
+                    {open ? (
+                      <button className="btn sm" disabled={!sealed} onClick={() => game.act((st, ctx) => unsealRelic(st, ctx, f.id))}>
+                        Break the seal
+                      </button>
+                    ) : (
+                      <p className="lock-note small">Locked: translate {from ? `${scriptDef(from.script).name} chapter ${from.n}` : 'more of the story'}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
+    </section>
+  );
+}
+
+// ---------- Sifting & Relic Restorations ----------
+
+function restorationLockReason(s: GameState, a: SkillAction): string | null {
+  if (skillLevel(s, 'archaeology') < a.level) return `Requires Archaeology level ${a.level}`;
+  if (a.accomplishments && !s.professionProgress.legacyAccess[a.id]) {
+    const reason = professionAccessReason(s, { skill: a.skill, level: a.level, accomplishments: a.accomplishments });
+    if (reason) return reason;
+  }
+  const st = stationLevelFor(a);
+  if (st && (s.account.hideout[st.station] ?? 1) < st.level) {
+    return `Needs Forge level ${st.level}`;
+  }
+  return null;
+}
+
+function RestorationCard({ s, a }: { s: GameState; a: SkillAction }) {
+  const d = deriveStats(s);
+  const tree = skillTreeStats(s);
+  const lockReason = restorationLockReason(s, a);
+  const blocker = lockReason ? null : actionBlocker(s, a);
+  const running = s.action?.kind === 'skill' && s.action.actionId === a.id;
+  const interval = actionIntervalMs(s, a, d);
+  const xp = +(a.xp * (1 + (d.skillXp + (tree.skillXp ?? 0)) / 100)).toFixed(1);
+  const outEntries = Object.entries(a.protectedOutputs ?? a.outputs ?? {});
+  const primaryOutId = outEntries[0]?.[0];
+
+  return (
+    <article
+      className={`dig-card restoration-card ${running ? 'running' : ''} ${lockReason ? 'locked' : ''}`}
+      style={{ ['--site' as string]: a.color ?? 'var(--accent)' }}
+    >
+      <div className="restoration-head">
+        <span className="restoration-icon">
+          {a.baseId ? (
+            <Art src={`items/${a.baseId}`} alt={baseDef(a.baseId).name} size={28} fallback={<Icon name={baseDef(a.baseId).slot} size={20} color={a.color} />} />
+          ) : primaryOutId ? (
+            <MatIcon id={primaryOutId} size={24} />
+          ) : null}
+        </span>
+        <div className="restoration-title-wrap">
+          <h4 className="restoration-title">{a.name}</h4>
+          <div className="restoration-meta num">
+            <span>Lv {a.level}</span>
+            <span>·</span>
+            <span>{interval < 60_000 ? `${(interval / 1000).toFixed(1)}s` : fmtTime(interval)}</span>
+            <span>·</span>
+            <span>{xp} XP</span>
+          </div>
+        </div>
+        {lockReason ? (
+          <LockedBadge level={a.level} reason={lockReason} />
+        ) : running ? (
+          <button className="btn sm stop" onClick={() => game.act((st) => stopAction(st))}>Stop</button>
+        ) : (
+          <button
+            className={`btn sm ${blocker ? '' : 'primary'}`}
+            disabled={!!blocker}
+            title={blocker ?? ''}
+            onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, a.id))}
+          >
+            {blocker === 'Missing materials' ? 'Missing' : blocker === 'Inventory full' ? 'Full' : a.id.startsWith('sift_') ? 'Sift' : 'Restore'}
+          </button>
+        )}
+      </div>
+
+      <div className="restoration-output">
+        <span className="dim small">Produces:</span>
+        {outEntries.map(([id, n]) => (
+          <span key={id} className="restoration-out-chip">
+            <MatIcon id={id} size={14} />
+            <b>{materialDef(id).name}</b>
+            <span className="num">×{n}</span>
+          </span>
+        ))}
+        {a.baseId && (
+          <span className="restoration-out-chip">
+            <b>{baseDef(a.baseId).name}</b>
+            <span className="dim small">· ilvl {Math.min(45, skillLevel(s, 'archaeology'))}</span>
+          </span>
+        )}
+      </div>
+
+      {a.inputs ? (
+        <div className="restoration-cost">
+          <span className="dim small">Cost:</span>
+          <Cost cost={a.inputs} have={s.storage.bank} />
+        </div>
+      ) : (
+        <div className="dim small">No materials required — steady Artifact sifting.</div>
+      )}
+
+      {lockReason && <p className="lock-note small" style={{ margin: 0 }}>{lockReason}</p>}
+      {running && s.action?.kind === 'skill' && (
+        <ProgressBar value={s.action.progress / interval} color="var(--success)" className="action-progress dig-progress" />
+      )}
+    </article>
+  );
+}
+
+/** Archaeology's Soil Sifting and Relic Restoration bench in Archaeology's own aesthetic. */
+export function RestorationView() {
+  const s = useGame();
+  const [showLocked, setShowLocked] = useState(false);
+  const all = actionsFor('archaeology').filter((a) => a.id.startsWith('sift_') || a.id.startsWith('restore_'));
+  const sifting = all.filter((a) => a.id.startsWith('sift_'));
+  const restorations = all.filter((a) => a.id.startsWith('restore_'));
+
+  const filterGroup = (list: SkillAction[]) => {
+    if (showLocked) return { visible: list, hidden: 0 };
+    const unlocked: SkillAction[] = [];
+    const locked: SkillAction[] = [];
+    for (const a of list) {
+      if (restorationLockReason(s, a)) locked.push(a);
+      else unlocked.push(a);
+    }
+    const keptLocked = locked.slice(0, 2);
+    return { visible: [...unlocked, ...keptLocked], hidden: locked.length - keptLocked.length };
+  };
+
+  const siftShown = filterGroup(sifting);
+  const restoreShown = filterGroup(restorations);
+  const totalHidden = siftShown.hidden + restoreShown.hidden;
+  const activeRestoration = s.action?.kind === 'skill' && (s.action.actionId.startsWith('sift_') || s.action.actionId.startsWith('restore_'));
+
+  return (
+    <section className="expedition">
+      <SkillIntro
+        step="Sift & Restore"
+        action={(totalHidden > 0 || showLocked) ? (
+          <button className="btn sm ghost" onClick={() => setShowLocked((v) => !v)}>
+            {showLocked ? 'Hide locked' : `Show locked (+${totalHidden})`}
+          </button>
+        ) : undefined}
+      >
+        Sift extra Artifacts directly from the soil, or combine Relic Fragments and Artifacts into permanent gear and relics
+      </SkillIntro>
+
+      <div className="expedition-banner">
+        <div>
+          <div className="dig-kicker">Field Bench</div>
+          <h3 className="expedition-title">Sifting & Relic Restoration</h3>
+        </div>
+        <div className="expedition-stats">
+          {CULTURES.map((c) => (
+            <Stat key={c.id} label={c.artifactName} value={fmt(s.storage.bank[c.artifact] ?? 0)} icon={c.artifact} />
+          ))}
+        </div>
+      </div>
+
+      {activeRestoration && <SkillMinigame skill="archaeology" />}
+
+      <div className="restoration-group">
+        <div className="section-head">
+          <h3>Soil Sifting</h3>
+          <span className="dim small">Steady Artifacts with no input costs</span>
+        </div>
+        <div className="restoration-grid">
+          {siftShown.visible.map((a) => <RestorationCard key={a.id} s={s} a={a} />)}
+        </div>
+      </div>
+
+      <div className="restoration-group">
+        <div className="section-head">
+          <h3>Relic Restorations</h3>
+          <span className="dim small">Craft specialized gear and ancient relics from fragments & Artifacts</span>
+        </div>
+        <div className="restoration-grid">
+          {restoreShown.visible.map((a) => <RestorationCard key={a.id} s={s} a={a} />)}
+        </div>
+      </div>
     </section>
   );
 }
@@ -371,18 +609,20 @@ function WareRow({ s, culture, w }: { s: GameState; culture: CultureDef; w: Ware
         {materialDef(w.item).name}
         {w.qty > 1 && <span className="num"> ×{w.qty}</span>}
       </span>
-      <span className="dim small num" title="Left on the shelf. It fills back up over time">
+      <span className="ware-shelf dim small num" title="Left on the shelf. It fills back up over time">
         {wareLeft(s, w)}/{w.shelf}
       </span>
-      <span className="small">
+      <span className="ware-cost small">
         <MatIcon id={culture.artifact} size={12} /> <span className="num">{fmt(warePrice(s, w))}</span>
       </span>
-      <button className="btn sm" disabled={!!reason} title={reason ?? ''} onClick={() => game.act((st, ctx) => buyWare(st, ctx, w.id))}>
-        Buy
-      </button>
-      <button className={`btn sm ${ordered ? 'selected' : ''}`} title="Buy this by itself whenever the Artifacts and the shelf allow, even while you're away. One order per merchant" onClick={() => game.act((st) => setOrder(st, w.id))}>
-        {ordered ? 'On order' : 'Order'}
-      </button>
+      <div className="ware-actions">
+        <button className="btn sm" disabled={!!reason} title={reason ?? ''} onClick={() => game.act((st, ctx) => buyWare(st, ctx, w.id))}>
+          Buy
+        </button>
+        <button className={`btn sm ${ordered ? 'selected' : ''}`} title="Buy this by itself whenever the Artifacts and the shelf allow, even while you're away. One order per merchant" onClick={() => game.act((st) => setOrder(st, w.id))}>
+          {ordered ? 'On order' : 'Order'}
+        </button>
+      </div>
     </div>
   );
 }
@@ -390,26 +630,61 @@ function WareRow({ s, culture, w }: { s: GameState; culture: CultureDef; w: Ware
 function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
   const have = standing(s, culture.id);
   const { open, next } = shelvesFor(s, culture.id);
+  const fragId = relicFragment(culture.id);
+  const frags = s.storage.bank[fragId] ?? 0;
+  const digsToNext = 60 - ((s.professionProgress.counters[`archaeology.fragments.${culture.id}`] ?? 0) % 60);
+
   return (
-    <div className="card">
-      <div className="card-title">
-        {culture.merchant}
-        <span className="grow" />
-        <Badge tone="neutral">
-          Standing {have} of {MAX_STANDING}
-        </Badge>
+    <div className="card merchant-card" style={{ ['--site' as string]: culture.color }}>
+      <div className="merchant-head">
+        <div>
+          <div className="dig-kicker">{culture.name}</div>
+          <h4 className="merchant-name">{culture.merchant}</h4>
+        </div>
+        <Badge tone="neutral">Standing {have} / {MAX_STANDING}</Badge>
       </div>
-      <p className="dim small">
-        {culture.deals}, for <MatIcon id={culture.artifact} size={12} /> {culture.artifactName}. You have <b className="num">{fmt(s.storage.bank[culture.artifact] ?? 0)}</b>.
-      </p>
-      <p className="small">Relic fragments: {s.storage.bank[relicFragment(culture.id)] ?? 0}. One every 60 matching digs;{60 - (s.professionProgress.counters[`archaeology.fragments.${culture.id}`] ?? 0) % 60} to the next.</p>
-      <button className="btn sm" disabled={(s.storage.bank[relicFragment(culture.id)] ?? 0) < 5} onClick={() => game.act((st, ctx) => exchangeFragments(st, ctx, culture.id))}>Exchange 5 fragments for 25 artifacts</button>
-      {open.map((w) => (
-        <WareRow key={w.id} s={s} culture={culture} w={w} />
-      ))}
+
+      <ProgressBar
+        value={Math.min(1, have / MAX_STANDING)}
+        color={culture.color}
+        label={`Standing ${have} of ${MAX_STANDING}`}
+        className="merchant-standing-bar"
+      />
+
+      <div className="merchant-balance">
+        <span className="small dim">{culture.deals}</span>
+        <span className="merchant-currency num">
+          <MatIcon id={culture.artifact} size={14} />
+          <b>{fmt(s.storage.bank[culture.artifact] ?? 0)}</b>
+          <span className="small dim">{culture.artifactName}</span>
+        </span>
+      </div>
+
+      <div className="merchant-fragments">
+        <div className="merchant-frag-info">
+          <MatIcon id={fragId} size={16} />
+          <div>
+            <div className="small">
+              <b>{fmt(frags)}</b> Relic fragments{' '}
+              <HelpTip tip="You earn 1 Relic fragment every 60 digs at this culture's sites. Trade 5 fragments for 25 Artifacts." />
+            </div>
+            <div className="small dim">{digsToNext} matching digs to next fragment</div>
+          </div>
+        </div>
+        <button className="btn sm primary" disabled={frags < 5} onClick={() => game.act((st, ctx) => exchangeFragments(st, ctx, culture.id))}>
+          Exchange 5 → 25
+        </button>
+      </div>
+
+      <div className="merchant-wares">
+        {open.map((w) => (
+          <WareRow key={w.id} s={s} culture={culture} w={w} />
+        ))}
+      </div>
+
       {next && (
-        <p className="lock-note small">
-          {materialDef(next.item).name} at standing {next.standing}. Finds at {SITES.filter((x) => x.culture === culture.id && !x.relic).map((x) => x.name).join(' and ')} raise it.
+        <p className="lock-note small" style={{ margin: 0 }}>
+          Next shelf: <b>{materialDef(next.item).name}</b> at standing {next.standing}. Finds at {SITES.filter((x) => x.culture === culture.id && !x.relic).map((x) => x.name).join(' and ')} raise it.
         </p>
       )}
     </div>
@@ -417,23 +692,34 @@ function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
 }
 
 /** Archaeology's board: the Expedition Trail and its digs, the Relic Forge, and the merchants who take what comes up. */
-export function ExpeditionBoard({ view = 'desk' }: { view?: 'desk' | 'codex' | 'chapters' | 'sites' | 'forge' | 'merchants' }) {
+export function ExpeditionBoard({ view = 'desk' }: { view?: 'desk' | 'codex' | 'chapters' | 'sites' | 'forge' | 'merchants' | 'restoration' }) {
   const s = useGame();
   if (!expeditionOpen(s)) {
     return <div className="callout skill-note">The dig sites are up in the Hollow Peaks, in {EXPEDITION_GATE.label}. Reach them to start digging.</div>;
   }
-  if (view === 'desk') return <DeskView />;
+  if (view === 'desk') {
+    return (
+      <>
+        <DeskView />
+        <TrailView s={s} />
+      </>
+    );
+  }
   if (view === 'codex') return <CodexView />;
   if (view === 'chapters') return <ChaptersView />;
   if (view === 'sites') return <TrailView s={s} />;
   if (view === 'forge') return <ForgeView s={s} />;
+  if (view === 'restoration') return <RestorationView />;
   return (
-    <section>
+    <section className="expedition">
+      <SkillIntro step="Culture Merchants">
+        Spend Excavated Artifacts here. Raise Standing by completing Finds at each culture's Dig Sites
+      </SkillIntro>
       <div className="section-head">
         <h3>Merchants</h3>
         <span className="dim small">{fmt(s.expedition.tally.traded)} traded · the emptier a shelf, the dearer it gets</span>
       </div>
-      <div className="card-grid" style={{ ['--card-min' as string]: '340px', gap: 8 }}>
+      <div className="card-grid" style={{ ['--card-min' as string]: '360px', gap: 10 }}>
         {CULTURES.map((c) => (
           <MerchantCard key={c.id} s={s} culture={c} />
         ))}

@@ -125,7 +125,7 @@ describe('Phase 15 Defence Uniques', () => {
       if (p.reward.category === 'flask') {
         expect(p.reward.flaskId).toBe('u_flask_still_heart');
       }
-      expect(p.inputs).toEqual({ moon_distillate: 6, ember_reduction: 10, prepared_glass: 3 });
+      expect(p.inputs).toEqual({ moon_distillate: 6, emberroot: 30, prepared_glass: 3 });
     });
 
     it('completes The Buried Grudge archaeology project cleanly', () => {

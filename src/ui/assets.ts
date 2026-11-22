@@ -649,6 +649,17 @@ export const SCENE_ART: Record<string, string> = {
   hideout: new URL('../assets/scenes/gegx-tavern-night.webp', import.meta.url).href,
 };
 
+/** Woodcutting Giant tree sprites (`src/assets/trees/*.png`, CC0 — see src/assets/CREDITS.md). */
+export const TREE_ART: Record<string, string> = {
+  ash: new URL('../assets/trees/ash.png', import.meta.url).href,
+  oak: new URL('../assets/trees/oak.png', import.meta.url).href,
+  yew: new URL('../assets/trees/yew.png', import.meta.url).href,
+  ironwood: new URL('../assets/trees/ironwood.png', import.meta.url).href,
+  ancient: new URL('../assets/trees/ancient.png', import.meta.url).href,
+  spirit: new URL('../assets/trees/spirit.png', import.meta.url).href,
+  worldwood: new URL('../assets/trees/worldwood.png', import.meta.url).href,
+};
+
 const PACK_ART: Record<string, Record<string, string>> = {
   items: ITEM_ART,
   uniques: UNIQUE_ART,
@@ -660,13 +671,14 @@ const PACK_ART: Record<string, Record<string, string>> = {
   stations: STATION_ART,
   zones: ZONE_ART,
   scenes: SCENE_ART,
+  trees: TREE_ART,
 };
 
 /** Small pixel sprites shown much larger than their 64px: scaled with hard edges instead of blur. */
 export function packArtIsPixel(key: string): boolean {
   const group = key.split('/')[0];
   const url = packArtUrl(key);
-  return (group === 'monsters' || group === 'portraits' || group === 'stations') && !!url && !/\.(jpe?g|webp)($|\?)/.test(url);
+  return (group === 'monsters' || group === 'portraits' || group === 'stations' || group === 'trees') && !!url && !/\.(jpe?g|webp)($|\?)/.test(url);
 }
 
 /** Pack art for an art key (`items/iron_hat`), or undefined. */

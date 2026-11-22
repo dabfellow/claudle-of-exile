@@ -13,19 +13,13 @@ import { actionIntervalMs, skillLevel, startSkillAction, stopAction } from '../.
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { fmtTime, ProgressBar, Tabs } from './common';
+import { EmptyState, fmtTime, GameIcon, ProgressBar, Tabs, type TabDef } from './common';
 import { MasteryProgress } from './MasteryProgress';
+import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
 import { SkillMinigame } from './SkillMinigame';
 import './foraging-bench.css';
 
-const tabs = [
-  { id: 'greenhouse', label: 'Greenhouse' },
-  { id: 'wild', label: 'Wild' },
-  { id: 'seeds', label: 'Seeds' },
-  { id: 'herbarium', label: 'Herbarium' },
-  { id: 'masterworks', label: 'Masterworks' },
-] as const;
-type ForagingTab = (typeof tabs)[number]['id'];
+type ForagingTab = 'greenhouse' | 'wild' | 'seeds' | 'herbarium' | 'masterworks';
 
 function MutationTags({ mutations }: { mutations: string[] }) {
   if (!mutations.length) return <span className="muted small">Plain strain</span>;
@@ -68,7 +62,7 @@ export function SeedPackets() {
   </section>;
 }
 
-function GreenhouseTab({ s, notify }: { s: GameState; notify: (msg: string) => void }) {
+function GreenhouseTab({ s, notify, onGoWild }: { s: GameState; notify: (msg: string) => void; onGoWild: () => void }) {
   const plots = greenhousePlotCount(s);
   const [plantingPlot, setPlantingPlot] = useState<number | null>(null);
   const [parent1, setParent1] = useState('');
@@ -92,6 +86,13 @@ function GreenhouseTab({ s, notify }: { s: GameState; notify: (msg: string) => v
   const inheritPct = parent1 && parent2 ? Math.min(95, 50 + inheritanceBonusPct(s, [parent1, parent2])) : 50;
 
   return <section className="card">
+    <SkillIntro
+      step="Greenhouse"
+      action={!plantable.length ? <button className="btn sm" onClick={onGoWild}>Forage Wild</button> : undefined}
+    >
+      Plant a single seed to harvest herbs &amp; essences, or cross two parents to pass on mutations, build generation stability, and breed Lv 80 hybrids.{' '}
+      <HelpTip tip="Crossing identical strains 5 times (3 with Deep-rooted) stabilises them so they never consume seeds when planted." />
+    </SkillIntro>
     <h3>Greenhouse · {plots} plots</h3>
     <div className="foraging-plots">
       {Array.from({ length: plots }, (_, i) => {
@@ -162,24 +163,40 @@ function GreenhouseTab({ s, notify }: { s: GameState; notify: (msg: string) => v
 }
 
 function WildTab({ s, notify }: { s: GameState; notify: (msg: string) => void }) {
+  const [showAllLocked, setShowAllLocked] = useState(false);
   const level = skillLevel(s, 'harvesting');
   const d = deriveStats(s);
   const patches = actionsFor('harvesting');
+  const unlockedPatches = patches.filter((a) => a.level <= level);
+  const lockedPatches = patches.filter((a) => a.level > level);
+  const visiblePatches = showAllLocked ? patches : [...unlockedPatches, ...lockedPatches.slice(0, 2)];
   const running = s.action?.kind === 'skill' && actionDef(s.action.actionId).skill === 'harvesting' ? s.action : null;
 
   return <section className="card">
-    <h3>Wild patches</h3>
+    <SkillIntro step="Wild Foraging">
+      Forage patches for Alchemy herbs and rare Seed Packets for your Lv 5 Greenhouse.
+    </SkillIntro>
+    <div className="row wrap" style={{ marginBottom: 8 }}>
+      <h3 style={{ margin: 0 }}>Wild patches</h3>
+      <span className="spacer" />
+      {lockedPatches.length > 2 && (
+        <label className="small row" style={{ gap: 6, cursor: 'pointer' }}>
+          <input type="checkbox" checked={showAllLocked} onChange={(e) => setShowAllLocked(e.target.checked)} />
+          Show all locked ({lockedPatches.length})
+        </label>
+      )}
+    </div>
     <SkillMinigame skill="harvesting" />
     <div className="foraging-grid" style={{ marginTop: 10 }}>
-      {patches.map((a) => {
+      {visiblePatches.map((a) => {
         const active = running?.actionId === a.id;
         const locked = a.level > level;
-        return <div key={a.id} className="foraging-card">
-          <div className="row">
+        return <div key={a.id} className={`foraging-card ${locked ? 'locked' : ''}`}>
+          <div className="foraging-card-head">
             <span className="foraging-swatch" style={{ background: a.color }} />
             <b>{a.name}</b>
             <span className="spacer" />
-            <span className="small muted">Lv {a.level}</span>
+            {locked ? <LockedBadge level={a.level} /> : <span className="small muted">Lv {a.level}</span>}
           </div>
           <p className="small muted">{fmtTime(actionIntervalMs(s, a, d))} · {a.xp} XP · 1% seed · 2% variant</p>
           <MasteryProgress s={s} mastery={a.mastery} compact />
@@ -194,22 +211,41 @@ function WildTab({ s, notify }: { s: GameState; notify: (msg: string) => void })
   </section>;
 }
 
-function SeedsTab({ s }: { s: GameState }) {
+function SeedsTab({ s, onGoWild }: { s: GameState; onGoWild: () => void }) {
   const [mutFilter, setMutFilter] = useState('');
-  const entries = Object.keys(s.foraging.strains)
+  const allStrains = Object.keys(s.foraging.strains);
+  const entries = allStrains
     .filter((k) => !mutFilter || parseStrain(k).mutations.includes(mutFilter))
     .sort();
+  const sealed = s.foraging.packets.length;
 
   return <section className="card">
-    <div className="row">
-      <h3>Seeds & strain herbs</h3>
+    <SkillIntro step="Seeds">
+      Seed Packets come from Wild foraging: 1% plain seeds (guaranteed by 100 harvests), 2% mutated variants.
+    </SkillIntro>
+    <div className="row wrap">
+      <h3>Seeds &amp; strain herbs</h3>
       <span className="spacer" />
       <label className="small">Filter mutation <select value={mutFilter} onChange={(e) => setMutFilter(e.target.value)}>
         <option value="">All strains</option>
         {ALL_MUTATIONS.map((m) => <option key={m.id} value={m.id}>{m.name} ({m.tier})</option>)}
       </select></label>
     </div>
-    {!entries.length ? <p className="muted">No matching strains yet.</p> : <div className="foraging-grid" style={{ marginTop: 8 }}>
+    {allStrains.length === 0 ? (
+      <EmptyState
+        icon={<GameIcon name="harvesting" size={28} />}
+        title="No seeds or discovered strains yet"
+        action={<button className="btn sm primary" onClick={onGoWild}>Go to Wild foraging</button>}
+      >
+        {sealed > 0
+          ? `You have ${sealed} sealed Seed Packet${sealed === 1 ? '' : 's'} at the top of the bench — open them to reveal your seeds!`
+          : 'Forage Wild patches to collect Alchemy herbs and find Seed Packets (1% plain seed, 2% mutated variant).'}
+      </EmptyState>
+    ) : !entries.length ? (
+      <EmptyState small title="No matching strains">
+        None of your discovered strains carry that mutation yet.
+      </EmptyState>
+    ) : <div className="foraging-grid" style={{ marginTop: 8 }}>
       {entries.map((key) => {
         const { species, mutations } = parseStrain(key);
         const rec = s.foraging.strains[key];
@@ -235,6 +271,9 @@ function HerbariumTab({ s }: { s: GameState }) {
   const hints = discoveredHybridHints(s);
 
   return <section className="card">
+    <SkillIntro step="Herbarium">
+      Your pressed catalogue of every unique species × mutation discovered — unlocks permanent plots, grow speed &amp; secret hybrid notes.
+    </SkillIntro>
     <h3>Herbarium · {count} strains · {stable} stable</h3>
     <div className="foraging-grid">
       <div className="foraging-card">
@@ -258,7 +297,7 @@ function HerbariumTab({ s }: { s: GameState }) {
       {ALL_SPECIES.filter((sp) => !sp.hybrid || Object.keys(s.foraging.strains).some((k) => parseStrain(k).species === sp.id)).map((sp) => {
         const list = Object.keys(s.foraging.strains).filter((k) => parseStrain(k).species === sp.id);
         return <div key={sp.id} className="foraging-card">
-          <div className="row"><span className="foraging-swatch" style={{ background: sp.color }} /><b>{sp.name}</b><span className="spacer" /><span className="small muted">{list.length}</span></div>
+          <div className="foraging-card-head"><span className="foraging-swatch" style={{ background: sp.color }} /><b>{sp.name}</b><span className="spacer" /><span className="small muted">{list.length}</span></div>
           {list.length ? list.map((k) => <div key={k} className="small">{strainLabel(k)}{s.foraging.strains[k].stable ? ' ★' : ''}</div>)
             : <span className="small muted">Not yet pressed</span>}
         </div>;
@@ -269,15 +308,29 @@ function HerbariumTab({ s }: { s: GameState }) {
 
 export function ForagingBench({ masterworks }: { masterworks: ReactNode }) {
   const s = useGame();
-  const [tab, setTab] = useState<ForagingTab>(() => s.professionProgress.activeProject?.project.skill === 'harvesting' ? 'masterworks' : 'greenhouse');
+  const hasGreenhouse = greenhousePlotCount(s) > 0;
+  const [tab, setTab] = useState<ForagingTab>(() => {
+    if (s.professionProgress.activeProject?.project.skill === 'harvesting') return 'masterworks';
+    if (!hasGreenhouse) return 'wild';
+    if (s.foraging.plots.every((p) => !p) && Object.keys(s.foraging.seeds).length === 0) return 'wild';
+    return 'greenhouse';
+  });
   const [notice, setNotice] = useState('');
+
+  const benchTabs: TabDef<ForagingTab>[] = [
+    { id: 'greenhouse', label: 'Greenhouse', locked: !hasGreenhouse ? 'Unlocks at Foraging Lv 5 (2 plots)' : undefined },
+    { id: 'wild', label: 'Wild' },
+    { id: 'seeds', label: 'Seeds' },
+    { id: 'herbarium', label: 'Herbarium' },
+    { id: 'masterworks', label: 'Masterworks' },
+  ];
 
   return <section className="foraging-bench">
     <SeedPackets />
-    <Tabs tabs={[...tabs]} value={tab} onChange={(next) => { setTab(next); setNotice(''); }} />
-    {tab === 'greenhouse' && <GreenhouseTab s={s} notify={setNotice} />}
+    <Tabs tabs={benchTabs} value={tab} onChange={(next) => { setTab(next); setNotice(''); }} />
+    {tab === 'greenhouse' && <GreenhouseTab s={s} notify={setNotice} onGoWild={() => setTab('wild')} />}
     {tab === 'wild' && <WildTab s={s} notify={setNotice} />}
-    {tab === 'seeds' && <SeedsTab s={s} />}
+    {tab === 'seeds' && <SeedsTab s={s} onGoWild={() => setTab('wild')} />}
     {tab === 'herbarium' && <HerbariumTab s={s} />}
     {tab === 'masterworks' && masterworks}
     {notice && <p role="status" className="muted small">{notice}</p>}

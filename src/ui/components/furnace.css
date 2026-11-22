@@ -1,4 +1,5 @@
 .furnace-view,
+.furnace-view-stack,
 .furnace-controls {
   display: flex;
   flex-direction: column;
@@ -31,6 +32,133 @@
 }
 
 .furnace-chamber > button { align-self: start; }
+
+.furnace-quick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.furnace-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 175px), 1fr));
+  gap: 8px;
+}
+
+.furnace-quick-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 10px;
+  border: 1px solid #69503b88;
+  border-radius: 6px;
+  background: #23191499;
+}
+
+.furnace-quick-head {
+  gap: 8px;
+  align-items: center;
+}
+
+.furnace-quick-meta {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.furnace-quick-ore {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.furnace-quick-ore > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.furnace-quick-card > .btn {
+  align-self: stretch;
+}
+
+.furnace-inline-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent-2);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.furnace-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.furnace-toolbar {
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+}
+
+.furnace-purity-panel {
+  padding: 0;
+}
+
+.furnace-purity-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 11px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.furnace-purity-summary::-webkit-details-marker { display: none; }
+
+.furnace-purity-summary::before {
+  content: '▸';
+  margin-right: 6px;
+  color: var(--muted);
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.furnace-purity-panel[open] .furnace-purity-summary::before {
+  transform: rotate(90deg);
+}
+
+.furnace-purity-body {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 0 12px 12px;
+  border-top: 1px solid #7353374d;
+  padding-top: 10px;
+}
+
+.furnace-supply-tips {
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.furnace-part-roadmap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding-top: 4px;
+  border-top: 1px solid #73533740;
+}
+
+.furnace-locked {
+  opacity: 0.78;
+  border-style: dashed;
+}
 
 .furnace-cutaway {
   position: relative;

@@ -9,17 +9,17 @@ import { SkillGame } from './minigames';
 
 const HOW_TO: Partial<Record<SkillId, string>> = {
   woodcutting: 'Split the log: tap where the axe lands. Within 3% of an even split is a double, within 7% a hit, within 15% weak.',
-  harvesting: 'Tap herbs as they pop up, before they wilt. Pick one while it glows gold for a double.',
-  thieving: 'Marks: tap while the target\'s back is turned, in the middle of that window for a double. Heist rooms: watch the pins light up, then tap them back in order.',
+  harvesting: 'Tap lit soil beds quickly to fertilise them before they fade. Tap while glowing gold for a double.',
+  thieving: 'Marks: spam-click while their back is turned to fill Focus and earn a double — stop the moment they look back! Heist rooms: watch the pins light up, then tap them back in order.',
   agility: 'Jump while the marker is in the bright band, or its gold middle for a double.',
-  archaeology: 'Tap the soil to brush the find free. Squares marked with a hairline are fragile and chip the find: a clean find is a double, one chip a hit, two weak, three a miss.',
+  archaeology: 'Brush soil squares to uncover the find. Avoid hairline cracks: 0 chips is a double, 1 a hit, 2 weak, 3+ a miss.',
   woodcrafting: 'Trace the marked line from start to finish in four seconds. A close trace earns a double.',
-  alchemy: 'Hold to heat and let go to cool. Keep the marker in the bright band, mostly in its gold middle for a double.',
+  alchemy: 'Hold to pour into the vial and release right on the target line. Dead on is a double.',
   gemcutting: 'Tap when the turning facet line meets the fixed guide. An exact cut earns a double.',
   runecarving: 'Drag from the circle along the whole stroke without leaving the line. Hug the gold middle for a double.',
   cooking: 'Three pots are heating up. Stir each one in the bright band, or its gold middle for a double, before it boils over.',
-  astrology: 'Turn the focus ring until the star is as sharp as you can get it, then let go. Spot on is a double.',
-  cartography: 'A landmark is hidden in the fog. Each sounding shows how many steps away it is: find it within 5, or within 3 for a double.',
+  astrology: 'Drag the outer brass focus ring around the scope until the star in the centre sharpens, then Lock Focus.',
+  cartography: 'Tap when the vertical line crosses the landmark, then tap when the horizontal line crosses it. Hitting the gold centre earns a double.',
 };
 
 /** Said once under every game: what gold means. */

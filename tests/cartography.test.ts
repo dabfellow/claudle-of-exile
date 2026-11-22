@@ -1,19 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { ACHIEVEMENT_BY_ID, ACHIEVEMENTS } from '../src/data/achievements';
-import { CARTOGRAPHY_GATE, CHART_MATERIALS, CHART_TIERS, FOLIO_COST, FOLIO_SIZE, MASTER_UPGRADE_MAPS, SEXTANT_RECIPES, UPGRADE_MAPS } from '../src/data/cartography';
+import { CARTOGRAPHY_GATE, CHART_MATERIALS, CHART_TIERS, FOLIO_COST, FOLIO_SIZE, SEXTANT_RECIPES, UPGRADE_MAPS } from '../src/data/cartography';
 import { MAP_DROPS, MAP_TIERS, mapId } from '../src/data/maps';
 import { actionDef, actionsFor, SKILLS, UPCOMING_SKILLS } from '../src/data/skills';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import { actOpen } from '../src/data/zones';
-import { cartographyOpen } from '../src/engine/cartography';
+import { cartographyOpen, upgradeCost } from '../src/engine/cartography';
 import type { Ctx } from '../src/engine/context';
+import { createItem } from '../src/engine/items';
 import { addMaps, mapsHeld, rollMapDrops, startMap } from '../src/engine/maps';
 import { hasMinigame, surveyDistance, surveyResult, SURVEY_COLS, SURVEY_ROWS, SURVEY_SOUNDINGS } from '../src/engine/minigame';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { actionBlocker, actionIntervalMs, skillStep, startSkillAction } from '../src/engine/skills';
-import { skillTreePoints } from '../src/engine/skillTree';
+import { skillTreePoints, skillTreeStats } from '../src/engine/skillTree';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameState, MonsterInstance } from '../src/engine/types';
@@ -41,7 +42,7 @@ function run(s: GameState, id: string, times = 1): void {
   skillStep(s, ctx(), actionIntervalMs(s, a, d) * times, d);
 }
 
-const DRAW = 'chart_t1';
+const DRAW = 'chart_folio_t1';
 const UPGRADE = 'chart_t2';
 const T1 = mapId(1);
 const T2 = mapId(2);
@@ -50,7 +51,7 @@ describe('the skill', () => {
   it('is a production skill with a mini-game, a tree branch and tree points', () => {
     expect(SKILLS.cartography.group).toBe('production');
     expect(hasMinigame('cartography')).toBe(true);
-    expect(SKILL_TREE_NODES.filter((n) => n.branch === 'cartography')).toHaveLength(6);
+    expect(SKILL_TREE_NODES.filter((n) => n.branch === 'cartography')).toHaveLength(14);
     const s = newGame(1);
     const before = skillTreePoints(s);
     s.skills.cartography = xpForLevel(60);
@@ -80,20 +81,24 @@ describe('the skill', () => {
     const made = new Set(actionsFor('cartography').flatMap((a) => Object.keys({ ...a.outputs, ...a.protectedOutputs })));
     for (const id of ['chart_survey_fragment', 'reliquary_fragment', 'atlas_survey_record']) made.add(id); // Covered by Phase 13 source-hook tests.
     for (const id of ['world_core_fragment', 'doom_key_fragment']) made.add(id); // Doomed boss hooks, covered by pinnacleProjects tests.
+    for (const id of ['boss_scrap', 'vault_scrap', 'guardian_scrap', 'guardian_trophy', 'lost_chart']) made.add(id); // Map boss/rare/chest scrap drops.
     expect([...own].filter((id) => !made.has(id))).toEqual([]);
-    const elsewhere = new Set(['alchemy', 'mining', 'woodcutting', 'harvesting'].flatMap((k) => actionsFor(k as 'mining').flatMap((a) => [...Object.keys(a.outputs ?? {}), ...(a.bonus ?? []).map((b) => b.id)])));
+    const elsewhere = new Set(['alchemy', 'mining', 'woodcutting', 'harvesting', 'smelting', 'smithing'].flatMap((k) => actionsFor(k as 'mining').flatMap((a) => [...Object.keys(a.outputs ?? {}), ...(a.bonus ?? []).map((b) => b.id)])));
     elsewhere.add('arcane_dust');
+    elsewhere.add('inscription_fragment');
+    for (const m of ['copper', 'iron', 'mithril', 'star']) elsewhere.add(`${m}_bar_flawless`);
     for (const a of actionsFor('cartography')) {
       expect(Object.keys(a.inputs!).filter((id) => !own.has(id) && !elsewhere.has(id))).toEqual([]);
     }
   });
 
-  it('has a recipe for each map tier 1–10 and each Sextant tier', () => {
+  it('has an upgrade recipe for tiers 2–10, T1 folio, and each Sextant tier', () => {
     const made = actionsFor('cartography').filter((a) => a.chart);
-    for (const tier of CHART_TIERS) {
+    for (const tier of CHART_TIERS.filter((t) => t.tier > 1)) {
       expect(MAP_TIERS.some((t) => t.tier === tier.tier)).toBe(true);
-      expect(made.some((a) => a.chart!.tier === tier.tier && a.chart!.qty === 1)).toBe(true);
+      expect(made.some((a) => a.chart!.tier === tier.tier && a.chart!.qty === 1 && a.chart!.upgrade)).toBe(true);
     }
+    expect(made.some((a) => a.id === 'chart_folio_t1' && a.chart!.tier === 1 && a.chart!.qty === FOLIO_SIZE)).toBe(true);
     for (const sex of SEXTANT_RECIPES) {
       expect(actionsFor('cartography').some((a) => a.outputs?.[sex.id] === 1)).toBe(true);
     }
@@ -101,15 +106,15 @@ describe('the skill', () => {
 });
 
 describe('recipes', () => {
-  it('draws a map into the same stock the Map Device runs from', () => {
+  it('draws a T1 folio into the same stock the Map Device runs from', () => {
     const s = act6();
     run(s, DRAW);
-    expect(mapsHeld(s, 1)).toBe(1);
+    expect(mapsHeld(s, 1)).toBe(FOLIO_SIZE);
     expect(s.storage.bank.vellum).toBe(0);
     expect(s.skills.cartography).toBeGreaterThan(xpForLevel(60));
-    expect(s.lifetime.mapsDrawn).toBe(1);
+    expect(s.lifetime.mapsDrawn).toBe(FOLIO_SIZE);
     expect(startMap(s, ctx(), 1)).toBeNull();
-    expect(s.maps.stock[T1]).toBe(0);
+    expect(s.maps.stock[T1]).toBe(FOLIO_SIZE - 1);
     expect(s.maps.run?.tier).toBe(1);
   });
 
@@ -147,7 +152,7 @@ describe('recipes', () => {
 
   it('a folio makes a stack for less per map', () => {
     const s = act6();
-    const single = actionDef(DRAW).inputs!;
+    const single = CHART_TIERS[0].inputs;
     const folio = actionDef('chart_folio_t1');
     for (const [id, n] of Object.entries(single)) expect(folio.inputs![id]).toBe(n * FOLIO_COST);
     run(s, folio.id);
@@ -158,44 +163,46 @@ describe('recipes', () => {
   it('keeps drawing through a night away', () => {
     const s = act6();
     const a = actionDef(DRAW);
-    give(s, a.inputs!, 10);
+    give(s, a.inputs!, 2);
     startSkillAction(s, ctx(), DRAW);
-    const sum = simulateOffline(s, ctx(), actionIntervalMs(s, a, deriveStats(s)) * 20);
-    expect(sum.mapsDrawn).toBe(10);
-    expect(mapsHeld(s, 1)).toBe(10);
+    const sum = simulateOffline(s, ctx(), actionIntervalMs(s, a, deriveStats(s)) * 4);
+    expect(sum.mapsDrawn).toBe(FOLIO_SIZE * 2);
+    expect(mapsHeld(s, 1)).toBe(FOLIO_SIZE * 2);
   });
 });
 
 describe('the tree', () => {
-  it('Second Copy draws two for one', () => {
+  it('Second Copy draws two Sextants for one', () => {
     const s = act6();
-    s.skillPassives.push('cartography_n0');
-    run(s, DRAW, 200);
-    expect(mapsHeld(s, 1)).toBeGreaterThan(200);
+    const r = createItem(s, 'iron_ring', 30, 'normal', seeded(1));
+    r.suffixes.push({ affixId: 'u_second_copy', tier: 0, values: [25] });
+    s.equipment.ring1 = r;
+    run(s, 'chart_sextant_apprentice', 200);
+    expect(s.storage.bank.sextant_apprentice).toBeGreaterThan(200);
   });
 
   it("Surveyor's Eye finds more maps", () => {
-    const kills = (node?: string) => {
+    const kills = (extra = false) => {
       const s = veteran(newGame(1));
-      if (node) s.skillPassives.push(node);
+      if (extra) {
+        const r = createItem(s, 'iron_ring', 30, 'normal', seeded(1));
+        r.suffixes.push({ affixId: 'u_map_find', tier: 0, values: [50] });
+        s.equipment.ring1 = r;
+      }
       const c = ctx();
       const mon = { level: MAP_DROPS.campaignMinLevel, isBoss: false } as MonsterInstance;
       for (let i = 0; i < 20000; i++) rollMapDrops(s, c, mon);
       return mapsHeld(s, 1);
     };
-    expect(kills('cartography_n1')).toBeGreaterThan(kills());
+    expect(kills(true)).toBeGreaterThan(kills(false));
   });
 
-  it('Master Cartographer upgrades for two maps, and slows the skill', () => {
+  it('exposes standard upgrade cost and Cartography scrap-drop tree stats', () => {
     const s = act6();
     const a = actionDef(UPGRADE);
-    const slow = actionIntervalMs(s, a, deriveStats(s));
-    s.skillPassives.push('cartography_ks');
-    expect(actionIntervalMs(s, a, deriveStats(s))).toBeCloseTo(slow * 1.25);
-    addMaps(s, 1, MASTER_UPGRADE_MAPS);
-    run(s, UPGRADE);
-    expect(s.maps.stock[T1]).toBe(0);
-    expect(s.maps.stock[T2]).toBe(1);
+    expect(upgradeCost(s, a)).toBe(UPGRADE_MAPS);
+    s.skillPassives = ['cartography_t0', 'cartography_t1'];
+    expect(skillTreeStats(s)['cartography.scrapDrops']).toBe(6);
   });
 });
 

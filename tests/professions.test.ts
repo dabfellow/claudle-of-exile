@@ -43,9 +43,9 @@ const realProjectCount = PROFESSION_PROJECTS.length;
 afterEach(() => { PROFESSION_PROJECTS.splice(realProjectCount); delete actionDef('smelt_copper').protectedOutputs; delete actionDef('smelt_copper').discovery; });
 
 describe('independent profession foundations', () => {
-  it('opens all eleven pages and a level-one task, leaving encounters locked', () => {
+  it('opens all twelve pages and a level-one task, leaving encounters locked', () => {
     const s = newGame(1);
-    for (const skill of ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as const) {
+    for (const skill of ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'astrology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'cartography'] as const) {
       expect(skillLock(s, skill)).toBeNull();
       const a = actionsFor(skill).find((a) => a.level === 1)!;
       expect(a).toBeDefined();
@@ -370,7 +370,15 @@ describe('pre-overhaul serialized compatibility', () => {
     s.account = structuredClone(fixture.account) as AccountState;
     settleCharacter(s, s.account);
     const again = reload(reload(s));
-    expect(again.skills).toEqual({ astrology: 0, ...raw.skills, smelting: raw.skills.smithing, woodcrafting: raw.skills.smithing, agility: 0 });
+    expect(again.skills).toEqual({
+      astrology: 0,
+      ...raw.skills,
+      smelting: raw.skills.smithing,
+      woodcrafting: raw.skills.smithing,
+      agility: 0,
+      cooking: 0,
+      runecarving: 0,
+    });
     expect(again.skillingMastery).toEqual(raw.skillingMastery);
     expect(again.action).toMatchObject(raw.action);
     expect(again.action).toEqual(s.action);

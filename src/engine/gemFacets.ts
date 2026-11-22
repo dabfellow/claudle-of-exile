@@ -14,11 +14,12 @@ type CutGem = SkillGemInstance | SupportGemInstance;
 export interface GemcuttingState {
   plans: CutPlan[];
   active: Record<string, string>;
+  quickFacets?: Record<string, CutFacet[]>;
   catalogue: string[];
   tray: number[];
 }
 
-export const freshGemcutting = (): GemcuttingState => ({ plans: [], active: {}, catalogue: [], tray: [] });
+export const freshGemcutting = (): GemcuttingState => ({ plans: [], active: {}, quickFacets: {}, catalogue: [], tray: [] });
 export const planKind = (a: SkillAction) => a.batchOf ?? a.id;
 export const cutPlanSlots = (s: GameState) => s.gemcutting.catalogue.length >= 10 ? 4 : 3;
 export const catalogueSpeed = (s: GameState) => s.gemcutting.catalogue.length >= 200 ? 10 : 0;
@@ -94,6 +95,19 @@ export function saveCutPlan(s: GameState, a: SkillAction, name: string, facets: 
   return null;
 }
 
+export function quickFacetsFor(s: GameState, a: SkillAction): CutFacet[] {
+  return s.gemcutting.quickFacets?.[planKind(a)] ?? [];
+}
+
+export function setQuickFacets(s: GameState, a: SkillAction, facets: readonly CutFacet[]): void {
+  const kind = planKind(a);
+  s.gemcutting.quickFacets ??= {};
+  const cleaned = facets.filter((f): f is CutFacet => Object.hasOwn(CUT_FACETS, f)).slice(0, 5);
+  if (cleaned.length) s.gemcutting.quickFacets[kind] = cleaned;
+  else delete s.gemcutting.quickFacets[kind];
+  delete s.gemcutting.active[kind];
+}
+
 export function removeCutPlan(s: GameState, plan: CutPlan): void {
   s.gemcutting.plans = s.gemcutting.plans.filter(({ id }) => id !== plan.id);
   if (s.gemcutting.active[plan.kind] === plan.id) delete s.gemcutting.active[plan.kind];
@@ -124,7 +138,8 @@ export function applyCutFacets(s: GameState, gemId: string, rough: RoughGem, wan
 export function finishFacetedGem(s: GameState, ctx: Ctx, a: SkillAction, gem: CutGem, rough: RoughGem,
   draft: CutFacet[] | undefined, named?: NamedCut): void {
   const id = 'gemId' in gem ? gem.gemId : gem.supportId;
-  gem.facets = applyCutFacets(s, id, rough, draft ?? activeCutPlan(s, a)?.facets ?? [], named);
+  const want = draft ?? activeCutPlan(s, a)?.facets ?? quickFacetsFor(s, a);
+  gem.facets = applyCutFacets(s, id, rough, want, named);
   gem.rough = rough;
   const entry = `${id}|${[...gem.facets].sort().join(',')}`;
   if (!s.gemcutting.catalogue.includes(entry)) s.gemcutting.catalogue.push(entry);

@@ -5,7 +5,7 @@ import { facetedAreaCells } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { facetedSupportMods, gemXpMultiplier } from '../src/engine/facetEffects';
 import {
-  applyCutFacets, catalogueSpeed, cutBlocker, cutCost, cutPlanSlots, cutSlots, cutTray, recutGem, saveCutPlan,
+  applyCutFacets, catalogueSpeed, cutBlocker, cutCost, cutPlanSlots, cutSlots, cutTray, quickFacetsFor, recutGem, saveCutPlan, setQuickFacets,
 } from '../src/engine/gemFacets';
 import { createSkillGem, createSupportGem, grantGemXp, minionStats, skillNumbers, skillSummary } from '../src/engine/gems';
 import { simulateOffline } from '../src/engine/offline';
@@ -217,6 +217,30 @@ describe('Gemcutting: Facet by facet', () => {
     expect(actionIntervalMs(s, a, deriveStats(s))).toBeLessThan(baseInterval);
   });
 
+  it('persists quickFacets via setQuickFacets for finishFacetedGem offline/on-repeat without any saved named plan', () => {
+    const s = newGame(8);
+    s.skills.gemcutting = xpToReach('gemcutting', 30);
+    s.storage.bank.rough_gem = 40;
+    s.storage.bank.arcane_dust = 400;
+
+    const a = actionDef('cut_skill');
+    setQuickFacets(s, a, ['clarity', 'polish']);
+    expect(quickFacetsFor(s, a)).toEqual(['clarity', 'polish']);
+    expect(s.gemcutting.plans).toEqual([]);
+
+    // Verify persistence across save/load as well
+    const reloaded = deserialize(serialize(s));
+    expect(quickFacetsFor(reloaded, a)).toEqual(['clarity', 'polish']);
+
+    expect(startSkillAction(reloaded, ctx(8), a.id, { rough: 'rough_gem' })).toBeNull();
+    simulateOffline(reloaded, ctx(9, true), 90_000);
+    const tray = cutTray(reloaded);
+    expect(tray.length).toBeGreaterThanOrEqual(2);
+    for (const g of tray) {
+      expect(g.facets).toEqual(['clarity', 'polish']);
+    }
+  });
+
   it('migrates pre-facet saves safely without losing rough_gem stacks or owned gems', () => {
     const s = newGame(7);
     s.storage.bank.rough_gem = 42;
@@ -229,7 +253,7 @@ describe('Gemcutting: Facet by facet', () => {
 
     const loaded = deserialize(JSON.stringify(raw));
     expect(loaded.storage.bank.rough_gem).toBe(42);
-    expect(loaded.gemcutting).toEqual({ plans: [], active: {}, catalogue: [], tray: [] });
+    expect(loaded.gemcutting).toEqual({ plans: [], active: {}, catalogue: [], tray: [], quickFacets: {} });
     expect(loaded.storage.gems[0].facets).toEqual([]);
   });
 });

@@ -1,6 +1,8 @@
 import { ROGUES, SPECIALTIES, newRoster, rogueLevelXp, talentPoints } from '../data/rogues';
 import { HEIST_JOBS, type HeistJob } from '../data/heist';
 import { canAfford, payCost } from './bank';
+import type { Ctx } from './context';
+import { chance, pick } from './rng';
 import type { GameState } from './types';
 
 export const rogueById = (id: string) => ROGUES.find((r) => r.id === id);
@@ -116,21 +118,43 @@ export function finishTraining(s: GameState): void {
     }
   }
 }
+/** Roll for recruiting a locked rogue on Street Mark completion, with early pity guarantees. */
+export function rollRogueRecruit(s: GameState, ctx: Ctx): string | null {
+  const unlocked = (s.heist.unlockedRogues ??= []);
+  const candidates = ROGUES.filter((r) => !unlocked.includes(r.id));
+  if (!candidates.length) return null;
+  const marks = s.professionProgress.counters['thieving.markers'] ?? 0;
+  const guaranteed = (unlocked.length === 0 && marks >= 3)
+    || (unlocked.length === 1 && marks >= 7)
+    || (unlocked.length === 2 && marks >= 12);
+  if (!guaranteed && !chance(ctx.rng, unlocked.length < 3 ? 0.08 : 0.04)) return null;
+  const r = pick(ctx.rng, candidates);
+  unlocked.push(r.id);
+  const text = `Recruit found: ${r.name} (${r.class}) joined your contact list in Rogue Crew!`;
+  s.heist.notice = text;
+  ctx.emit({ t: 'info', text, tone: 'good' });
+  return r.id;
+}
+
 /** Preserve old investments as Field Mastery and map retired classes to their successors. */
 export function settleRoster(s: GameState): void {
   const migrated = !s.heist.roster;
-  if (!s.heist.roster) {
+  const aliases: Record<string, string> = { fence: 'grifter', cutpurse: 'pickpocket' };
+  if (migrated) {
     s.heist.roster = newRoster();
-    const aliases: Record<string, string> = { fence: 'grifter', cutpurse: 'pickpocket' };
     for (const [old, rank] of Object.entries(s.heist.rogues)) {
       const r = s.heist.roster[aliases[old] ?? old];
       if (r) r.level = Math.max(1, Math.min(10, rank * 2));
     }
     s.heist.crew = s.heist.crew.map((id) => aliases[id] ?? id);
   }
-  s.heist.crew = [...new Set(s.heist.crew)].filter((id) => rogueById(id) && !s.heist.roster![id]?.training).slice(0, 3);
-  for (const id of migrated ? ROGUES.map((r) => r.id) : []) {
-    if (s.heist.crew.length >= 3) break;
-    if (!s.heist.crew.includes(id) && !s.heist.roster[id]?.training) s.heist.crew.push(id);
-  }
+  const baseUnlocked = s.heist.unlockedRogues
+    ?? (migrated
+      ? [...s.heist.crew, ...Object.entries(s.heist.rogues ?? {}).filter(([, rank]) => rank > 0).map(([id]) => aliases[id] ?? id)]
+      : s.heist.crew)
+    ?? [];
+  s.heist.unlockedRogues = [...new Set(baseUnlocked.filter((id) => !!rogueById(id)))];
+  s.heist.crew = [...new Set(s.heist.crew)]
+    .filter((id) => rogueById(id) && s.heist.unlockedRogues!.includes(id) && !s.heist.roster![id]?.training)
+    .slice(0, 3);
 }

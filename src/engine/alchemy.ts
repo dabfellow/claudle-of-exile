@@ -129,13 +129,28 @@ export function infusionQueueBlocker(s: GameState): string | null {
   return null;
 }
 
-export function queueInfusion(s: GameState, infusionId: string, source: string): string | null {
+function validateInfusionChoice(s: GameState, infusionId: string, source: string): string | null {
   if (isClassic(s)) return CLASSIC_BLOCK;
   const def = infusionDef(infusionId);
   if (!def) return 'Unknown infusion';
   if (!infusionUnlocked(s, infusionId)) return def.rareMutation ? 'Not yet unlocked' : `Requires Alchemy level ${def.level}`;
   if (!sourceFitsInfusion(infusionId, source)) return 'Selected herb source does not match this infusion';
+  return null;
+}
+
+export function queueInfusion(s: GameState, infusionId: string, source: string): string | null {
+  const err = validateInfusionChoice(s, infusionId, source);
+  if (err) return err;
   s.alchemy.queue.push({ infusion: infusionId, source });
+  return null;
+}
+
+/** Validate infusion + herb stock and place it at index 0 so starting `brew_infusion` brews it immediately. */
+export function prependInfusion(s: GameState, infusionId: string, source: string): string | null {
+  const err = validateInfusionChoice(s, infusionId, source);
+  if (err) return err;
+  if (herbStockForSource(s, source) < INFUSION_BREW_HERBS) return `Needs ${INFUSION_BREW_HERBS} herbs`;
+  s.alchemy.queue.unshift({ infusion: infusionId, source });
   return null;
 }
 

@@ -10506,3 +10506,100 @@ button.hx-mat:hover {
   align-items: center;
   gap: 5px;
 }
+
+/* ============ skilling UX helpers (SkillIntro, HelpTip, locked tabs) ============ */
+.tab.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
+.skill-intro-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  margin-bottom: var(--s-2);
+  border: 1px solid color-mix(in srgb, var(--profession, var(--accent)) 42%, var(--line-2));
+  border-left: 3px solid var(--profession, var(--accent));
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--profession, var(--accent)) 7%, var(--panel));
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.skill-intro-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+  min-width: 0;
+  flex: 1 1 240px;
+}
+
+.skill-intro-step {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--profession, var(--accent)) 20%, var(--bg-2));
+  border: 1px solid color-mix(in srgb, var(--profession, var(--accent)) 50%, transparent);
+  color: var(--accent-2);
+  font-weight: 700;
+  font-size: var(--fs-2xs);
+  white-space: nowrap;
+}
+
+.skill-intro-text {
+  color: var(--text);
+  opacity: 0.92;
+}
+
+.skill-intro-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.help-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: help;
+  vertical-align: middle;
+}
+
+.help-tip.with-label .help-tip-label {
+  border-bottom: 1px dotted var(--dim);
+}
+
+.help-tip-q {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.help-tip:hover .help-tip-q,
+.help-tip:focus-visible .help-tip-q {
+  border-color: var(--accent);
+  color: var(--accent-2);
+}
+
+.help-tip-box {
+  max-width: 280px;
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--text);
+}

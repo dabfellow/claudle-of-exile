@@ -235,6 +235,235 @@
   gap: .3rem;
 }
 
+.anvil-stage-head,
+.anvil-label-row {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+}
+
+.anvil-blank-picker {
+  display: grid;
+  gap: .5rem;
+  padding: .65rem;
+  border: 1px solid #3c3229;
+  border-radius: .4rem;
+  background: #1a1816;
+}
+
+.anvil-blank-picker.focused {
+  border-color: #cb9564;
+  box-shadow: inset 0 0 0 1px #cb956444;
+}
+
+.anvil-blank-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .45rem .8rem;
+}
+
+.anvil-blank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(10.5rem, 100%), 1fr));
+  gap: .4rem;
+  max-height: 13.5rem;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.anvil-blank-btn {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .42rem .55rem;
+  text-align: left;
+  color: var(--text, #e0d8ca);
+  background: #231f1c;
+  border: 1px solid #45382c;
+  border-radius: .3rem;
+  cursor: pointer;
+}
+
+.anvil-blank-btn:hover {
+  border-color: #8b6c4f;
+}
+
+.anvil-blank-btn.active {
+  border-color: #d9a066;
+  background: #2e241b;
+  box-shadow: inset 0 -2px #b67e48;
+}
+
+.anvil-blank-btn.locked {
+  opacity: .72;
+  border-style: dashed;
+}
+
+.anvil-blank-meta {
+  display: grid;
+  gap: .1rem;
+  min-width: 0;
+  font-size: .8rem;
+}
+
+.anvil-blank-meta b {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============ The High Crucible (Master forms) ============ */
+.master-crucible {
+  background:
+    radial-gradient(ellipse at 14% 0%, rgba(79, 120, 196, 0.16), transparent 48%),
+    radial-gradient(ellipse at 86% 8%, rgba(212, 162, 76, 0.16), transparent 52%),
+    linear-gradient(168deg, #0d1018 0%, #090a0f 55%, #120e0c 100%);
+  border: 1px solid #8a6c3a;
+  box-shadow:
+    inset 0 1px 0 rgba(235, 196, 118, 0.22),
+    inset 0 0 28px rgba(45, 76, 138, 0.14),
+    0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
+.master-crucible .anvil-heading h3 {
+  color: #f0cf89;
+  letter-spacing: 0.02em;
+}
+
+.crucible-showcase {
+  display: grid;
+  gap: .55rem;
+  padding: .75rem;
+  border: 1px solid rgba(196, 152, 74, 0.45);
+  border-radius: .45rem;
+  background: linear-gradient(180deg, rgba(16, 20, 32, 0.88), rgba(11, 12, 18, 0.94));
+  box-shadow: inset 0 0 18px rgba(64, 102, 178, 0.12);
+}
+
+.crucible-showcase-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: .4rem .8rem;
+}
+
+.crucible-showcase-head b {
+  color: #e8c77f;
+  font-size: .88rem;
+}
+
+.crucible-alloy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+  gap: .5rem;
+}
+
+.crucible-alloy-card {
+  display: grid;
+  gap: .35rem;
+  align-content: start;
+  padding: .6rem .7rem;
+  text-align: left;
+  color: var(--text, #e5dcce);
+  background: linear-gradient(150deg, #151926 0%, #0f1119 100%);
+  border: 1px solid #36415c;
+  border-radius: .4rem;
+  cursor: pointer;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.crucible-alloy-card:hover {
+  border-color: #7c97cf;
+}
+
+.crucible-alloy-card.active {
+  border-color: #e2b45e;
+  background: linear-gradient(150deg, #1b2032 0%, #17130d 100%);
+  box-shadow:
+    0 0 0 1px rgba(226, 180, 94, 0.4),
+    0 0 16px rgba(212, 162, 76, 0.18);
+}
+
+.crucible-alloy-card.living {
+  border-color: #7a5ca8;
+}
+
+.crucible-alloy-card.living.active {
+  border-color: #f0c975;
+  box-shadow:
+    0 0 0 1px rgba(240, 201, 117, 0.5),
+    0 0 18px rgba(176, 106, 208, 0.25);
+}
+
+.crucible-alloy-card.empty {
+  opacity: .78;
+}
+
+.crucible-alloy-top {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+}
+
+.crucible-alloy-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  flex: 0 0 auto;
+}
+
+.crucible-alloy-stock {
+  font-size: .76rem;
+  color: var(--muted, #9aa3b2);
+}
+
+.crucible-alloy-stock.has {
+  color: #a9d6b3;
+  font-weight: 600;
+}
+
+.crucible-alloy-sig {
+  margin: 0;
+  font-size: .78rem;
+  line-height: 1.35;
+  color: #d6c59d;
+}
+
+.master-crucible .anvil-stage-track button,
+.master-crucible .anvil-choice,
+.master-crucible .anvil-blank-picker,
+.master-crucible .anvil-blank-btn {
+  background: #131722;
+  border-color: #36425e;
+}
+
+.master-crucible .anvil-stage-track button.active,
+.master-crucible .anvil-choice.active,
+.master-crucible .anvil-blank-btn.active {
+  border-color: #e2b45e;
+  box-shadow: inset 0 -2px #c8963e;
+  background: #1d1b18;
+}
+
+.master-crucible .anvil-piece {
+  background:
+    radial-gradient(ellipse at 50% 62%, rgba(79, 120, 196, 0.28) 0%, rgba(212, 162, 76, 0.16) 38%, transparent 72%),
+    linear-gradient(180deg, #101420 0%, #0b0c12 100%);
+  border-color: #6f5a38;
+}
+
+.master-crucible .anvil-piece > :first-child {
+  filter: drop-shadow(0 0 12px rgba(226, 180, 94, 0.52));
+}
+
+.master-crucible .anvil-block {
+  background: linear-gradient(#8fa8d6 0 14%, #3c4863 16% 42%, #1b202d 43% 100%);
+}
+
 @media (max-width: 720px) {
   .anvil-work-grid {
     grid-template-columns: minmax(0, 1fr);

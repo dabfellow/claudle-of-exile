@@ -6,7 +6,7 @@
 
 .delve-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(240px, .85fr);
+  grid-template-columns: minmax(0, 1.65fr) minmax(260px, .9fr);
   gap: 14px;
   align-items: start;
 }
@@ -18,14 +18,15 @@
 }
 
 .delve-title, .delve-records, .delve-upgrade-heading, .delve-upgrade-row,
-.delve-brace-heading, .delve-replay-heading, .delve-elevator, .delve-elevator form, .delve-buttons {
+.delve-brace-heading, .delve-replay-heading, .delve-elevator, .delve-elevator form,
+.delve-buttons, .delve-shaft-footer {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.delve-title, .delve-upgrade-heading, .delve-upgrade-row { justify-content: space-between; }
+.delve-title, .delve-upgrade-heading, .delve-upgrade-row, .delve-shaft-footer { justify-content: space-between; }
 .delve-title h2, .delve-main p, .delve-supplies p, .delve-replay p, .delve-replay h3 { margin: 0; }
 .delve-records { color: #d4bfa2; }
 .delve-title h2 { color: #e2c5a5; }
@@ -35,52 +36,134 @@
   min-width: 0;
   width: 0;
   flex: 1 1 60px;
-  padding: 6px 8px;
-  border: 1px solid #6c5c4d;
-  border-radius: 4px;
-  background: #161715;
-  color: #f1e4d6;
+  padding: 5px 8px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-xs);
+  background: var(--bg-2);
+  color: var(--text);
   font: inherit;
 }
 
+/* ---- mine-shaft framing: timber side beams + rocky strata ---- */
 .delve-shaft {
+  position: relative;
   display: grid;
-  gap: 2px;
-  padding: 6px;
-  border: 1px solid #564637;
-  border-radius: 7px;
-  background: #151410;
+  gap: 3px;
+  padding: 8px 14px;
+  border-top: 4px solid #5d452c;
+  border-bottom: 4px solid #3c2c1b;
+  border-left: 8px solid #513b24;
+  border-right: 8px solid #513b24;
+  border-radius: var(--r-sm);
+  background:
+    linear-gradient(90deg, rgba(114, 83, 50, 0.28) 0, transparent 10px, transparent calc(100% - 10px), rgba(114, 83, 50, 0.28) 100%),
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.015) 0 18px, rgba(0, 0, 0, 0.14) 18px 20px),
+    #14120f;
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.72);
+}
+
+.delve-shaft-head {
+  display: grid;
+  grid-template-columns: minmax(76px, auto) minmax(70px, 1fr) auto;
+  gap: 8px;
+  padding: 2px 6px 5px;
+  border-bottom: 1px solid #3c3227;
+  font-size: var(--fs-2xs);
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .delve-layer {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(29px, auto) minmax(55px, 1fr) auto auto;
+  grid-template-columns: minmax(76px, auto) minmax(70px, 1fr) auto auto;
   align-items: center;
   gap: 8px;
-  padding: 4px 8px;
-  min-height: 33px;
-  border: 1px solid transparent;
-  border-left: 3px solid var(--stratum);
-  border-radius: 3px;
+  padding: 6px 8px;
+  min-height: 36px;
+  border: 1px solid #2c261f;
+  border-left: 4px solid var(--stratum);
+  border-radius: var(--r-xs);
   background:
-    radial-gradient(80% 220% at 44% 140%, color-mix(in srgb, var(--stratum) 17%, transparent), transparent 72%),
-    repeating-linear-gradient(-4deg, #26231d 0px, #26231d 5px, #29251f 6px, #27241d 9px);
+    radial-gradient(80% 220% at 44% 140%, color-mix(in srgb, var(--stratum) 18%, transparent), transparent 72%),
+    repeating-linear-gradient(-4deg, #25221c 0px, #25221c 5px, #29251f 6px, #26231d 9px);
   color: #f2e8dc;
   text-align: left;
   font: inherit;
   line-height: 1.2;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast), background-color var(--dur-fast);
 }
 
 button.delve-layer:not(:disabled) { cursor: pointer; }
 button.delve-layer:hover:not(:disabled), .delve-layer.selected { border-color: #ac8b62; }
-.delve-layer.selected { background-color: #5e4730; }
-.delve-layer.unreached { color: #9e9589; border-left-color: #39342c; background: #1e1c18; }
-.delve-depth { color: #ddc3a5; }
+.delve-layer.selected {
+  background-color: #463523;
+  box-shadow: inset 0 0 0 1px rgba(209, 173, 114, 0.35);
+}
+.delve-layer.unreached {
+  color: var(--dim);
+  border-style: dashed;
+  border-left-style: solid;
+  border-left-color: #39342c;
+  background: #1a1815;
+}
+.delve-layer.dig-face {
+  box-shadow: inset 0 -2px 12px rgba(210, 139, 58, 0.35);
+}
+.delve-layer.motherlode {
+  box-shadow: inset 0 0 12px rgba(226, 194, 97, 0.45);
+}
+.delve-layer.lantern {
+  border-color: #e2b45d;
+  background:
+    radial-gradient(65% 150% at 15% 50%, rgba(247, 193, 92, 0.22), transparent 75%),
+    radial-gradient(80% 220% at 44% 140%, color-mix(in srgb, var(--stratum) 24%, transparent), transparent 72%),
+    #2f271b;
+  box-shadow: 0 0 14px rgba(247, 193, 92, 0.28), inset 0 0 10px rgba(247, 193, 92, 0.16);
+}
+
+.delve-depth {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  border: 1px solid #493b2c;
+  background: #191510;
+  color: #e4caa7;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .delve-layer-name { overflow-wrap: anywhere; }
-.delve-layer.dig-face { box-shadow: inset 0 -2px 12px #d28b3a65; }
-.delve-layer.motherlode { box-shadow: inset 0 0 12px #e2c26180; }
-.delve-face-label { color: #f7cd86; font-size: .77em; white-space: nowrap; }
+.delve-row-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.delve-face-label {
+  color: #f7cd86;
+  font-size: 0.76em;
+  white-space: nowrap;
+}
+.delve-lantern-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  border: 1px solid rgba(247, 193, 92, 0.55);
+  background: rgba(247, 193, 92, 0.16);
+  color: #ffe09e;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.delve-lantern-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffcf6e;
+  box-shadow: 0 0 7px #ffcf6e;
+}
+
 .delve-marks { display: flex; gap: 4px; flex-wrap: wrap; }
 .delve-mark { color: #e5d1af; font-size: 1rem; line-height: 1; }
 .delve-mark.station { color: #9dd3d4; }
@@ -91,8 +174,45 @@ button.delve-layer:hover:not(:disabled), .delve-layer.selected { border-color: #
   gap: 8px;
   padding: 10px;
   border: 1px solid #4b4235;
-  border-radius: 5px;
+  border-radius: var(--r-sm);
   background: #231e17;
+}
+.delve-upgrade.locked {
+  border-style: dashed;
+  opacity: 0.78;
+}
+
+.delve-next-pick {
+  display: grid;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #3b3328;
+}
+
+.delve-pick-toggle {
+  justify-self: start;
+}
+
+.delve-pick-list {
+  margin: 4px 0 0;
+  padding: 6px 0 0;
+  border-top: 1px solid #3b3328;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.delve-pick-item {
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid #3c3429;
+  border-radius: var(--r-xs);
+  background: #1c1813;
+}
+.delve-pick-item.locked {
+  border-style: dashed;
+  opacity: 0.72;
 }
 
 .delve-brace { border-color: #86674b; background: #2d2419; }
@@ -102,10 +222,11 @@ button.delve-layer:hover:not(:disabled), .delve-layer.selected { border-color: #
 .delve-focus { display: grid; grid-template-columns: auto minmax(28px, 1fr) auto; gap: 7px; align-items: center; font-size: .78em; }
 
 .delve-traits, .delve-costs { padding: 0; margin: 0; list-style: none; }
-.delve-costs { font-size: .84em; }
-.delve-costs li, .delve-supply-grid span { display: flex; align-items: center; gap: 5px; }
+.delve-costs { font-size: .84em; display: grid; gap: 3px; }
+.delve-costs li, .delve-supply-grid span { display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .delve-supply-grid { display: flex; flex-wrap: wrap; gap: 8px 18px; }
-.delve-autobrace { display: flex; align-items: center; gap: 7px; }
+.delve-term-note { line-height: 1.35; }
+.delve-autobrace { display: flex; align-items: center; gap: 7px; font-size: var(--fs-xs); }
 .delve-autobrace input { accent-color: #b48c61; }
 .delve-log ol { margin: 0; padding: 0; list-style: none; }
 .delve-log li { border-bottom: 1px solid #4b4235; padding: 8px 0; }
@@ -137,7 +258,9 @@ button.delve-layer:hover:not(:disabled), .delve-layer.selected { border-color: #
 
 @media (max-width: 560px) {
   .delve-title { align-items: flex-start; }
-  .delve-layer { gap: 5px; padding: 5px 6px; }
+  .delve-shaft { padding: 6px 8px; border-left-width: 5px; border-right-width: 5px; }
+  .delve-shaft-head { display: none; }
+  .delve-layer { grid-template-columns: auto 1fr; gap: 5px; padding: 6px; }
   .delve-elevator .btn, .delve-brace .btn { min-height: 40px; }
   .delve-elevator form { max-width: none; }
 }

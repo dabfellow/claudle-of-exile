@@ -28,6 +28,8 @@ const fixed = (v: number): Ctx => ({ rng: { next: () => v } as Rng, now: 0, emit
 function makeThief(level = 1, markers = 0): GameState {
   const s = newGame(1, { name: 'Thief', classId: 'shadow' });
   s.skills.thieving = xpForLevel(level);
+  s.heist.unlockedRogues = ['infiltrator', 'locksmith', 'lookout'];
+  s.heist.crew = ['infiltrator', 'locksmith', 'lookout'];
   if (markers > 0) for (const j of HEIST_JOBS) for (const e of prepBoard(j.id).items.filter((e) => e.kind !== 'ledger').slice(0, prepBoard(j.id).min)) s.heist.prep[prepId(j.id, e.kind)] = 3;
   settleProfessionProgress(s);
   return s;

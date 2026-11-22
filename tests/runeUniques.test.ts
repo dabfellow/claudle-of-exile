@@ -59,7 +59,7 @@ describe('Phase 16 Rune-carved Uniques: Hands of the Forgotten Choir & Hollow Ci
       expect(choir).toBeDefined();
       expect(choir.name).toBe('Hands of the Forgotten Choir');
       expect(worldDropUniques(85).some((u) => u.id === 'hands_forgotten_choir')).toBe(false);
-      expect(uniqueDropsIn(choir)).toEqual(['Rune-carving 70, Rune Board 1: Hands of the Forgotten Choir project']);
+      expect(uniqueDropsIn(choir)).toEqual(['Cartography 70: Hands of the Forgotten Choir project']);
     });
 
     it('hollow_circuit is excluded from global drops and maps', () => {
@@ -67,16 +67,16 @@ describe('Phase 16 Rune-carved Uniques: Hands of the Forgotten Choir & Hollow Ci
       expect(circuit).toBeDefined();
       expect(circuit.name).toBe('Hollow Circuit');
       expect(worldDropUniques(85).some((u) => u.id === 'hollow_circuit')).toBe(false);
-      expect(uniqueDropsIn(circuit)).toEqual(['Rune-carving 70, Rune Board 1: Hollow Circuit project']);
+      expect(uniqueDropsIn(circuit)).toEqual(['Cartography 70: Hollow Circuit project']);
     });
 
-    it('hands_forgotten_choir project requires Rune-carving 70, Rune Board 1, and exact inputs', () => {
+    it('hands_forgotten_choir project requires Cartography 70 and exact inputs', () => {
       const p = professionProject('hands_forgotten_choir');
       expect(p).toBeDefined();
-      expect(p!.skill).toBe('runecarving');
+      expect(p!.skill).toBe('cartography');
       expect(p!.level).toBe(70);
-      expect(p!.station).toEqual({ id: 'rune_board', level: 1 });
-      expect(p!.accomplishments).toContain('runecarving_work_100');
+      expect(p!.station).toBeUndefined();
+      expect(p!.accomplishments).toContain('cartography_work_100');
       expect(p!.inputs).toEqual({ choir_inscription: 2, exceptional_crystal: 1 });
       expect(p!.baseIds).toEqual(['hierophant_gloves', 'seraph_gloves']);
       expect(p!.baseNonUnique).toBe(true);
@@ -84,13 +84,13 @@ describe('Phase 16 Rune-carved Uniques: Hands of the Forgotten Choir & Hollow Ci
       expect(p!.xp).toBe(1800);
     });
 
-    it('hollow_circuit project requires Rune-carving 70, Rune Board 1, and exact inputs', () => {
+    it('hollow_circuit project requires Cartography 70 and exact inputs', () => {
       const p = professionProject('hollow_circuit');
       expect(p).toBeDefined();
-      expect(p!.skill).toBe('runecarving');
+      expect(p!.skill).toBe('cartography');
       expect(p!.level).toBe(70);
-      expect(p!.station).toEqual({ id: 'rune_board', level: 1 });
-      expect(p!.accomplishments).toContain('runecarving_work_100');
+      expect(p!.station).toBeUndefined();
+      expect(p!.accomplishments).toContain('cartography_work_100');
       expect(p!.inputs).toEqual({ circuit_inscription: 2, exceptional_crystal: 2 });
       expect(p!.baseId).toBe('diamond_ring');
       expect(p!.baseMinIlvl).toBe(45);
@@ -130,9 +130,8 @@ describe('Phase 16 Rune-carved Uniques: Hands of the Forgotten Choir & Hollow Ci
     it('hands_forgotten_choir escrows crafted gloves, returns on cancel, and transforms on completion', () => {
       const s = newGame(1);
       const ctx = context();
-      s.skills.runecarving = xpForLevel(70);
-      s.professionProgress.work.runecarving = 100;
-      s.account.hideout.rune_board = 1;
+      s.skills.cartography = xpForLevel(70);
+      s.professionProgress.work.cartography = 100;
       s.storage.bank = { choir_inscription: 2, exceptional_crystal: 1 };
 
       const glove = createItem(s, 'hierophant_gloves', 60, 'rare', ctx.rng);
@@ -168,9 +167,8 @@ describe('Phase 16 Rune-carved Uniques: Hands of the Forgotten Choir & Hollow Ci
     it('hollow_circuit escrows diamond ring and produces unique diamond ring', () => {
       const s = newGame(1);
       const ctx = context();
-      s.skills.runecarving = xpForLevel(70);
-      s.professionProgress.work.runecarving = 100;
-      s.account.hideout.rune_board = 1;
+      s.skills.cartography = xpForLevel(70);
+      s.professionProgress.work.cartography = 100;
       s.storage.bank = { circuit_inscription: 2, exceptional_crystal: 2 };
 
       const ring = createItem(s, 'diamond_ring', 55, 'magic', ctx.rng);

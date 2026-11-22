@@ -101,18 +101,11 @@ export const PROFESSION_PROJECTS: ProfessionProject[] = [{
   sources: [{ label: 'Cast alloys in Smelting', skill: 'smelting' }, { label: 'Carve frames in Woodcrafting', skill: 'woodcrafting' }],
   use: 'High-tier hybrid tool: +12% Production speed across all crafting disciplines (Forging, Smelting, and Woodcrafting). Level 1 to equip; one normal rune slot.',
 }, {
-  id: 'tool_cooking', version: 1, name: 'Hearth Spoon', skill: 'cooking', level: 30,
-  accomplishments: ['cooking_work_100'], durationMs: 1_200_000, xp: 360, repeatable: true,
-  inputs: { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 },
-  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: 'Hearth Spoon', fixedSuffixes: [{ affixId: 'profession_speed_cooking', tier: 0, values: [8] }] },
-  sources: [{ label: 'Mine Copper/Mithril and Rough Gems', skill: 'mining' }, { label: 'Smelt Copper/Mithril Bars', skill: 'smithing' }, { label: 'Cut and refine Oak Planks', skill: 'woodcutting' }],
-  use: 'One fixed magic main-hand tool: 8% increased Cooking speed only. Level 1 to equip; one normal rune slot. Other professions may supply inputs. No automatic task switching.',
-}, {
   id: 'tool_gemcutting', version: 1, name: "Lapidary's Chisel", skill: 'gemcutting', level: 30,
   accomplishments: ['gemcutting_work_100'], durationMs: 1_200_000, xp: 360, repeatable: true,
   inputs: { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 },
   reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Lapidary's Chisel", fixedSuffixes: [{ affixId: 'profession_speed_gemcutting', tier: 0, values: [8] }] },
-  sources: [{ label: 'Mine Copper/Mithril and Rough Gems', skill: 'mining' }, { label: 'Smelt Copper/Mithril Bars', skill: 'smithing' }, { label: 'Cut and refine Oak Planks', skill: 'woodcutting' }],
+  sources: [{ label: 'Mine Copper/Mithril and Rough Gems', skill: 'mining' }, { label: 'Smelt Copper/Mithril Bars', skill: 'smelting' }, { label: 'Cut and refine Oak Planks', skill: 'woodcutting' }],
   use: 'One fixed magic main-hand tool: 8% increased Gemcutting speed only. Level 1 to equip. Other professions may supply inputs. No automatic task switching.',
 }];
 
@@ -122,30 +115,6 @@ PROFESSION_PROJECTS.push({ id: 'chart_reliquary', version: 1, name: "Chart Artis
   reward: { category: 'chart', id: 'umap_artisans_reliquary' },
   sources: [{ label: 'Survey progress from ordinary Cartography; craft vellum, inks and a Journeyman Sextant', skill: 'cartography' }],
   use: 'One exclusive chart in the shared Map Case. Map Device campaign access is still required. Twenty packs and a T7 guardian; victory gives a Reliquary Fragment, 10 Rough Gems and 100 Arcane Dust. Failure uses the chart; no existing Unique Map trophy rewards.' });
-
-PROFESSION_PROJECTS.push({
-  id: 'signature_wayfarer', version: 1, name: "Wayfarer's Inscription", skill: 'runecarving', level: 55,
-  accomplishments: ['rune_stone_grade_3_practice'], durationMs: 1_800_000, xp: 360, repeatable: true,
-  inputs: { inscription_fragment: 10, rune_stone_3: 1, heartwood_fragment: 5 },
-  reward: { category: 'progress', materials: { rune_signature_wayfarer: 1 } },
-  sources: [
-    { label: 'Carve Deep Stone Runes & earn Inscription Fragments', skill: 'runecarving' },
-    { label: 'Ancient Heartwood Survey for Heartwood Fragments', skill: 'woodcutting' },
-  ],
-  use: 'One signature stone rune: Weapon +6% gathering speed; Armour +4% all elemental resistances; Jewellery +6% maximum Mana. Requires item level 45. Normal stone resonance scales numeric values.',
-});
-
-PROFESSION_PROJECTS.push({
-  id: 'signature_channel', version: 1, name: "Channeler's Inscription", skill: 'runecarving', level: 65,
-  accomplishments: ['rune_storm_grade_3_practice'], durationMs: 1_800_000, xp: 480, repeatable: true,
-  inputs: { inscription_fragment: 10, rune_storm_3: 1, exceptional_crystal: 1 },
-  reward: { category: 'progress', materials: { rune_signature_channel: 1 } },
-  sources: [
-    { label: 'Carve Deep Storm Runes & earn Inscription Fragments', skill: 'runecarving' },
-    { label: 'Cut Exceptional Crystals from Mining Crystal Shards', skill: 'gemcutting' },
-  ],
-  use: 'One signature storm rune: Weapon +8% cast speed; Armour +8% energy shield; Jewellery +10% mana regeneration. Requires item level 45. Normal storm resonance scales numeric values; Hollow Circuit converts mana regen.',
-});
 
 PROFESSION_PROJECTS.push(...([
   ['woundmaker', 'Woundmaker', 'overhaul_great_axe', 60, 1200, { wound_alloy: 3, tempered_alloy: 5, yew_plank: 10 }, 'Up to 8 Bleeds; 60% less hit damage; cannot critically strike. The unique adds no bleed chance beyond the normal axe implicit.'],
@@ -157,7 +126,7 @@ PROFESSION_PROJECTS.push(...([
   reward: { category: 'equipment', baseId, ilvl: 80, rarity: 'unique', name, uniqueId: id },
   sources: [{ label: 'Smithing alloys and frames from Mining and Woodcutting', skill: 'smithing' },
     ...(id === 'winters_pyre' ? [{ label: 'Exceptional Crystals from Mining shards', skill: 'gemcutting' as const }] : []),
-    ...(id === 'the_homecoming' ? [{ label: 'Return Inscriptions from grade 2+ rune fragments and Keen grade 3', skill: 'runecarving' as const }] : [])],
+    ...(id === 'the_homecoming' ? [{ label: 'Prepare Return Inscriptions from Inscription Fragments and Flawless Copper Bars', skill: 'cartography' as const }] : [])],
 })));
 
 PROFESSION_PROJECTS.push({
@@ -203,8 +172,8 @@ PROFESSION_PROJECTS.push({
  */
 const PINNACLE_NOTE = 'Item level 90, combat level 80 to equip. One normal rune slot. Full protected costs; no manual double or input conservation.';
 PROFESSION_PROJECTS.push({
-  id: 'the_second_heresy', version: 1, name: 'The Second Heresy', skill: 'runecarving', level: 85,
-  station: { id: 'rune_board', level: 1 }, accomplishments: ['runecarving_work_100'], repeatable: true,
+  id: 'the_second_heresy', version: 1, name: 'The Second Heresy', skill: 'cartography', level: 85,
+  accomplishments: ['cartography_work_100'], repeatable: true,
   durationMs: 3_600_000, xp: 2400,
   inputs: { crownless_sigil: 1, stolen_oath_seal: 1, restored_taboo_tablet: 1, inscription_fragment: 5 },
   reward: { category: 'equipment', baseId: 'overhaul_plain_ring', ilvl: 90, rarity: 'unique', name: 'The Second Heresy', uniqueId: 'the_second_heresy' },
@@ -212,7 +181,7 @@ PROFESSION_PROJECTS.push({
     { label: 'Hard Boss: defeat the Crownless King for a Crownless Sigil', skill: 'combat' },
     { label: 'Heist: Occult Treasury Oath Fragments assemble a Stolen Oath Seal', skill: 'thieving' },
     { label: 'Expedition: restore a Taboo Tablet after the first Adit discovery', skill: 'archaeology' },
-    { label: 'Inscription Fragments from grade 2+ rune carving', skill: 'runecarving' },
+    { label: 'Inscription Fragments from Tier 5+ Map bosses', skill: 'cartography' },
   ],
   use: `One ring: allows one additional Forbidden keystone. Two copies still allow only two. Removing it refunds the newest excess keystone. Fixed effect; no Divine reroll. ${PINNACLE_NOTE}`,
 }, {
@@ -229,26 +198,28 @@ PROFESSION_PROJECTS.push({
   ],
   use: `One belt: 30% less Damage taken from hits and damage over time, applied once. Fixed effect; no Divine reroll. ${PINNACLE_NOTE}`,
 }, {
-  id: 'the_sum_of_all_things', version: 1, name: 'The Sum of All Things', skill: 'runecarving', level: 90,
-  station: { id: 'rune_board', level: 1 }, accomplishments: ['runecarving_work_100'], repeatable: true,
+  id: 'the_sum_of_all_things', version: 1, name: 'The Sum of All Things', skill: 'cartography', level: 90,
+  accomplishments: ['cartography_work_100'], repeatable: true,
   durationMs: 7_200_000, xp: 3000,
   inputs: {
     completed_atlas_chart: 1, reliquary_fragment: 1, fractured: 1,
     marrow_shard: 1, choir_glass: 1, black_pearl: 1, throne_ash: 1, crownless_sigil: 1,
     exile_doom_sigil: 1, architect_doom_sigil: 1, void_sigil: 1,
     stolen_oath_seal: 1, convergence_relic: 1, convergence_frame: 1, star_distillate: 1,
-    binding_stock: 1, convergence_crystal: 1, convergence_inscription: 1,
+    gilded_stardust: 5, convergence_crystal: 1, convergence_inscription: 1,
   },
   reward: { category: 'equipment', baseId: 'overhaul_plain_amulet', ilvl: 90, rarity: 'unique', name: 'The Sum of All Things', uniqueId: 'the_sum_of_all_things' },
   sources: [
     { label: 'Mining ore, fragments and crystal shards (frame and crystal)', skill: 'mining' },
     { label: 'Ancient Heartwood (Convergence Frame)', skill: 'woodcutting' },
+    { label: 'Smelt Flawless bars and alloys', skill: 'smelting' },
     { label: 'Convergence Frame from Wound and Stone Alloy', skill: 'smithing' },
+    { label: 'Carve timber frames', skill: 'woodcrafting' },
     { label: 'Moon and Star Blooms, grown or foraged', skill: 'harvesting' },
     { label: 'Star Distillate', skill: 'alchemy' },
-    { label: 'Binding Stock', skill: 'cooking' },
+    { label: 'Gilded Stardust from researching the sky', skill: 'astrology' },
     { label: 'Convergence Crystal polished from an Exceptional Crystal', skill: 'gemcutting' },
-    { label: 'Convergence Inscription and the final assembly', skill: 'runecarving' },
+    { label: 'Convergence Inscription and the final assembly', skill: 'cartography' },
     { label: 'Stolen Oath Seal from the Occult Treasury', skill: 'thieving' },
     { label: 'Convergence Relic restored after the first Heart discovery', skill: 'archaeology' },
     { label: 'Completed Atlas Chart (ten T10 Map wins) and a Reliquary Fragment (Unique Map)', skill: 'cartography' },
@@ -318,7 +289,7 @@ PROFESSION_PROJECTS.push({
   station: { id: 'alchemy_table', level: 3 },
   durationMs: 3_600_000,
   xp: 1200,
-  inputs: { moon_distillate: 6, ember_reduction: 10, prepared_glass: 3 },
+  inputs: { moon_distillate: 6, emberroot: 30, prepared_glass: 3 },
   reward: {
     category: 'flask',
     flaskId: 'u_flask_still_heart',
@@ -330,7 +301,7 @@ PROFESSION_PROJECTS.push({
   repeatable: true,
   sources: [
     { label: 'Distill Moon Blooms at Alchemy Table 3', skill: 'alchemy' },
-    { label: 'Cook Emberroot Reduction from Emberroots and Vitality Essences', skill: 'cooking' },
+    { label: 'Forage Emberroots in the Wild or Greenhouse', skill: 'harvesting' },
     { label: 'Refine Prepared Glass at Alchemy Table 3', skill: 'alchemy' },
   ],
   use: 'One The Still Heart life flask: recovers 1800 Life over 6s, continuing at full life. Cannot leech or regenerate life during effect. Replaces active recovery on reuse. 20 of 40 charges per use. Borrowed Tomorrow blocks its life recovery entirely.',
@@ -368,10 +339,9 @@ PROFESSION_PROJECTS.push({
   id: 'hands_forgotten_choir',
   version: 1,
   name: 'Hands of the Forgotten Choir',
-  skill: 'runecarving',
+  skill: 'cartography',
   level: 70,
-  station: { id: 'rune_board', level: 1 },
-  accomplishments: ['runecarving_work_100'],
+  accomplishments: ['cartography_work_100'],
   durationMs: 7_200_000,
   xp: 1800,
   inputs: { choir_inscription: 2, exceptional_crystal: 1 },
@@ -387,7 +357,7 @@ PROFESSION_PROJECTS.push({
   },
   repeatable: true,
   sources: [
-    { label: 'Prepare Choir Inscriptions from Inscription Fragments and Blood Grade 3', skill: 'runecarving' },
+    { label: 'Prepare Choir Inscriptions from Inscription Fragments and Flawless Iron Bars', skill: 'cartography' },
     { label: 'Cut Exceptional Crystals from Mining Crystal Shards and Rough Gems', skill: 'gemcutting' },
     { label: 'Crafted Hierophant’s Gloves or Seraph Gloves', skill: 'smithing' },
   ],
@@ -398,10 +368,9 @@ PROFESSION_PROJECTS.push({
   id: 'hollow_circuit',
   version: 1,
   name: 'Hollow Circuit',
-  skill: 'runecarving',
+  skill: 'cartography',
   level: 70,
-  station: { id: 'rune_board', level: 1 },
-  accomplishments: ['runecarving_work_100'],
+  accomplishments: ['cartography_work_100'],
   durationMs: 7_200_000,
   xp: 1800,
   inputs: { circuit_inscription: 2, exceptional_crystal: 2 },
@@ -418,7 +387,7 @@ PROFESSION_PROJECTS.push({
   },
   repeatable: true,
   sources: [
-    { label: 'Prepare Circuit Inscriptions from Inscription Fragments and Storm Grade 3', skill: 'runecarving' },
+    { label: 'Prepare Circuit Inscriptions from Inscription Fragments and Flawless Mithril Bars', skill: 'cartography' },
     { label: 'Cut Exceptional Crystals from Mining Crystal Shards and Rough Gems', skill: 'gemcutting' },
     { label: 'Crafted Diamond Ring of item level 45+', skill: 'smithing' },
   ],

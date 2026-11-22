@@ -224,10 +224,10 @@ describe('Phase 05 Equipment Checkpoint', () => {
       const timeToLevel15Min = (xpForLevel(15) / starterXpRate) / 60;
       expect(timeToLevel15Min).toBeCloseTo(57.4, 0);
 
-      // 1. Thieving 1 Peddler for 300 gold (independent unconditional gold source)
+      // 1. Thieving 1 Peddler for at least 300 gold (independent unconditional gold source)
       expect(actionBlocker(s, actionDef('mark_peddler'))).toBeNull();
-      doActionCycles(s, 'mark_peddler', 100, c); // 100 * 3 gold = 300 gold
-      expect(s.storage.bank.gold).toBe(300);
+      doActionCycles(s, 'mark_peddler', 100, c); // 100 * 3 gold (+ possible mastery proc)
+      expect(s.storage.bank.gold).toBeGreaterThanOrEqual(300);
 
       // 2. Advance profession levels to level 15 (and 10 in Smithing for Forge 2)
       s.skills.mining = xpForLevel(15);

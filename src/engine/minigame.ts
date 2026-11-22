@@ -46,12 +46,12 @@ export const FOCUS_HIT_OFFSET = 0.09;
 export const FOCUS_WEAK_OFFSET = 0.15;
 
 /** Archaeology: a soil grid over a find. Brushing a fragile crack chips the find. */
-export const BRUSH_COLS = 5;
-export const BRUSH_ROWS = 4;
-export const BRUSH_FIND_MIN = 5;
-export const BRUSH_FIND_MAX = 7;
-export const BRUSH_CRACKS_MIN = 3;
-export const BRUSH_CRACKS_MAX = 5;
+export const BRUSH_COLS = 4;
+export const BRUSH_ROWS = 3;
+export const BRUSH_FIND_MIN = 3;
+export const BRUSH_FIND_MAX = 4;
+export const BRUSH_CRACKS_MIN = 2;
+export const BRUSH_CRACKS_MAX = 3;
 
 /** How a brushed find came out, by the cracks chipped: clean is a double, one chip a hit, two weak, three or more a miss. */
 export function brushResult(chips: number): SwingResult {
@@ -66,7 +66,7 @@ export interface BrushPatch {
 }
 
 /**
- * A new patch: the find is a connected blob of 5–7 squares, and the cracks are on squares touching it.
+ * A new patch: the find is a connected blob of 3–4 squares, and the cracks are on squares touching it.
  * `crackCut` is how many cracks the codex takes off; there is always at least one.
  */
 export function brushPatch(rng: { next(): number }, crackCut = 0): BrushPatch {
@@ -146,7 +146,7 @@ export function pourResult(error: number, spilled: boolean): SwingResult {
 export function sightingResult(errX: number, errY: number): SwingResult {
   if (!Number.isFinite(errX) || !Number.isFinite(errY)) return 'miss';
   const e = Math.max(Math.abs(errX), Math.abs(errY));
-  return e <= 0.02 ? 'double' : e <= 0.06 ? 'hit' : e <= 0.12 ? 'weak' : 'miss';
+  return e <= 0.06 ? 'double' : e <= 0.14 ? 'hit' : e <= 0.24 ? 'weak' : 'miss';
 }
 
 export function curveResult(avgDeviation: number, completed: boolean): SwingResult {
@@ -221,6 +221,19 @@ export function liftResult(tapMs: number, windowStartMs: number, windowEndMs: nu
     return tapMs >= dStart && tapMs <= dStart + third ? 'double' : 'hit';
   }
   return tapMs <= windowEndMs + LIFT_WEAK_GRACE_MS ? 'weak' : 'miss';
+}
+
+/** Street marks spam-click thresholds per attention-away window. */
+export const LIFT_CLICKS_HIT = 4;
+export const LIFT_CLICKS_DOUBLE = 8;
+
+/** Score a street-mark spam-click window: getting caught misses; 2–3 weak, 4–7 hit, 8+ double. */
+export function liftSpamResult(clicks: number, caught: boolean): SwingResult | null {
+  if (caught) return 'miss';
+  if (clicks >= LIFT_CLICKS_DOUBLE) return 'double';
+  if (clicks >= LIFT_CLICKS_HIT) return 'hit';
+  if (clicks >= 2) return 'weak';
+  return null;
 }
 
 /** How a locked telescope focus landed: `offset` is how far the ring sits from the sharpest point. */

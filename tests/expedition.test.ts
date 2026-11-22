@@ -73,7 +73,7 @@ describe('Archaeology', () => {
     const before = skillTreePoints(s);
     s.skills.archaeology = xpForLevel(10);
     expect(skillTreePoints(s)).toBeGreaterThan(before);
-    expect(SKILL_TREE_NODES.filter((n) => n.branch === 'archaeology')).toHaveLength(6);
+    expect(SKILL_TREE_NODES.filter((n) => n.branch === 'archaeology')).toHaveLength(14);
     expect(hasMinigame('archaeology')).toBe(true);
     startSkillAction(s, ctx(), 'dig_cairn');
     minigameSwing(s, 'hit');
@@ -149,7 +149,12 @@ describe('sites', () => {
   it('Keen Eye adds Artifacts and Deep Survey doubles the digging at a cost in speed', () => {
     const s = digger(50);
     const slow = actionIntervalMs(s, actionDef('dig_cairn'), deriveStats(s));
-    s.skillPassives = ['archaeology_n0', 'archaeology_ks'];
+    const ring = createItem(s, 'iron_ring', 30, 'normal', seeded(1));
+    ring.suffixes.push(
+      { affixId: 'u_artifact_chance', tier: 0, values: [25] },
+      { affixId: 'u_archaeology_double', tier: 0, values: [1] },
+    );
+    s.equipment.ring1 = ring;
     expect(artifactsPerDig(s, CAIRN)).toBeCloseTo(digChance(CAIRN) * 1.25);
     expect(actionIntervalMs(s, actionDef('dig_cairn'), deriveStats(s))).toBeCloseTo(slow * 1.25);
     startSkillAction(s, ctx(), 'dig_cairn');
@@ -221,7 +226,9 @@ describe('merchants', () => {
 
   it('Silver Tongue takes 15% off', () => {
     const s = digger(30);
-    s.skillPassives = ['archaeology_n1'];
+    const ring = createItem(s, 'iron_ring', 30, 'normal', seeded(1));
+    ring.suffixes.push({ affixId: 'u_ware_discount', tier: 0, values: [15] });
+    s.equipment.ring1 = ring;
     expect(warePrice(s, wareDef('giant_alteration'))).toBe(51);
   });
 
@@ -369,7 +376,7 @@ describe('Expedition offline', () => {
   it('Overtime speeds a dig as it does any skilling', () => {
     const plain = digger();
     const fast = digger();
-    fast.skillPassives = ['core_3'];
+    fast.skillPassives = ['core_overtime'];
     startSkillAction(plain, ctx(), 'dig_cairn');
     startSkillAction(fast, ctx(), 'dig_cairn');
     simulateOffline(plain, ctx(), 3_600_000);

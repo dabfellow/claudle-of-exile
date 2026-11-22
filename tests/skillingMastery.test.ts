@@ -131,7 +131,7 @@ describe('non-combat action mastery', () => {
 
   it('shares bulk recipe tracks but keeps every other action and recipe separate', () => {
     expect(actionDef('orb_transmute').mastery!.id).toBe(actionDef('orb_transmute_x10').mastery!.id);
-    expect(actionDef('carve_rune_ember_1').mastery!.id).not.toBe(actionDef('carve_rune_ember_4').mastery!.id);
+    expect(actionDef('smelt_copper').mastery!.id).not.toBe(actionDef('smelt_iron').mastery!.id);
     const weapons = ACTIONS.filter((a) => a.baseId && a.level < 10);
     expect(new Set(weapons.map((a) => a.mastery!.id)).size).toBe(weapons.length);
     expect(new Set(HEIST_JOBS.map((j) => j.mastery!.id)).size).toBe(HEIST_JOBS.length);

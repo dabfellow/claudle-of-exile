@@ -83,6 +83,8 @@ describe('double zones', () => {
       const s = newGame(1, { name: 'T', classId: 'warrior' });
       s.unlockedZones.push('cinderroad', 'saltflats', 'blackgrass', 'caravan', 'kurgans', 'plateau', 'pyretemple', 'burningthrone');
       s.skills.thieving = xpForLevel(job.level);
+      s.heist.unlockedRogues = ['infiltrator', 'locksmith', 'lookout'];
+      s.heist.crew = ['infiltrator', 'locksmith', 'lookout'];
       for (const e of prepBoard(job.id).items.slice(0, 2)) s.heist.prep[prepId(job.id, e.kind)] = 1;
       // never sounds the alarm
       const c: Ctx = { rng: { next: () => 0.999 } as Rng, now: 0, emit: () => {} };

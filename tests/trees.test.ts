@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { EXILE_START, FORBIDDEN, PASSIVE_BY_ID, PASSIVE_NODES, RIM_RADIUS } from '../src/data/passiveTree';
-import { SKILL_TREE_NODES } from '../src/data/skillTree';
-import { actionDef } from '../src/data/skills';
+import { SKILL_TREE_NODES, SKILLING_RING } from '../src/data/skillTree';
 import { zoneDef } from '../src/data/zones';
 import { combatStep, makeMonster, mitigate, startCombat, useFlask } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
+import { grantSeed, harvestPlot, plantPlot, plotDurationMs } from '../src/engine/foraging';
 import { createSkillGem } from '../src/engine/gems';
 import { allocate, allocateReason, changeMastery, PASSIVE_POINTS_PER_LEVEL, passiveNodeCost, passiveRoute, refund, refundReason, settlePassivePoints, startNode } from '../src/engine/passives';
 import { seeded } from '../src/engine/rng';
-import { allocateSkillNode, MAX_SKILL_TREE_POINTS, skillTreePoints } from '../src/engine/skillTree';
-import { actionIntervalMs, startSkillAction } from '../src/engine/skills';
+import { allocateSkillNode, MAX_SKILL_TREE_POINTS, skillTreePoints, skillTreeStats } from '../src/engine/skillTree';
+import { startSkillAction } from '../src/engine/skills';
 import { newGame, SAVE_VERSION, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import { deserialize, serialize } from '../src/engine/save';
@@ -463,24 +463,29 @@ describe('skilling tree', () => {
     const s = newGame(1);
     expect(skillTreePoints(s)).toBe(1);
     s.skills.mining = xpForLevel(50);
-    // 50 mining + 1 in each of the other ten skills = 60
+    // 50 mining + 1 in each of the other 11 ring skills = 61 -> 6 points
     expect(skillTreePoints(s)).toBe(6);
-    for (const id of ['core_0', 'mining_s0', 'mining_s1', 'mining_s2', 'mining_n1']) expect(allocateSkillNode(s, ctx(), id)).toBeNull();
-    expect(allocateSkillNode(s, ctx(), 'mining_ks')).toBeNull();
-    for (const skill of ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as const) {
+    for (const id of ['core_overtime', 'mining_t0', 'mining_t1', 'mining_f0_s0', 'mining_f0_s1', 'mining_f0_s2']) {
+      expect(allocateSkillNode(s, ctx(), id)).toBeNull();
+    }
+    expect(allocateSkillNode(s, ctx(), 'mining_f0_n0')).toMatch(/No points left/);
+    for (const skill of SKILLING_RING) {
       s.skills[skill] = xpForLevel(99);
     }
     expect(skillTreePoints(s)).toBe(MAX_SKILL_TREE_POINTS);
-    expect(SKILL_TREE_NODES.length).toBeGreaterThanOrEqual(30);
+    expect(allocateSkillNode(s, ctx(), 'mining_f0_n0')).toBeNull();
+    expect(allocateSkillNode(s, ctx(), 'mining_f0_n1')).toBeNull();
+    expect(allocateSkillNode(s, ctx(), 'mining_f0_ks')).toBeNull();
+    expect(SKILL_TREE_NODES.length).toBeGreaterThanOrEqual(180);
   });
 
   it('has one branch for every implemented life skill and none for Fishing', () => {
-    const branches = new Set(SKILL_TREE_NODES.filter((n) => n.branch !== 'core').map((n) => n.branch));
-    for (const skill of ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography']) {
+    const branches = new Set(SKILL_TREE_NODES.filter((n) => n.branch !== 'core' && n.branch !== 'bridge').map((n) => n.branch));
+    for (const skill of SKILLING_RING) {
       expect(branches.has(skill as never), skill).toBe(true);
-      expect(SKILL_TREE_NODES.filter((n) => n.branch === skill)).toHaveLength(6);
+      expect(SKILL_TREE_NODES.filter((n) => n.branch === skill)).toHaveLength(14);
     }
-    expect(branches.has('fishing')).toBe(false);
+    expect(branches.has('fishing' as never)).toBe(false);
   });
 
   it('refunds the old skilling tree when the specialisation cap arrives', () => {
@@ -522,31 +527,28 @@ describe('skilling tree', () => {
     expect(loaded.passives).toContain(adjacent);
   });
 
-  it('Motherlode doubles ore and slows mining', () => {
+  it('aggregates core and branch keystones in the 12-skill ring', () => {
     const s = newGame(1);
-    s.skills.mining = xpForLevel(60);
-    for (const id of ['core_0', 'mining_s0', 'mining_s1', 'mining_s2', 'mining_n0', 'mining_ks']) expect(allocateSkillNode(s, ctx(), id)).toBeNull();
-    const a = actionDef('mine_copper');
-    const d = deriveStats(s);
-    // core_0 (+3%) and three Prospectors (+15%) are 18% faster; Motherlode is 30% slower
-    expect(actionIntervalMs(s, a, d)).toBeCloseTo((a.intervalMs / 1.18) * 1.3, 0);
+    s.skillPassives = ['core_overtime', 'core_studious', 'mining_f1_ks', 'harvesting_f1_ks'];
+    const st = skillTreeStats(s);
+    expect(st.offlineSpeed).toBe(10);
+    expect(st.skillXp).toBe(3);
+    expect(st['mining.motherlodeHunter']).toBe(1);
+    expect(st['harvesting.unstableGenes']).toBe(1);
+  });
+
+  it('Greenhouse keeps planted seeds growing in the background while doing other skills', () => {
+    const s = newGame(1);
+    s.skills.harvesting = xpForLevel(10);
+    grantSeed(s, 'sunpetal', 1, 0, false);
+    expect(plantPlot(s, 0, ['sunpetal'], 0)).toBeNull();
+    const dur = plotDurationMs(s, ['sunpetal']);
     const c = ctx();
     startSkillAction(s, c, 'mine_copper');
     tick(s, c, 60_000);
-    const actions = Math.floor(60_000 / actionIntervalMs(s, a, d));
-    expect(s.storage.bank.copper_ore ?? 0).toBeGreaterThanOrEqual(actions * 2);
-  });
-
-  it('Greenhouse keeps the last harvest growing in the background', () => {
-    const s = newGame(1);
-    s.skills.harvesting = xpForLevel(60);
-    for (const id of ['core_2', 'harvesting_s0', 'harvesting_s1', 'harvesting_s2', 'harvesting_n0', 'harvesting_ks']) {
-      expect(allocateSkillNode(s, ctx(), id)).toBeNull();
-    }
-    const c = ctx();
-    startSkillAction(s, c, 'herb_sun');
-    startSkillAction(s, c, 'mine_copper');
-    tick(s, c, 120_000);
-    expect(s.storage.bank.sunpetal ?? 0).toBeGreaterThan(0);
+    expect(s.storage.bank.copper_ore ?? 0).toBeGreaterThan(0);
+    const res = harvestPlot(s, c, 0, dur);
+    expect(typeof res).toBe('object');
+    expect(s.storage.bank.sunpetal ?? 0).toBeGreaterThanOrEqual(10);
   });
 });

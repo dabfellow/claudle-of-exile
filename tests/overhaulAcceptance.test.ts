@@ -6,11 +6,9 @@ import { FLASKS, flaskDef } from '../src/data/flasks';
 import { CURRENCIES, MATERIALS } from '../src/data/materials';
 import { PROFESSION_PROJECTS, professionProject } from '../src/data/professionProjects';
 import { ACTIONS, SKILLS, actionDef, actionsFor } from '../src/data/skills';
-import { MEALS } from '../src/data/cooking';
-import { CULTURES, SITES } from '../src/data/expedition';
+import { SITES } from '../src/data/expedition';
 import { relicFragment } from '../src/data/archaeology';
 import { HEIST_JOBS } from '../src/data/heist';
-import { RUNE_FAMILIES, RUNE_GRADES } from '../src/data/runes';
 import { DROP_TABLES } from '../src/data/drops';
 import { settleCharacter } from '../src/engine/account';
 import { isClassic } from '../src/engine/challenge';
@@ -30,9 +28,9 @@ import type { SkillId } from '../src/engine/types';
 
 const ctx = (seed = 42) => makeCtx(seeded(seed));
 
-const ALL_11_PROFESSIONS: SkillId[] = [
-  'mining', 'woodcutting', 'smithing', 'harvesting', 'alchemy',
-  'cooking', 'gemcutting', 'runecarving', 'thieving', 'archaeology', 'cartography',
+const ALL_12_PROFESSIONS: SkillId[] = [
+  'mining', 'woodcutting', 'smelting', 'smithing', 'woodcrafting',
+  'harvesting', 'alchemy', 'astrology', 'gemcutting', 'thieving', 'archaeology', 'cartography',
 ];
 
 const EQUIPMENT_11_UNIQUES = [
@@ -49,15 +47,15 @@ const FLASK_2_UNIQUES = [
 
 const ALL_13_PROJECTS = [...EQUIPMENT_11_UNIQUES, ...FLASK_2_UNIQUES.map((f) => f.projectId)];
 
-const ALL_7_TOOLS = [
+const ALL_TOOLS = [
   'tool_mining', 'tool_woodcutting', 'tool_harvesting', 'tool_alchemy',
-  'tool_wayfarer_hammer', 'tool_cooking', 'tool_gemcutting',
+  'tool_wayfarer_hammer', 'tool_smelter_tongs', 'tool_carver_drawknife', 'tool_master_artisan', 'tool_gemcutting',
 ];
 
 describe('Phase 18 Whole-Overhaul Acceptance', () => {
-  it('audits all 11 professions, 7 tools, 2 signatures, 2 feasts, Reliquary chart, and 13 exclusive uniques', () => {
+  it('audits all 12 professions, active tools, Reliquary chart, and 13 exclusive uniques', () => {
     const fresh = newGame(1);
-    for (const skill of ALL_11_PROFESSIONS) {
+    for (const skill of ALL_12_PROFESSIONS) {
       expect(SKILLS[skill], `missing SKILLS entry for ${skill}`).toBeDefined();
       expect(skillLock(fresh, skill)).toBeNull();
       const starter = actionsFor(skill).find((a) => a.level === 1);
@@ -67,7 +65,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
       expect(blocker ?? '').not.toMatch(/Act|Reach|Defeat/i);
     }
 
-    for (const id of [...ALL_7_TOOLS, 'signature_wayfarer', 'signature_channel', 'project_feast_artisans', 'project_feast_wayfarers', 'chart_reliquary', ...ALL_13_PROJECTS]) {
+    for (const id of [...ALL_TOOLS, 'chart_reliquary', ...ALL_13_PROJECTS]) {
       expect(professionProject(id), `missing project ${id}`).toBeDefined();
     }
 
@@ -99,9 +97,6 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
         obtainable.add('star_bloom');
       }
     }
-    for (const f of RUNE_FAMILIES) for (const g of RUNE_GRADES) obtainable.add(`rune_${f.id}_${g.grade}`);
-    for (const m of MEALS) obtainable.add(m.id);
-    for (const c of CULTURES) obtainable.add(c.id);
     for (const site of SITES) obtainable.add(relicFragment(site.culture));
     obtainable.add('giant_tally');
     obtainable.add('survey_relic_fragment');
@@ -143,7 +138,13 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
     obtainable.add('stone_fragment');
     obtainable.add('heartwood_fragment');
     obtainable.add('inscription_fragment');
-    obtainable.add('ember_reduction');
+    obtainable.add('stardust');
+    obtainable.add('gilded_stardust');
+    obtainable.add('boss_scrap');
+    obtainable.add('vault_scrap');
+    obtainable.add('guardian_scrap');
+    obtainable.add('guardian_trophy');
+    obtainable.add('lost_chart');
     obtainable.add('chart_survey_fragment');
     obtainable.add('completed_atlas_chart');
     for (const f of ['scorched_fossil', 'frigid_fossil', 'metallic_fossil', 'serrated_fossil', 'dense_fossil']) {
@@ -254,7 +255,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
       expect(loaded2.action.delveLayer).toBe(45);
       expect(loaded2.action.progress).toBe(1100);
     }
-    expect(loaded2.professionProgress.discoveries['seed_sunpetal']).toBe(true);
+    expect(loaded2.foraging.strains.sunpetal).toBeDefined();
     expect(loaded2.professionProgress.work.mining ?? 0).toBe(0);
 
     const classic = newGame(1);
@@ -303,27 +304,27 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
     }
   });
 
-  it('verifies representative 8-hour offline parity across all 11 professions', () => {
-    const cookStarter = actionsFor('cooking').find((a) => a.level === 1)!;
+  it('verifies representative 8-hour offline parity across all 12 professions', async () => {
     const gemTargeted = actionsFor('gemcutting').find((a) => a.level === 15)!;
-    const runeStarter = actionsFor('runecarving').find((a) => a.level === 1)!;
     const thievingStarter = actionsFor('thieving').find((a) => a.level === 1)!;
     const cartographyStarter = actionsFor('cartography').find((a) => a.level === 1)!;
     const cases: { skill: SkillId; actionId: string; bank?: Record<string, number>; setup?: (s: ReturnType<typeof newGame>) => void }[] = [
       { skill: 'mining', actionId: 'mine_copper' },
       { skill: 'woodcutting', actionId: 'giant_ash' },
       { skill: 'smelting', actionId: 'smelt_copper', bank: { copper_ore: 50000 } },
+      { skill: 'smithing', actionId: 'smith_rusted_sword', bank: { copper_bar: 50000, ash_plank: 50000 } },
+      { skill: 'woodcrafting', actionId: 'smith_short_bow', bank: { copper_bar: 50000, ash_plank: 50000 } },
       { skill: 'harvesting', actionId: 'forage_sunpetal' },
       { skill: 'alchemy', actionId: 'brew_life_small', bank: { sunpetal: 50000, ash_log: 50000 } },
-      { skill: 'cooking', actionId: cookStarter.id, bank: { sunpetal: 50000, ash_log: 50000, frostleaf: 50000, copper_ore: 50000 } },
+      { skill: 'astrology', actionId: 'research_lantern' },
       { skill: 'gemcutting', actionId: gemTargeted.id, bank: { rough_gem: 5000, arcane_dust: 50000 }, setup: (s) => { s.skills.gemcutting = xpForLevel(20); } },
-      { skill: 'runecarving', actionId: runeStarter.id, bank: Object.fromEntries(Object.keys(runeStarter.inputs ?? {}).map((k) => [k, 50000])) },
       { skill: 'thieving', actionId: thievingStarter.id },
       { skill: 'archaeology', actionId: 'dig_cairn' },
       { skill: 'cartography', actionId: cartographyStarter.id, bank: Object.fromEntries(Object.keys(cartographyStarter.inputs ?? {}).map((k) => [k, 50000])) },
     ];
 
     for (const tc of cases) {
+      await new Promise((r) => setTimeout(r, 0));
       const live = newGame(1);
       const off = newGame(1);
       for (const s of [live, off]) {

@@ -69,6 +69,7 @@ export function cartographyPreview(s: GameState, a: SkillAction): string[] {
     : mapSupply;
   return [
     `Supplies cover ${Number.isFinite(inputSupply) ? inputSupply : 0} completion(s)${a.chart ? ` and ${inputSupply * a.chart.qty} maps before yield bonuses` : ''}.`,
+    ...(a.protectedOutputs ? ['Protected component: full listed costs; no manual double or input conservation.'] : []),
     ...(a.chart?.upgrade ? [`Uses ${upgradeCost(s, a)} Tier ${a.chart.tier - 1} maps per completion. Full map cost is never conserved.`] : []),
     ...(a.specialMap?.needsPlainTier ? [`Uses 1 plain Tier ${a.specialMap.needsPlainTier} map from your map supply.`] : []),
     ...(sex ? [sex.desc, `Six base charges; your current Map Device and Atlas give ${sextantCharges(s)} charges. Roll pool:`, ...SEXTANT_MODS.filter((m) => m.tier === sex.tier).map((m) => `${m.name}: ${m.desc}`)] : []),

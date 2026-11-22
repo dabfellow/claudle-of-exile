@@ -71,9 +71,9 @@ describe('Phase 17 pinnacle projects', () => {
     expect(s.professionProgress.projects.worldheart.completed).toBe(1);
   });
 
-  it('each recipe spans three real endgame activities, and the amulet draws on all eleven professions', () => {
+  it('each recipe spans three real endgame activities, and the amulet draws on all twelve professions', () => {
     const skills = (id: string) => new Set(professionProject(id)!.sources.map((x) => x.skill));
-    const professions: SkillId[] = ['mining', 'woodcutting', 'smithing', 'harvesting', 'alchemy', 'cooking', 'gemcutting', 'runecarving', 'thieving', 'archaeology', 'cartography'];
+    const professions: SkillId[] = ['mining', 'woodcutting', 'smelting', 'smithing', 'woodcrafting', 'harvesting', 'alchemy', 'astrology', 'gemcutting', 'thieving', 'archaeology', 'cartography'];
     for (const skill of professions) expect(skills('the_sum_of_all_things').has(skill)).toBe(true);
     const sum = professionProject('the_sum_of_all_things')!.inputs;
     // every named Hard Boss trophy and Uber sigil, one each, not generic trophies

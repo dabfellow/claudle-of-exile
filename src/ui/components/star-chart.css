@@ -29,13 +29,21 @@
 }
 
 .star-region.locked {
-  opacity: 0.55;
+  opacity: 0.62;
+  border-style: dashed;
+}
+
+.star-first-step {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line-2));
+  background: color-mix(in srgb, var(--accent) 9%, var(--panel));
 }
 
 .star-card-head {
   display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
 }
 
 .star-sky {

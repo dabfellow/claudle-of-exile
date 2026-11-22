@@ -19,10 +19,9 @@ import {
   DOUBLE_SHARE,
   doubleZoneStart,
   inDoubleZone,
-  LIFT_CYCLE_MAX_MS,
-  LIFT_CYCLE_MIN_MS,
-  liftResult,
-  liftWindowMs,
+  LIFT_CLICKS_DOUBLE,
+  LIFT_CLICKS_HIT,
+  liftSpamResult,
   logProfile,
   massShare,
   splitResult,
@@ -36,6 +35,7 @@ import { levelOf } from '../../engine/xp';
 import './star-chart.css';
 import '../archaeology.css';
 import './giants.css';
+import './minigames-overhaul.css';
 
 const SWEEP_MS = 1200;
 const WOOD_ZONE = 0.18;
@@ -267,18 +267,41 @@ function SplitGame({ onSwing }: { onSwing: OnSwing }) {
 
 import { BASE_SPECIES_INDEX } from '../../data/foraging';
 
-/** 3×3 whack-a-mole fertilising: tap the lit plant before it fades; quick tap doubles. */
+type ForagePhase = 'gold' | 'green' | 'late';
+interface ForageBed {
+  cell: number;
+  born: number;
+  id: number;
+  phase: ForagePhase;
+}
+
+/** 3×3 garden soil beds: tap lit sprouts quickly to fertilise them; golden blooms earn a double. */
 function ForagingGame({ onSwing }: { matId?: string; onSwing: OnSwing }) {
   const s = useGame();
   const speciesId = s.action?.kind === 'skill' && s.action.actionId.startsWith('forage_') ? s.action.actionId.slice(7) : 'sunpetal';
   const spIndex = BASE_SPECIES_INDEX.get(speciesId) ?? 0;
   const windowMs = fertiliseWindowMs(spIndex);
-  const [lit, setLit] = useState<{ cell: number; born: number }[]>([]);
+  const [lit, setLit] = useState<ForageBed[]>([]);
+  const [flash, setFlash] = useState<Record<number, { id: number; kind: 'double' | 'hit' | 'miss' }>>({});
+  const litRef = useRef<ForageBed[]>([]);
+  const onSwingRef = useRef(onSwing);
+  onSwingRef.current = onSwing;
+  const uidRef = useRef(0);
+  const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const spawnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const scheduleSpawnRef = useRef<(delay: number) => void>(() => {});
+
+  const setBeds = (next: ForageBed[]) => {
+    litRef.current = next;
+    setLit(next);
+  };
 
   useEffect(() => {
     let alive = true;
-    const clearAll = () => {
+    const clearScheduled = () => {
+      if (fadeTimer.current) { clearTimeout(fadeTimer.current); fadeTimer.current = null; }
+      if (spawnTimer.current) { clearTimeout(spawnTimer.current); spawnTimer.current = null; }
       timers.current.forEach(clearTimeout);
       timers.current.clear();
     };
@@ -291,48 +314,137 @@ function ForagingGame({ onSwing }: { matId?: string; onSwing: OnSwing }) {
         if (!cells.includes(c)) cells.push(c);
       }
       const born = performance.now();
-      setLit(cells.map((cell) => ({ cell, born })));
-      const fade = setTimeout(() => {
-        timers.current.delete(fade);
-        setLit((prev) => {
-          if (prev.length) onSwing('miss');
-          return [];
-        });
-        const next = setTimeout(() => {
-          timers.current.delete(next);
-          spawn();
-        }, 400);
-        timers.current.add(next);
+      setBeds(cells.map((cell) => ({ cell, born, id: ++uidRef.current, phase: 'gold' })));
+      if (fadeTimer.current) clearTimeout(fadeTimer.current);
+      fadeTimer.current = setTimeout(() => {
+        fadeTimer.current = null;
+        if (!alive) return;
+        if (litRef.current.length > 0) {
+          onSwingRef.current('miss');
+          setBeds([]);
+        }
+        scheduleSpawn(320);
       }, windowMs + 300);
-      timers.current.add(fade);
     };
+    const scheduleSpawn = (delay: number) => {
+      if (!alive) return;
+      if (spawnTimer.current) clearTimeout(spawnTimer.current);
+      spawnTimer.current = setTimeout(() => {
+        spawnTimer.current = null;
+        spawn();
+      }, delay);
+    };
+    scheduleSpawnRef.current = scheduleSpawn;
     spawn();
-    return () => { alive = false; clearAll(); };
+    return () => {
+      alive = false;
+      scheduleSpawnRef.current = () => {};
+      clearScheduled();
+    };
   }, [spIndex, windowMs]);
 
+  useFrame(() => {
+    const cur = litRef.current;
+    if (cur.length === 0) return;
+    const now = performance.now();
+    let changed = false;
+    const updated = cur.map((item) => {
+      const elapsed = now - item.born;
+      const nextPhase: ForagePhase = elapsed <= windowMs * 0.3 ? 'gold' : elapsed <= windowMs ? 'green' : 'late';
+      if (nextPhase !== item.phase) {
+        changed = true;
+        return { ...item, phase: nextPhase };
+      }
+      return item;
+    });
+    if (changed) setBeds(updated);
+  });
+
+  const triggerFlash = (cell: number, kind: 'double' | 'hit' | 'miss') => {
+    const id = ++uidRef.current;
+    setFlash((prev) => ({ ...prev, [cell]: { id, kind } }));
+    const t = setTimeout(() => {
+      timers.current.delete(t);
+      setFlash((prev) => {
+        if (prev[cell]?.id !== id) return prev;
+        const copy = { ...prev };
+        delete copy[cell];
+        return copy;
+      });
+    }, 260);
+    timers.current.add(t);
+  };
+
   const tap = (cell: number) => {
-    const hit = lit.find((x) => x.cell === cell);
+    const hit = litRef.current.find((x) => x.cell === cell);
     if (!hit) {
-      onSwing(fertiliseResult(null, windowMs, true));
+      onSwingRef.current(fertiliseResult(null, windowMs, true));
+      triggerFlash(cell, 'miss');
       return;
     }
     const elapsed = performance.now() - hit.born;
-    onSwing(fertiliseResult(elapsed, windowMs, false));
-    setLit((prev) => prev.filter((x) => x.cell !== cell));
+    const res = fertiliseResult(elapsed, windowMs, false);
+    onSwingRef.current(res);
+    triggerFlash(cell, res === 'double' ? 'double' : res === 'miss' ? 'miss' : 'hit');
+    const remaining = litRef.current.filter((x) => x.cell !== cell);
+    setBeds(remaining);
+    if (remaining.length === 0) {
+      if (fadeTimer.current) { clearTimeout(fadeTimer.current); fadeTimer.current = null; }
+      scheduleSpawnRef.current(280);
+    }
   };
 
   return (
-    <div className="foraging-mole-grid" role="group" aria-label="Fertilise lit plants">
+    <div className="forage-bed-grid" role="group" aria-label="Fertilise lit soil beds">
       {Array.from({ length: 9 }, (_, cell) => {
-        const active = lit.some((x) => x.cell === cell);
+        const active = lit.find((x) => x.cell === cell);
+        const f = flash[cell];
+        const cls = [
+          'forage-bed',
+          active ? 'lit' : '',
+          active?.phase === 'gold' ? 'gold' : '',
+          active?.phase === 'late' ? 'late' : '',
+          !active && f ? `flash-${f.kind}` : '',
+        ].filter(Boolean).join(' ');
+        const label = active ? (active.phase === 'gold' ? 'Gold!' : active.phase === 'late' ? 'Hurry!' : 'Fertilise!') : 'Soil';
         return (
           <button
             key={cell}
             type="button"
-            className={`foraging-mole-cell ${active ? 'lit' : ''}`}
-            onPointerDown={() => tap(cell)}
+            className={cls}
+            aria-label={active ? `${label} plot ${cell + 1}` : `Dormant soil plot ${cell + 1}`}
+            onPointerDown={(e) => {
+              if (e.pointerType === 'mouse' && e.button !== 0) return;
+              tap(cell);
+            }}
+            onKeyDown={(e) => {
+              if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) {
+                e.preventDefault();
+                tap(cell);
+              }
+            }}
           >
-            {active ? 'Fertilise!' : '·'}
+            {active ? (
+              <>
+                <svg className="forage-bed-icon" viewBox="0 0 32 32" aria-hidden>
+                  <ellipse cx="16" cy="27" rx="10" ry="3" fill="rgba(0,0,0,0.45)" />
+                  <path d="M16 26 V13" stroke={active.phase === 'gold' ? '#ffe588' : '#8ce892'} strokeWidth="2.4" strokeLinecap="round" />
+                  <path d="M16 18 C11 17 8 13 9 9 C13 9 16 12 16 18 Z" fill={active.phase === 'gold' ? '#ffcf3a' : '#74d67c'} />
+                  <path d="M16 15 C21 14 24 10 23 6 C19 6 16 9 16 15 Z" fill={active.phase === 'gold' ? '#ffe799' : '#9af09f'} />
+                  {active.phase === 'gold' && <circle cx="16" cy="7" r="2" fill="#fff8d6" />}
+                </svg>
+                <span className="forage-bed-label">{label}</span>
+                <span key={active.id} className="forage-bed-timer" style={{ animationDuration: `${windowMs}ms` }} aria-hidden />
+              </>
+            ) : (
+              <>
+                <svg className="forage-bed-icon" viewBox="0 0 32 32" aria-hidden>
+                  <path d="M5 24 Q16 16 27 24 Z" fill="#3b2d20" stroke="#53402e" strokeWidth="1" />
+                  <circle cx="16" cy="19" r="1.7" fill="#5e4b36" />
+                </svg>
+                <span className="forage-bed-sub">Dormant</span>
+              </>
+            )}
           </button>
         );
       })}
@@ -340,33 +452,92 @@ function ForagingGame({ onSwing }: { matId?: string; onSwing: OnSwing }) {
   );
 }
 
+const TELESCOPE_LOCK_TEXT: Record<SwingResult, string> = {
+  double: 'Double! ×2 — Razor sharp',
+  hit: 'Locked — Sharp focus',
+  weak: 'Locked — Slightly hazy',
+  miss: 'Locked — Out of focus',
+};
+
 /**
- * Focus the telescope: the star is a blurred disc, and the blur shrinks as the focus ring nears a hidden sharpest point.
- * Drag the ring (or hold an arrow), then let go or press Lock. Calm, no timer.
+ * Focus the telescope: a square optical eyepiece with two turnable brass outer rings.
+ * Drag around the outer ring, scroll wheel, drag the dial, or use arrow keys/buttons, then press Lock Focus.
  */
 function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
-  const newTarget = () => random(0.12, 0.88);
-  const target = useRef(newTarget());
+  const newTarget = (avoid: number) => {
+    let t = random(0.12, 0.88);
+    for (let i = 0; i < 8 && Math.abs(t - avoid) < 0.16; i++) t = random(0.12, 0.88);
+    return t;
+  };
   const ring = useRef(0.5);
+  const target = useRef(newTarget(0.5));
   const turning = useRef(0);
-  const dragging = useRef(false);
+  const sliderDrag = useRef(false);
+  const ringDrag = useRef<{ pointerId: number; lastAngle: number | null } | null>(null);
   const track = useRef<HTMLDivElement>(null);
+  const scopeRef = useRef<HTMLDivElement>(null);
+  const onSwingRef = useRef(onSwing);
+  onSwingRef.current = onSwing;
   const [pos, setPos] = useState(0.5);
+  const [feedback, setFeedback] = useState<{ id: number; r: SwingResult } | null>(null);
 
   const move = (to: number) => {
-    ring.current = Math.min(1, Math.max(0, to));
-    setPos(ring.current);
+    const clamped = Math.min(1, Math.max(0, to));
+    ring.current = clamped;
+    setPos(clamped);
   };
+
   const lock = () => {
-    onSwing(focusResult(ring.current - target.current));
-    target.current = newTarget();
-    dragging.current = false;
-    setPos(ring.current);
+    const r = focusResult(ring.current - target.current);
+    onSwingRef.current(r);
+    setFeedback({ id: Math.random(), r });
+    target.current = newTarget(ring.current);
+    sliderDrag.current = false;
+    ringDrag.current = null;
   };
-  const fromPointer = (e: ReactPointerEvent<HTMLDivElement>) => {
+
+  const fromSliderPointer = (e: ReactPointerEvent<HTMLDivElement>) => {
     const box = track.current?.getBoundingClientRect();
     if (box && box.width > 0) move((e.clientX - box.left) / box.width);
   };
+
+  const angleFromCenter = (e: ReactPointerEvent<HTMLDivElement>): number | null => {
+    const box = e.currentTarget.getBoundingClientRect();
+    const dx = e.clientX - (box.left + box.width / 2);
+    const dy = e.clientY - (box.top + box.height / 2);
+    return Math.hypot(dx, dy) < 8 ? null : Math.atan2(dy, dx);
+  };
+
+  useEffect(() => {
+    const el = scopeRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const step = Math.max(-0.04, Math.min(0.04, -e.deltaY * 0.00028));
+      if (step !== 0) move(ring.current + step);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  useEffect(() => {
+    const typing = (e: KeyboardEvent) => e.target instanceof HTMLElement && e.target.matches('input, textarea, select');
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (typing(e)) return;
+      if (e.key === 'ArrowLeft') { e.preventDefault(); turning.current = -1; }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); turning.current = 1; }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' && turning.current === -1) turning.current = 0;
+      else if (e.key === 'ArrowRight' && turning.current === 1) turning.current = 0;
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, []);
 
   useFrame((dt) => {
     if (turning.current) move(ring.current + (turning.current * TELESCOPE_TURN_PER_SEC * dt) / 1000);
@@ -376,11 +547,63 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
   const blur = Math.abs(pos - target.current) * TELESCOPE_BLUR_PX;
   return (
     <div className="mini-patch mini-sky mini-telescope">
-      <div className="telescope-view" aria-hidden>
-        <span className="telescope-star" style={{ filter: `blur(${blur.toFixed(1)}px)` }} />
+      <div
+        ref={scopeRef}
+        className="telescope-scope-box"
+        tabIndex={0}
+        role="application"
+        aria-label="Telescope optical scope. Drag the outer brass ring or scroll to focus the star, then press Lock Focus or Space."
+        onPointerDown={(e) => {
+          if (e.pointerType === 'mouse' && e.button !== 0) return;
+          e.currentTarget.setPointerCapture(e.pointerId);
+          ringDrag.current = { pointerId: e.pointerId, lastAngle: angleFromCenter(e) };
+        }}
+        onPointerMove={(e) => {
+          const drag = ringDrag.current;
+          if (!drag || e.pointerId !== drag.pointerId) return;
+          const angle = angleFromCenter(e);
+          if (angle === null) return;
+          if (drag.lastAngle === null) {
+            drag.lastAngle = angle;
+            return;
+          }
+          let delta = angle - drag.lastAngle;
+          if (delta > Math.PI) delta -= Math.PI * 2;
+          if (delta < -Math.PI) delta += Math.PI * 2;
+          drag.lastAngle = angle;
+          move(ring.current + delta / (Math.PI * 2));
+        }}
+        onPointerUp={(e) => { if (ringDrag.current?.pointerId === e.pointerId) ringDrag.current = null; }}
+        onPointerCancel={(e) => { if (ringDrag.current?.pointerId === e.pointerId) ringDrag.current = null; }}
+        onLostPointerCapture={() => { ringDrag.current = null; }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.repeat) {
+            e.preventDefault();
+            lock();
+          }
+        }}
+      >
+        <span className="telescope-index" aria-hidden />
+        <div className="telescope-outer-ring" style={{ transform: `rotate(${(pos * 360).toFixed(2)}deg)` }} aria-hidden />
+        <div className="telescope-inner-ring" style={{ transform: `rotate(${(-pos * 180).toFixed(2)}deg)` }} aria-hidden />
+        <div className="telescope-eyepiece" aria-hidden>
+          <div className="telescope-reticle">
+            <span className="telescope-reticle-circle" />
+          </div>
+          <span className="telescope-center-star" style={{ filter: `blur(${blur.toFixed(1)}px)` }}>
+            <svg viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="22" fill="#a9b8ff" opacity="0.22" />
+              <circle cx="32" cy="32" r="13" fill="#dce6ff" opacity="0.45" />
+              <path d="M32 3 L34.2 29.8 L61 32 L34.2 34.2 L32 61 L29.8 34.2 L3 32 L29.8 29.8 Z" fill="#ffffff" opacity="0.95" />
+              <path d="M32 14 L35.5 28.5 L50 32 L35.5 35.5 L32 50 L28.5 35.5 L14 32 L28.5 28.5 Z" fill="#fff7d6" opacity="0.72" />
+              <circle cx="32" cy="32" r="4.5" fill="#ffffff" />
+            </svg>
+          </span>
+        </div>
       </div>
       <div className="telescope-controls">
         <button
+          type="button"
           className="btn sm"
           aria-label="Turn the focus ring down"
           onPointerDown={() => { turning.current = -1; }}
@@ -394,21 +617,25 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
           ref={track}
           className="telescope-ring"
           role="slider"
-          aria-label="Focus ring"
+          aria-label="Fine focus dial"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(pos * 100)}
           onPointerDown={(e) => {
-            dragging.current = true;
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            sliderDrag.current = true;
             e.currentTarget.setPointerCapture(e.pointerId);
-            fromPointer(e);
+            fromSliderPointer(e);
           }}
-          onPointerMove={(e) => { if (dragging.current) fromPointer(e); }}
-          onPointerUp={() => { if (dragging.current) lock(); }}
+          onPointerMove={(e) => { if (sliderDrag.current) fromSliderPointer(e); }}
+          onPointerUp={() => { sliderDrag.current = false; }}
+          onPointerCancel={() => { sliderDrag.current = false; }}
+          onLostPointerCapture={() => { sliderDrag.current = false; }}
         >
           <span className="telescope-knob" style={{ left: `${pos * 100}%` }} />
         </div>
         <button
+          type="button"
           className="btn sm"
           aria-label="Turn the focus ring up"
           onPointerDown={() => { turning.current = 1; }}
@@ -418,7 +645,12 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
         >
           ▶
         </button>
-        <button className="btn sm primary" onClick={lock}>Lock</button>
+        <button type="button" className="btn sm primary" onClick={lock}>Lock Focus</button>
+      </div>
+      <div className="telescope-status" aria-live="polite">
+        {feedback
+          ? <span key={feedback.id} className={`telescope-lock-msg ${feedback.r}`}>{TELESCOPE_LOCK_TEXT[feedback.r]}</span>
+          : <span>Turn ring or scroll to sharpen star, then Lock Focus</span>}
       </div>
     </div>
   );
@@ -458,43 +690,116 @@ function CookingGame({ onSwing }: { onSwing: OnSwing }) {
   );
 }
 
+const SIGHTING_TEXT: Record<SwingResult, string> = {
+  double: 'Double Sighting! ×2',
+  hit: 'Hit! +50% Focus',
+  weak: 'Weak Sighting',
+  miss: 'Missed landmark',
+};
+
 /** Take a sighting: tap when the vertical line crosses the landmark, then when the horizontal line crosses it. */
 function CartographyGame({ onSwing }: { onSwing: OnSwing }) {
   const newTarget = () => ({ x: 0.2 + Math.random() * 0.6, y: 0.2 + Math.random() * 0.6 });
   const [target, setTarget] = useState(newTarget);
-  const [phase, setPhase] = useState<'x' | 'y'>('x');
-  const [pos, setPos] = useState(0.5);
-  const [errX, setErrX] = useState(0);
+  const [phase, setPhase] = useState<'x' | 'y' | 'result'>('x');
+  const [lockedX, setLockedX] = useState<number | null>(null);
+  const [lockedY, setLockedY] = useState<number | null>(null);
+  const [lastResult, setLastResult] = useState<SwingResult | null>(null);
   const tRef = useRef(0);
   const posRef = useRef(0.5);
+  const lockedXRef = useRef(0.5);
+  const phaseRef = useRef<'x' | 'y' | 'result'>('x');
+  const lineVRef = useRef<HTMLSpanElement>(null);
+  const lineHRef = useRef<HTMLSpanElement>(null);
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onSwingRef = useRef(onSwing);
+  onSwingRef.current = onSwing;
+
+  useEffect(() => () => {
+    if (resetTimer.current) clearTimeout(resetTimer.current);
+  }, []);
 
   useFrame((dt) => {
+    if (phaseRef.current === 'result') return;
     tRef.current += dt;
-    const p = 0.5 + 0.48 * Math.sin(tRef.current / 520);
+    const p = 0.5 + 0.48 * Math.sin(tRef.current / 740);
     posRef.current = p;
-    setPos(p);
+    if (phaseRef.current === 'x' && lineVRef.current) lineVRef.current.style.left = `${p * 100}%`;
+    if (phaseRef.current === 'y' && lineHRef.current) lineHRef.current.style.top = `${p * 100}%`;
   });
 
   const tap = () => {
-    if (phase === 'x') {
-      setErrX(posRef.current - target.x);
+    if (phaseRef.current === 'result') return;
+    if (phaseRef.current === 'x') {
+      lockedXRef.current = posRef.current;
+      setLockedX(posRef.current);
+      phaseRef.current = 'y';
       setPhase('y');
       tRef.current = 0;
+      posRef.current = 0.5;
     } else {
-      onSwing(sightingResult(errX, posRef.current - target.y));
-      setTarget(newTarget());
-      setPhase('x');
-      tRef.current = 0;
+      const lx = lockedXRef.current;
+      const ly = posRef.current;
+      const res = sightingResult(lx - target.x, ly - target.y);
+      setLockedY(ly);
+      setLastResult(res);
+      phaseRef.current = 'result';
+      setPhase('result');
+      if (res === 'hit' || res === 'double') onSwingRef.current('hit');
+      onSwingRef.current(res);
+      if (resetTimer.current) clearTimeout(resetTimer.current);
+      resetTimer.current = setTimeout(() => {
+        resetTimer.current = null;
+        setTarget(newTarget());
+        setLockedX(null);
+        setLockedY(null);
+        setLastResult(null);
+        tRef.current = 0;
+        posRef.current = 0.5;
+        phaseRef.current = 'x';
+        setPhase('x');
+      }, 480);
     }
   };
+  useSpace(tap);
 
   return (
-    <button type="button" className="carto-sighting" onPointerDown={tap} aria-label={phase === 'x' ? 'Lock vertical sighting' : 'Lock horizontal sighting'}>
-      <span className="carto-landmark" style={{ left: `${target.x * 100}%`, top: `${target.y * 100}%` }} />
-      {phase === 'x'
-        ? <span className="carto-line-v" style={{ left: `${pos * 100}%` }} />
-        : <span className="carto-line-h" style={{ top: `${pos * 100}%` }} />}
-    </button>
+    <div className="carto-sighting-wrap">
+      <button
+        type="button"
+        className="carto-sighting"
+        aria-label={phase === 'x' ? 'Lock vertical sighting' : phase === 'y' ? 'Lock horizontal sighting' : 'Sighting locked'}
+        onPointerDown={(e) => {
+          if (e.pointerType === 'mouse' && e.button !== 0) return;
+          tap();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.repeat) {
+            e.preventDefault();
+            tap();
+          }
+        }}
+      >
+        <span className="carto-zone-hit" style={{ left: `${target.x * 100}%`, top: `${target.y * 100}%` }} aria-hidden />
+        <span className="carto-zone-double" style={{ left: `${target.x * 100}%`, top: `${target.y * 100}%` }} aria-hidden />
+        <span className="carto-landmark" style={{ left: `${target.x * 100}%`, top: `${target.y * 100}%` }} aria-hidden />
+        {phase === 'x' && <span ref={lineVRef} className="carto-line-v" style={{ left: '50%' }} aria-hidden />}
+        {(phase === 'y' || phase === 'result') && lockedX !== null && (
+          <span className="carto-line-v locked" style={{ left: `${lockedX * 100}%` }} aria-hidden />
+        )}
+        {phase === 'y' && <span ref={lineHRef} className="carto-line-h" style={{ top: '50%' }} aria-hidden />}
+        {phase === 'result' && lockedY !== null && (
+          <span className="carto-line-h locked" style={{ top: `${lockedY * 100}%` }} aria-hidden />
+        )}
+      </button>
+      <div className={`carto-status ${lastResult ?? ''}`} aria-live="polite">
+        {phase === 'result' && lastResult
+          ? SIGHTING_TEXT[lastResult]
+          : phase === 'x'
+            ? '1/2 · Tap as vertical line crosses landmark'
+            : '2/2 · Tap as horizontal line crosses landmark'}
+      </div>
+    </div>
   );
 }
 
@@ -557,57 +862,197 @@ function ThievingGame({ onSwing }: { onSwing: OnSwing }) {
   );
 }
 
-const LIFT_LABEL = { watching: 'Watching you', turning: 'Turning away', back: 'Back turned: lift!', glance: 'Glancing back' } as const;
-const RESULT_WORD: Record<SwingResult, string> = { double: 'Double!', hit: 'Hit', weak: 'Weak', miss: 'Miss' };
+type LiftPhase = 'away' | 'glancing' | 'watching';
 
-/** A target's attention swings away and back. Tap while their back is turned: the middle of it is a double. */
+const LIFT_BADGE: Record<LiftPhase, string> = {
+  away: 'LIFT NOW! (spam click)',
+  glancing: 'TURNING BACK!',
+  watching: 'WATCHING — STOP',
+};
+
+/**
+ * Street marks: spam-click to pickpocket while their back is turned; stop when they glance back or watch!
+ * Phase durations randomize each cycle so players react to the mark rather than counting fixed beats.
+ */
 function LiftGame({ markLevel, onSwing }: { markLevel: number; onSwing: OnSwing }) {
-  const win = liftWindowMs(markLevel);
-  const makeCycle = () => {
-    const len = random(LIFT_CYCLE_MIN_MS, LIFT_CYCLE_MAX_MS);
-    const rest = len - win;
-    const start = rest * 0.5 + rest * 0.2; // watching, then turning away
-    return { len, start, end: start + win, turnFrom: rest * 0.5, t0: performance.now(), used: false };
+  const markLevelRef = useRef(markLevel);
+  markLevelRef.current = markLevel;
+  const onSwingRef = useRef(onSwing);
+  onSwingRef.current = onSwing;
+
+  const durationFor = (next: LiftPhase) => {
+    if (next === 'away') {
+      const min = Math.max(950, 1100 - Math.floor(markLevelRef.current * 1.5));
+      const max = Math.max(1700, 3312 - markLevelRef.current * 12);
+      return random(min, max);
+    }
+    if (next === 'glancing') return random(420, 700);
+    return random(800, 2200);
   };
-  const cycle = useRef(makeCycle());
-  const [view, setView] = useState({ phase: 'watching' as keyof typeof LIFT_LABEL, angle: 0 });
-  const [last, setLast] = useState<{ id: number; r: SwingResult } | null>(null);
+
+  const stateRef = useRef({
+    phase: 'watching' as LiftPhase,
+    startedAt: performance.now(),
+    duration: random(800, 1500),
+    clicks: 0,
+    total: 0,
+    glanced: false,
+  });
+  const uidRef = useRef(0);
+  const timers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+
+  const [phase, setPhase] = useState<LiftPhase>('watching');
+  const [clicks, setClicks] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [caughtFlash, setCaughtFlash] = useState(false);
+  const [popups, setPopups] = useState<{ id: number; x: number; y: number }[]>([]);
+  const [alert, setAlert] = useState<{ id: number; kind: 'double' | 'hit' | 'glancing' | 'caught'; text: string } | null>(null);
+
+  useEffect(() => () => {
+    timers.current.forEach(clearTimeout);
+    timers.current.clear();
+  }, []);
+
+  useEffect(() => {
+    const st = stateRef.current;
+    st.phase = 'watching';
+    st.startedAt = performance.now();
+    st.duration = random(800, 1500);
+    st.clicks = 0;
+    st.glanced = false;
+    setPhase('watching');
+    setClicks(0);
+    setAlert(null);
+  }, [markLevel]);
 
   useFrame(() => {
-    let c = cycle.current;
-    let t = performance.now() - c.t0;
-    if (t >= c.len) {
-      c = cycle.current = makeCycle();
-      t = 0;
+    const st = stateRef.current;
+    const now = performance.now();
+    if (now - st.startedAt < st.duration) return;
+    const next: LiftPhase = st.phase === 'watching' ? 'away' : st.phase === 'away' ? 'glancing' : 'watching';
+    st.phase = next;
+    st.startedAt = now;
+    st.duration = durationFor(next);
+    if (next === 'away') {
+      st.clicks = 0;
+      st.glanced = false;
+      setClicks(0);
+      setAlert(null);
+    } else if (next === 'glancing') {
+      st.glanced = false;
     }
-    const phase = t < c.turnFrom ? 'watching' : t < c.start ? 'turning' : t <= c.end ? 'back' : 'glance';
-    const angle = t < c.turnFrom ? 0 : t < c.start ? ((t - c.turnFrom) / (c.start - c.turnFrom)) * 180 : t <= c.end ? 180 : Math.max(0, 180 - ((t - c.end) / (c.len - c.end)) * 360);
-    setView((v) => (v.phase === phase && Math.abs(v.angle - angle) < 1 ? v : { phase, angle }));
+    setPhase(next);
   });
 
   const tap = () => {
-    const c = cycle.current;
-    if (c.used) return;
-    c.used = true;
-    const r = liftResult(performance.now() - c.t0, c.start, c.end);
-    onSwing(r);
-    setLast({ id: Math.random(), r });
+    const st = stateRef.current;
+    if (st.phase === 'away') {
+      st.clicks += 1;
+      st.total += 1;
+      setClicks(st.clicks);
+      setTotal(st.total);
+      const popId = ++uidRef.current;
+      setPopups((prev) => [...prev.slice(-7), { id: popId, x: random(28, 72), y: random(20, 56) }]);
+      const t = setTimeout(() => {
+        timers.current.delete(t);
+        setPopups((prev) => prev.filter((p) => p.id !== popId));
+      }, 560);
+      timers.current.add(t);
+
+      if (st.clicks % LIFT_CLICKS_HIT === 0) {
+        const res = st.clicks % LIFT_CLICKS_DOUBLE === 0 ? 'double' : 'hit';
+        onSwingRef.current(res);
+        setAlert({
+          id: ++uidRef.current,
+          kind: res,
+          text: res === 'double' ? 'Double Lift! ×2' : 'Hit! Focus +25%',
+        });
+      }
+      return;
+    }
+
+    if (st.phase === 'glancing') {
+      if (!st.glanced) {
+        st.glanced = true;
+        onSwingRef.current('weak');
+        setAlert({ id: ++uidRef.current, kind: 'glancing', text: 'Close call — glancing back!' });
+      }
+      return;
+    }
+
+    // watching -> caught!
+    st.clicks = 0;
+    st.total = 0;
+    setClicks(0);
+    setTotal(0);
+    onSwingRef.current(liftSpamResult(0, true)!);
+    setAlert({ id: ++uidRef.current, kind: 'caught', text: 'Caught!' });
+    setCaughtFlash(true);
+    const t = setTimeout(() => {
+      timers.current.delete(t);
+      setCaughtFlash(false);
+    }, 280);
+    timers.current.add(t);
   };
   useSpace(tap);
 
-  // facing down = at you; turning swings the gaze round to the top of the circle
-  const rad = ((90 + view.angle) * Math.PI) / 180;
-  const arc = (a: number) => `${50 + 38 * Math.cos(a)},${50 + 38 * Math.sin(a)}`;
-  const open = (view.phase === 'back' ? 'var(--accent)' : 'var(--text-dim)');
+  const headDeg = phase === 'away' ? 180 : phase === 'glancing' ? 88 : 0;
+  const coneColor = phase === 'away' ? '#7fd696' : phase === 'glancing' ? '#e5a94c' : '#d6685e';
+  const cycleClicks = clicks === 0 ? 0 : ((clicks - 1) % LIFT_CLICKS_DOUBLE) + 1;
+  const progressText = cycleClicks >= LIFT_CLICKS_DOUBLE
+    ? `${LIFT_CLICKS_DOUBLE}/${LIFT_CLICKS_DOUBLE} Double!`
+    : cycleClicks >= LIFT_CLICKS_HIT
+      ? `${cycleClicks}/${LIFT_CLICKS_DOUBLE} for Double`
+      : `${cycleClicks}/${LIFT_CLICKS_HIT}`;
+
   return (
-    <div className="mini-timed" role="button" tabIndex={0} aria-label="Lift: tap while their back is turned" onPointerDown={tap} onKeyDown={(e) => { if (e.key === 'Enter' && !e.repeat) { e.preventDefault(); tap(); } }} style={{ cursor: 'pointer', touchAction: 'manipulation', textAlign: 'center' }}>
-      <svg viewBox="0 0 100 100" width="120" height="120" aria-hidden>
-        <circle cx="50" cy="50" r="16" fill="none" stroke={open} strokeWidth="4" />
-        <path d={`M50,50 L${arc(rad - 0.5)} A38,38 0 0 1 ${arc(rad + 0.5)} Z`} fill={open} opacity="0.35" />
-        <line x1="50" y1="50" x2={50 + 38 * Math.cos(rad)} y2={50 + 38 * Math.sin(rad)} stroke={open} strokeWidth="3" />
-      </svg>
-      <div className="num">{LIFT_LABEL[view.phase]}</div>
-      <div className="small" aria-live="polite">{last ? <span key={last.id}>{RESULT_WORD[last.r]}</span> : 'Tap anywhere to lift'}</div>
+    <div
+      className={`lift-arena ${phase} ${caughtFlash ? 'caught-flash' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label="Pickpocket mark: spam click while looking away, stop when watching"
+      onPointerDown={(e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        tap();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !e.repeat) {
+          e.preventDefault();
+          tap();
+        }
+      }}
+    >
+      <span className={`lift-badge ${phase}`}>{LIFT_BADGE[phase]}</span>
+      <div className="lift-gaze-wrap">
+        <svg className="lift-gaze-svg" viewBox="0 0 110 110" aria-hidden>
+          <circle cx="55" cy="55" r="46" fill="none" stroke={coneColor} strokeOpacity="0.3" strokeWidth="2" strokeDasharray={phase === 'away' ? '5 4' : undefined} />
+          <g className="lift-head-group" style={{ transform: `rotate(${headDeg}deg)` }}>
+            <path d="M55,55 L27,92 A46,46 0 0 0 83,92 Z" fill={coneColor} opacity="0.28" />
+            <circle cx="55" cy="55" r="18" fill="#1e222b" stroke={coneColor} strokeWidth="2.8" />
+            <circle cx="49" cy="61" r="2.3" fill={phase === 'watching' ? '#ff7c70' : coneColor} />
+            <circle cx="61" cy="61" r="2.3" fill={phase === 'watching' ? '#ff7c70' : coneColor} />
+            <path d="M55,73 L50,67 L60,67 Z" fill={coneColor} opacity="0.85" />
+          </g>
+        </svg>
+        {popups.map((p) => (
+          <span key={p.id} className="lift-pop" style={{ left: `${p.x}%`, top: `${p.y}%` }} aria-hidden>+1</span>
+        ))}
+      </div>
+      <div className="lift-progress-row">
+        <div className="lift-pips" aria-hidden>
+          {Array.from({ length: LIFT_CLICKS_DOUBLE }, (_, i) => (
+            <span key={i} className="lift-pip-wrap" style={{ display: 'inline-flex', alignItems: 'center' }}>
+              {i === LIFT_CLICKS_HIT && <span className="lift-pip-divider" />}
+              <span className={`lift-pip ${i < LIFT_CLICKS_HIT ? 'hit' : 'double'} ${i < cycleClicks ? 'on' : ''}`} />
+            </span>
+          ))}
+        </div>
+        <span className="lift-count-text num">{progressText}</span>
+        <span className="lift-streak num">Streak: {total}</span>
+      </div>
+      <div className={`lift-feedback ${alert?.kind ?? ''}`} aria-live="polite">
+        {alert ? <span key={alert.id}>{alert.text}</span> : (phase === 'away' ? 'Spam click or press Space!' : 'Hands off until they turn away')}
+      </div>
     </div>
   );
 }
@@ -618,13 +1063,18 @@ function ArchaeologyGame({ onSwing }: { onSwing: OnSwing }) {
   const cut = brushCrackCut(s.archaeology);
   const newPatch = () => {
     const patch = brushPatch({ next: Math.random }, cut);
-    // the find shows through as a faint silhouette over about 60% of its squares
-    const shown = new Set([...patch.find].sort(() => Math.random() - 0.5).slice(0, Math.ceil(patch.find.length * 0.6)));
+    // the find shows through as a faint silhouette over 75% of its squares
+    const shown = new Set([...patch.find].sort(() => Math.random() - 0.5).slice(0, Math.ceil(patch.find.length * 0.75)));
     return { id: Math.random(), patch, shown };
   };
   const [round, setRound] = useState(newPatch);
   const [brushed, setBrushed] = useState<Set<number>>(new Set());
   const [finished, setFinished] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (resetTimer.current) clearTimeout(resetTimer.current);
+  }, []);
 
   const brush = (n: number) => {
     if (finished || brushed.has(n)) return;
@@ -632,12 +1082,15 @@ function ArchaeologyGame({ onSwing }: { onSwing: OnSwing }) {
     setBrushed(next);
     if (!brushDone(round.patch, next)) return;
     setFinished(true);
-    onSwing(brushResult(brushChips(round.patch, next)));
-    setTimeout(() => {
+    const res = brushResult(brushChips(round.patch, next));
+    if (res === 'double' || res === 'hit') onSwing('hit');
+    onSwing(res);
+    resetTimer.current = setTimeout(() => {
+      resetTimer.current = null;
       setRound(newPatch());
       setBrushed(new Set());
       setFinished(false);
-    }, 500);
+    }, 280);
   };
 
   const chips = brushChips(round.patch, brushed);

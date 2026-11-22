@@ -14,6 +14,7 @@ function setup() {
   const s = newGame(1, { name: 'Rogue test', classId: 'ranger' });
   for (const e of prepBoard(job.id).items.filter((x) => x.kind !== 'ledger').slice(0, 2)) s.heist.prep[prepId(job.id, e.kind)] = 3;
   s.storage.bank.gold = 20000;
+  s.heist.unlockedRogues = ROGUES.map((r) => r.id);
   s.heist.crew = ['bruiser', 'locksmith', 'lookout'];
   return s;
 }
@@ -38,7 +39,7 @@ describe('tactical rogue roster', () => {
     toggleCrew(s, 'shadow');
     expect(s.heist.crew).toEqual(['locksmith', 'lookout', 'shadow']);
     toggleCrew(s, 'shadow');
-    expect(startHeist(s, safe, job.id)).toMatch(/three/);
+    expect(startHeist(s, safe, job.id)).toMatch(/Assign 3 rogues/);
   });
   it('locks crew, talents and mentor training while a job is running', () => {
     const s = run();

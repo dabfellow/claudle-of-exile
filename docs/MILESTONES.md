@@ -1,10 +1,12 @@
 # Roadmap and decisions
 
-Last updated 2026-11-21. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-22. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
-All 12 reworked skills (Thieving, Astrology, Archaeology, Woodcutting, Mining, Smelting, Forging, Woodcrafting, Gemcutting, Foraging, Alchemy, Cartography), the Agility/Cooking/Rune-carving removals, and the 12-skill skilling tree revamp are built locally on the skilling overhaul checkout (2026-11-21). Ready for final verification and playtesting before releasing.
+All 12 reworked skills, Agility/Cooking/Rune-carving removals, 12-skill skilling tree revamp, and the **Skilling UX, Tree Art & Minigame Polish Pass** (2026-11-22, unreleased on local worktree) are complete:
+- Added `<SkillIntro>`, `<HelpTip>`, locked high-level tabs, consistent `Masterworks` tab placement, modern `SawmillView`/`RestorationView`/Forging `High Crucible`/Woodcrafting `Recipes`, CC0 tree artwork across all 7 Woodcutting species, bar-based Mining pick upgrades, zero-start Rogue recruitment via Street Marks, spam-click Pickpocket / 4×3 Brush / Square Optical Scope / 3×3 Garden Bed / Forgiving Cartography Sighting minigames, `Bellows` needle starting left, one-click Alchemy `Brew now`, fixed `The Still Heart` crash, and on-the-fly Gemcutting facets.
+- **Owner review needed:** See [SKILLING_UI_PASS_NOTES.md](SKILLING_UI_PASS_NOTES.md) for full UI polish recommendations, tutorial blueprint, and the 4 former Rune-carving Masterworks (`The Second Heresy`, `The Sum of All Things` using `5× Gilded Stardust`, `Hands of the Forgotten Choir`, `Hollow Circuit`) relocated onto Cartography (with `The Still Heart` updated from deleted `Emberroot Reduction` to `30× Emberroot`).
 
 Act-map readability, quest highlighting and the Quests sidebar page are live in **0.5.10**.
 
@@ -83,7 +85,7 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented. Level 1–99 skilling rework underway. Mining, Smelting, Forging and Woodcrafting built and playtested locally on 2026-11-21. Remaining skills, removals and skilling tree work are still open. |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented. Level 1–99 skilling rework across all 12 skills, retired skill removals, skilling tree revamp, and the 2026-11-22 UX/minigame/tree-art polish pass are complete locally on the skilling overhaul branch; UI pass notes in [SKILLING_UI_PASS_NOTES.md](SKILLING_UI_PASS_NOTES.md) awaiting final owner review before shipping. |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions

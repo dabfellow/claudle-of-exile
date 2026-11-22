@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { baseDef } from '../../data/bases';
 import { FORGE_CHAPTERS, FORGE_CHAPTER_SIZE, forgeBeatMs, forgeStages, masterFormLevel, type ForgeElement, type ForgeStageId } from '../../data/forging';
 import { materialDef } from '../../data/materials';
@@ -15,7 +15,8 @@ import { actionIntervalMs, skillLevel, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Art, MatIcon, ProgressBar, Tabs } from './common';
+import { Art, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
+import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
 import { UseBarGrade } from './FurnaceView';
 import { ItemCell } from './ItemView';
 import { Icon } from './Icon';
@@ -26,6 +27,24 @@ const resultText: Record<SwingResult, string> = { double: 'Double!', hit: 'Hit',
 const elements: { id: ForgeElement; name: string }[] = [
   { id: 'fire', name: 'Fire' }, { id: 'cold', name: 'Cold' }, { id: 'light', name: 'Lightning' },
 ];
+
+type ForgeCategory = 'weapons' | 'shields' | 'armour' | 'jewellery';
+const FORGE_CATEGORIES: { id: ForgeCategory; label: string }[] = [
+  { id: 'weapons', label: 'Weapons' },
+  { id: 'shields', label: 'Shields' },
+  { id: 'armour', label: 'Armour' },
+  { id: 'jewellery', label: 'Jewellery' },
+];
+
+function forgeCategoryOf(baseId: string): ForgeCategory {
+  const slot = baseDef(baseId).slot;
+  if (slot === 'weapon') return 'weapons';
+  if (slot === 'offhand') return 'shields';
+  if (slot === 'ring' || slot === 'amulet' || slot === 'belt') return 'jewellery';
+  return 'armour';
+}
+
+const SINGING_TIP = 'About 1 in 500 forged pieces (higher as you complete Pattern book chapters) emerges Singing. Singing gear lets you choose +1 tier on all mods, +1 extra modifier, or +30% quality.';
 
 function playBeat(audio: AudioContext) {
   const level = music.prefs.volume * 0.15;
@@ -139,7 +158,10 @@ export function ForgeRack({ includeSongs = false }: { includeSongs?: boolean } =
   return (
     <section className="anvil-rack" aria-label="Weapon rack">
       <div className="anvil-heading">
-        <h3>Weapon rack</h3>
+        <div className="row">
+          <h3>Weapon rack</h3>
+          <HelpTip label="Singing gear" tip={SINGING_TIP} />
+        </div>
         {offline.size > 0 && <button className="btn sm ghost" onClick={() => game.act(dismissForgeRack)}>Clear return rack</button>}
       </div>
       <div className="anvil-rack-grid">
@@ -170,11 +192,7 @@ export function ForgeRack({ includeSongs = false }: { includeSongs?: boolean } =
   );
 }
 
-const tabs = [
-  { id: 'anvil', label: 'Anvil' }, { id: 'patterns', label: 'Patterns' }, { id: 'book', label: 'Pattern book' },
-  { id: 'quick', label: 'Quick recipes' }, { id: 'master', label: 'Master forms' }, { id: 'masterworks', label: 'Masterworks' },
-] as const;
-type ForgeTab = typeof tabs[number]['id'];
+type ForgeTab = 'anvil' | 'patterns' | 'book' | 'quick' | 'master' | 'masterworks';
 type SelectedStage = ForgeStageId | 'blank';
 
 function firstPlan(baseId: string, level: number, alloy?: string): ForgePlan {
@@ -198,7 +216,10 @@ function PatternBook({ s }: { s: GameState }) {
           return <div key={id} className="anvil-book-card"><b>{label}</b><ProgressBar value={count / FORGE_CHAPTER_SIZE} label={count >= FORGE_CHAPTER_SIZE ? 'Complete' : `${count} / ${FORGE_CHAPTER_SIZE}`} /></div>;
         })}
       </div>
-      <p className="dim small">{forgingSpeed(s)}% Forging speed · {forgePatternSlots(s)} pattern slots · about 1 in {Math.round(1 / forgeSingingChance(s))} pieces sing</p>
+      <p className="dim small row" style={{ marginTop: 10 }}>
+        <span>{forgingSpeed(s)}% Forging speed · {forgePatternSlots(s)} pattern slots · about 1 in {Math.round(1 / forgeSingingChance(s))} pieces sing</span>
+        <HelpTip label="Singing" tip={SINGING_TIP} />
+      </p>
     </section>
   );
 }
@@ -213,8 +234,11 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
   setNotice: (notice: string) => void;
 }) {
   const [stage, setStage] = useState<SelectedStage>('shape');
+  const [category, setCategory] = useState<ForgeCategory>(() => forgeCategoryOf(plan.baseId));
+  const [showLocked, setShowLocked] = useState(false);
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
+  const presetSelectId = useId();
   const level = skillLevel(s, 'smithing');
   const recipes = forgeRecipes();
   const base = baseDef(plan.baseId);
@@ -230,9 +254,47 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
   const runningTime = running ? actionIntervalMs(s, running, deriveStats(s)) : 1;
   const presetChoices = forgePresetsFor(plan.baseId);
 
+  useEffect(() => {
+    setCategory(forgeCategoryOf(plan.baseId));
+  }, [plan.baseId]);
+
+  const gateOf = (recipe: SkillAction) => (master ? Math.max(recipe.level, masterFormLevel(baseDef(recipe.baseId!))) : recipe.level);
+  const categoryRecipes = recipes
+    .filter((recipe) => recipe.baseId && forgeCategoryOf(recipe.baseId) === category)
+    .sort((a, b) => gateOf(a) - gateOf(b) || a.level - b.level);
+  const unlockedBlanks = categoryRecipes.filter((recipe) => gateOf(recipe) <= level);
+  const lockedBlanks = categoryRecipes.filter((recipe) => gateOf(recipe) > level);
+  const visibleBlanks = showLocked
+    ? categoryRecipes
+    : [
+      ...unlockedBlanks,
+      ...lockedBlanks.slice(0, 1),
+      ...lockedBlanks.slice(1).filter((recipe) => recipe.baseId === plan.baseId),
+    ];
+  const hiddenBlanks = categoryRecipes.length - visibleBlanks.length;
+
   const chooseBase = (id: string) => {
     setPlan(firstPlan(id, level, plan.alloy));
     setStage('shape');
+  };
+  const selectCategory = (next: ForgeCategory) => {
+    setCategory(next);
+    if (forgeCategoryOf(plan.baseId) === next) return;
+    const inCategory = recipes
+      .filter((recipe) => recipe.baseId && forgeCategoryOf(recipe.baseId) === next)
+      .sort((a, b) => gateOf(a) - gateOf(b) || a.level - b.level);
+    const pick = inCategory.find((recipe) => gateOf(recipe) <= level) ?? inCategory[0];
+    if (pick?.baseId) chooseBase(pick.baseId);
+  };
+  const selectAlloy = (id: string) => {
+    const hadAlloy = !!plan.alloy;
+    setPlan({
+      ...plan,
+      legacyPurpose: undefined,
+      alloy: id,
+      choices: { ...plan.choices, signature: level >= 80 ? plan.choices.signature ?? 'amplified' : undefined },
+    });
+    if (!hadAlloy) setStage('signature');
   };
   const selectChoice = (id: ForgeStageId, value: string) => {
     const original = plan.legacyPurpose ? firstPlan(plan.baseId, level, plan.alloy) : plan;
@@ -241,12 +303,81 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
     setPlan({ ...original, choices, element });
   };
 
+  const alloyCards = master ? MASTER_ALLOYS.flatMap((def) => {
+    const livingId = `living_${def.id}`;
+    const livingOwned = s.storage.bank[livingId] ?? 0;
+    const cards: { id: string; def: (typeof MASTER_ALLOYS)[number]; living: boolean; owned: number }[] = [
+      { id: def.id, def, living: false, owned: s.storage.bank[def.id] ?? 0 },
+    ];
+    if (livingOwned > 0 || plan.alloy === livingId) {
+      cards.push({ id: livingId, def, living: true, owned: livingOwned });
+    }
+    return cards;
+  }) : [];
+
+  const blankPicker = (
+    <div className={`anvil-blank-picker ${stage === 'blank' ? 'focused' : ''}`}>
+      <div className="anvil-blank-head">
+        <div className="gem-chips" role="tablist" aria-label="Item category">
+          {FORGE_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              role="tab"
+              aria-selected={category === cat.id}
+              className={`gem-chip ${category === cat.id ? 'active' : ''}`}
+              onClick={() => selectCategory(cat.id)}
+            >{cat.label}</button>
+          ))}
+        </div>
+        {(hiddenBlanks > 0 || showLocked) && (
+          <label className="check small">
+            <input type="checkbox" checked={showLocked} onChange={(e) => setShowLocked(e.target.checked)} />
+            {' '}Show locked{hiddenBlanks > 0 ? ` (${hiddenBlanks})` : ''}
+          </label>
+        )}
+      </div>
+      <div className="anvil-blank-grid" role="group" aria-label="Select blank">
+        {visibleBlanks.map((recipe) => {
+          const b = baseDef(recipe.baseId!);
+          const gate = gateOf(recipe);
+          const isLocked = gate > level;
+          const isActive = b.id === base.id;
+          return (
+            <button
+              key={recipe.id}
+              type="button"
+              className={`anvil-blank-btn ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
+              aria-pressed={isActive}
+              onClick={() => chooseBase(b.id)}
+            >
+              <Art src={`items/${b.id}`} alt="" size={26} fallback={<Icon name={b.slot} size={20} />} />
+              <span className="anvil-blank-meta">
+                <b>{b.name}</b>
+                {isLocked ? <LockedBadge level={gate} /> : <span className="dim small num">Lv {gate}</span>}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
-    <section className="anvil-workspace">
+    <section className={`anvil-workspace ${master ? 'master-crucible' : ''}`}>
+      {master ? (
+        <SkillIntro step="The High Crucible">
+          Infuse forged gear with Master Alloys for guaranteed Signature modifiers and high-tier Endgame stats.
+        </SkillIntro>
+      ) : (
+        <SkillIntro step="Start here: Choose a blank & forge stages">
+          Choose a category and blank below, customise its stages, and click Forge once — or save patterns for idle repeating.
+        </SkillIntro>
+      )}
       <div className="anvil-heading">
         <div>
-          <h3>{master ? 'Master forms' : 'At the anvil'}</h3>
-          {master && <p className="dim small">One-handed weapons open at 80, two-handed weapons at 85, armour at 88 and jewellery at 92.</p>}
+          <h3>{master ? 'The High Crucible · Master Alloy Forms' : 'At the anvil'}</h3>
+          {master && <p className="dim small">Tier unlocks: Lv 80 one-handed weapons · Lv 85 two-handed weapons · Lv 88 armour &amp; shields · Lv 92 jewellery.</p>}
         </div>
         {!master && s.forging.patterns.length > 0 && (
           <label className="anvil-select">Load a pattern
@@ -255,15 +386,55 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
               if (pattern && !pattern.alloy) setPlan(pattern);
             }}>
               <option value="">Choose a pattern</option>
-              {s.forging.patterns.filter(({ alloy }) => !alloy).map((pattern) => <option key={pattern.id} value={pattern.id}>{pattern.name}</option>)}
+              {s.forging.patterns.filter(({ alloy: a }) => !a).map((pattern) => <option key={pattern.id} value={pattern.id}>{pattern.name}</option>)}
             </select>
           </label>
         )}
       </div>
       <div className="anvil-work-grid">
         <div className="anvil-plan">
+          {master && (
+            <div className="crucible-showcase">
+              <div className="crucible-showcase-head">
+                <b>Master Alloy Showcase</b>
+                <span className="dim small">{plan.alloy ? `Infusing ${materialDef(plan.alloy).name}` : 'Select an alloy to bind its signature'}</span>
+              </div>
+              <div className="crucible-alloy-grid" role="group" aria-label="Master Alloys">
+                {alloyCards.map(({ id, def, living, owned }) => {
+                  const selectedAlloy = plan.alloy === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className={`crucible-alloy-card ${selectedAlloy ? 'active' : ''} ${living ? 'living' : ''} ${owned === 0 ? 'empty' : ''}`}
+                      aria-pressed={selectedAlloy}
+                      onClick={() => selectAlloy(id)}
+                    >
+                      <div className="crucible-alloy-top">
+                        <span className="crucible-alloy-swatch" style={{ background: def.color, boxShadow: `0 0 10px ${def.color}66` }} aria-hidden="true" />
+                        <MatIcon id={id} size={18} />
+                        <b>{living ? `Living ${def.name}` : def.name}</b>
+                        <span className="spacer" />
+                        <span className={`crucible-alloy-stock num ${owned > 0 ? 'has' : ''}`}>{owned} owned</span>
+                      </div>
+                      <p className="crucible-alloy-sig">{def.signature}{living ? ' · +1 random second alloy signature' : ''}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {!master && blankPicker}
+
+          <div className="anvil-stage-head">
+            <HelpTip
+              label="Stage Track"
+              tip="Walk through Shape, Temper, Edge/Rim/Setting, and Finish (plus Signature in the High Crucible). Each stage shapes which modifier groups roll more often, or adds quality, speed, or extra mods."
+            />
+          </div>
           <div className="anvil-stage-track" aria-label="Forge stages">
-            <button className={stage === 'blank' ? 'active' : ''} onClick={() => setStage('blank')} aria-pressed={stage === 'blank'}>Blank</button>
+            <button className={stage === 'blank' ? 'active' : ''} onClick={() => setStage('blank')} aria-pressed={stage === 'blank'}>Blank<small>{base.name}</small></button>
             {stages.map((entry) => (
               <button key={entry.id} className={stage === entry.id ? 'active' : ''} onClick={() => setStage(entry.id)} aria-pressed={stage === entry.id}>
                 {entry.label}
@@ -282,29 +453,17 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
             <span className="anvil-block" aria-hidden="true" />
             <b>{base.name}</b>
           </div>
-          <div className="anvil-fields">
-            <label className="anvil-select">Blank
-              <select value={base.id} onChange={(event) => chooseBase(event.target.value)}>
-                {recipes.map((recipe) => <option key={recipe.id} value={recipe.baseId}>{baseDef(recipe.baseId!).name} · Lv {master ? Math.max(recipe.level, masterFormLevel(baseDef(recipe.baseId!))) : recipe.level}</option>)}
-              </select>
-            </label>
-            {master && (
-              <label className="anvil-select">Master alloy
-                <select value={plan.alloy ?? ''} onChange={(e) => {
-                  const alloy = e.target.value || undefined;
-                  setPlan({ ...plan, alloy, choices: { ...plan.choices, signature: alloy && level >= 80 ? plan.choices.signature ?? 'amplified' : undefined } });
-                  setStage('signature');
-                }}>
-                  <option value="">Choose an alloy</option>
-                  {MASTER_ALLOYS.flatMap((alloy) => [alloy.id, `living_${alloy.id}`].map((id) => (
-                    <option key={id} value={id} disabled={(s.storage.bank[id] ?? 0) === 0}>{materialDef(id).name} · {s.storage.bank[id] ?? 0} owned</option>
-                  )))}
-                </select>
-              </label>
-            )}
-            {!master && presetChoices.length > 0 && (
-              <label className="anvil-select">Purpose presets
-                <select value={plan.legacyPurpose ?? ''} onChange={(event) => {
+
+          {master && blankPicker}
+
+          {!master && presetChoices.length > 0 && (
+            <div className="anvil-fields">
+              <div className="anvil-select">
+                <span className="anvil-label-row">
+                  <label htmlFor={presetSelectId}>Purpose presets</label>
+                  <HelpTip tip="Ready-made stage recipes that guarantee two specific starter modifiers (such as Physical damage, Protection, or elemental Resistances) instead of pure random weights." />
+                </span>
+                <select id={presetSelectId} value={plan.legacyPurpose ?? ''} onChange={(event) => {
                   const preset = presetChoices.find(({ id }) => id === event.target.value);
                   setPlan(preset ? forgePreset(preset) : firstPlan(plan.baseId, level));
                   setStage('shape');
@@ -312,9 +471,9 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
                   <option value="">Custom path</option>
                   {presetChoices.map((recipe) => <option key={recipe.id} value={recipe.id}>{recipe.name}</option>)}
                 </select>
-              </label>
-            )}
-          </div>
+              </div>
+            </div>
+          )}
           {selected && (
             <div className="anvil-choices" aria-label={selected.label}>
               {selected.choices.map((choice) => (
@@ -339,7 +498,11 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
               <span>{Math.round(actionIntervalMs(s, action, deriveStats(s)) / 1000)} s per piece</span>
             </div>
           )}
-          <UseBarGrade />
+          <div className="anvil-fields">
+            <UseBarGrade />
+            <span className="spacer" />
+            <HelpTip label="Singing gear" tip={SINGING_TIP} />
+          </div>
           <div className="anvil-actions">
             <button className="btn primary" disabled={!!blocker} onClick={start}>Forge once</button>
             <button className="btn" disabled={(master && !plan.alloy) || s.forging.patterns.length >= forgePatternSlots(s)} onClick={() => setSaving(!saving)}>Save pattern</button>
@@ -396,18 +559,43 @@ export function AnvilView({ quickRecipes, catalysts, masterworks }: { quickRecip
       setTab(chosen.alloy ? 'master' : 'anvil');
     }
   };
+  const forgeTabs: TabDef<ForgeTab>[] = [
+    { id: 'anvil', label: 'Anvil' },
+    {
+      id: 'patterns',
+      label: 'Patterns',
+      locked: level < 10 && s.forging.patterns.length === 0 ? 'Unlocks at Forging Lv 10 (or save a pattern at the Anvil)' : undefined,
+    },
+    { id: 'book', label: 'Pattern book' },
+    { id: 'quick', label: 'Quick recipes' },
+    {
+      id: 'master',
+      label: 'Master forms',
+      locked: level < 80 ? 'Unlocks at Forging Lv 80 (Master Alloy gear)' : undefined,
+    },
+    ...(masterworks ? [{ id: 'masterworks' as const, label: 'Masterworks' }] : []),
+  ];
   return (
     <div className="forge-anvil">
-      <Tabs tabs={tabs.filter(({ id }) => id !== 'masterworks' || !!masterworks)} value={tab} onChange={(next) => { setNotice(''); setTab(next); }} />
+      <Tabs tabs={forgeTabs} value={tab} onChange={(next) => { setNotice(''); setTab(next); }} />
       {tab === 'anvil' && <ForgePlanPanel s={s} plan={plan} setPlan={setPlan} master={false} start={() => start(plan)} notice={notice} setNotice={setNotice} />}
       {tab === 'master' && <ForgePlanPanel s={s} plan={masterPlan} setPlan={setMasterPlan} master start={() => start(masterPlan)} notice={notice} setNotice={setNotice} />}
       {(tab === 'anvil' || tab === 'master' || tab === 'quick') && catalysts}
       {(tab === 'anvil' || tab === 'master') && <ForgeRack includeSongs />}
-      {tab === 'quick' && <><UseBarGrade />{quickRecipes}</>}
+      {tab === 'quick' && <>
+        <SkillIntro step="Quick recipes">
+          Classic one-click recipes and Boss Keys without stage customisation. Use the Anvil tab for mod weights, Pattern book chapters, and Singing gear.
+        </SkillIntro>
+        <UseBarGrade />
+        {quickRecipes}
+      </>}
       {tab === 'masterworks' && <><UseBarGrade />{masterworks}</>}
       {tab === 'book' && <PatternBook s={s} />}
       {tab === 'patterns' && (
         <section className="anvil-patterns">
+          <SkillIntro step="Repeat forging">
+            Save your favourite stage setups at the Anvil, then start one here to forge repeatedly while idle or offline.
+          </SkillIntro>
           <div className="anvil-heading"><h3>Saved patterns</h3><span>{s.forging.patterns.length} / {forgePatternSlots(s)} slots</span></div>
           {s.forging.patterns.length === 0 && <p className="dim small">Choose a stage path at the anvil and save it here to repeat it while idle or away.</p>}
           {s.forging.patterns.map((pattern) => {

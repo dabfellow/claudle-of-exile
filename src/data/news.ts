@@ -25,6 +25,15 @@ export const UPCOMING: string[] = [
   'Cartography now assembles special Boss, Vault, Guardian, Pinnacle and Lost Chart maps from scraps and trophies dropped in Maps, with an Atlas of special maps, a two-axis sighting Focus minigame, and a drafting-table collectible. Plain Tier 1 maps now come from monster drops.',
   'Agility, Cooking and Rune-carving have been retired: close-in and Heist room speeds run at normal pace, meal buffs and rune slots are removed, cooking extracts convert to herbs (3:1), and active feast projects are refunded.',
   'The skilling passive tree has been rebuilt as a 12-skill ring of partners (186 allocatable nodes, up to 118 points including Astrology): every branch forks into two specialisations with 12 bridge keystones between neighbouring skills, and all spent skilling points have been refunded.',
+  'All 12 reworked skills now include Step 1 onboarding banners, inline `?` help tooltips on unfamiliar terms, locked high-level tabs, and clearer upcoming/unlocked tier filters.',
+  'Mining pick upgrades now spend metal bars instead of raw ore, the Delve shows timber shaft framing with Masterworks in its own top tab, and reached strata hide far-off layers by default.',
+  'Woodcutting Giant trees now display distinct pixel tree artwork for all seven species with explicit Drop and Purpose labels, alongside a modernised Sawmill tab.',
+  'New thieves now start with zero crew and discover contacts by working Street Marks; Pickpocket uses a rapid spam-click minigame during distracted guard windows.',
+  'Archaeology sites now live directly under the Scholar’s Desk, Culture Merchants stay cleanly out of the Masterworks tab, Restoration & Sifting has a refreshed UI, and soil brushing uses a faster 4×3 grid.',
+  'Astrology opens on Research when you have no stars yet and features a new square optical eyepiece with rotating outer focus rings.',
+  'Smelting bellows needles now start all the way to the left with an inline Quick Smelt picker; Forging swaps flat blank dropdowns for category filters and a High Crucible Master Forms workshop; Woodcrafting removes stray elemental resistance shields and refreshes the Recipes tab.',
+  'Alchemy lets you Brew Now in one click from Infusions and fixes a crash when opening The Still Heart on Masterworks (which now uses Emberroots).',
+  'Gemcutting lets you toggle facets on the fly without saved plan forms, and Cartography widens sighting rings and shows map/material requirements clearly. Former Rune-carving Masterworks (The Second Heresy, The Sum of All Things, Hands of the Forgotten Choir, and Hollow Circuit) can now be crafted in Cartography.',
 ];
 
 export const NEWS: NewsEntry[] = [

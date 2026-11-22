@@ -4,13 +4,14 @@ import { actionsFor } from '../../data/skills';
 import { ROGUES, SPECIALTIES, rogueLevelXp, talentPoints, type Rogue } from '../../data/rogues';
 import { materialDef } from '../../data/materials';
 import { activeCrew, chooseTactic, learnTalent, matchesRoom, roomRevealed, roomSpecialty, scoutRoom, tacticReason, trainReason, trainRogue, vaultProfile } from '../../engine/rogues';
-import { alarmChance, alarmKeeps, canStartJob, cleanChance, crewSlots, heistGearTargetPool, jobBlocker, jobExit, prepHeld, prepKindsHeld, roomMs, setJobExit, setJobGearTarget, setPlannedJob, startHeist, stopHeistRepeat, toggleCrew, type HeistGearCategory } from '../../engine/heist';
+import { alarmChance, alarmKeeps, canStartJob, cleanChance, crewSlots, heistGearTargetPool, jobBlocker, jobExit, prepChance, prepHeld, prepKindsHeld, roomMs, setJobExit, setJobGearTarget, setPlannedJob, startHeist, stopHeistRepeat, toggleCrew, type HeistGearCategory } from '../../engine/heist';
 import { masteryLevel } from '../../engine/skillingMastery';
 import { startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Art, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tooltip } from './common';
+import { Art, Badge, EmptyState, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tooltip } from './common';
+import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
 import { MasteryProgress, MasteryTip } from './MasteryProgress';
 import { SkillMinigame } from './SkillMinigame';
 import './thieving-ledger.css';
@@ -126,6 +127,7 @@ function JobDossier({ s, job }: { s: GameState; job: HeistJob }) {
       {!blocker && board.items.length > 0 && <div className="thief-rewards thief-prep" aria-label="Prep board">
         <div className="thief-prep-head">
           <h3>Prep board</h3>
+          <HelpTip tip="Street Marks drop prep items for jobs whose level you meet. Plan a job to mark helpful Street Marks, then hold the minimum items to start. Each run consumes 1 of each held item for its bonus." />
           <span className="spacer" />
           <button className={`btn sm ${planned ? 'selected' : 'ghost'}`} aria-pressed={planned} title="Marks that can give prep for this job get a badge" onClick={() => game.act((st) => { setPlannedJob(st, planned ? null : job.id); })}>{planned ? 'Planned job' : 'Plan this job'}</button>
         </div>
@@ -135,8 +137,16 @@ function JobDossier({ s, job }: { s: GameState; job: HeistJob }) {
           const mark = actionsFor('thieving').find((a) => a.id === e.mark);
           const n = held[e.kind] ?? 0;
           const working = workingMark === e.mark;
+          const dropPct = +(prepChance(s, e.mark) * 100).toFixed(1);
           return <div className="thief-prep-item" key={e.kind}>
-            <div className="thief-prep-text"><b>{def.name}</b><small>{def.effect}</small><small>From {mark?.name ?? e.mark}</small></div>
+            <div className="thief-prep-text">
+              <span className="thief-prep-name">
+                <b>{def.name}</b>
+                <HelpTip tip={`${def.effect} Drops from ${mark?.name ?? e.mark} (${dropPct}% per completion, max ${PREP_CAP} stored). One is consumed per run.`} />
+              </span>
+              <small>{def.effect}</small>
+              <small>From {mark?.name ?? e.mark} ({dropPct}%)</small>
+            </div>
             <span className="num thief-prep-held" title="Held">{n}/{PREP_CAP}</span>
             <button className="btn sm" disabled={!mark || working} onClick={() => game.act((st, ctx) => { startSkillAction(st, ctx, e.mark); })}>{working ? 'Working' : 'Work this mark'}</button>
           </div>;
@@ -179,21 +189,35 @@ function HeistLedger() {
   const s = useGame();
   const runningId = s.action?.kind === 'heist' ? s.action.jobId : s.heist.auto || null;
   const open = HEIST_JOBS.filter((j) => !jobBlocker(s, j));
+  const nextLocked = HEIST_JOBS.find((j) => !!jobBlocker(s, j));
   const [selectedId, setSelectedId] = useState(() => runningId ?? open.at(-1)?.id ?? HEIST_JOBS[0].id);
-  const [onlyUnlocked, setOnlyUnlocked] = useState(false);
+  const [onlyUnlocked, setOnlyUnlocked] = useState(true);
   const job = HEIST_JOBS.find((j) => j.id === selectedId) ?? HEIST_JOBS[0];
-  const shown = onlyUnlocked ? open : HEIST_JOBS;
+  const shown = onlyUnlocked ? [...open, ...(nextLocked ? [nextLocked] : [])] : HEIST_JOBS;
   const { tally } = s.heist;
+  const unlockedCount = s.heist.unlockedRogues?.length ?? 0;
+  const crewCount = activeCrew(s).length;
 
-  return <div className="thief-workspace">
+  return <>
+    <SkillIntro
+      step="How Heists work"
+      action={unlockedCount < 3
+        ? <Badge tone="warn">Recruits: {unlockedCount}/3</Badge>
+        : crewCount !== 3
+          ? <Badge tone="warn">Crew: {crewCount}/3</Badge>
+          : <Badge tone="success">Crew ready: 3/3</Badge>}
+    >
+      Plan a job → find Prep items on Street Marks → run the Heist with a 3-rogue crew
+    </SkillIntro>
+    <div className="thief-workspace">
     <section className="card thief-ledger" aria-label="Heist ledger">
-      <div className="thief-ledger-title"><h2>Heist Operations</h2><span className="dim small num">{tally.jobs} done · {tally.alarms} alarms</span><button className="btn sm ghost" onClick={() => setOnlyUnlocked((v) => !v)}>{onlyUnlocked ? 'Show all' : 'Unlocked only'}</button></div>
+      <div className="thief-ledger-title"><h2>Heist Operations</h2><span className="dim small num">{tally.jobs} done · {tally.alarms} alarms</span><button className="btn sm ghost" onClick={() => setOnlyUnlocked((v) => !v)}>{onlyUnlocked ? `Show all (${HEIST_JOBS.length})` : 'Unlocked only'}</button></div>
       <div className="thief-group">
         <div className="thief-columns" aria-hidden><span>Job</span><span>Level</span><span>Rooms</span><span>Prep</span><span>Mastery</span></div>
         {shown.map((j) => {
           const reason = jobBlocker(s, j);
           return <button key={j.id} className={`thief-target ${job.id === j.id ? 'selected' : ''} ${reason ? 'locked' : ''}`} aria-pressed={job.id === j.id} title={reason ?? `View ${j.name}`} onClick={() => setSelectedId(j.id)}>
-            <span className="thief-target-name"><JobPortrait job={j} /><span><b>{j.name}</b>{runningId === j.id ? <small className="thief-working">{s.action?.kind === 'heist' ? `On the job · room ${s.action.room}` : 'Casing the job'}</small> : <small className="thief-sub">{j.favours}</small>}</span>{reason && <GameIcon name="lock" size={12} />}</span>
+            <span className="thief-target-name"><JobPortrait job={j} /><span><b>{j.name}</b>{runningId === j.id ? <small className="thief-working">{s.action?.kind === 'heist' ? `On the job · room ${s.action.room}` : 'Casing the job'}</small> : <small className="thief-sub">{j.favours}</small>}</span>{reason && <LockedBadge level={j.level} reason={reason} />}</span>
             <span className="num thief-cell" data-label="Level">{j.level}</span>
             <span className="num thief-cell" data-label="Rooms">{j.rooms}</span>
             <span className="num thief-cell" data-label="Prep">{prepKindsHeld(s, j.id)}/{prepBoard(j.id).min}</span>
@@ -208,7 +232,8 @@ function HeistLedger() {
       </div>
     </section>
     <JobDossier s={s} job={job} />
-  </div>;
+  </div>
+  </>;
 }
 
 function RogueDossier({ s, rogue }: { s: GameState; rogue: Rogue }) {
@@ -244,7 +269,10 @@ function RogueDossier({ s, rogue }: { s: GameState; rogue: Rogue }) {
         <ProgressBar value={r.level === 100 ? 1 : r.xp / rogueLevelXp(r.level)} color="#88682f" />
       </div>
       <div className="thief-dossier-section">
-        <h3>Mentor training</h3>
+        <div className="thief-prep-head" style={{ marginBottom: 12 }}>
+          <h3>Mentor training</h3>
+          <HelpTip tip="Pay 5,000 gold to teach this rogue an extra room specialty. They step off the active crew for 2 completed heists (even if an alarm sounds) and keep the mastery permanently." />
+        </div>
         {r.training ? <p className="thief-reward-note">Training {r.training.specialty}: away for {r.training.remaining} more completed heists.</p> : <div className="thief-plan">
           <select aria-label={`${rogue.name} mentor specialty`} value={specialty} onChange={(e) => setSpecialty(e.target.value)}>{SPECIALTIES.filter((x) => x !== rogue.primary).map((x) => <option key={x}>{x}</option>)}</select>
           <span className="spacer" />
@@ -270,38 +298,67 @@ function RogueDossier({ s, rogue }: { s: GameState; rogue: Rogue }) {
 
 function CrewLedger() {
   const s = useGame();
-  const [selectedId, setSelectedId] = useState(() => s.heist.crew[0] ?? ROGUES[0].id);
-  const rogue = ROGUES.find((r) => r.id === selectedId) ?? ROGUES[0];
-  const crewSet = (onCrew: boolean) => ROGUES.filter((r) => s.heist.crew.includes(r.id) === onCrew);
+  const unlockedIds = s.heist.unlockedRogues ?? [];
+  const unlockedRogues = ROGUES.filter((r) => unlockedIds.includes(r.id));
+  const [selectedId, setSelectedId] = useState(() => s.heist.crew[0] ?? unlockedRogues[0]?.id ?? '');
+  const rogue = unlockedRogues.find((r) => r.id === selectedId) ?? unlockedRogues.find((r) => s.heist.crew.includes(r.id)) ?? unlockedRogues[0] ?? null;
+  const crewSet = (onCrew: boolean) => unlockedRogues.filter((r) => s.heist.crew.includes(r.id) === onCrew);
   const row = (r: Rogue) => {
     const p = s.heist.roster?.[r.id];
     const onCrew = s.heist.crew.includes(r.id);
-    return <button key={r.id} className={`thief-target crew ${rogue.id === r.id ? 'selected' : ''}`} aria-pressed={rogue.id === r.id} title={`View ${r.name}`} onClick={() => setSelectedId(r.id)}>
+    return <button key={r.id} className={`thief-target crew ${rogue?.id === r.id ? 'selected' : ''}`} aria-pressed={rogue?.id === r.id} title={`View ${r.name}`} onClick={() => setSelectedId(r.id)}>
       <span className="thief-target-name"><Portrait src={ROGUE_PORTRAITS[r.id]} icon="thieving" /><span><b>{r.name} · {r.class}</b>{p?.training ? <small className="thief-sub">Training {p.training.specialty}</small> : onCrew ? <small className="thief-working">On the crew</small> : <small className="thief-sub">{r.primary}</small>}</span></span>
       <span className="num thief-cell" data-label="Level">{p?.level ?? 1}</span>
       <span className="num thief-cell" data-label="Talents">{p ? `${p.talents.length}/10` : '—'}</span>
       <span className="num thief-cell thief-mastery-number" data-label="Points">{p ? talentPoints(p) : 0}</span>
     </button>;
   };
-  return <div className="thief-workspace">
-    <section className="card thief-ledger" aria-label="Rogue crew ledger">
-      <div className="thief-ledger-title"><h2>Rogue Crew</h2><span className="dim small num">{s.heist.crew.length} of {crewSlots(s)} places</span></div>
-      <div className="thief-group">
-        <div className="thief-group-heading" role="heading" aria-level={3}><b>On the crew</b><span className="spacer" /><span className="num">{s.heist.crew.length}/{crewSlots(s)}</span></div>
-        <div className="thief-columns crew" aria-hidden><span>Rogue</span><span>Level</span><span>Talents</span><span>Points</span></div>
-        {crewSet(true).map(row)}
-        {!s.heist.crew.length && <p className="dim small">Nobody yet. Pick a rogue and choose Bring along.</p>}
+  return <>
+    <SkillIntro
+      step="Recruit & assign 3 rogues"
+      action={<Badge tone={unlockedRogues.length >= 3 ? 'success' : 'neutral'}>Recruited {unlockedRogues.length} / {ROGUES.length}</Badge>}
+    >
+      Work Street Marks to discover rogue contacts, then click Bring along to put 3 on your crew
+    </SkillIntro>
+    {unlockedRogues.length === 0 ? (
+      <div className="thief-workspace single">
+        <section className="card thief-ledger" aria-label="Rogue crew ledger">
+          <div className="thief-ledger-title">
+            <h2>Rogue Crew</h2>
+            <span className="dim small num">Recruited 0 / {ROGUES.length} · 0 of {crewSlots(s)} on crew</span>
+          </div>
+          <EmptyState icon={<GameIcon name="thieving" size={28} />} title="No contacts yet">
+            Work Street Marks to discover rogue contacts looking for work. Your first 3 recruits are guaranteed within 3, 7, and 12 Street Mark completions — then return here and click Bring along to form a 3-rogue Heist crew.
+          </EmptyState>
+        </section>
       </div>
-      <div className="thief-group">
-        <div className="thief-group-heading" role="heading" aria-level={3}><b>Available</b><span className="spacer" /><span className="num">{crewSet(false).length}</span></div>
-        {crewSet(false).map(row)}
+    ) : (
+      <div className="thief-workspace">
+        <section className="card thief-ledger" aria-label="Rogue crew ledger">
+          <div className="thief-ledger-title">
+            <h2>Rogue Crew</h2>
+            <span className="dim small num">Recruited {unlockedRogues.length} / {ROGUES.length} · {s.heist.crew.length}/{crewSlots(s)} on crew</span>
+          </div>
+          <div className="thief-group">
+            <div className="thief-group-heading" role="heading" aria-level={3}><b>On the crew</b><span className="spacer" /><span className="num">{s.heist.crew.length}/{crewSlots(s)}</span></div>
+            <div className="thief-columns crew" aria-hidden><span>Rogue</span><span>Level</span><span>Talents</span><span>Points</span></div>
+            {crewSet(true).map(row)}
+            {!s.heist.crew.length && <p className="dim small">Nobody yet. Pick a recruited rogue and choose Bring along.</p>}
+          </div>
+          <div className="thief-group">
+            <div className="thief-group-heading" role="heading" aria-level={3}><b>Available</b><span className="spacer" /><span className="num">{crewSet(false).length}</span></div>
+            {crewSet(false).map(row)}
+            {!crewSet(false).length && <p className="dim small">All recruited contacts are currently on your crew.</p>}
+          </div>
+          <div className="thief-marker-note">
+            {unlockedRogues.length < 3 && <p>Recruit {3 - unlockedRogues.length} more {3 - unlockedRogues.length === 1 ? 'rogue' : 'rogues'} on Street Marks to fill your 3-rogue Heist crew.</p>}
+            <p>A heist needs three rogues. Bringing along a fourth sends the first one home. The crew and their talents stay fixed while a heist is under way.</p>
+          </div>
+        </section>
+        {rogue && <RogueDossier key={rogue.id} s={s} rogue={rogue} />}
       </div>
-      <div className="thief-marker-note">
-        <p>A heist needs three rogues. Bringing along a fourth sends the first one home. The crew and their talents stay fixed while a heist is under way.</p>
-      </div>
-    </section>
-    <RogueDossier key={rogue.id} s={s} rogue={rogue} />
-  </div>;
+    )}
+  </>;
 }
 
 /** Thieving's other half: the heist ledger and the crew ledger, each beside a dossier. */

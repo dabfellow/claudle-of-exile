@@ -1,5 +1,6 @@
+.lapidary { display: grid; gap: 12px; }
 .lapidary-work { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
-.lapidary-side, .lapidary-card, .lapidary-card form { display: grid; align-content: start; gap: 10px; }
+.lapidary-side, .lapidary-card, .lapidary-card form { display: grid; align-content: start; gap: 10px; min-width: 0; }
 .lapidary .lapidary-card { padding: 14px; margin: 0; }
 .lapidary-card h2, .lapidary-card h3, .lapidary-card p, .lapidary-tray p { margin: 0; }
 .lapidary-card label { display: grid; gap: 5px; }
@@ -8,12 +9,17 @@
 .lapidary-rough { width: 66px; height: 78px; clip-path: polygon(18% 9%, 79% 0, 100% 42%, 83% 90%, 30% 100%, 0 54%); background: linear-gradient(134deg,#bfb9ff,#4d487f 51%,#292646 52%,#8074c0); box-shadow: inset 0 0 16px #b1b3ef; }
 .lapidary-stone.star .lapidary-rough { background: radial-gradient(circle at center,#fff8ad,#eeb963 23%,#7d4854 56%,#372043); }
 .lapidary-faces, .lapidary-costs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-.lapidary-face { border: 1px solid #55766c; border-radius: 4px; padding: 4px 8px; color: var(--muted); background: none; }
+.lapidary-face { border: 1px solid #55766c; border-radius: 4px; padding: 4px 8px; color: var(--muted); background: none; font-size: 12px; }
 .lapidary-face.filled { color: #e2fff0; background: #365f51; cursor: pointer; }
+.lapidary-face.pill { cursor: default; }
 .lapidary-costs { justify-content: flex-start; gap: 6px 12px; }
-.lapidary-facet-list, .lapidary-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(145px,100%),1fr)); gap: 8px; }
-.lapidary .lapidary-choice { display: grid; text-align: left; white-space: normal; }
+.lapidary-facet-list, .lapidary-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(185px,100%),1fr)); gap: 8px; }
+.lapidary .lapidary-choice { display: grid; gap: 4px; text-align: left; white-space: normal; align-content: start; min-width: 0; }
+.lapidary .lapidary-choice.locked { opacity: 0.68; border-style: dashed; }
 .lapidary-entry { padding: 7px 9px; background: #25312c; border-radius: 5px; }
+.lapidary-recycle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(270px, 100%), 1fr)); gap: 10px; }
+.lapidary-recycle-card { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2, rgba(20, 28, 26, 0.72)); min-width: 0; align-content: start; }
+.lapidary-recycle-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .lapidary-tray { display: grid; gap: 8px; }
 .lapidary-tray-piece { display: flex; gap: 8px; align-items: center; }
 .lapidary-tray-piece.star { color: #ffd487; }

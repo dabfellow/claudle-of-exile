@@ -38,6 +38,18 @@ The `zones/terrain-*.webp` images are existing illustrations, paintings and prin
 | Workshop | Jean-Alphonse Duplessy, [Cobbler's Quarters](https://www.clevelandart.org/art/1980.257) | CC0 |
 | Forge | Charles-Émile Jacque, [The Blacksmith Shop](https://www.clevelandart.org/art/1921.1444) | CC0 |
 | Underworks | Giovanni Battista Piranesi, [The Prisons: An Immense Interior with a Drawbridge](https://www.clevelandart.org/art/1941.26.5) | CC0 |
+
+## Woodcutting Giant Trees
+
+The `trees/*.png` pixel tree sprites are sourced from OpenGameArt packs under CC0:
+
+| Tree sprite(s) | Author & Pack | License | Notes |
+|---|---|---|---|
+| `ash.png`, `oak.png`, `ancient.png`, `worldwood.png` | Croomfolk, [Pixelled Trees](https://opengameart.org/content/pixelled-trees) | CC0 | `worldwood.png` recoloured emerald-jade |
+| `yew.png` | stealthyshiroean, [Pixel Pine Tree Assets 10-pack](https://opengameart.org/content/pixel-pine-tree-assets-10-pack) | CC0 | — |
+| `ironwood.png` | cemkalyoncu, [Haunted Forest Trees](https://opengameart.org/content/haunted-forest-trees) | CC0 | Tinted cool iron-slate |
+| `spirit.png` | Snabisch, [Some Pixel Trees](https://opengameart.org/content/some-pixel-trees) | CC0 | Background removed, tinted moonlight blue |
+
 - **music/\*.ogg**: 10 Medieval Tracks by AlkaKrab (itch.io), free pack, the looping versions of Silverbrook, Emberlight, Elven Dawn and Throne of Storms, re-encoded to 96 kbps Opus. Assumed free for public use while the game isn't sold. The pack's licence PDF goes further: royalty-free, commercial use allowed, credit appreciated, edits for timing, volume or EQ allowed. The files may not be redistributed as-is, and open-source games need the author's permission (alkakrab04@gmail.com), so ask before making this repo public.
 
 Current game-id mappings are in `src/ui/assets.ts`; custom overrides are in `src/assets/art`. Historical recolour recipes are retained below; they are provenance, not a current art coverage report.

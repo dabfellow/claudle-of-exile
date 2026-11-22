@@ -29,7 +29,7 @@ export function baseCategory(b: BaseDef): 'weapon' | 'armour' | 'jewellery' {
 }
 
 export function newHeistState(): HeistState {
-  return { rogues: {}, roster: newRoster(), crew: ['infiltrator', 'locksmith', 'lookout'], exits: {}, auto: null, planned: null, prep: {}, tally: { jobs: 0, alarms: 0 } };
+  return { rogues: {}, roster: newRoster(), unlockedRogues: [], crew: [], exits: {}, auto: null, planned: null, prep: {}, tally: { jobs: 0, alarms: 0 } };
 }
 
 // ---------- the crew ----------
@@ -109,7 +109,10 @@ export function canStartJob(s: GameState, jobId: string): string | null {
   const job = heistJob(jobId);
   const blocker = jobBlocker(s, job);
   if (blocker) return blocker;
-  if (s.heist.roster && activeCrew(s).length !== 3) return 'Select three available rogues first';
+  if (s.heist.roster) {
+    if ((s.heist.unlockedRogues?.length ?? 0) < 3) return 'Recruit 3 rogues from Street Marks first';
+    if (activeCrew(s).length !== 3) return 'Assign 3 rogues on the Rogue Crew tab first';
+  }
   const min = prepBoard(jobId).min;
   if (prepKindsHeld(s, jobId) < min) return `Needs ${min} of these`;
   return null;
@@ -166,6 +169,7 @@ export function toggleCrew(s: GameState, id: string): string | null {
   if (h.roster) {
     if (s.action?.kind === 'heist') return 'Finish the current heist first';
     if (!rogueById(id) || !h.roster[id]) return 'Unknown rogue';
+    if (!h.crew.includes(id) && !(h.unlockedRogues ?? []).includes(id)) return 'Recruit this rogue by working Street Marks first';
     if (h.roster[id].training) return 'Unavailable during mentor training';
     h.crew = h.crew.includes(id) ? h.crew.filter((x) => x !== id) : [...h.crew, id].slice(-3);
     return null;
@@ -294,7 +298,10 @@ export function startHeist(s: GameState, ctx: Ctx, jobId: string): string | null
     ctx.emit({ t: 'info', text: blocker, tone: 'warn' });
     return blocker;
   }
-  if (s.heist.roster && activeCrew(s).length !== 3) return 'Select three available rogues first';
+  if (s.heist.roster) {
+    if ((s.heist.unlockedRogues?.length ?? 0) < 3) return 'Recruit 3 rogues from Street Marks first';
+    if (activeCrew(s).length !== 3) return 'Assign 3 rogues on the Rogue Crew tab first';
+  }
   s.combat = null;
   s.heist.planned = job.id;
   s.heist.auto = job.id;

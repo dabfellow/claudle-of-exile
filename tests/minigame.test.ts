@@ -1,14 +1,40 @@
 import { describe, expect, it } from 'vitest';
-import { angleResult, bellowsResult, braceResult, fertiliseResult, fertiliseWindowMs, gemTurnMs, liftResult, liftWindowMs, pourResult, sightingResult } from '../src/engine/minigame';
+import {
+  angleResult,
+  bellowsResult,
+  braceResult,
+  BRUSH_COLS,
+  BRUSH_CRACKS_MAX,
+  BRUSH_CRACKS_MIN,
+  BRUSH_FIND_MAX,
+  BRUSH_FIND_MIN,
+  BRUSH_ROWS,
+  brushChips,
+  brushDone,
+  brushPatch,
+  brushResult,
+  fertiliseResult,
+  fertiliseWindowMs,
+  gemTurnMs,
+  LIFT_CLICKS_DOUBLE,
+  LIFT_CLICKS_HIT,
+  liftResult,
+  liftSpamResult,
+  liftWindowMs,
+  pourResult,
+  sightingResult,
+} from '../src/engine/minigame';
+import { seeded } from '../src/engine/rng';
 
 describe('Cartography take a sighting', () => {
   it('scores using the larger of the two axis errors', () => {
     expect(sightingResult(0.01, -0.02)).toBe('double');
-    expect(sightingResult(0.021, 0.01)).toBe('hit');
-    expect(sightingResult(0.06, 0.05)).toBe('hit');
-    expect(sightingResult(0.01, 0.061)).toBe('weak');
-    expect(sightingResult(0.12, 0.12)).toBe('weak');
-    expect(sightingResult(0.121, 0)).toBe('miss');
+    expect(sightingResult(0.06, -0.06)).toBe('double');
+    expect(sightingResult(0.061, 0.01)).toBe('hit');
+    expect(sightingResult(0.14, 0.10)).toBe('hit');
+    expect(sightingResult(0.01, 0.141)).toBe('weak');
+    expect(sightingResult(0.24, 0.24)).toBe('weak');
+    expect(sightingResult(0.241, 0)).toBe('miss');
     expect(sightingResult(Number.NaN, 0)).toBe('miss');
   });
 });
@@ -118,5 +144,67 @@ describe('liftResult', () => {
     expect(liftWindowMs(10)).toBe(1350);
     expect(liftWindowMs(59)).toBe(1150);
     expect(liftWindowMs(500)).toBe(800);
+  });
+});
+
+describe('liftSpamResult', () => {
+  it('exposes hit and double click thresholds', () => {
+    expect(LIFT_CLICKS_HIT).toBe(4);
+    expect(LIFT_CLICKS_DOUBLE).toBe(8);
+  });
+
+  it('misses immediately when caught regardless of click count', () => {
+    expect(liftSpamResult(0, true)).toBe('miss');
+    expect(liftSpamResult(4, true)).toBe('miss');
+    expect(liftSpamResult(12, true)).toBe('miss');
+  });
+
+  it('returns null under 2 clicks, weak for 2-3, hit for 4-7, and double for 8+', () => {
+    expect(liftSpamResult(0, false)).toBeNull();
+    expect(liftSpamResult(1, false)).toBeNull();
+    expect(liftSpamResult(2, false)).toBe('weak');
+    expect(liftSpamResult(3, false)).toBe('weak');
+    expect(liftSpamResult(4, false)).toBe('hit');
+    expect(liftSpamResult(7, false)).toBe('hit');
+    expect(liftSpamResult(8, false)).toBe('double');
+    expect(liftSpamResult(12, false)).toBe('double');
+  });
+});
+
+describe('Archaeology brushing patch', () => {
+  it('uses a compact 4x3 grid with 3-4 find squares and 2-3 cracks', () => {
+    expect(BRUSH_COLS).toBe(4);
+    expect(BRUSH_ROWS).toBe(3);
+    expect(BRUSH_FIND_MIN).toBe(3);
+    expect(BRUSH_FIND_MAX).toBe(4);
+    expect(BRUSH_CRACKS_MIN).toBe(2);
+    expect(BRUSH_CRACKS_MAX).toBe(3);
+
+    const rng = seeded(17);
+    for (let i = 0; i < 200; i++) {
+      const p = brushPatch(rng);
+      expect(p.find.length).toBeGreaterThanOrEqual(3);
+      expect(p.find.length).toBeLessThanOrEqual(4);
+      expect(p.cracks.length).toBeGreaterThanOrEqual(2);
+      expect(p.cracks.length).toBeLessThanOrEqual(3);
+      for (const t of [...p.find, ...p.cracks]) {
+        expect(t).toBeGreaterThanOrEqual(0);
+        expect(t).toBeLessThan(BRUSH_COLS * BRUSH_ROWS);
+      }
+      expect(p.cracks.some((t) => p.find.includes(t))).toBe(false);
+    }
+  });
+
+  it('scores chips and completion accurately on the 4x3 patch', () => {
+    expect(brushResult(0)).toBe('double');
+    expect(brushResult(1)).toBe('hit');
+    expect(brushResult(2)).toBe('weak');
+    expect(brushResult(3)).toBe('miss');
+    const p = { find: [1, 2, 5], cracks: [0, 6] };
+    expect(brushDone(p, new Set([1, 2]))).toBe(false);
+    expect(brushDone(p, new Set([1, 2, 5]))).toBe(true);
+    expect(brushChips(p, new Set([1, 2, 5]))).toBe(0);
+    expect(brushChips(p, new Set([1, 2, 5, 0]))).toBe(1);
+    expect(brushPatch(seeded(3), 9).cracks).toHaveLength(1);
   });
 });

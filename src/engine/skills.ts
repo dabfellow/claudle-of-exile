@@ -15,6 +15,7 @@ import { createSkillGem, createSupportGem } from './gems';
 import { digDone } from './expedition';
 import { codexDigSpeed } from './deciphering';
 import { rollPrep } from './heist';
+import { rollRogueRecruit } from './rogues';
 import { cartographyDone, chartDone, hasChartMaps, specialMapDone } from './cartography';
 import { focusMult, focusStep, takeDouble } from './minigame';
 import { bagFull, dropItem } from './storage';
@@ -596,6 +597,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   if (a.skill === 'thieving') {
     s.professionProgress.counters['thieving.markers'] = (s.professionProgress.counters['thieving.markers'] ?? 0) + 1;
     rollPrep(s, ctx, a);
+    rollRogueRecruit(s, ctx);
   }
 
   // a doubled base is a second full base, catalysts and all; a Craft-until stop on the first ends it there

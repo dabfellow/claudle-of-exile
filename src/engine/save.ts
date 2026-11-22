@@ -8,6 +8,7 @@ import { PASSIVE_BY_ID } from '../data/passiveTree';
 import { STASH_PAGE_SIZE, STASH_START_PAGES } from '../data/hideout';
 import { ACTIONS, hasAction } from '../data/skills';
 import { HEIST_JOBS, PREP_CAP, prepBoard, prepId } from '../data/heist';
+import { ROGUES } from '../data/rogues';
 import { skillLevel } from './skills';
 import { legacyMasteryForAction, legacyMasteryForHeist } from '../data/skillingMastery';
 import { FLASK_SLOTS } from '../data/flasks';
@@ -186,6 +187,32 @@ function migrateSkillingTreeRevamp(raw: Record<string, unknown>): void {
     const notices = (raw.migrationNotices as string[] | undefined) ?? [];
     notices.push('The skilling tree has been rebuilt. All your points are back to spend.');
     raw.migrationNotices = notices;
+  }
+}
+
+/**
+ * Rogue recruitment: existing mid-game/endgame characters keep all 12 rogues unlocked;
+ * untouched Lv 1 characters start with 0 unlocked rogues and 0 crew to recruit organically.
+ */
+export function migrateRogueRecruitment(raw: Record<string, unknown>): void {
+  const heist = raw.heist as {
+    tally?: { jobs?: number };
+    roster?: Record<string, { level?: number; xp?: number; talents?: unknown[]; mastered?: unknown[]; training?: unknown }>;
+    rogues?: Record<string, number>;
+    crew?: string[];
+    unlockedRogues?: string[];
+  } | undefined;
+  if (!heist) return;
+  const hasJobs = (heist.tally?.jobs ?? 0) > 0;
+  const hasRosterProgress = Object.values(heist.roster ?? {}).some(
+    (r) => (r.level ?? 1) > 1 || (r.xp ?? 0) > 0 || (r.talents?.length ?? 0) > 0 || (r.mastered?.length ?? 0) > 0 || !!r.training,
+  );
+  const hasLegacyRanks = Object.values(heist.rogues ?? {}).some((rank) => rank > 0);
+  if (hasJobs || hasRosterProgress || hasLegacyRanks) {
+    heist.unlockedRogues = ROGUES.map((r) => r.id);
+  } else {
+    heist.crew = [];
+    heist.unlockedRogues = [];
   }
 }
 
@@ -589,6 +616,7 @@ const MIGRATIONS: Record<number, Migration> = {
   62: migrateCartographyScraps,
   63: migrateRemovedSkills,
   64: migrateSkillingTreeRevamp,
+  65: migrateRogueRecruitment,
 };
 
 /**

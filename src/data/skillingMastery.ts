@@ -373,6 +373,7 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
   }
   if (a.skill === 'alchemy') {
     if (a.id === 'brew_abyssal_key') return production('keys.alchemy', 'Key Alchemy', a.skill, a);
+    if (a.id === 'brew_infusion' || a.grandFlask || a.id === 'brew_mana_medium') return undefined;
     if (a.flaskId) {
       const kind = a.flaskId.startsWith('life_') ? 'life' : a.flaskId.startsWith('mana_') ? 'mana' : 'utility';
       return production(`alchemy.flask.${kind}`, `${materialName(kind)} Flasks`, a.skill, a);
@@ -396,6 +397,8 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
     return production(`cooking.${band}`, ingredient ? 'Cooking Ingredients' : `${a.level <= 10 ? 'Simple' : a.level <= 35 ? 'Campaign' : 'Master'} Meals`, a.skill, a);
   }
   if (a.skill === 'cartography') {
+    if (a.id === 'carve_regent_key') return production('keys.runecarving', 'Key Rune-carving', a.skill, a);
+    if (a.specialMap || a.id.startsWith('special_')) return undefined;
     if (a.id.includes('vellum')) return production('cartography.vellum', 'Vellum', a.skill, a);
     if (a.id.includes('ink')) return production('cartography.ink', 'Cartographic Ink', a.skill, a);
     if (a.id.includes('sextant_')) return production(`cartography.${out}`, a.name, a.skill, a);
@@ -403,6 +406,7 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
       const low = Math.floor((a.chart.tier - 1) / 2) * 2 + 1;
       return production(`cartography.maps.${low}_${low + 1}`, `Map Tiers ${low}–${low + 1}`, a.skill, a);
     }
+    return undefined;
   }
   throw new Error(`Eligible action ${a.id} has no legacy mastery band`);
 }

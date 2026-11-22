@@ -12,7 +12,8 @@ import { actionBlocker, actionIntervalMs, startSkillAction, stopAction } from '.
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { fmt, MatIcon, ProgressBar } from './common';
+import { EmptyState, fmt, GameIcon, MatIcon, ProgressBar } from './common';
+import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
 import './star-chart.css';
 
 const num = (v: number) => Number(v.toFixed(2));
@@ -57,7 +58,7 @@ function Wallet({ s }: { s: GameState }) {
 
 type Pending = { kind: 'place'; slot: number; id: string; partner?: number; cost: number } | { kind: 'clear'; slot: number; cost: number };
 
-function ChartTab({ s }: { s: GameState }) {
+function ChartTab({ s, onTab }: { s: GameState; onTab?: (next: string) => void }) {
   const slots = chartSlots(s);
   const layout = chartLayout(slots.length);
   const report = chartReport(s);
@@ -111,11 +112,27 @@ function ChartTab({ s }: { s: GameState }) {
     ...STARS.filter((x) => isUnlocked(s, x.id)).map((x) => ({ id: x.id, name: x.name, sub: starEffectNow(x, starRank(s, x.id)), rank: starRank(s, x.id), placed: slots.indexOf(x.id) })),
     ...s.astrology.fallen.map((f) => ({ id: f.uid, name: fallenKind(f.effect)?.name ?? 'Fallen star', sub: fallenKind(f.effect)?.desc(f.value) ?? '', placed: slots.indexOf(f.uid) })),
   ];
+  const noStarsYet = tray.length === 0;
   const near = pairFirst !== null ? adjacentSlots(slots.length, pairFirst) : [];
   const totals = Object.entries(report.totals).filter(([, v]) => v > 0);
 
   return (
     <div className="star-chart">
+      <SkillIntro step="Constellation">
+        Slot unlocked stars into nodes — adjacent stars of the same family empower one another.{' '}
+        <HelpTip tip="Stars from the same sky region placed on connected nodes boost each other's bonuses." />
+      </SkillIntro>
+      {noStarsYet && (
+        <div className="card star-first-step" role="region" aria-label="First step in Astrology">
+          <EmptyState
+            icon={<GameIcon name="astrology" size={28} />}
+            title="Start in Research to unlock your first star"
+            action={onTab ? <button className="btn sm primary" onClick={() => onTab('research')}>Go to Research</button> : undefined}
+          >
+            You don't have any unlocked stars or fallen stars yet. Open the <b>Research</b> tab above and study a sky region (such as Dawn Verge) to gather Stardust and unlock stars to chart here.
+          </EmptyState>
+        </div>
+      )}
       {s.astrology.chartNotice && (
         <div className="callout skill-note">
           Astrology changed: your old constellations became sky regions, and their stars were unlocked and ranked for you. Your constellation starts empty. Pick a star below, then a slot, to chart it. The first fill of each slot is free.
@@ -170,7 +187,7 @@ function ChartTab({ s }: { s: GameState }) {
 
       <div className="card">
         <div className="card-title">Stars you can chart</div>
-        {tray.length === 0 && <p className="muted">No stars yet. Research a sky region to unlock its first star.</p>}
+        {tray.length === 0 && <p className="muted">No stars yet. Head to the <b>Research</b> tab to unlock your first star.</p>}
         <div className="star-tray">
           {tray.map((t) => (
             <button
@@ -242,7 +259,9 @@ function RegionCard({ s, r }: { s: GameState; r: SkyRegion }) {
     <div className={`card star-region ${locked ? 'locked' : ''} ${running ? 'running' : ''}`} style={{ ['--cst' as string]: r.color }}>
       <div className="star-card-head">
         <b>{r.name}</b>
-        <span className="dim num">{locked ? `Lv ${r.level}` : r.deep ? 'Deep sky' : `${unlockedInRegion(s, r.id)}/${r.stars.length} stars`}</span>
+        {locked
+          ? <LockedBadge level={r.level} reason={`Requires Astrology level ${r.level}`} />
+          : <span className="dim num">{r.deep ? 'Deep sky' : `${unlockedInRegion(s, r.id)}/${r.stars.length} stars`}</span>}
       </div>
       <p className="muted star-lore">{r.lore}</p>
       {!locked && (
@@ -262,7 +281,7 @@ function RegionCard({ s, r }: { s: GameState; r: SkyRegion }) {
           </div>
         </>
       )}
-      {locked && <p className="muted">Requires Astrology level {r.level}.</p>}
+      {locked && <p className="muted small">Requires Astrology level {r.level}.</p>}
     </div>
   );
 }
@@ -272,6 +291,9 @@ function ResearchTab({ s }: { s: GameState }) {
   const deep = REGIONS.filter((r) => r.deep);
   return (
     <div className="star-chart">
+      <SkillIntro step="Step 1 · Research">
+        Start here: Study a sky region to discover stars and gather Stardust.
+      </SkillIntro>
       <Wallet s={s} />
       <div className="callout skill-note">Each research finishes with a research point for the region and some Stardust. Enough points unlock the region's stars, and the deep-sky regions hold a rare wonder.</div>
       <div className="star-grid">{seen.map((r) => <RegionCard key={r.id} s={s} r={r} />)}</div>
@@ -316,6 +338,9 @@ function WatchRow({ s, star }: { s: GameState; star: StarDef }) {
 function WatchTab({ s }: { s: GameState }) {
   return (
     <div className="star-chart">
+      <SkillIntro step="Watch">
+        Watch unlocked stars to gain Star XP, raise their rank, and earn Gilded Stardust.
+      </SkillIntro>
       <Wallet s={s} />
       <div className="callout skill-note">
         Watch one star at a time. Each look gives it 1 star XP. Ranks 2 to 10 cost {costText(rankUpCost(1))} to start, and ranks 11 to 15 also need 1 Gilded Stardust. Now and then, a watched sky drops a fallen star.
@@ -336,11 +361,16 @@ function FallenTab({ s }: { s: GameState }) {
   const slots = chartSlots(s);
   return (
     <div className="star-chart">
+      <SkillIntro step="Fallen Stars">
+        Rare Fallen Stars found while watching can fill any node on your Constellation.
+      </SkillIntro>
       <Wallet s={s} />
       <div className="card">
         <div className="card-title">Fallen stars</div>
         {s.astrology.fallen.length === 0 ? (
-          <p className="muted">None yet. A very rare meteorite can fall while you watch a star. It becomes a one-of-a-kind star with an effect research can't give.</p>
+          <EmptyState small icon={<GameIcon name="astrology" size={24} />} title="No Fallen Stars yet">
+            A very rare meteorite can fall while you watch a star. It becomes a one-of-a-kind star with an effect research can't give.
+          </EmptyState>
         ) : (
           <ul className="star-entries">
             {s.astrology.fallen.map((f) => (
@@ -364,10 +394,10 @@ function FallenTab({ s }: { s: GameState }) {
 }
 
 /** Astrology's screen below the skill header: the night-sky Chart, then Research, Watch and Fallen. */
-export function Observatory({ tab }: { tab: string }) {
+export function Observatory({ tab, onTab }: { tab: string; onTab?: (next: string) => void }) {
   const s = useGame();
   if (tab === 'research') return <ResearchTab s={s} />;
   if (tab === 'watch') return <WatchTab s={s} />;
   if (tab === 'fallen') return <FallenTab s={s} />;
-  return <ChartTab s={s} />;
+  return <ChartTab s={s} onTab={onTab} />;
 }

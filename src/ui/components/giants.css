@@ -1,4 +1,4 @@
-/* Woodcutting: Felling giants. The log-splitting game, the giant view, the lodge, felling cards and the Collection tab. */
+/* Woodcutting: Felling giants. The log-splitting game, the giant clearing, the lodge, regions, trophies & modern Sawmill. */
 
 /* ---- split the log ---- */
 .mini-split {
@@ -48,14 +48,17 @@
   text-align: center;
 }
 
-/* ---- the giant up close ---- */
+/* ---- the giant up close: forest clearing & tree art ---- */
 .giant-layout {
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-columns: minmax(0, 3.2fr) minmax(240px, 1.8fr);
   align-items: start;
 }
-@media (max-width: 760px) {
+.giant-layout > * {
+  min-width: 0;
+}
+@media (max-width: 960px) {
   .giant-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -65,100 +68,195 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 10px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .giant-head h2 {
   margin: 0;
   font-size: 18px;
 }
-.giant-scene {
-  display: block;
+
+.giant-clearing {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, 148px) minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
   width: 100%;
-  max-height: 260px;
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius, 6px);
+  box-sizing: border-box;
+  padding: 12px 10px;
+  border: 1px solid color-mix(in srgb, var(--giant, var(--wood)) 36%, var(--line-2));
+  border-radius: var(--r, 8px);
+  background:
+    radial-gradient(65% 60% at 50% 45%, color-mix(in srgb, var(--giant, #6fae4a) 16%, transparent), transparent 72%),
+    radial-gradient(85% 45% at 50% 95%, rgba(44, 62, 36, 0.42), transparent 75%),
+    linear-gradient(180deg, #0b100e 0%, #101814 68%, #181c14 100%);
+  overflow: hidden;
 }
-.giant-ground {
-  stroke: var(--line-2);
-  stroke-width: 2;
+.giant-clearing.legend {
+  border-color: rgba(227, 207, 107, 0.55);
+  box-shadow: inset 0 0 28px rgba(227, 207, 107, 0.12);
 }
-.giant-part {
-  cursor: pointer;
-  outline: none;
-}
-.giant-part .shape {
-  fill: var(--giant, var(--wood));
-  stroke: var(--accent-line);
-  stroke-width: 2;
-  transition: fill-opacity 200ms;
-}
-.giant-part.crown .shape {
-  fill: var(--success);
-}
-.giant-part.heart .shape {
-  fill: var(--accent);
-}
-.giant-part.done .shape {
-  stroke-dasharray: 4 4;
-  stroke: var(--line-2);
-}
-.giant-part.locked {
-  cursor: not-allowed;
-}
-.giant-part.active .shape {
-  stroke: var(--accent-2);
-  stroke-width: 3.5;
-}
-.giant-part:focus-visible .shape {
-  stroke: var(--accent-2);
-  stroke-width: 3.5;
-}
-.giant-ring {
-  fill: none;
-  stroke: var(--wood-dark);
-  stroke-width: 1.5;
-}
-.giant-tiles {
+
+.giant-clearing-col {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  margin-top: 8px;
+  gap: 8px;
+  min-width: 0;
+  position: relative;
+  z-index: 2;
 }
-@media (min-width: 900px) {
-  .giant-tiles {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-.giant-tile {
+
+.giant-tree-stage {
+  position: relative;
   display: grid;
-  gap: 3px;
-  padding: 6px 8px;
+  place-items: center;
+  min-width: 0;
+  min-height: 185px;
+  padding: 6px 4px 14px;
+}
+
+.giant-tree-halo {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--giant, #6fae4a) 28%, transparent), transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.giant-tree-art {
+  position: relative;
+  z-index: 1;
+  width: 128px;
+  height: 156px;
+  max-width: 100%;
+  object-fit: contain;
+  transition: transform 0.4s var(--ease, ease), opacity 0.3s;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.72));
+}
+.giant-tree-art.fallen {
+  transform: rotate(-84deg) translate(-12%, 14%);
+  opacity: 0.78;
+}
+
+.giant-heart-ember {
+  position: absolute;
+  bottom: 28px;
+  z-index: 2;
+  padding: 3px 10px;
+  border-radius: var(--r-pill, 999px);
+  border: 1px solid rgba(209, 173, 114, 0.75);
+  background: rgba(45, 28, 14, 0.9);
+  color: var(--accent-2);
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(230, 200, 148, 0.45);
+}
+
+.giant-clearing-floor {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.65), transparent 72%);
+  pointer-events: none;
+}
+
+.giant-hotspot {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
   text-align: left;
   color: var(--text);
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius, 6px);
+  background: rgba(25, 29, 35, 0.88);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm, 6px);
   cursor: pointer;
+  overflow-wrap: anywhere;
+  transition: border-color var(--dur-fast, 0.12s), background-color var(--dur-fast, 0.12s), box-shadow var(--dur-fast, 0.12s);
 }
-.giant-tile:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-.giant-tile.active {
+.giant-hotspot:hover:not(:disabled) {
   border-color: var(--accent);
-  background: var(--accent-soft);
+  background: rgba(36, 41, 48, 0.95);
 }
-.giant-tile b {
+.giant-hotspot:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+.giant-hotspot.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, var(--panel));
+  box-shadow: 0 0 14px rgba(209, 173, 114, 0.25);
+}
+.giant-hotspot.done {
+  opacity: 0.55;
+  border-style: dashed;
+}
+.giant-hotspot.locked {
+  border-style: dashed;
+}
+.giant-hotspot.missing-part {
+  cursor: default;
+  opacity: 0.7;
+  border-style: dashed;
+}
+
+.giant-hotspot-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 6px;
+}
+.giant-hotspot-head b {
   font-size: 13px;
 }
-.giant-tile .yield {
+.giant-hotspot-drop {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-2);
+}
+.giant-hotspot-use {
   font-size: 11px;
   color: var(--muted);
+  line-height: 1.3;
 }
+.giant-hotspot-yield {
+  font-size: 11px;
+  color: var(--good);
+}
+
+@media (max-width: 680px) {
+  .giant-clearing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .giant-tree-stage {
+    order: -1;
+    min-height: 150px;
+  }
+  .giant-tree-art {
+    width: 120px;
+    height: 140px;
+  }
+  .giant-clearing-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 440px) {
+  .giant-clearing-col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .giant-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   margin-top: 8px;
 }
@@ -185,6 +283,10 @@
   border: 1px solid var(--line);
   border-radius: var(--radius, 6px);
 }
+.giant-card.locked {
+  border-style: dashed;
+  opacity: 0.72;
+}
 .giant-card.legend,
 .felling-card.legend {
   border-color: var(--rare);
@@ -194,6 +296,20 @@
 .felling-card h3 {
   margin: 0;
   font-size: 15px;
+}
+.giant-region-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.giant-region-thumb {
+  width: 42px;
+  height: 46px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.giant-card.locked .giant-region-thumb {
+  filter: grayscale(0.65) opacity(0.6);
 }
 .giant-chips {
   display: flex;
@@ -219,6 +335,74 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+/* ---- modern Sawmill view ---- */
+.sawmill-view {
+  display: grid;
+  gap: 12px;
+}
+.sawmill-status {
+  padding: 12px 14px;
+}
+.sawmill-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sawmill-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr));
+}
+.sawmill-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  min-width: 0;
+  align-content: start;
+}
+.sawmill-card.running {
+  border-color: var(--accent);
+}
+.sawmill-card.locked {
+  border-style: dashed;
+  opacity: 0.76;
+}
+.sawmill-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sawmill-card-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm, 6px);
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  flex-shrink: 0;
+}
+.sawmill-card-title {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.sawmill-card-title b {
+  font-size: 14px;
+}
+.sawmill-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.sawmill-inputs {
+  display: grid;
+  gap: 4px;
 }
 
 /* ---- felling cards on return ---- */

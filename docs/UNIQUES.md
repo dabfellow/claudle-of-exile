@@ -129,16 +129,16 @@ Generated from the game data; run `npm run uniques` after changing a unique, ins
 
 | Unique | Slot | Base (req. level) | Mods | Drops in |
 | --- | --- | --- | --- | --- |
-| **Hollow Circuit**<br>*The current flows where thought once lingered.* | ring | Diamond Ring (24) | • 100% of would-be Mana regeneration recovers Energy Shield instead; no Mana regeneration or natural Energy Shield recharge | Rune-carving 70, Rune Board 1: Hollow Circuit project |
+| **Hollow Circuit**<br>*The current flows where thought once lingered.* | ring | Diamond Ring (24) | • 100% of would-be Mana regeneration recovers Energy Shield instead; no Mana regeneration or natural Energy Shield recharge | Cartography 70: Hollow Circuit project |
 | **Borrowed Tomorrow**<br>*Every second bought on credit comes due.* | amulet | Relic Treasury Amulet (60) | • Wearer life leech is instant; no life regeneration or flask life recovery | Thieving 65: Borrowed Tomorrow heist treasure claim or Occult Treasury vault jackpot |
 | **Debt of Stone**<br>*The earth takes what it gave, grain by grain.* | body | Sunforged Plate (60) | • 50% of incoming hit damage deferred evenly over 4s; cannot gain Energy Shield | Smithing 70, Forge 3: Debt of Stone project |
-| **Hands of the Forgotten Choir**<br>*Their voices sing what the hands can no longer speak.* | gloves | Seraph Gloves (60) | • Totem skills place two at once; +2 maximum active totems; you cannot deal damage yourself | Rune-carving 70, Rune Board 1: Hands of the Forgotten Choir project |
+| **Hands of the Forgotten Choir**<br>*Their voices sing what the hands can no longer speak.* | gloves | Seraph Gloves (60) | • Totem skills place two at once; +2 maximum active totems; you cannot deal damage yourself | Cartography 70: Hands of the Forgotten Choir project |
 | **The Buried Grudge**<br>*The stone breaks before it bends, and remembers what broke it.* | offhand | Sunforged Bulwark (60) | • Blocked hits take 50% damage; store prevented damage up to 300% max Life to unleash in a shockwave on your next slam | Archaeology 65: The Buried Grudge restoration project |
 | **The Homecoming**<br>*An arrow always knows the way back.* | weapon | Manticore Greatbow (60) | • One arrow per attack, overriding additional arrows; arrows return after 0.5 seconds | Smithing 65, Forge 3: The Homecoming project |
 | **Winter's Pyre**<br>*Even the coldest memory can burn.* | weapon | Seraph Staff (60) | • Cold damage can ignite; 100% more ignite damage; cannot chill or freeze; deal no Fire or Lightning Damage except cold-sourced ignites | Smithing 65, Forge 3: Winter's Pyre project |
 | **Woundmaker**<br>*The wound remembers every blow.* | weapon | Relic Great Axe (60) | • Bleeds stack up to 8; 60% less hit damage; cannot critically strike | Smithing 60, Forge 3: Woundmaker project |
-| **The Second Heresy**<br>*One sin is a mistake. Two is a doctrine.* | ring | Pinnacle Ring (80) | • Allows one additional Forbidden keystone | Rune-carving 85, Rune Board: The Second Heresy project (Crownless Sigil, Stolen Oath Seal, Restored Taboo Tablet) |
-| **The Sum of All Things**<br>*Everything you ever made, weighed at once.* | amulet | Pinnacle Amulet (80) | • (1–200)% more Damage | Rune-carving 90, Rune Board: The Sum of All Things project (all eleven professions and every endgame encounter) |
+| **The Second Heresy**<br>*One sin is a mistake. Two is a doctrine.* | ring | Pinnacle Ring (80) | • Allows one additional Forbidden keystone | Cartography 85: The Second Heresy project (Crownless Sigil, Stolen Oath Seal, Restored Taboo Tablet, Inscription Fragments) |
+| **The Sum of All Things**<br>*Everything you ever made, weighed at once.* | amulet | Pinnacle Amulet (80) | • (1–200)% more Damage | Cartography 90: The Sum of All Things project (all twelve professions and every endgame encounter) |
 | **Worldheart**<br>*Beneath every mountain, something is still beating.* | belt | Pinnacle Belt (80) | • 30% less Damage taken | Smithing 90, Forge 3: Worldheart project (World Core Fragments, Reliquary Fragment, Architect's Doom Sigil) |
 
 ## Boss trophies (11)

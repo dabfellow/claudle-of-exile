@@ -39,6 +39,8 @@ export function materialSources(id: string): Source[] {
   if (id === 'mineral_fragment') out.push({ label: 'Mining: Mithril layers and deeper', page: 'mining' });
   if (id === 'stone_fragment') out.push({ label: 'Mining: Adamant layers and deeper', page: 'mining' });
   if (id === 'living_metal') out.push({ label: 'Smelting: furnace at purity 8+', page: 'smelting' });
+  if (id === 'stardust' || id === 'gilded_stardust') out.push({ label: 'Astrology: research sky regions', page: 'astrology' });
+  if (id === 'inscription_fragment') out.push({ label: 'Maps: Tier 5+ Boss map bosses (25%)', page: 'maps' });
   for (const job of HEIST_JOBS) {
     if ([...job.drops, ...job.vault].some((d) => d.id === id)) out.push({ label: `Heist: ${job.name}`, detail: `Thieving ${job.level}`, page: 'thieving' });
   }

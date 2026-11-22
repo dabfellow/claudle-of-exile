@@ -24,7 +24,7 @@ function prepared(id: string, level: number) {
 
 describe('production mastery batches', () => {
   it('covers ordinary production in every crafting profession without batching protected progress, keys, maps or gear', () => {
-    for (const skill of ['smelting', 'woodcutting', 'alchemy', 'cooking', 'runecarving', 'gemcutting', 'cartography']) {
+    for (const skill of ['smelting', 'woodcutting', 'alchemy', 'gemcutting', 'cartography']) {
       expect(ACTIONS.some((a) => a.skill === skill && a.batchMastery)).toBe(true);
     }
     for (const a of ACTIONS.filter((a) => a.batchMastery)) {
@@ -91,7 +91,7 @@ describe('production mastery batches', () => {
 
   it('retains per-gem minimum costs when Steady Hands conserves batch ingredients', () => {
     const s = prepared('cut_skill_x50', 90);
-    s.skillPassives = ['core_steady'];
+    s.skillPassives = ['core_steady_hands'];
     const a = actionDef('cut_skill_x50');
     const before = s.storage.bank.rough_gem;
     const ctx = makeCtx({ next: () => 0 });

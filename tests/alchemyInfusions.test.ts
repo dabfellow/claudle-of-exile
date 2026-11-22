@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { INFUSION_BREW_MS } from '../src/data/alchemy';
+import { PROFESSION_PROJECTS } from '../src/data/professionProjects';
 import { actionDef } from '../src/data/skills';
 import {
   brewsForNextRank,
@@ -7,8 +8,11 @@ import {
   flaskInfusionBuffStats,
   infusionStrength,
   pourVial,
+  prependInfusion,
   queueInfusion,
 } from '../src/engine/alchemy';
+import { projectPreview } from '../src/engine/professions';
+import { cleanProjectDesc } from '../src/ui/components/projectHelpers';
 import { startCombat, useFlask } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { flaskStats, newFlask } from '../src/engine/flasks';
@@ -147,5 +151,51 @@ describe('Alchemy: Your own flasks', () => {
     const loaded = deserialize(JSON.stringify(raw));
     expect(loaded.alchemy).toEqual({ queue: [], vials: [], ranks: {}, unlockedRare: [], awayVials: [], awayRankUps: [] });
     if (loaded.flaskSlots[0]) expect(loaded.flaskSlots[0].infusions).toEqual([]);
+  });
+
+  it('prependInfusion validates herb count and unlock, and prepends ahead of existing queue', () => {
+    const s = newGame(6);
+    s.skills.alchemy = xpToReach('alchemy', 12);
+
+    // Locked infusion rejected
+    expect(prependInfusion(s, 'onslaught', 'emberroot')).toMatch(/level 25/);
+
+    // Insufficient herbs rejected with 'Needs 20 herbs'
+    s.storage.bank.frostleaf = 19;
+    expect(prependInfusion(s, 'frostguard', 'frostleaf')).toBe('Needs 20 herbs');
+    expect(s.alchemy.queue).toHaveLength(0);
+
+    // Existing item queued first, then prependInfusion places new item at index 0
+    s.storage.bank.sunpetal = 20;
+    expect(queueInfusion(s, 'cleansing', 'sunpetal')).toBeNull();
+    s.storage.bank.frostleaf = 20;
+    expect(prependInfusion(s, 'frostguard', 'frostleaf')).toBeNull();
+
+    expect(s.alchemy.queue).toEqual([
+      { infusion: 'frostguard', source: 'frostleaf' },
+      { infusion: 'cleansing', source: 'sunpetal' },
+    ]);
+    expect(startSkillAction(s, makeCtx(seeded(9)), 'brew_infusion')).toBeNull();
+    const vial = finishQueuedInfusion(s, makeCtx(seeded(10)));
+    expect(vial?.infusion).toBe('frostguard');
+    expect(s.alchemy.queue).toEqual([{ infusion: 'cleansing', source: 'sunpetal' }]);
+  });
+
+  it('runs cleanProjectDesc and projectPreview safely across every project including the_still_heart and witchglass', () => {
+    const s = newGame(7);
+    const ids = PROFESSION_PROJECTS.map((p) => p.id);
+    expect(ids).toContain('the_still_heart');
+    expect(ids).toContain('witchglass');
+
+    for (const p of PROFESSION_PROJECTS) {
+      expect(() => cleanProjectDesc(p)).not.toThrow();
+      const preview = projectPreview(s, p.id);
+      expect(preview.project?.id).toBe(p.id);
+    }
+
+    const stillHeart = PROFESSION_PROJECTS.find((p) => p.id === 'the_still_heart')!;
+    const witchglass = PROFESSION_PROJECTS.find((p) => p.id === 'witchglass')!;
+    expect(cleanProjectDesc(stillHeart)).toBeTruthy();
+    expect(cleanProjectDesc(witchglass)).toBeTruthy();
   });
 });

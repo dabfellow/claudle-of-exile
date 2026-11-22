@@ -427,14 +427,14 @@ describe('brushing the find free', () => {
     expect(brushResult(5)).toBe('miss');
   });
 
-  it('lays out a 5 by 4 patch with a 5 to 7 square find and 3 to 5 cracks beside it', () => {
+  it('lays out a 4 by 3 patch with a 3 to 4 square find and 2 to 3 cracks beside it', () => {
     const rng = seeded(17);
     for (let i = 0; i < 200; i++) {
       const p = brushPatch(rng);
-      expect(p.find.length).toBeGreaterThanOrEqual(5);
-      expect(p.find.length).toBeLessThanOrEqual(7);
-      expect(p.cracks.length).toBeGreaterThanOrEqual(3);
-      expect(p.cracks.length).toBeLessThanOrEqual(5);
+      expect(p.find.length).toBeGreaterThanOrEqual(3);
+      expect(p.find.length).toBeLessThanOrEqual(4);
+      expect(p.cracks.length).toBeGreaterThanOrEqual(2);
+      expect(p.cracks.length).toBeLessThanOrEqual(3);
       for (const t of [...p.find, ...p.cracks]) expect(t).toBeLessThan(BRUSH_COLS * BRUSH_ROWS);
       expect(p.cracks.some((t) => p.find.includes(t))).toBe(false);
       const near = (a: number, b: number) => Math.abs((a % BRUSH_COLS) - (b % BRUSH_COLS)) <= 1 && Math.abs(Math.floor(a / BRUSH_COLS) - Math.floor(b / BRUSH_COLS)) <= 1;
@@ -449,7 +449,7 @@ describe('brushing the find free', () => {
   it('takes the codex\'s cracks off, but never the last one', () => {
     const rng = seeded(3);
     for (let i = 0; i < 50; i++) {
-      expect(brushPatch(rng, 1).cracks.length).toBeLessThanOrEqual(4);
+      expect(brushPatch(rng, 1).cracks.length).toBeLessThanOrEqual(2);
       expect(brushPatch(rng, 9).cracks).toHaveLength(1);
     }
   });

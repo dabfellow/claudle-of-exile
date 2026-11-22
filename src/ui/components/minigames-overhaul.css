@@ -1,0 +1,708 @@
+/* Overhauled skilling minigames: Thieving Street Marks, Archaeology Brushing,
+   Astrology Telescope, Foraging Soil Beds, and Cartography Sighting. */
+
+/* ==================== 1. THIEVING STREET MARKS ==================== */
+
+.lift-arena {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.03), var(--bg-2));
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.lift-arena:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.lift-arena.away {
+  border-color: color-mix(in srgb, var(--success) 65%, var(--double));
+  box-shadow: 0 0 16px -4px rgba(114, 152, 129, 0.35), inset 0 0 14px rgba(255, 207, 58, 0.06);
+}
+
+.lift-arena.glancing {
+  border-color: var(--warn);
+  box-shadow: 0 0 14px -4px rgba(201, 154, 85, 0.45);
+  animation: lift-wobble 180ms ease-in-out infinite alternate;
+}
+
+.lift-arena.watching {
+  border-color: var(--danger);
+  box-shadow: 0 0 14px -4px rgba(169, 99, 90, 0.4);
+  background: radial-gradient(circle at 50% 42%, rgba(169, 99, 90, 0.1), var(--bg-2));
+}
+
+.lift-arena.caught-flash {
+  box-shadow: 0 0 22px rgba(204, 132, 120, 0.65), inset 0 0 22px rgba(169, 99, 90, 0.35);
+}
+
+@keyframes lift-wobble {
+  from { transform: translateX(-1.5px); }
+  to { transform: translateX(1.5px); }
+}
+
+.lift-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lift-badge.away {
+  color: #f6e29c;
+  background: linear-gradient(90deg, rgba(114, 152, 129, 0.3), rgba(255, 207, 58, 0.25));
+  border: 1px solid var(--double);
+}
+
+.lift-badge.glancing {
+  color: #ffd58e;
+  background: var(--warn-soft);
+  border: 1px solid var(--warn);
+}
+
+.lift-badge.watching {
+  color: #f0a89d;
+  background: var(--danger-soft);
+  border: 1px solid var(--danger);
+}
+
+.lift-gaze-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+}
+
+.lift-gaze-svg {
+  width: 112px;
+  height: 112px;
+  overflow: visible;
+}
+
+.lift-head-group {
+  transform-origin: 55px 55px;
+  transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.lift-pop {
+  position: absolute;
+  pointer-events: none;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--double);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+  animation: lift-float 560ms ease-out forwards;
+}
+
+@keyframes lift-float {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(0.85);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(-50%, -14px) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -32px) scale(0.95);
+  }
+}
+
+.lift-progress-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  font-size: var(--fs-2xs);
+}
+
+.lift-pips {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.lift-pip-divider {
+  width: 1px;
+  height: 12px;
+  margin: 0 2px;
+  background: var(--line-2);
+}
+
+.lift-pip {
+  width: 11px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid var(--line-2);
+  background: var(--panel);
+  transition: transform 80ms ease, background 80ms ease, border-color 80ms ease;
+}
+
+.lift-pip.hit.on {
+  background: var(--success);
+  border-color: var(--good);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--success) 55%, transparent);
+}
+
+.lift-pip.double.on {
+  background: var(--double);
+  border-color: #fff2b2;
+  box-shadow: 0 0 8px var(--double-soft);
+  transform: scale(1.08);
+}
+
+.lift-count-text {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.lift-streak {
+  color: var(--muted);
+}
+
+.lift-feedback {
+  min-height: 18px;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.lift-feedback.double { color: var(--double); }
+.lift-feedback.hit { color: var(--good); }
+.lift-feedback.glancing { color: var(--warn); }
+.lift-feedback.caught { color: var(--bad); }
+
+/* ==================== 2. ARCHAEOLOGY BRUSHING ==================== */
+
+.mini-brush-wrap .mini-brush {
+  max-width: 232px;
+  gap: 4px;
+}
+
+.mini-brush-tile {
+  transition: filter 90ms ease, transform 90ms ease;
+}
+
+.mini-brush-tile:not(.open):hover {
+  filter: brightness(1.14);
+}
+
+.mini-brush-tile.open.find {
+  animation: brush-find-pop 180ms ease-out;
+}
+
+@keyframes brush-find-pop {
+  from { transform: scale(0.86); }
+  to { transform: scale(1); }
+}
+
+/* ==================== 3. ASTROLOGY TELESCOPE ==================== */
+
+.mini-patch.mini-sky.mini-telescope {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  height: auto;
+  min-height: 0;
+  padding: 12px 10px 10px;
+}
+
+.telescope-scope-box {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 220px;
+  height: 220px;
+  max-width: 100%;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  border: 1px solid rgba(209, 173, 114, 0.35);
+  background:
+    radial-gradient(circle at 12px 12px, #8a6c3a 0 2.5px, transparent 3px),
+    radial-gradient(circle at calc(100% - 12px) 12px, #8a6c3a 0 2.5px, transparent 3px),
+    radial-gradient(circle at 12px calc(100% - 12px), #8a6c3a 0 2.5px, transparent 3px),
+    radial-gradient(circle at calc(100% - 12px) calc(100% - 12px), #8a6c3a 0 2.5px, transparent 3px),
+    linear-gradient(145deg, #1b202b, #0e1118);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 0 24px rgba(0, 0, 0, 0.65),
+    0 6px 16px rgba(0, 0, 0, 0.45);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.telescope-scope-box:active {
+  cursor: grabbing;
+}
+
+.telescope-scope-box:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.telescope-index {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  margin-left: -5px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid var(--double);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+  z-index: 4;
+  pointer-events: none;
+}
+
+.telescope-outer-ring {
+  position: absolute;
+  inset: 11px;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(
+      from -2deg,
+      rgba(230, 200, 148, 0.92) 0deg 3.2deg,
+      #4a3719 3.2deg 15deg
+    );
+  border: 2px solid #b58d4a;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.7),
+    inset 0 0 6px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
+.telescope-outer-ring::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  width: 6px;
+  height: 9px;
+  margin-left: -3px;
+  border-radius: 2px;
+  background: var(--double);
+  box-shadow: 0 0 6px var(--double);
+}
+
+.telescope-inner-ring {
+  position: absolute;
+  inset: 24px;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(
+      from -1deg,
+      rgba(209, 173, 114, 0.75) 0deg 2deg,
+      #2d2210 2deg 9deg
+    );
+  border: 1.5px solid #8c6c37;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.75);
+  pointer-events: none;
+}
+
+.telescope-eyepiece {
+  position: absolute;
+  inset: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(1px 1px at 18% 24%, #ffffffb0 50%, transparent),
+    radial-gradient(1px 1px at 78% 19%, #cfd8ff99 50%, transparent),
+    radial-gradient(1.2px 1.2px at 26% 76%, #ffffff88 50%, transparent),
+    radial-gradient(1px 1px at 71% 69%, #cfd8ff99 50%, transparent),
+    radial-gradient(1px 1px at 84% 48%, #ffffff77 50%, transparent),
+    radial-gradient(1px 1px at 14% 55%, #ffffff77 50%, transparent),
+    radial-gradient(circle at 50% 50%, #161c38 0%, #090d1c 68%, #04060d 100%);
+  box-shadow:
+    inset 0 0 22px rgba(0, 0, 0, 0.92),
+    0 0 0 2px #6b5228;
+}
+
+.telescope-reticle {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.telescope-reticle::before,
+.telescope-reticle::after {
+  content: '';
+  position: absolute;
+  background: rgba(209, 173, 114, 0.22);
+}
+
+.telescope-reticle::before {
+  top: 50%;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+}
+
+.telescope-reticle::after {
+  left: 50%;
+  top: 8%;
+  bottom: 8%;
+  width: 1px;
+}
+
+.telescope-reticle-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+  border-radius: 50%;
+  border: 1px solid rgba(209, 173, 114, 0.22);
+}
+
+.telescope-center-star {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  will-change: filter;
+}
+
+.telescope-center-star svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.mini-telescope .telescope-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+  max-width: 310px;
+  min-width: 0;
+  padding: 0;
+}
+
+.mini-telescope .telescope-ring {
+  flex: 1;
+  min-width: 60px;
+  height: 24px;
+  border-radius: 12px;
+}
+
+.telescope-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 12px;
+  min-height: 18px;
+  font-size: var(--fs-2xs);
+  color: var(--muted);
+}
+
+.telescope-lock-msg {
+  font-weight: 700;
+}
+
+.telescope-lock-msg.double { color: var(--double); }
+.telescope-lock-msg.hit { color: var(--good); }
+.telescope-lock-msg.weak { color: var(--warn); }
+.telescope-lock-msg.miss { color: var(--bad); }
+
+/* ==================== 4. FORAGING FERTILISE ==================== */
+
+.forage-bed-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  max-width: 276px;
+  margin: 0 auto;
+  min-width: 0;
+}
+
+.forage-bed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  height: 74px;
+  padding: 4px 4px 8px;
+  border-radius: var(--r);
+  border: 1px solid #3c4734;
+  color: var(--text);
+  cursor: pointer;
+  overflow: hidden;
+  user-select: none;
+  touch-action: manipulation;
+  background:
+    repeating-linear-gradient(
+      -12deg,
+      rgba(0, 0, 0, 0.2) 0 4px,
+      rgba(255, 255, 255, 0.025) 4px 8px
+    ),
+    radial-gradient(circle at 50% 45%, #2f251b, #1b1610);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
+  transition: border-color 110ms ease, box-shadow 110ms ease, transform 80ms ease;
+}
+
+.forage-bed:hover {
+  border-color: #5b6d4f;
+}
+
+.forage-bed:active {
+  transform: scale(0.97);
+}
+
+.forage-bed:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.forage-bed.lit {
+  border-color: #79d47e;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(104, 198, 108, 0.34), rgba(22, 34, 22, 0.92)),
+    #1b281b;
+  box-shadow:
+    0 0 12px rgba(121, 212, 126, 0.3),
+    inset 0 0 10px rgba(121, 212, 126, 0.22);
+}
+
+.forage-bed.lit.gold {
+  border-color: var(--double);
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 207, 58, 0.36), rgba(40, 31, 14, 0.92)),
+    #282011;
+  animation: forage-gold-pulse 380ms ease-in-out infinite alternate;
+}
+
+.forage-bed.lit.late {
+  border-color: var(--warn);
+  background:
+    radial-gradient(circle at 50% 44%, rgba(201, 154, 85, 0.28), rgba(32, 24, 16, 0.92)),
+    #221a12;
+  box-shadow: 0 0 10px rgba(201, 154, 85, 0.28);
+}
+
+@keyframes forage-gold-pulse {
+  from {
+    box-shadow: 0 0 8px rgba(255, 207, 58, 0.4), inset 0 0 8px rgba(255, 207, 58, 0.2);
+  }
+  to {
+    box-shadow: 0 0 16px rgba(255, 207, 58, 0.8), inset 0 0 14px rgba(255, 207, 58, 0.35);
+  }
+}
+
+.forage-bed.flash-double {
+  border-color: var(--double);
+  box-shadow: 0 0 16px rgba(255, 207, 58, 0.65);
+}
+
+.forage-bed.flash-hit {
+  border-color: var(--good);
+  box-shadow: 0 0 12px rgba(141, 179, 156, 0.5);
+}
+
+.forage-bed.flash-miss {
+  border-color: var(--danger);
+  box-shadow: 0 0 12px rgba(169, 99, 90, 0.5);
+}
+
+.forage-bed-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.forage-bed-label {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.forage-bed.lit.gold .forage-bed-label { color: #ffe799; }
+.forage-bed.lit:not(.gold):not(.late) .forage-bed-label { color: #b7f2b9; }
+.forage-bed.lit.late .forage-bed-label { color: #f4c676; }
+
+.forage-bed-sub {
+  font-size: 10px;
+  color: var(--dim);
+  line-height: 1;
+}
+
+.forage-bed-timer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: #79d47e;
+  transform-origin: left center;
+  animation: forage-drain linear forwards;
+  pointer-events: none;
+}
+
+.forage-bed.lit.gold .forage-bed-timer {
+  background: var(--double);
+}
+
+.forage-bed.lit.late .forage-bed-timer {
+  background: var(--warn);
+}
+
+@keyframes forage-drain {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+/* ==================== 5. CARTOGRAPHY SIGHTING ==================== */
+
+.carto-sighting-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.carto-sighting-wrap .carto-sighting {
+  position: relative;
+  display: block;
+  width: 240px;
+  max-width: 100%;
+  height: 180px;
+  margin: 0 auto;
+  padding: 0;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(0deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 24px 24px,
+    radial-gradient(circle at 50% 55%, rgba(120, 110, 180, 0.22), rgba(14, 14, 22, 0.94));
+  overflow: hidden;
+  cursor: crosshair;
+  touch-action: manipulation;
+}
+
+.carto-sighting-wrap .carto-sighting:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.carto-zone-hit {
+  position: absolute;
+  width: 28%;
+  height: 28%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px dashed rgba(141, 179, 156, 0.85);
+  background: rgba(114, 152, 129, 0.14);
+  pointer-events: none;
+}
+
+.carto-zone-double {
+  position: absolute;
+  width: 12%;
+  height: 12%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px solid var(--double);
+  background: rgba(255, 207, 58, 0.22);
+  box-shadow: 0 0 8px rgba(255, 207, 58, 0.35);
+  pointer-events: none;
+}
+
+.carto-sighting-wrap .carto-landmark {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px solid #fff7d6;
+  background: var(--double);
+  pointer-events: none;
+}
+
+.carto-sighting-wrap .carto-line-v {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: #9fd2ff;
+  box-shadow: 0 0 6px rgba(159, 210, 255, 0.65);
+  pointer-events: none;
+}
+
+.carto-sighting-wrap .carto-line-v.locked {
+  background: var(--good);
+  box-shadow: 0 0 6px rgba(141, 179, 156, 0.8);
+}
+
+.carto-sighting-wrap .carto-line-h {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  margin-top: -1px;
+  background: #f2cc8f;
+  box-shadow: 0 0 6px rgba(242, 204, 143, 0.65);
+  pointer-events: none;
+}
+
+.carto-sighting-wrap .carto-line-h.locked {
+  background: var(--good);
+  box-shadow: 0 0 6px rgba(141, 179, 156, 0.8);
+}
+
+.carto-status {
+  min-height: 18px;
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+}
+
+.carto-status.double { color: var(--double); }
+.carto-status.hit { color: var(--good); }
+.carto-status.weak { color: var(--warn); }
+.carto-status.miss { color: var(--bad); }
+
+@media (prefers-reduced-motion: reduce) {
+  .lift-arena.glancing,
+  .forage-bed.lit.gold,
+  .lift-pop {
+    animation: none;
+  }
+}

@@ -113,8 +113,8 @@ describe('skilling mini-games', () => {
     expect(1 + MAX_FOCUS_SPEED).toBeGreaterThan(1 + overtime / 100);
   });
 
-  it('only feeds gathering skills that have a game', () => {
-    for (const skill of ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smithing', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as SkillId[]) {
+  it('only feeds skills that have a game', () => {
+    for (const skill of ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'astrology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'cartography'] as SkillId[]) {
       expect(hasMinigame(skill)).toBe(true);
       const s = player();
       s.action = { kind: 'skill', actionId: actionsFor(skill)[0].id, progress: 0 };
@@ -263,7 +263,7 @@ describe('auto-crafting', () => {
 
   it('Patient Crafter sometimes keeps the orb', () => {
     const s = crafter();
-    s.skillPassives = ['core_overtime'];
+    s.skillPassives = ['core_patient_crafter'];
     const item = ring(s, 20, 'magic');
     s.storage.bank.alteration = 200;
     const c = ctx(2);
@@ -297,7 +297,9 @@ describe('smithing catalysts', () => {
     setSmithCatalyst(s, { fossil: 'scorched_fossil' });
     run(s, 'smith_iron_ring', 3);
     expect(s.storage.bank.scorched_fossil).toBe(5);
-    s.skillPassives = ['smithing_ks']; // Grandmaster Smith: always Magic
+    const r = ring(s); r.suffixes.push({ affixId: 'u_smith_magic', tier: 0, values: [100] });
+    s.equipment.ring1 = r;
+    s.inventory = s.inventory.filter((i) => i.uid !== r.uid);
     run(s, 'smith_iron_ring', 3);
     expect(s.storage.bank.scorched_fossil).toBe(2);
   });
@@ -305,7 +307,9 @@ describe('smithing catalysts', () => {
   it('repeat until stops on a Fossil modifier', () => {
     const s = player();
     s.skills.smithing = xpForLevel(20);
-    s.skillPassives = ['smithing_ks'];
+    const r = ring(s); r.suffixes.push({ affixId: 'u_smith_magic', tier: 0, values: [100] });
+    s.equipment.ring1 = r;
+    s.inventory = s.inventory.filter((i) => i.uid !== r.uid);
     s.storage.bank = { ...s.storage.bank, copper_ore: 10000, copper_bar: 10000, rough_gem: 10000, scorched_fossil: 1000 };
     setSmithCatalyst(s, { fossil: 'scorched_fossil', until: true, salvageMisses: true });
     run(s, 'smith_iron_ring', 500);
@@ -364,7 +368,9 @@ describe('smithing catalysts', () => {
   it('a repeat-until hit with a full bag waits on the ground', () => {
     const s = smith(true);
     s.skills.smithing = xpForLevel(20);
-    s.skillPassives = ['smithing_ks'];
+    const r = createItem(s, 'iron_ring', 20, 'normal', seeded(9));
+    r.suffixes.push({ affixId: 'u_smith_magic', tier: 0, values: [100] });
+    s.equipment.ring1 = r;
     s.storage.bank.scorched_fossil = 1000;
     setSmithCatalyst(s, { fossil: 'scorched_fossil', until: true, salvageFull: true });
     run(s, 'smith_iron_ring', 500);
@@ -395,7 +401,9 @@ describe('gathering and alchemy', () => {
   it('Fossil Hunter finds more Fossils', () => {
     const plain = player();
     const hunter = player();
-    hunter.skillPassives = ['mining_n1'];
+    const r = createItem(hunter, 'iron_ring', 20, 'normal', seeded(9));
+    r.suffixes.push({ affixId: 'u_fossil_chance', tier: 0, values: [100] });
+    hunter.equipment.ring1 = r;
     for (const s of [plain, hunter]) {
       s.skills.mining = xpForLevel(5);
       run(s, 'mine_scorched', 1000, 7);
@@ -405,19 +413,20 @@ describe('gathering and alchemy', () => {
 
   it('Distiller turns some Lesser Essences into Greater', () => {
     const s = player();
-    s.skillPassives = ['harvesting_n0'];
-    run(s, 'herb_sun', 3000);
+    const r = createItem(s, 'iron_ring', 20, 'normal', seeded(9));
+    r.suffixes.push({ affixId: 'u_distiller', tier: 0, values: [50] });
+    s.equipment.ring1 = r;
+    run(s, 'forage_sunpetal', 3000);
     expect(s.storage.bank.essence_vitality_2).toBeGreaterThan(0);
   });
 
-  it('batch recipes cost 8.5×, or 7.5× with Bulk Brewer', () => {
+  it('batch recipes cost 8.5× nominal inputs', () => {
     expect(actionDef('orb_transmute_x10').inputs).toEqual({ arcane_dust: 26, sunpetal: 17 });
     const s = player();
-    s.skillPassives = ['alchemy_n0'];
     s.storage.bank = { ...s.storage.bank, arcane_dust: 100, sunpetal: 100 };
     run(s, 'orb_transmute_x10', 1);
-    expect(s.storage.bank.arcane_dust).toBe(100 - 23);
-    expect(s.storage.bank.sunpetal).toBe(100 - 15);
+    expect(s.storage.bank.arcane_dust).toBe(100 - 26);
+    expect(s.storage.bank.sunpetal).toBe(100 - 17);
     expect(s.storage.bank.transmute).toBeGreaterThanOrEqual(10);
   });
 

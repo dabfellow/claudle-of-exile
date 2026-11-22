@@ -3,20 +3,20 @@ import {
   CHAPTERS, chapterNeed, CODEX_TIERS, EARLY_SCRIPTS, FIRST_SCRIPT_GATE, INSCRIPTION_CHANCE, meaningDef, SCRIPTS, SECRET_CHAPTERS, SECRET_DATA,
   type ChapterReward, type ScriptDef, type ScriptId,
 } from '../../data/deciphering';
-import { chamberActionId, ROSETTA_STONE, SITES, siteOfAction, TRAIL } from '../../data/expedition';
+import { isChamberAction, ROSETTA_STONE, SITES, siteOfAction } from '../../data/expedition';
 import { actionDef } from '../../data/skills';
 import {
   clearArrivals, codexDigSpeed, codexTier, crackedCount, firstScriptHintSource, firstScriptOpen, glyphOf, meaningName, readInscription, revealThreshold, seenMeanings, setGuess,
   trueMeaning, useRosetta, type ReadResult,
 } from '../../engine/deciphering';
-import { hasPassport } from '../../engine/expedition';
-import { actionBlocker, actionIntervalMs, skillLevel, startSkillAction, stopAction } from '../../engine/skills';
+import { actionIntervalMs, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import { glyphIds } from '../../data/deciphering';
 import type { GameState, Inscription } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { MatIcon, ProgressBar } from './common';
 import { GlyphTile } from './Glyph';
+import { HelpTip, SkillIntro } from './SkillHelp';
 import { SkillMinigame } from './SkillMinigame';
 import '../archaeology.css';
 
@@ -183,49 +183,56 @@ function Inscriptions({ s }: { s: GameState }) {
   );
 }
 
-function DigPanel({ s }: { s: GameState }) {
-  const level = skillLevel(s, 'archaeology');
-  const options: { id: string; label: string }[] = [];
-  for (const id of TRAIL) {
-    const site = SITES.find((x) => x.id === id)!;
-    if (!hasPassport(s, id) || level < site.level) continue;
-    options.push({ id, label: site.name });
-    if (s.archaeology.chambers.includes(id)) options.push({ id: chamberActionId(id), label: `Hidden chamber: ${site.name}` });
-  }
-  const running = s.action?.kind === 'skill' && siteOfAction(s.action.actionId) ? s.action.actionId : undefined;
-  const [picked, setPicked] = useState<string | undefined>();
-  const [open, setOpen] = useState(false);
-  const chosen = running ?? (picked && options.some((o) => o.id === picked) ? picked : options.at(-1)?.id);
-  if (!chosen) return <aside className="dig-side-panel"><p className="lock-note">No dig site open yet.</p></aside>;
-  const a = actionDef(chosen);
-  const reason = actionBlocker(s, a);
-  const interval = actionIntervalMs(s, a, deriveStats(s));
-  const digging = running === chosen;
+function DigStatusPanel({ s }: { s: GameState }) {
+  const runningSiteAction = s.action?.kind === 'skill' && siteOfAction(s.action.actionId) ? actionDef(s.action.actionId) : null;
+  const runningSite = runningSiteAction ? siteOfAction(runningSiteAction.id) : null;
+  const anyArchAction = s.action?.kind === 'skill' && actionDef(s.action.actionId).skill === 'archaeology' ? actionDef(s.action.actionId) : null;
+  const activeAction = runningSiteAction ?? anyArchAction;
+  const interval = activeAction ? actionIntervalMs(s, activeAction, deriveStats(s)) : 0;
   const speed = codexDigSpeed(s);
+  const rosettas = s.storage.bank[ROSETTA_STONE] ?? 0;
+
   return (
     <aside className="dig-side-panel">
-      <div className="dig-kicker">Dig site</div>
-      <select className="dig-select" value={chosen} disabled={!!running} onChange={(e) => setPicked(e.target.value)} aria-label="Dig site">
-        {options.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-      </select>
-      <ProgressBar value={digging && s.action?.kind === 'skill' ? s.action.progress / interval : 0} color="var(--success)" className="action-progress dig-progress" />
-      <div className="small dim">A dig every {(interval / 1000).toFixed(1)}s{speed ? `, ${speed}% faster from your codex` : ''}.</div>
-      {digging ? (
+      <div className="dig-kicker">Active dig & focus</div>
+      {activeAction ? (
         <>
-          <button className="btn sm" onClick={() => setOpen((v) => !v)} aria-expanded={open}>{open ? 'Close the dig' : 'Open the dig'}</button>
-          <button className="btn sm ghost" onClick={() => game.act((st) => stopAction(st))}>Stop digging</button>
+          <div className="dig-active-head">
+            <div>
+              <b>{runningSite ? runningSite.name : activeAction.name}</b>
+              {runningSiteAction && isChamberAction(runningSiteAction.id) && (
+                <div className="small dim">Hidden chamber</div>
+              )}
+            </div>
+            <button className="btn sm ghost" onClick={() => game.act((st) => stopAction(st))}>
+              Stop
+            </button>
+          </div>
+          <ProgressBar
+            value={s.action?.kind === 'skill' && interval > 0 ? s.action.progress / interval : 0}
+            color="var(--success)"
+            className="action-progress dig-progress"
+          />
+          <div className="small dim">
+            Every {(interval / 1000).toFixed(1)}s{speed ? ` · ${speed}% faster from your codex` : ''}.
+          </div>
+          <SkillMinigame skill="archaeology" />
         </>
       ) : (
-        <button className="btn sm primary" disabled={!!reason} title={reason ?? ''} onClick={() => { game.act((st, ctx) => startSkillAction(st, ctx, chosen)); setOpen(true); }}>
-          Open the dig
-        </button>
+        <div className="dig-idle-note">
+          <p className="small">No dig running right now.</p>
+          <p className="small dim">
+            Choose a site on the <b>Expedition Trail</b> below and click <b>Dig</b>. Active dig progress and the Focus brushing minigame appear right here.
+          </p>
+        </div>
       )}
-      {reason && !digging && <p className="lock-note small">{reason}</p>}
-      {digging && open && <SkillMinigame skill="archaeology" />}
-      {(s.storage.bank[ROSETTA_STONE] ?? 0) > 0 && (
-        <button className="btn sm" onClick={() => game.act((st, ctx) => useRosetta(st, ctx))}>
-          Use a Rosetta Stone <span className="num">×{s.storage.bank[ROSETTA_STONE]}</span>
-        </button>
+      {rosettas > 0 && (
+        <div className="row" style={{ gap: 6, alignItems: 'center', marginTop: 4 }}>
+          <button className="btn sm" onClick={() => game.act((st, ctx) => useRosetta(st, ctx))}>
+            Use a Rosetta Stone <span className="num">×{rosettas}</span>
+          </button>
+          <HelpTip tip="Consumes 1 Rosetta Stone to reveal glyphs across all scripts and open a culture's secret chapter once you are 3 chapters in." />
+        </div>
       )}
     </aside>
   );
@@ -236,6 +243,9 @@ export function DeskView() {
   const a = s.archaeology;
   return (
     <section className="expedition desk">
+      <SkillIntro step="Start here: Dig a site below → read rubbings here">
+        Dig at the sites below for Artifacts and stone Inscriptions, then match glyphs to picture hints on the Scholar's Desk to crack scripts and unlock the trail
+      </SkillIntro>
       <div className="expedition-banner">
         <div>
           <div className="dig-kicker">The Hollow Peaks</div>
@@ -258,7 +268,7 @@ export function DeskView() {
       <RubbingsCard s={s} onOpen={() => game.act((st) => clearArrivals(st))} />
       <div className="desk-layout">
         <Inscriptions s={s} />
-        <DigPanel s={s} />
+        <DigStatusPanel s={s} />
       </div>
     </section>
   );
@@ -312,9 +322,15 @@ export function CodexView() {
   const s = useGame();
   return (
     <section>
+      <SkillIntro step="Glyph Dictionary">
+        Your dictionary of translated glyphs across 4 lost cultures — cracking glyphs permanently speeds up digging and yields
+      </SkillIntro>
       <div className="section-head">
         <h3>Codex</h3>
-        <span className="dim small">Every glyph that reaches {revealThreshold(s.archaeology)} evidence reveals itself. Perks stack across scripts.</span>
+        <span className="dim small">
+          Every glyph that reaches {revealThreshold(s.archaeology)} evidence reveals itself. Perks stack across scripts.{' '}
+          <HelpTip tip="Each time you press Read on an inscription at the Scholar's Desk, every correct glyph gains 1 evidence toward revealing its true meaning permanently." />
+        </span>
       </div>
       <div className="card-grid" style={{ ['--card-min' as string]: '320px', gap: 8 }}>
         {SCRIPTS.map((x) => <CodexPage key={x.id} s={s} script={x} />)}
@@ -373,6 +389,9 @@ export function ChaptersView() {
   const s = useGame();
   return (
     <section>
+      <SkillIntro step="Story Progression">
+        Translating inscriptions completes story chapters, unlocking new Dig Sites, hidden chambers, merchant stock & Relic Forge forms
+      </SkillIntro>
       <div className="section-head">
         <h3>Chapters</h3>
         <span className="dim small">Each chapter needs more translated inscriptions than the one before. Rewards open the trail.</span>

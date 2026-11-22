@@ -3,8 +3,8 @@ import { actionDef } from '../src/data/skills';
 import { makeCtx } from '../src/engine/context';
 import {
   braceDelve, buildDelveInstallation, delveActionSpec, delveDepthCap, delveGasPaused, delveHazardChance,
-  delvePickBlocker, delvePushCost, delvePushTime, delveStep, installationCovers, migrateDelve, rollDelveRough, rollDelveTraits,
-  startDelve, upgradeDelvePick,
+  delvePickBlocker, delvePickCost, delvePushCost, delvePushTime, delveStep, installationCovers, migrateDelve,
+  rollDelveRough, rollDelveTraits, startDelve, upgradeDelvePick,
 } from '../src/engine/delve';
 import { simulateOffline } from '../src/engine/offline';
 import { startProject } from '../src/engine/professions';
@@ -147,16 +147,34 @@ describe('Mining Delve', () => {
     expect(delveHazardChance(s.delve, 1, 'work')).toBe(0);
   });
 
-  it('requires depth and its band ore to forge the next pick tier', () => {
+  it('requires depth and its band metal bars (any grade) to forge the next pick tier', () => {
+    expect(delvePickCost(0)).toEqual({ iron_bar: 50 });
+    expect(delvePickCost(6)).toEqual({ world_bar: 50, heartstone: 5 });
+
     const s = newGame(11);
     expect(delvePickBlocker(s)).toBe('Reach layer 45');
     s.delve.deepest = 45;
     expect(delvePickBlocker(s)).toBe('Missing materials');
     s.storage.bank.iron_ore = 50;
+    expect(delvePickBlocker(s)).toBe('Missing materials');
+    s.storage.bank.iron_bar = 50;
     expect(upgradeDelvePick(s)).toBeNull();
     expect(s.delve.pickTier).toBe(1);
-    expect(s.storage.bank.iron_ore).toBe(0);
+    expect(s.storage.bank.iron_bar).toBe(0);
     expect(delvePickBlocker(s)).toBe('Reach layer 90');
+
+    // Crude, Pure, and Flawless bars also satisfy pick upgrade costs.
+    s.delve.deepest = 90;
+    s.storage.bank.mithril_bar_crude = 20;
+    s.storage.bank.mithril_bar_pure = 15;
+    s.storage.bank.mithril_bar_flawless = 15;
+    expect(delvePickBlocker(s)).toBeNull();
+    expect(upgradeDelvePick(s)).toBeNull();
+    expect(s.delve.pickTier).toBe(2);
+    expect(s.storage.bank.mithril_bar_crude).toBe(0);
+    expect(s.storage.bank.mithril_bar_pure).toBe(0);
+    expect(s.storage.bank.mithril_bar_flawless).toBe(0);
+    expect(delvePickBlocker(s)).toBe('Reach layer 135');
   });
 
   it('finds Heartstone in a deep cavern and continues through the Worldroot landmark', () => {

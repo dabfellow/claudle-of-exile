@@ -1276,6 +1276,8 @@ export interface ArchaeologyState {
 /** Thieving's Heist board (engine/heist.ts). The job under way lives on `action`, so anything else you start ends it. */
 export interface HeistState {
   roster?: Record<string, import('../data/rogues').RogueProgress>;
+  /** rogues recruited via Street Marks and available for crew assignment */
+  unlockedRogues?: string[];
   /** rank of every rogue hired */
   rogues: Record<string, number>;
   /** rogues on the crew, up to crewSlots() */

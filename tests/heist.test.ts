@@ -131,7 +131,7 @@ describe('Thieving', () => {
     const before = skillTreePoints(s);
     s.skills.thieving = xpForLevel(10);
     expect(skillTreePoints(s)).toBeGreaterThan(before);
-    expect(SKILL_TREE_NODES.filter((n) => n.branch === 'thieving')).toHaveLength(6);
+    expect(SKILL_TREE_NODES.filter((n) => n.branch === 'thieving')).toHaveLength(14);
   });
 });
 
@@ -300,7 +300,9 @@ describe('the crew', () => {
 
   it('Clean Getaway keeps the whole take', () => {
     const s = thief(50);
-    s.skillPassives = ['thieving_ks'];
+    const ring = createItem(s, 'iron_ring', 30, 'normal', seeded(1));
+    ring.suffixes.push({ affixId: 'u_thieving_double', tier: 0, values: [1] });
+    s.equipment.ring1 = ring;
     expect(alarmKeeps(s)).toBe(1);
   });
 });
@@ -398,7 +400,8 @@ describe('saves', () => {
     expect(s.skills.thieving).toBe(0);
     expect(levelOf('thieving', s.skills.thieving)).toBe(1);
     expect(s.heist.roster?.infiltrator.level).toBe(1);
-    expect(s.heist.crew).toHaveLength(3);
+    expect(s.heist.unlockedRogues).toEqual([]);
+    expect(s.heist.crew).toHaveLength(0);
     expect(startSkillAction(s, makeCtx(seeded(1)), 'mark_peddler')).toBeNull();
   });
 

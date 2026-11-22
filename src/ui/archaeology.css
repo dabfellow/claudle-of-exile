@@ -869,3 +869,234 @@ button.glyph-tile:hover { border-color: var(--script); }
 .mini-brush-chips { display: flex; gap: 6px; align-items: center; font-size: 12px; }
 .mini-brush-pip { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--line-2); }
 .mini-brush-pip.used { background: var(--bad); border-color: var(--bad); }
+
+/* ---------- Desk active dig status ---------- */
+.dig-active-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.dig-idle-note {
+  padding: 8px 10px;
+  border: 1px dashed var(--line-2);
+  border-radius: 6px;
+  background: var(--bg-2);
+}
+.dig-idle-note p {
+  margin: 0;
+  line-height: 1.45;
+}
+.dig-idle-note p + p {
+  margin-top: 4px;
+}
+
+/* ---------- Relic form base & implicit details ---------- */
+.relic-form-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.relic-form-base {
+  font-size: 12.5px;
+  color: var(--text);
+  margin-top: 2px;
+}
+.relic-form-stats {
+  margin: 4px 0 6px;
+  padding: 6px 8px;
+  list-style: none;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  font-size: 12px;
+  color: var(--magic);
+  display: grid;
+  gap: 2px;
+}
+
+/* ---------- Restoration & Sifting Bench ---------- */
+.restoration-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.restoration-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 10px;
+}
+.restoration-card {
+  --site: var(--accent);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-color: color-mix(in srgb, var(--site) 30%, var(--line));
+  border-left: 3px solid var(--site);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--site) 6%, var(--panel)), var(--bg-2));
+}
+.restoration-card.running {
+  border-color: var(--success);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--success) 35%, transparent);
+}
+.restoration-card.locked {
+  opacity: 0.72;
+}
+.restoration-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.restoration-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid var(--line-2);
+  background: var(--panel);
+}
+.restoration-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.restoration-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.restoration-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.restoration-output,
+.restoration-cost {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.restoration-out-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 12px;
+}
+
+/* ---------- Culture Merchants & Ware Rows ---------- */
+.merchant-card {
+  --site: var(--accent);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 3px solid var(--site);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--site) 7%, var(--panel)), var(--panel) 140px);
+}
+.merchant-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.merchant-name {
+  margin: 2px 0 0;
+  font-family: Spectral, Georgia, serif;
+  font-size: 17px;
+  color: var(--site);
+}
+.merchant-standing-bar {
+  margin-top: 2px;
+}
+.merchant-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.merchant-currency {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+}
+.merchant-fragments {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--site) 35%, var(--line));
+  border-radius: 6px;
+  background: var(--bg-2);
+}
+.merchant-frag-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.merchant-wares {
+  display: flex;
+  flex-direction: column;
+}
+.merchant-card .ware-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.merchant-card .ware-shelf {
+  min-width: 34px;
+  text-align: right;
+}
+.merchant-card .ware-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 48px;
+  justify-content: flex-end;
+}
+.merchant-card .ware-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+@media (max-width: 520px) {
+  .merchant-card .ware-row {
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+    row-gap: 6px;
+  }
+  .merchant-card .ware-name {
+    grid-column: 2 / -1;
+  }
+  .merchant-card .ware-shelf {
+    grid-column: 1 / 2;
+    text-align: left;
+    min-width: 0;
+  }
+  .merchant-card .ware-cost {
+    grid-column: 2 / 3;
+    justify-content: flex-start;
+  }
+  .merchant-card .ware-actions {
+    grid-column: 3 / 4;
+    justify-content: flex-end;
+  }
+}

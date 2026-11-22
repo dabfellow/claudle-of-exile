@@ -147,5 +147,9 @@ div.thief-group-heading { cursor: default; }
 .thief-prep-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid rgba(80,60,30,.25)}
 .thief-prep-text{flex:1;min-width:0;display:flex;flex-direction:column}
 .thief-prep-text small{font-size:11px;opacity:.8}
+.thief-prep-name{display:inline-flex;align-items:center;gap:5px}
 .thief-prep-held{min-width:30px;text-align:right}
 .thief-prep-badge{display:block;color:#7a5a1c;font-size:10px}
+.thief-workspace.single{grid-template-columns:minmax(0,1fr)}
+.thief-dossier .help-tip-q{background:#cbb78c;border-color:#8d785b;color:#3f3122}
+.thief-dossier .help-tip:hover .help-tip-q,.thief-dossier .help-tip:focus-visible .help-tip-q{border-color:#4b3a20;color:#241b11}

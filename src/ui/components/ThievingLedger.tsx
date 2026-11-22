@@ -9,7 +9,8 @@ import { skillTreeStats } from '../../engine/skillTree';
 import { deriveStats } from '../../engine/stats';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
-import { Art, fmt, GameIcon, MatIcon, ProgressBar, Tooltip } from './common';
+import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar, Tooltip } from './common';
+import { LockedBadge, SkillIntro } from './SkillHelp';
 import { MasteryProgress, MasteryTip } from './MasteryProgress';
 import { SkillMinigame } from './SkillMinigame';
 import './thieving-ledger.css';
@@ -66,7 +67,7 @@ export function ThievingLedger() {
   const skillActionId = s.action?.kind === 'skill' ? s.action.actionId : null;
   const activeId = MARKS.some((a) => a.id === skillActionId) ? skillActionId : null;
   const [selectedId, setSelectedId] = useState(() => activeId ?? MARKS[0].id);
-  const [onlyUnlocked, setOnlyUnlocked] = useState(false);
+  const [onlyUnlocked, setOnlyUnlocked] = useState(true);
   const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
   const a = MARKS.find((mark) => mark.id === selectedId) ?? MARKS[0];
   const d = deriveStats(s);
@@ -78,14 +79,23 @@ export function ThievingLedger() {
   const selectedGroup = GROUPS.find((g) => g.actions.includes(a))!;
   const planned = s.heist.planned ? HEIST_JOBS.find((j) => j.id === s.heist.planned && !jobBlocker(s, j)) : undefined;
   const prepGiven = (markId: string) => planned ? prepBoard(planned.id).items.filter((e) => e.mark === markId).map((e) => prepDef(e.kind).name) : [];
+  const nextLockedId = MARKS.find((mark) => !!actionBlocker(s, mark))?.id;
+  const unlockedCount = s.heist.unlockedRogues?.length ?? 0;
 
-  return <div className="thief-workspace">
+  return <>
+    <SkillIntro
+      step="Start here: Pick a Street Mark and click Pickpocket"
+      action={unlockedCount < 3 ? <Badge tone="neutral">Recruits: {unlockedCount}/3</Badge> : undefined}
+    >
+      Pickpocket targets for gold, Heist prep items, and rogues looking for work
+    </SkillIntro>
+    <div className="thief-workspace">
     <section className="card thief-ledger" aria-label="Street mark ledger">
       <div className="thief-ledger-title"><h2>Street Marks</h2><button className="btn sm ghost" onClick={() => setOnlyUnlocked((v) => !v)}>{onlyUnlocked ? 'Show all' : 'Unlocked only'}</button></div>
       {GROUPS.map((group, i) => {
         const available = group.actions.filter((mark) => !actionBlocker(s, mark));
-        const shown = onlyUnlocked ? available : group.actions;
-        const expanded = groupOverrides[group.name] ?? (i === 0 || group === selectedGroup);
+        const shown = onlyUnlocked ? group.actions.filter((mark) => !actionBlocker(s, mark) || mark.id === nextLockedId) : group.actions;
+        const expanded = groupOverrides[group.name] ?? (i === 0 || (group === selectedGroup && !onlyUnlocked) || shown.length > 0);
         return <div className="thief-group" key={group.name}>
           <button className="thief-group-heading" aria-expanded={expanded} onClick={() => setGroupOverrides((prev) => ({ ...prev, [group.name]: !expanded }))}>
             <span aria-hidden>{expanded ? '▾' : '▸'}</span><b>{group.name}</b><span className="thief-level-range">Lv {group.actions[0].level}–{group.actions.at(-1)!.level}</span><span className="spacer" /><span className="num">{available.length}/{group.actions.length}</span>
@@ -97,14 +107,14 @@ export function ThievingLedger() {
                 const reason = actionBlocker(s, mark);
                 const active = activeId === mark.id;
                 return <button key={mark.id} data-tut={`action-${mark.id}`} className={`thief-target ${a.id === mark.id ? 'selected' : ''} ${reason ? 'locked' : ''}`} aria-pressed={a.id === mark.id} title={reason ?? `View ${mark.name}`} onClick={() => setSelectedId(mark.id)}>
-                  <span className="thief-target-name"><TargetPortrait a={mark} /><span><b>{mark.name}</b>{active && <small className="thief-working">Working the mark</small>}{prepGiven(mark.id).length > 0 && <small className="thief-prep-badge" title={`Can give prep for ${planned!.name}: ${prepGiven(mark.id).join(', ')}`}>Prep: {prepGiven(mark.id).join(', ')}</small>}</span>{reason && <GameIcon name="lock" size={12} />}</span>
+                  <span className="thief-target-name"><TargetPortrait a={mark} /><span><b>{mark.name}</b>{active && <small className="thief-working">Working the mark</small>}{prepGiven(mark.id).length > 0 && <small className="thief-prep-badge" title={`Can give prep for ${planned!.name}: ${prepGiven(mark.id).join(', ')}`}>Prep: {prepGiven(mark.id).join(', ')}</small>}</span>{reason && <LockedBadge level={mark.level} reason={reason} />}</span>
                   <span className="num thief-cell" data-label="Level">{mark.level}</span>
                   <span className="num thief-cell" data-label="Time">{(actionIntervalMs(s, mark, d) / 1000).toFixed(1)}s</span>
                   <span className="num thief-cell" data-label="XP">{xpFor(mark)}</span>
                   <span className="num thief-cell thief-mastery-number" data-label="Mastery">{mark.mastery ? masteryLevel(s, mark.mastery.id) : '—'}</span>
                 </button>;
               })}
-            </> : <p className="dim small">No unlocked targets in this group.</p>}
+            </> : <p className="dim small">No unlocked targets in this group yet.</p>}
           </>}
         </div>;
       })}
@@ -120,7 +130,7 @@ export function ThievingLedger() {
       <div className="thief-rewards"><h3>Rewards per lift</h3>
         {Object.entries(a.outputs ?? {}).map(([id, n]) => <div className="thief-reward" key={id}><MatIcon id={id} size={20} /><b>{materialDef(id).name}</b><span className="spacer" /><span className="num">{n} base{a.outputChance !== undefined && ` · ${a.outputChance * 100}% chance`}</span></div>)}
         {a.bonus?.map((bonus) => <div className="thief-reward" key={bonus.id}><MatIcon id={bonus.id} size={20} /><b>{materialDef(bonus.id).name}</b><span className="spacer" /><span className="num">×{bonus.qty} · {+(Math.min(1, bonus.chance) * 100).toFixed(2)}%</span></div>)}
-        <p className="thief-reward-note">Base gold before mastery and Focus bonuses. Prep for planned Heists can drop too.</p>
+        <p className="thief-reward-note">Base gold before mastery and Focus bonuses. Prep for planned Heists and rogue recruits can drop too.</p>
       </div>
       <div className="thief-dossier-action">
         {blocker && <p className="thief-blocker"><GameIcon name="lock" size={14} /> {blocker}</p>}
@@ -139,5 +149,6 @@ export function ThievingLedger() {
       </div>
       {running && <div className="thief-focus"><SkillMinigame skill="thieving" /></div>}
     </section>
-  </div>;
+  </div>
+  </>;
 }

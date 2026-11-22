@@ -7,8 +7,7 @@ import { HEIST_JOBS, heistJob } from '../../data/heist';
 import { materialDef } from '../../data/materials';
 import { recipeMaterialCount } from '../../engine/bank';
 import { isMapId } from '../../data/maps';
-import { CULTURES, SEALED_RELIC, TRAIL } from '../../data/expedition';
-import { hasPassport } from '../../engine/expedition';
+import { CULTURES, SEALED_RELIC } from '../../data/expedition';
 import { crackedCount } from '../../engine/deciphering';
 import { SCRIPT_IDS, SCRIPTS } from '../../data/deciphering';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
@@ -29,7 +28,7 @@ import type { GameState } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
 import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/common';
-import { ExpeditionBoard } from '../components/ExpeditionBoard';
+import { ExpeditionBoard, RestorationView } from '../components/ExpeditionBoard';
 import { HeistBoard } from '../components/HeistBoard';
 import { MapCaseBoard } from '../components/MapCaseBoard';
 import { Observatory } from '../components/StarChart';
@@ -56,7 +55,7 @@ import { smithingPreview } from '../../engine/smithing';
 import { foragingAccessHint, foragingPreview } from '../../engine/foraging';
 import { LEGENDS, WOODS } from '../../data/woodcutting';
 import { unlockedRegions } from '../../engine/woodcutting';
-import { GIANT_TABS, GiantView, isGiantTab } from '../components/GiantView';
+import { GIANT_TABS, GiantView, isGiantTab, SawmillView } from '../components/GiantView';
 import { alchemyPreview } from '../../engine/alchemy';
 import { alchemyCategory, ALCHEMY_CATEGORIES } from '../../data/alchemy';
 import { COOKING_CATEGORIES, cookingCategory, cookingPreview } from '../../engine/cooking';
@@ -505,7 +504,6 @@ const ARCHAEOLOGY_TABS: { id: string; label: string }[] = [
   { id: 'codex', label: 'Codex' },
   { id: 'chapters', label: 'Chapters' },
   { id: 'forge', label: 'Relic Forge' },
-  { id: 'sites', label: 'Sites' },
   { id: 'restoration', label: 'Restoration & Sifting' },
   { id: 'merchants', label: 'Culture Merchants' },
 ];
@@ -753,13 +751,11 @@ function QuickForgeRecipes() {
 }
 
 function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'gemcutting' | 'harvesting' | 'alchemy' | 'cartography'; go?: (skill: SkillId) => void }) {
-  const s = useGame();
-  const activeProject = s.professionProgress.activeProject?.project.skill === skill;
   const projects = <ProjectBoard skill={skill} go={go} />;
   const catalysts = <details className="profession-supplies"><summary>Catalysts & salvage settings</summary><CatalystPanel /></details>;
   return <div className={`page profession-page profession-${skill}`} style={{ ['--profession' as string]: SKILLS[skill].color }}>
     <SkillHeader skill={skill} />
-    {skill === 'mining' && <DelveView />}
+    {skill === 'mining' && <DelveView masterworks={projects} />}
     {skill === 'smelting' && <FurnaceView projects={projects} />}
     {skill === 'smithing' && <AnvilView quickRecipes={<QuickForgeRecipes />} catalysts={catalysts} masterworks={projects} />}
     {skill === 'woodcrafting' && <WoodBench catalysts={catalysts} masterworks={projects} />}
@@ -767,7 +763,6 @@ function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing'
     {skill === 'harvesting' && <ForagingBench masterworks={projects} />}
     {skill === 'alchemy' && <AlchemyBench masterworks={projects} />}
     {skill === 'cartography' && <CartographyBoard masterworks={projects} />}
-    {skill === 'mining' && <details className="profession-supplies" open={activeProject}><summary>Masterworks</summary>{projects}</details>}
   </div>;
 }
 
@@ -791,7 +786,8 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
   const actions = allActions.filter((a) => !a.batchMastery || isUnlocked(a));
   const [skillTabs, setSkillTabs] = useState<Record<string, string>>({});
   const activeSkillProject = s.professionProgress.activeProject?.project.skill === skill && s.professionProgress.activeProject?.project.category !== 'masteryBatch';
-  const tab = skillTabs[skill] ?? (activeSkillProject ? 'masterworks' : defaultSkillTab(skill));
+  const fallbackTab = skill === 'astrology' && !Object.keys(s.astrology.stars).length && !s.astrology.fallen.length ? 'research' : defaultSkillTab(skill);
+  const tab = skillTabs[skill] ?? (activeSkillProject ? 'masterworks' : fallbackTab);
   const setTab = (t: string) => setSkillTabs((prev) => ({ ...prev, [skill]: t }));
   const tabs = getSkillTabs(skill);
   const selectedActions = actions;
@@ -815,18 +811,17 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
 
   const showActivities =
     tab !== 'masterworks' &&
-    (skill !== 'archaeology' || tab === 'restoration') &&
+    skill !== 'archaeology' &&
     skill !== 'thieving' &&
     skill !== 'fishing' &&
     !(skill === 'harvesting' && tab === 'greenhouse') &&
     skill !== 'astrology' &&
-    !(skill === 'woodcutting' && tab !== 'planks');
+    skill !== 'woodcutting';
 
   return (
     <div className={`page ${skill === 'thieving' ? 'thieving-page' : `profession-page profession-${skill}`}`} style={{ ['--profession' as string]: SKILLS[skill].color }}>
       {skill === 'thieving' ? <ThievingHeader /> : <SkillHeader skill={skill} />}
       {skill !== 'thieving' && skill !== 'archaeology' && skill !== 'woodcutting' && !showActivities && <SkillMinigame skill={skill} />}
-      {skill === 'woodcutting' && tab === 'planks' && <SkillMinigame skill={skill} />}
 
       {tabs && (
         <div className="smith-tabs" style={{ marginTop: 8 }}>
@@ -846,7 +841,6 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
               if (x.id === 'desk') countText = `${s.archaeology.inscriptions.length}`;
               else if (x.id === 'codex') countText = `${SCRIPT_IDS.reduce((n, id) => n + crackedCount(s.archaeology, id), 0)}/${SCRIPTS.reduce((n, x) => n + x.glyphs, 0)}`;
               else if (x.id === 'chapters') countText = `${SCRIPT_IDS.reduce((n, id) => n + (s.archaeology.chapters[id] ?? 0), 0)}/${SCRIPTS.reduce((n, x) => n + x.chapters, 0)}`;
-              else if (x.id === 'sites') countText = `${TRAIL.filter((id) => hasPassport(s, id)).length}/${TRAIL.length}`;
               else if (x.id === 'forge') countText = s.expedition.forge ? '1 open' : `${s.storage.bank[SEALED_RELIC] ?? 0}`;
               else if (x.id === 'restoration') {
                 const list = selectedActions.filter((a) => a.id.startsWith('sift_') || a.id.startsWith('restore_'));
@@ -901,14 +895,10 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
         </div>
       )}
 
-      {skill === 'astrology' && tab !== 'masterworks' && <Observatory tab={tab} />}
+      {skill === 'astrology' && tab !== 'masterworks' && <Observatory tab={tab} onTab={setTab} />}
       {skill === 'agility' && <AgilityShortcuts level={level} />}
       {skill === 'woodcutting' && isGiantTab(tab) && <GiantView tab={tab} go={setTab} />}
-      {skill === 'woodcutting' && tab === 'planks' && (
-        <div className="callout skill-note">
-          The Sawmill saws logs into planks and refines Ancient Heartwood. Ash, Oak and Yew planks are open to everyone; Ironwood and deeper planks and heartwood refining need the Sawmill built in the Lodge{s.giant.lodge.sawmill >= 1 ? ' (built)' : ''}.
-        </div>
-      )}
+      {skill === 'woodcutting' && tab === 'planks' && <SawmillView />}
 
       {skill === 'alchemy' && <div className="callout skill-note">Salvage unwanted items in your Inventory for Arcane Dust, then transmute it into orbs here.</div>}
       {skill === 'gemcutting' && (
@@ -946,7 +936,8 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
       {skill === 'thieving' && tab === 'heists' && <HeistBoard view="jobs" />}
       {skill === 'thieving' && tab === 'crew' && <HeistBoard view="crew" />}
 
-      {skill === 'archaeology' && tab !== 'restoration' && <ExpeditionBoard view={tab as 'desk' | 'codex' | 'chapters' | 'sites' | 'forge' | 'merchants'} />}
+      {skill === 'archaeology' && tab === 'restoration' && <RestorationView />}
+      {skill === 'archaeology' && tab !== 'restoration' && tab !== 'masterworks' && <ExpeditionBoard view={tab as 'desk' | 'codex' | 'chapters' | 'forge' | 'merchants'} />}
       {skill === 'fishing' && (
         <div className="callout skill-note">
           Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.

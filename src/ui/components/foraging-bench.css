@@ -1,14 +1,17 @@
 .foraging-bench { display: grid; gap: 14px; }
-.foraging-plots { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
-.foraging-plot { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2, rgba(20, 24, 20, 0.7)); }
+.foraging-plots { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.foraging-plot { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2, rgba(20, 24, 20, 0.7)); min-width: 0; align-content: start; }
 .foraging-plot.ready { border-color: var(--good, #6ec878); }
-.foraging-plot-plant { display: flex; align-items: center; gap: 10px; }
+.foraging-plot-plant { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .foraging-swatch { width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto; border: 1px solid rgba(255,255,255,0.25); }
 .foraging-mut-tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 3px; border: 1px solid var(--border); margin: 2px 4px 0 0; }
 .foraging-mut-tag.rare { border-color: #d7b56d; color: #f2d28a; }
 .foraging-mut-tag.giga { border-color: #c58aff; color: #e4c6ff; background: rgba(145, 80, 220, 0.18); }
-.foraging-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
-.foraging-card { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2, rgba(20, 24, 20, 0.6)); }
+.foraging-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.foraging-card { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2, rgba(20, 24, 20, 0.6)); min-width: 0; overflow: hidden; align-content: start; }
+.foraging-card.locked { opacity: 0.68; border-style: dashed; }
+.foraging-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+.foraging-card-head b { min-width: 0; overflow-wrap: anywhere; }
 .foraging-card.triple { border-color: #d7b56d; }
 .foraging-card.giga { border-color: #c58aff; box-shadow: 0 0 0 1px rgba(197, 138, 255, 0.25); }
 .foraging-packets { display: grid; gap: 8px; }

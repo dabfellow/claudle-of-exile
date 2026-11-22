@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { baseDef, uniqueDef } from '../src/data/bases';
 import { professionProject } from '../src/data/professionProjects';
-import { actionDef } from '../src/data/skills';
 import { worldDropUniques } from '../src/data/uniqueDrops';
 import { uniqueDropsIn } from '../src/data/uniqueList';
 import { zoneDef } from '../src/data/zones';
@@ -11,7 +10,7 @@ import { createSkillGem, createSupportGem } from '../src/engine/gems';
 import { createUnique, createItem } from '../src/engine/items';
 import { advanceProject, completeProject, settleProfessionProgress, startProject } from '../src/engine/professions';
 import { deserialize, serialize } from '../src/engine/save';
-import { skillStep, startSkillAction, actionIntervalMs } from '../src/engine/skills';
+import { skillStep, startSkillAction } from '../src/engine/skills';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import { charXpForLevel, xpForLevel } from '../src/engine/xp';
@@ -110,20 +109,17 @@ describe('Phase 14 crafted weapons', () => {
 
   it('makes the required crystal and inscription from bounded sources without conservation or duplicate output', () => {
     const s = newGame(1), c = context();
-    s.skills.gemcutting = s.skills.runecarving = xpForLevel(90);
+    s.skills.gemcutting = s.skills.cartography = xpForLevel(90);
     settleProfessionProgress(s, true);
     s.storage.bank = { crystal_shard: 10, rough_gem: 5 };
     expect(startSkillAction(s, c, 'cut_exceptional')).toBeNull();
     skillStep(s, c, 120_000, deriveStats(s)); expect(s.storage.bank.exceptional_crystal).toBe(1);
-    const rune = actionDef('carve_rune_keen_2');
-    s.storage.bank = Object.fromEntries(Object.entries(rune.inputs!).map(([id, n]) => [id, n * 200]));
-    expect(startSkillAction(s, c, rune.id)).toBeNull();
-    for (let i = 0; i < 200; i++) skillStep(s, c, actionIntervalMs(s, rune, deriveStats(s)), deriveStats(s));
-    expect(s.storage.bank.inscription_fragment).toBe(10);
-    const keen3 = actionDef('carve_rune_keen_3'); Object.assign(s.storage.bank, keen3.inputs);
-    expect(startSkillAction(s, c, keen3.id)).toBeNull(); skillStep(s, c, keen3.intervalMs, deriveStats(s));
-    expect(startSkillAction(s, c, 'prepare_return_inscription')).toBeNull(); skillStep(s, c, 120_000, deriveStats(s));
-    expect(s.storage.bank.return_inscription).toBe(1); expect(s.storage.bank.inscription_fragment).toBe(0);
+    s.storage.bank = { inscription_fragment: 10, copper_bar_flawless: 5 };
+    expect(startSkillAction(s, c, 'prepare_return_inscription')).toBeNull();
+    skillStep(s, c, 120_000, deriveStats(s));
+    expect(s.storage.bank.return_inscription).toBe(1);
+    expect(s.storage.bank.inscription_fragment).toBe(0);
+    expect(s.storage.bank.copper_bar_flawless).toBe(0);
   });
 
   it('Woundmaker preserves pre-penalty bleed damage, suppresses forced/mega critical strikes and applies one bleed per hit', () => {

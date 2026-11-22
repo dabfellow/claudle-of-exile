@@ -6,7 +6,7 @@ import {
 import { MINING_FOSSILS } from '../data/mining';
 import { actionDef, SKILL_XP_SCALE, type SkillAction } from '../data/skills';
 import { astrologyOffline, astrologyXp, astrologyYield } from './astrology';
-import { addBank, canAfford, hasItem, materialRoom, payCost } from './bank';
+import { addBank, canAfford, hasItem, materialRoom, payCost, payResolvedCost, resolveRecipeCost } from './bank';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
 import { rollCollectible } from './collectibles';
 import type { Ctx } from './context';
@@ -153,7 +153,7 @@ export function buildDelveInstallation(s: GameState, hazard: DelveHazard, layer:
 export function delvePickCost(pickTier: number): Record<string, number> {
   const next = DELVE_PICKS[pickTier + 1];
   if (!next) return {};
-  return { [delveBand(next.layer).ore]: 50, ...(next.layer === WORLDROOT_DEPTH ? { heartstone: 5 } : {}) };
+  return { [delveBand(next.layer).ore.replace(/_ore$/, '_bar')]: 50, ...(next.layer === WORLDROOT_DEPTH ? { heartstone: 5 } : {}) };
 }
 
 export function delvePickBlocker(s: GameState): string | null {
@@ -161,13 +161,15 @@ export function delvePickBlocker(s: GameState): string | null {
   const next = DELVE_PICKS[s.delve.pickTier + 1];
   if (!next) return 'Fully upgraded';
   if (s.delve.deepest < next.layer) return `Reach layer ${next.layer}`;
-  return canAfford(s, delvePickCost(s.delve.pickTier)) ? null : 'Missing materials';
+  return resolveRecipeCost(s, delvePickCost(s.delve.pickTier)) ? null : 'Missing materials';
 }
 
 export function upgradeDelvePick(s: GameState): string | null {
   const blocker = delvePickBlocker(s);
   if (blocker) return blocker;
-  payCost(s, delvePickCost(s.delve.pickTier));
+  const resolved = resolveRecipeCost(s, delvePickCost(s.delve.pickTier));
+  if (!resolved) return 'Missing materials';
+  payResolvedCost(s, resolved);
   s.delve.pickTier++;
   return null;
 }
