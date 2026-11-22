@@ -1,4 +1,5 @@
 import { classDef } from '../data/classes';
+import { MAX_RANK, REGIONS, STAR_UNLOCK_POINTS } from '../data/astrology';
 import { bundleCharacter, fillAccount, freshAccount, freshCharacterStorage } from './account';
 import { newAscendancyRuntime, newAscendancyState } from './ascendancy';
 import { TRIALS } from '../data/ascendancies';
@@ -28,6 +29,7 @@ import { migrateSettingsProfiles, settleTreeProfiles } from './treeProfiles';
 import { settleProfessionProgress } from './professions';
 import { settleForagingSeeds } from './foraging';
 import { newCampaignQuestState, settleCampaignQuests } from './campaignQuests';
+import { newAstrologyState } from './astrology';
 
 // kept from the game's old name: changing it would orphan every existing save
 export const SAVE_KEY = 'claudle-of-exile-save';
@@ -434,6 +436,7 @@ const MIGRATIONS: Record<number, Migration> = {
     tut.step = moved;
   },
   51: (raw) => { retireMarkers(raw); },
+  52: migrateAstrologyConstellations,
 };
 
 /**
@@ -469,6 +472,39 @@ export function retireMarkers(raw: Record<string, unknown>): void {
   delete bank.rogues_marker;
   if (gold > 0) bank.gold = (bank.gold ?? 0) + gold;
   heist.notice = `Rogue's Markers are retired. Your ${markers} Markers became ${given} prep and ${gold} gold.`;
+}
+
+/**
+ * Astrology became "chart your own constellation" (docs/ASTROLOGY_CONSTELLATIONS.md). Each old constellation pair maps to a
+ * sky region: research starts at the points for as many stars as the pair had lit (up to 4), and those stars start at
+ * rank 2 x the pair's average stars lit (at most 10). The constellation starts empty, and Stardust carries over.
+ * Old study tracks and a running study move to the region's research.
+ */
+export function migrateAstrologyConstellations(raw: Record<string, unknown>): void {
+  const oldStars = ((raw.astrology as { stars?: Record<string, unknown> } | undefined)?.stars ?? {}) as Record<string, unknown>;
+  const next = newAstrologyState();
+  const mastery = (raw.skillingMastery ?? {}) as Record<string, number>;
+  for (const region of REGIONS) {
+    if (!region.old) continue;
+    const lit = region.old.reduce((n, id) => n + (typeof oldStars[id] === 'number' ? Math.min(5, Math.max(0, oldStars[id] as number)) : 0), 0);
+    const count = Math.min(4, lit);
+    if (count > 0) {
+      next.regions[region.id] = { research: STAR_UNLOCK_POINTS[count - 1] };
+      for (const starId of region.stars.slice(0, count)) next.stars[starId] = { rank: Math.min(MAX_RANK, Math.max(1, lit)), xp: 0 };
+    }
+    const tracks = region.old.map((id) => mastery[`task.study_${id}`] ?? 0);
+    for (const id of region.old) delete mastery[`task.study_${id}`];
+    if (Math.max(...tracks) > 0) mastery[`task.research_${region.id}`] = Math.max(mastery[`task.research_${region.id}`] ?? 0, ...tracks);
+  }
+  next.chartNotice = Object.keys(next.stars).length > 0;
+  raw.astrology = next;
+  const action = raw.action as { kind?: string; actionId?: string } | null | undefined;
+  if (action?.kind === 'skill' && action.actionId?.startsWith('study_')) {
+    const old = action.actionId.slice('study_'.length);
+    const region = REGIONS.find((r) => r.old?.includes(old));
+    if (region) action.actionId = `research_${region.id}`;
+    else raw.action = null;
+  }
 }
 
 /**

@@ -271,8 +271,7 @@ describe('Marker conversion', () => {
     const r = raw(100, 8, { heist_clean_cinder_toll: true as const });
     r.version = 51;
     const s = deserialize(JSON.stringify(r));
-    expect(SAVE_VERSION).toBe(52);
-    expect(s.version).toBe(52);
+    expect(s.version).toBe(SAVE_VERSION);
     expect(s.storage.bank.rogues_marker ?? 0).toBe(0);
     // Salt Tithe is the top job: ledger, uniform, key
     expect(s.heist.prep).toEqual({ prep_salt_tithe_ledger: 3, prep_salt_tithe_uniform: 3, prep_salt_tithe_key: 3 });

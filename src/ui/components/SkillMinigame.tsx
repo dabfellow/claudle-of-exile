@@ -20,6 +20,7 @@ const HOW_TO: Partial<Record<SkillId, string>> = {
   gemcutting: 'Cut the facets in order, 1 to 3, before the stone settles. Finish while the timer is in the gold for a double.',
   runecarving: 'Drag from the circle along the whole stroke without leaving the line. Hug the gold middle for a double.',
   cooking: 'Three pots are heating up. Stir each one in the bright band, or its gold middle for a double, before it boils over.',
+  astrology: 'Turn the focus ring until the star is as sharp as you can get it, then let go. Spot on is a double.',
   cartography: 'A landmark is hidden in the fog. Each sounding shows how many steps away it is: find it within 5, or within 3 for a double.',
 };
 

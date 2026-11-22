@@ -7,7 +7,7 @@ import type { GameState } from './types';
 import { levelOf } from './xp';
 
 // Fishing is left out: it is always level 1 and would only nudge the point count
-const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as const;
+const SKILLING = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology'] as const;
 
 export const MAX_SKILL_TREE_POINTS = 36;
 

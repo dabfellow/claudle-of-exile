@@ -16,6 +16,7 @@ import { autoSalvages, routeDrop } from './lootRouting';
 import { HARD_BOSSES, UBER_BOSSES, uniqueMapDef } from '../data/maps';
 import { encounterWorldDropUniques } from '../data/uniqueDrops';
 import { addMaps, runModifiers } from './maps';
+import { astrologyCurrency } from './astrology';
 import { chance, pick, pickWeighted, rInt } from './rng';
 import type { Derived } from './stats';
 import type { GameState, Item, MonsterInstance, Rarity } from './types';
@@ -105,7 +106,7 @@ function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, 
   const ilvl = mon.level + (zone.ilvlBonus ?? 0) + MAP_ILVL[stationLevel(s, 'map_device') - 1];
   const giveCurrency = (id: string, qty = 1) => {
     if (CURRENCY_ORBS.has(id)) {
-      const amount = qty * Math.max(ctx.event?.loot ?? 1, ctx.event?.currencyDrops ?? 1) / (ctx.event?.loot ?? 1) * (ctx.simulation?.currencyDrops ?? 1);
+      const amount = qty * Math.max(ctx.event?.loot ?? 1, ctx.event?.currencyDrops ?? 1) / (ctx.event?.loot ?? 1) * (ctx.simulation?.currencyDrops ?? 1) * (1 + astrologyCurrency(s) / 100);
       qty = Math.floor(amount) + (amount % 1 > 0 && rng.next() < amount % 1 ? 1 : 0);
     }
     addBank(s, id, qty);

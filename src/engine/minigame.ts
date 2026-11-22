@@ -37,6 +37,14 @@ export const SURVEY_SOUNDINGS = 5;
 /** Finding it in this many soundings or fewer is a double. */
 export const SURVEY_DOUBLE = 3;
 
+/**
+ * Astrology: how far the focus ring can sit from the hidden sharpest point (0–1) and still count.
+ * Up to the hit limit is a hit, and its middle third (a third of the band either side of the target) is the double.
+ */
+export const FOCUS_DOUBLE_OFFSET = 0.03;
+export const FOCUS_HIT_OFFSET = 0.09;
+export const FOCUS_WEAK_OFFSET = 0.15;
+
 const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'agility', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology'];
 
 export type SwingResult = 'double' | 'hit' | 'weak' | 'miss';
@@ -94,6 +102,12 @@ export function liftResult(tapMs: number, windowStartMs: number, windowEndMs: nu
     return tapMs >= dStart && tapMs <= dStart + third ? 'double' : 'hit';
   }
   return tapMs <= windowEndMs + LIFT_WEAK_GRACE_MS ? 'weak' : 'miss';
+}
+
+/** How a locked telescope focus landed: `offset` is how far the ring sits from the sharpest point. */
+export function focusResult(offset: number): SwingResult {
+  const off = Math.abs(offset);
+  return off <= FOCUS_DOUBLE_OFFSET ? 'double' : off <= FOCUS_HIT_OFFSET ? 'hit' : off <= FOCUS_WEAK_OFFSET ? 'weak' : 'miss';
 }
 
 /** Steps between two tiles of the survey grid: what a sounding shows. */

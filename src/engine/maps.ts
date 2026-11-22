@@ -65,6 +65,7 @@ import { flaskCapacity } from './mechanics';
 import { chance, pick, pickWeighted, rInt } from './rng';
 import { skillTreeStats } from './skillTree';
 import { deriveStats } from './stats';
+import { astrologyMapDrops } from './astrology';
 import type { AtlasState, EquipSlot, GameState, GroundKind, MapSettings, MapState, MonsterInstance, SextantSlot } from './types';
 import { charXpForLevel } from './xp';
 
@@ -991,7 +992,7 @@ export function rollMapDrops(s: GameState, ctx: Ctx, mon: MonsterInstance): void
       : mon.isBoss
         ? MAP_DROPS.campaignBoss
         : MAP_DROPS.campaignKill;
-  const mapFindMult = 1 + ((skillTreeStats(s).mapFind ?? 0) + (mods?.mapFindPct ?? 0)) / 100;
+  const mapFindMult = 1 + ((skillTreeStats(s).mapFind ?? 0) + (mods?.mapFindPct ?? 0) + astrologyMapDrops(s)) / 100;
 
   if (chance(ctx.rng, baseDropChance * mapFindMult)) {
     const tier = run ? droppedTier(s, ctx, run.tier) : MAP_TIERS[0].tier;

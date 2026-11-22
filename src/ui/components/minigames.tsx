@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import {
   CHARGE_ZONE_WIDTH,
   chargeResult,
+  focusResult,
   DOUBLE_SHARE,
   doubleZoneStart,
   inDoubleZone,
@@ -20,6 +21,7 @@ import {
 } from '../../engine/minigame';
 import type { SkillId } from '../../engine/types';
 import { MatIcon } from './common';
+import './star-chart.css';
 
 const CHARGE_MS = 1100;
 const SWEEP_MS = 1200;
@@ -31,12 +33,9 @@ const HERB_LIFE_MS = 3400;
 const HERB_BLOOM_FROM = 0.3;
 const HERB_BLOOM_TO = 0.55;
 const HERBS_MAX = 3;
-/** Astrology: shooting stars cross the sky, flaring gold for part of the way. Matches .mini-star in styles.css. */
-const STAR_EVERY_MS = 1200;
-const STAR_LIFE_MS = 3000;
-const STAR_FLARE_FROM = 0.35;
-const STAR_FLARE_TO = 0.6;
-const STARS_MAX = 3;
+/** Astrology: the telescope. The blur grows by this many pixels per 1.0 of focus ring away from the sharpest point; holding an arrow turns the ring this fast. */
+const TELESCOPE_BLUR_PX = 80;
+const TELESCOPE_TURN_PER_SEC = 0.5;
 const PINS = 4;
 const LOCK_LENGTH = 3;
 const PIN_SHOW_MS = 380;
@@ -276,54 +275,86 @@ function ForagingGame({ matId, onSwing }: { matId?: string; onSwing: OnSwing }) 
   );
 }
 
-interface FallingStar {
-  id: number;
-  x: number;
-  y: number;
-  born: number;
-}
+/**
+ * Focus the telescope: the star is a blurred disc, and the blur shrinks as the focus ring nears a hidden sharpest point.
+ * Drag the ring (or hold an arrow), then let go or press Lock. Calm, no timer.
+ */
+function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
+  const newTarget = () => random(0.12, 0.88);
+  const target = useRef(newTarget());
+  const ring = useRef(0.5);
+  const turning = useRef(0);
+  const dragging = useRef(false);
+  const track = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState(0.5);
 
-/** Shooting stars cross the night sky: catch one, and catch it while it flares gold for a double. */
-function AstrologyGame({ onSwing }: { onSwing: OnSwing }) {
-  const [stars, setStars] = useState<FallingStar[]>([]);
-  const nextId = useRef(0);
-
-  useEffect(() => {
-    const timers = new Set<ReturnType<typeof setTimeout>>();
-    const fall = () => {
-      const id = nextId.current++;
-      setStars((list) => (list.length >= STARS_MAX ? list : [...list, { id, x: random(0, 28), y: random(0, 35), born: performance.now() }]));
-      const gone = setTimeout(() => {
-        timers.delete(gone);
-        setStars((list) => list.filter((h) => h.id !== id));
-      }, STAR_LIFE_MS);
-      timers.add(gone);
-    };
-    fall();
-    const sky = setInterval(fall, STAR_EVERY_MS);
-    return () => {
-      clearInterval(sky);
-      timers.forEach(clearTimeout);
-    };
-  }, []);
-
-  const catchStar = (h: FallingStar) => {
-    setStars((list) => list.filter((x) => x.id !== h.id));
-    const age = (performance.now() - h.born) / STAR_LIFE_MS;
-    onSwing(age >= STAR_FLARE_FROM && age <= STAR_FLARE_TO ? 'double' : 'hit');
+  const move = (to: number) => {
+    ring.current = Math.min(1, Math.max(0, to));
+    setPos(ring.current);
+  };
+  const lock = () => {
+    onSwing(focusResult(ring.current - target.current));
+    target.current = newTarget();
+    dragging.current = false;
+    setPos(ring.current);
+  };
+  const fromPointer = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const box = track.current?.getBoundingClientRect();
+    if (box && box.width > 0) move((e.clientX - box.left) / box.width);
   };
 
+  useFrame((dt) => {
+    if (turning.current) move(ring.current + (turning.current * TELESCOPE_TURN_PER_SEC * dt) / 1000);
+  });
+  useSpace(lock);
+
+  const blur = Math.abs(pos - target.current) * TELESCOPE_BLUR_PX;
   return (
-    <div className="mini-patch mini-sky">
-      {stars.map((h) => (
+    <div className="mini-patch mini-sky mini-telescope">
+      <div className="telescope-view" aria-hidden>
+        <span className="telescope-star" style={{ filter: `blur(${blur.toFixed(1)}px)` }} />
+      </div>
+      <div className="telescope-controls">
         <button
-          key={h.id}
-          className="mini-star"
-          aria-label="Catch shooting star"
-          style={{ left: `${h.x}%`, top: `${h.y}%`, animationDuration: `${STAR_LIFE_MS}ms` }}
-          onPointerDown={() => catchStar(h)}
-        />
-      ))}
+          className="btn sm"
+          aria-label="Turn the focus ring down"
+          onPointerDown={() => { turning.current = -1; }}
+          onPointerUp={() => { turning.current = 0; }}
+          onPointerLeave={() => { turning.current = 0; }}
+          onPointerCancel={() => { turning.current = 0; }}
+        >
+          ◀
+        </button>
+        <div
+          ref={track}
+          className="telescope-ring"
+          role="slider"
+          aria-label="Focus ring"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(pos * 100)}
+          onPointerDown={(e) => {
+            dragging.current = true;
+            e.currentTarget.setPointerCapture(e.pointerId);
+            fromPointer(e);
+          }}
+          onPointerMove={(e) => { if (dragging.current) fromPointer(e); }}
+          onPointerUp={() => { if (dragging.current) lock(); }}
+        >
+          <span className="telescope-knob" style={{ left: `${pos * 100}%` }} />
+        </div>
+        <button
+          className="btn sm"
+          aria-label="Turn the focus ring up"
+          onPointerDown={() => { turning.current = 1; }}
+          onPointerUp={() => { turning.current = 0; }}
+          onPointerLeave={() => { turning.current = 0; }}
+          onPointerCancel={() => { turning.current = 0; }}
+        >
+          ▶
+        </button>
+        <button className="btn sm primary" onClick={lock}>Lock</button>
+      </div>
     </div>
   );
 }
@@ -837,7 +868,7 @@ export function SkillGame({ skill, matId, markLevel, onSwing }: { skill: SkillId
     case 'cartography':
       return <CartographyGame onSwing={onSwing} />;
     case 'astrology':
-      return <AstrologyGame onSwing={onSwing} />;
+      return <TelescopeGame onSwing={onSwing} />;
     default:
       return null;
   }

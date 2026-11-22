@@ -659,6 +659,10 @@ export function OfflineModal() {
           </>
         )}
 
+        {(sum.observations?.length ?? 0) > 0 && <div className="away-alert">
+          <b>Observation log</b>
+          {sum.observations!.map((o, i) => <p key={i}>{o.bold ? <b>{o.text}</b> : o.text}</p>)}
+        </div>}
         {Object.keys(sum.masteryProcs ?? {}).length > 0 && <div className="away-alert">
           <b>Thematic Mastery Triggers</b>
           {Object.entries(sum.masteryProcs ?? {}).map(([name, count]) => <p key={name}>✦ {name}: {count} trigger{count === 1 ? '' : 's'}</p>)}
