@@ -1,6 +1,6 @@
 # Roadmap and decisions
 
-Last updated 2026-11-20. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-21. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
@@ -10,7 +10,7 @@ Combat pace controls, entry countdowns, matchup and dimmed terrain art are live 
 
 Illustrated terrain backdrops and the zone terminology update are live across the seven-act campaign in **0.5.10**.
 
-The level 1–99 profession design pass has an initial audit of all 15 main-game skills. Mastery rewards now have an agreed profession-level schedule. The scope of global buffs and the individual profession designs are next. See [Skilling Progression](SKILLING_PROGRESSION.md).
+The level 1–99 profession design pass has an initial audit of all 15 main-game skills. Mastery rewards now have an agreed profession-level schedule. The scope of global buffs and the individual profession designs are next. See [Skilling Progression](SKILLING_PROGRESSION.md). Mining's redesign as [the Delve](MINING_DELVE.md) Woodcutting's as [Felling giants](WOODCUTTING_GIANTS.md) and Foraging's as [Wild variants and cross-breeding](FORAGING_BREEDING.md), Thieving's [casing](THIEVING_CASING.md), Archaeology's [Deciphering the lost peoples](ARCHAEOLOGY_DECIPHERING.md) and Astrology's [Chart your own constellation](ASTROLOGY_CONSTELLATIONS.md) are settled and ready to build. Agility is being scrapped (2026-11-21). Every production design is settled: Smelting, Forging, Woodcrafting, Gemcutting, Alchemy (your own flasks) and Cartography (special maps from scraps); Cooking and Rune-carving are being scrapped. The per-skill review and the skilling tree revamp design are finished (2026-11-21); everything is ready to build. Every design doc has an Implementation spec; builders start with [the skilling build guide](SKILLING_BUILD_GUIDE.md). The skilling passive tree revamp comes after.
 
 Panel frames, Hideout layout fixes and the stacked Inventory layout are live in **0.5.10**.
 
@@ -91,6 +91,18 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 - Zone scenery (2026-11-20): Use “zone” for combat destinations. Each zone can share a terrain backdrop and optionally choose a variant, such as a night forest or a cave with crystal spiders. Maps inherit the borrowed campaign zone’s scenery. Use existing illustrated backdrops licensed for free use in the game and record their sources in the asset credits. Generate art only when the owner explicitly asks for it.
 
 - Profession progression (2026-11-20): Give every skill varied content across levels 1–99, a reward earned through sustained work, a separate rare drop chase, and a distinct reason to train it. Each skilling zone gets exactly one hidden collectible with no gameplay effect. Gathering professions are self-contained. Early production uses outputs from one or two other professions. Late production ramps up to recipes that can draw on as many as five other professions or crafting outputs. Space meaningful unlocks out. The owner chose profession level for mastery rewards, so any eligible activity advances them. Levels 10, 30, 50, 70 and 90 grant global buffs. Levels 20, 40, 60 and 80 grant buffs to that profession. Level 99 grants a large global buff. See [Skilling Progression](SKILLING_PROGRESSION.md) for the audit and open decisions.
+- Mining twist (2026-11-20): Mining becomes **the Delve**, one mine dug ever deeper, with permanent depth, layered finds and hazards when pushing down. Design settled in [Mining: the Delve](MINING_DELVE.md).
+- Woodcutting twist (2026-11-21): Woodcutting becomes **Felling giants**, where each tree is one big individual with parts (crown, limbs, trunk, heart) the player chooses to work. Design settled in [Woodcutting: Felling giants](WOODCUTTING_GIANTS.md).
+- Foraging twist (2026-11-21): Foraging becomes **Wild variants and cross-breeding**, finding plant variants with traits in the wild and breeding new strains in the Greenhouse. Design settled in [Foraging: Wild variants and cross-breeding](FORAGING_BREEDING.md). Skill twists ignore overlap with Fishing, which stands on its own; other skills should stay unique from each other.
+- Thieving twist (2026-11-21): keep the existing Heist and crew rework; Street Marks become **casing for Heists**, giving job-specific prep (keys, ledgers, patrol times). Settled in [Thieving: Casing the job](THIEVING_CASING.md).
+- Agility (2026-11-21): **scrapped.** Owner: "agility was kind of a meme add, I think we can scrap it." Its courses, levels and page go. Its shortcut bonuses are dropped, not moved: fights close in and Heist rooms run at normal speed (owner chose A, 2026-11-21); hidden gathering spots go with the Mining, Woodcutting and Foraging rebuilds.
+- Archaeology twist (2026-11-21): Archaeology becomes **Deciphering the lost peoples**: finds carry glyphs, cracking each culture's script translates inscriptions that lead to new sites, hidden chambers and relic recipes. Layers and cave-ins retire (they belong to the Delve). Settled in [Archaeology: Deciphering the lost peoples](ARCHAEOLOGY_DECIPHERING.md).
+- Astrology twist (2026-11-21): Astrology becomes **chart your own constellation**: research sky regions to unlock stars with different effects, watch stars to rank them up, and chart one constellation from them for a small global buff; progression is star slots, new stars and star ranks. Settled in [Astrology: Chart your own constellation](ASTROLOGY_CONSTELLATIONS.md).
+- Smelting twist (2026-11-21, my picks, approved by owner 2026-11-21): **running the furnace**, bars come out Crude/Refined/Pure/Flawless; fuel and flux set purity odds, purer bars give better Forging and Smithing rolls, master alloys at 80–99. Owner asked for picks to be presented as a full set for the production skills. See [Smelting: Running the furnace](SMELTING_FURNACE.md).
+- Production skill twists (2026-11-21, my picks approved by the owner; they asked for the full set to be presented at once): Forging **shapes gear stage by stage** ([FORGING_STAGES.md](FORGING_STAGES.md)); Woodcrafting **tunes pieces to the wielder** with trade-off dials ([WOODCRAFTING_TUNING.md](WOODCRAFTING_TUNING.md)); Gemcutting cuts **facet by facet** by carat ([GEMCUTTING_FACETS.md](GEMCUTTING_FACETS.md)). After three written-up alternatives each (2026-11-21), owner chose Alchemy **your own flasks** with infusions ([ALCHEMY.md](ALCHEMY.md)) and Cartography **special maps from scraps**, making boss, vault and pinnacle maps as the endgame map source ([CARTOGRAPHY.md](CARTOGRAPHY.md)).
+- Cooking (2026-11-21): **scrapped.** Owner: "cooking is the worst one I've seen yet, no redo, just scrap it, it's a weird inclusion." Decided on the owner's behalf: meal buffs are dropped, and Sacred/Sulphur flasks brew straight from herbs.
+- Rune-carving (2026-11-21): **scrapped.** Owner turned down my first pick and all three alternatives ([RUNECARVING.md](RUNECARVING.md)): "nothing, scrap rune carving." Rune slots on gear are removed completely and socketed runes disappear (owner chose A, 2026-11-21). Decided on the owner's behalf: the Return Inscription weapon project takes its Inscription Fragments from Cartography's special boss maps instead.
+- Skilling tree revamp (2026-11-21): each branch bends its skill's new twist (no plain speed nodes; keystones are rule changes), with bridge keystones between neighbours on a ring of partners; each branch forks into two directions; small core of general perks; one shared pool of about 118 points. Node list approved 2026-11-21; see [Skilling tree revamp](SKILLING_TREE_REVAMP.md).
 
 - Panel frames (2026-11-20): Use a thin gray border for ordinary panels. Illustrated frames are reserved for a surface they fit, such as timber around the Woodcutting workbench.
 
@@ -686,6 +698,65 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 - [ ] Finish the level 1–99 profession design pass and build the approved progression, chases, zone collectibles and mastery perks.
   - Initial audit covers all 15 trainable main-game skills and records Saltmere's separate progression. Global buff scope, zone list, and per-skill designs are open in [Skilling Progression](SKILLING_PROGRESSION.md).
+  - Mining design settled 2026-11-21 as [the Delve](MINING_DELVE.md). Woodcutting settled 2026-11-21 as [Felling giants](WOODCUTTING_GIANTS.md). Foraging settled 2026-11-21 as [Wild variants and cross-breeding](FORAGING_BREEDING.md). Thieving reviewed 2026-11-21 as [Casing the job](THIEVING_CASING.md). Archaeology settled 2026-11-21 as [Deciphering the lost peoples](ARCHAEOLOGY_DECIPHERING.md). Astrology settled 2026-11-21 as [Chart your own constellation](ASTROLOGY_CONSTELLATIONS.md). Agility is being scrapped (2026-11-21). Smelting settled 2026-11-21 as [Running the furnace](SMELTING_FURNACE.md); Forging, Woodcrafting and Gemcutting settled 2026-11-21; Alchemy settled as [your own flasks](ALCHEMY.md) and Cartography as [special maps from scraps](CARTOGRAPHY.md); Cooking and Rune-carving are being scrapped. The per-skill review and the skilling tree revamp design are finished (2026-11-21); everything is ready to build. Every design doc has an Implementation spec; builders start with [the skilling build guide](SKILLING_BUILD_GUIDE.md).
+
+- [ ] Build Mining as the Delve, from [Mining: the Delve](MINING_DELVE.md).
+  - Mine engine: permanent depth, rolled layer traits, every reached layer workable, no bottom, landmark near level 99, level limits on depth.
+  - Supports from rubble, push/work modes, the three hazards with their own effects, caverns from Unstable layers.
+  - Brace minigame (matched fixes on push; rarer creaks on worked layers) and slow layer securing.
+  - Pump Station, Ventilation Shaft and Rock Bolts with coverage ranges and upgrades.
+  - Pick tiers with Delve perks, Motherlode trait, Heartstone, lost miner's lantern.
+  - Shaft side-view screen with elevator/jump buttons, and the descent replay (with skip) plus shaft log on return.
+  - Move existing saves, ore, fossils, fragments and the current pick onto the Delve without losses; keep offline and live results matching.
+
+- [ ] Build Woodcutting as Felling giants, from [Woodcutting: Felling giants](WOODCUTTING_GIANTS.md).
+  - Giant engine: parts (crown, limbs, trunk, heart), falling when the trunk is cut through, splinters, heart after the fall.
+  - Scouting with quirks, forest regions by level, standing order for time away.
+  - Log-splitting minigame with weird-shaped logs (double within 3%, hit to ~7%, weak to 15%, miss beyond).
+  - Legendary giants and the felled legends record.
+  - Woodcutter's lodge buildings (scout tower, drying shed, sawmill, trophy wall) and the World Tree seed.
+  - Giant-up-close screen with tabs, and felling cards on return.
+  - Move existing saves, logs, resin, planks, heartwood progress and the hatchet over without losses; keep offline and live results matching.
+
+- [ ] Build Foraging as Wild variants and cross-breeding, from [Foraging: Wild variants and cross-breeding](FORAGING_BREEDING.md).
+  - Strains with up to three weighted mutations (common, rare, giga rare), found in the wild including offline.
+  - Real-time Greenhouse plots for crossing two parents, offspring inheritance and new mutations; more plots by level.
+  - New base species at milestone levels; hidden hybrid pairings with their own rare mutations.
+  - Whack-a-mole fertilizing minigame.
+  - Stabilising strains and the herbarium with their perks; pressed-flower collectibles per patch.
+  - Greenhouse bench screen with tabs, and seed packets to open on return.
+  - Move existing herbs, essences, blooms, seeds and the remembered Greenhouse crop over without losses; keep offline and live results matching.
+
+- [ ] Build Thieving casing, from [Thieving: Casing the job](THIEVING_CASING.md).
+  - Prep board per Heist (three to five named items from specific marks), minimum prep to start, extra prep effects.
+  - Remove Markers as entry cost and convert existing Markers fairly.
+  - The lift minigame on marks; Heist rooms keep the lockpick.
+- [ ] Remove Agility (decided 2026-11-21). Steps for all three removals are in section 9 of [the skilling build guide](SKILLING_BUILD_GUIDE.md).
+  - Remove courses, the Agility page, its mastery entries and project; existing saves drop Agility XP without errors.
+  - Hidden gathering spots go with the Mining, Woodcutting and Foraging rebuilds, which replace those spots anyway.
+  - Drop the close-in and Heist room speed bonuses entirely (owner chose A, 2026-11-21).
+- [ ] Build Archaeology as Deciphering the lost peoples, from [Archaeology: Deciphering the lost peoples](ARCHAEOLOGY_DECIPHERING.md).
+  - Glyph scripts per culture, inscriptions with picture hints, the matching puzzle and auto-reveal from piled-up evidence.
+  - Story chapters with set rewards replacing Clue Fragments and Passports; full translation opens the culture's relic.
+  - Brushing minigame for digs; retire layers, Commitment and cave-ins without losing save progress.
+  - The First Script at the Sealed Reliquary (80–99), Rosetta stones rare drop, codex perks, one hidden collectible per site.
+  - Scholar's desk screen and the stack-of-rubbings return view.
+- [ ] Build Astrology as Chart your own constellation, from [Astrology: Chart your own constellation](ASTROLOGY_CONSTELLATIONS.md).
+  - Stars with individual effects; research sky regions to unlock them, watch them to rank up.
+  - One charted constellation with slots and links that feed each other; recharting costs Stardust.
+  - Focus-the-telescope minigame; deep-sky wonders and the Great Chart for 80–99; fallen stars and Gilded Stardust rank push.
+  - Night-sky screen, observation-log return, one hidden collectible per region; count Astrology toward total level, achievements and a skilling-tree branch.
+- [ ] Build Smelting as Running the furnace, from [Smelting: Running the furnace](SMELTING_FURNACE.md).
+  - Purity grades, fuel and flux loadout, bellows minigame, furnace parts, master alloys, living metal, ingot-rack return.
+- [ ] Build the remaining production twists (all approved by the owner 2026-11-21):
+  - Forging: stage-by-stage shaping, rhythm hammer, saved patterns, master forms, pattern book, singing blades ([FORGING_STAGES.md](FORGING_STAGES.md)).
+  - Woodcrafting: tuning dials per wood, follow-the-curve, saved tunings, living woods, jigs, perfectly balanced pieces ([WOODCRAFTING_TUNING.md](WOODCRAFTING_TUNING.md)).
+  - Gemcutting: carat-based facets, line-up-the-angle, saved cut plans, named cuts, cut catalogue, star stones ([GEMCUTTING_FACETS.md](GEMCUTTING_FACETS.md)).
+  - Alchemy (owner chose 2026-11-21): your own flasks with two infusions, pour-to-the-line, infusion ranks, grand flasks, giga-rare infusions ([ALCHEMY.md](ALCHEMY.md)).
+  - Cartography (owner chose 2026-11-21): special maps from scraps (boss, vault, guardian and pinnacle maps), sighting minigame, atlas of special maps, lost charts; plain maps come from drops ([CARTOGRAPHY.md](CARTOGRAPHY.md)).
+- [ ] Remove Cooking (decided 2026-11-21): meals, the Cooking page, its mastery, projects and achievements; saves drop Cooking XP and items without errors. Meal buffs are dropped; Sacred/Sulphur flasks brew from herbs.
+- [ ] Remove Rune-carving (decided 2026-11-21): the carving page, recipes, mastery and projects; saves drop Rune-carving XP without errors. Remove rune slots and socketed runes from all gear, plus resonance and rune stats (owner chose A); Return Inscription's fragments move to Cartography boss-map drops; existing fragment progress carries over.
+- [ ] Revamp the skilling passive tree (owner asked 2026-11-21) from [Skilling tree revamp](SKILLING_TREE_REVAMP.md): ring of 12 forked branches, 12 bridge keystones, small core, shared point pool, full refund at launch. Design and node list approved 2026-11-21; ready to build.
 
 - [ ] Build the Saltmere Fishing RPG from [Fishing RPG Design](FISHING_RPG.md).
   - First milestone is a playable shore and harbor with real gear, a logbook and working traps. Nearshore boats and crew, the boundary and offshore voyages, and the full 500-plus-species catalog follow.
