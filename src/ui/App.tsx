@@ -131,7 +131,7 @@ function GameScreen() {
       <XpBar />
       <PinDock />
       <ItemMenuHost />
-      <OfflineModal />
+      <OfflineModal onOpenDesk={() => setPage('archaeology')} />
       <IntroModal />
       <AccountModal />
     </div>

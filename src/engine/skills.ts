@@ -11,7 +11,8 @@ import type { Ctx } from './context';
 import { benchBuilt } from './crafting';
 import { flaskStats, newFlask, rerollMagic, stashFlask } from './flasks';
 import { createSkillGem, createSupportGem } from './gems';
-import { digDone, digSpeedMult } from './expedition';
+import { digDone } from './expedition';
+import { codexDigSpeed } from './deciphering';
 import { markerBoost } from './heist';
 import { cartographyDone, chartDone, hasChartMaps } from './cartography';
 import { focusMult, focusStep, takeDouble } from './minigame';
@@ -71,8 +72,8 @@ export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): numb
   const mealGathering = GATHERING_SET.has(a.skill) ? (d.gatheringSpeed ?? 0) : 0;
   const mealProduction = PRODUCTION_SET.has(a.skill) ? (d.productionSpeed ?? 0) : 0;
   let speed = d.skillSpeed + mealGathering + mealProduction + (t.skillSpeed ?? 0) + (t[`${a.skill}Speed` as keyof TreeStats] ?? 0) + masterySpeed(s, a.mastery) + astrologySpeed(s, a.skill);
-  const layer = a.skill === 'archaeology' ? digSpeedMult(s, a.id) : 1;
-  return ((a.intervalMs * layer) / (1 + speed / 100)) * keystoneSlow(a.skill, t);
+  if (a.skill === 'archaeology') speed += codexDigSpeed(s);
+  return (a.intervalMs / (1 + speed / 100)) * keystoneSlow(a.skill, t);
 }
 
 /** Manufacturing strength follows the profession and necessary station, independently of combat. */
@@ -504,8 +505,6 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
     }
   }
 
-  // a slower layer is a longer dig, and pays XP to match
-  const digXp = a.skill === 'archaeology' ? digSpeedMult(s, a.id) : 1;
   if (a.skill === 'archaeology') digDone(s, ctx, a, outputs);
   if (a.chart) chartDone(s, a, mult, Object.keys(cost).length > 0, outputs);
   if (a.skill === 'thieving') {
@@ -556,7 +555,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   ctx.emit({ t: 'produce', skill: a.skill, outputs, baseId: a.baseId });
   const heartwoodXp = a.skill === 'woodcutting' && t.heartwood ? 0.8 : 1;
   const branchXp = a.skill === 'gemcutting' ? (t.gemcuttingXp ?? 0) : 0;
-  grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0) + branchXp) / 100) * heartwoodXp * digXp);
+  grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0) + branchXp) / 100) * heartwoodXp);
   grantMasteryPractice(s, a.mastery, a.intervalMs / 1000);
   if (foreground) {
     awardProfessionProgress(s, a.skill, a.batch ?? (a.chart?.qty ?? 1));
@@ -582,7 +581,7 @@ export function skillStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
     }
     s.action.progress -= interval;
     complete(s, ctx, a, d, takeDouble(s, ctx));
-    // breaking into a new layer changes how long the next dig takes, however the time was chunked
+    // cracking a glyph can speed the next dig up, however the time was chunked
     if (a.skill === 'archaeology') interval = actionIntervalMs(s, a, d);
   }
 }

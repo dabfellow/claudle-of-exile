@@ -158,6 +158,16 @@ True glyph meanings come from a fixed seed per character, so every player's scri
 - `brushResult` boundaries.
 - Migration of a save with Barrow open and 2 Clue Fragments.
 
+## Build notes (2026-11-21)
+
+- Built in `src/data/deciphering.ts` and `src/engine/deciphering.ts`; the screen is `ScholarsDesk.tsx` and `Glyph.tsx` beside `ExpeditionBoard.tsx`. Save version 52 (`migrateArchaeologyToDeciphering`).
+- Each script's glyphs map one to one to meanings (the First Script uses all 24), so a hint names exactly one glyph.
+- "Merchant stock tier" is +1 standing with that people's merchant (Surveyors and Rimebound; the Giants' first chapter pays Ancient Data).
+- A Rosetta stone cracks glyphs in all four scripts, the First Script included.
+- The layers' Ancient Data an hour and Buried's rare components are gone with the layers; Ancient Data now comes from translations and chapters, and merchants still sell those components. Every dig now counts one towards a find and one towards a Relic Fragment (Deep Survey still doubles finds).
+- The migration grants passports, chambers and relic forms for chapters it sets, but never Ancient Data. Anyone who held a Sealed Relic keeps all seven forms.
+- Hidden collectibles are not built here: `digDone` has a `// TODO collectibles` comment.
+
 ## Build work
 
 Tracked in [MILESTONES.md](MILESTONES.md) under "Build Archaeology as Deciphering the lost peoples".

@@ -25,6 +25,8 @@ import { ItemIcon, ItemTip } from './components/ItemView';
 import { SKILL_KEYS } from './pages/SkillGemsPage';
 import { fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tooltip } from './components/common';
 import { PinnedCurrencies } from './components/CurrencyPins';
+import { RubbingsCard } from './components/ScholarsDesk';
+import { clearArrivals } from '../engine/deciphering';
 import { QuestTracker } from './components/QuestTracker';
 import { ChallengeTag, Crest } from './screens/Screens';
 import { APP_VERSION } from '../platform/errors';
@@ -556,8 +558,8 @@ function CatchUp({ progress }: { progress: number }) {
   );
 }
 
-export function OfflineModal() {
-  useGame();
+export function OfflineModal({ onOpenDesk }: { onOpenDesk?: () => void }) {
+  const state = useGame();
   const catchUp = useSyncExternalStore(game.subscribeCatchUp, () => game.catchUpProgress());
   if (catchUp !== null) return <CatchUp progress={catchUp} />;
   const sum = game.offline;
@@ -752,6 +754,7 @@ export function OfflineModal() {
             </p>
           </div>
         )}
+        <RubbingsCard s={state} openLabel="Open the desk" onOpen={() => { game.act((st) => clearArrivals(st)); game.dismissOffline(); onOpenDesk?.(); }} />
         {sum.crafted && (
           <div className="away-alert">
             <div className="row">

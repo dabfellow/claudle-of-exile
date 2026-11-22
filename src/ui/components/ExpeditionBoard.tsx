@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import {
-  ANCIENT_DATA, CLUES_PER_PASSPORT, COMMIT_MAX, CULTURES, cultureDef, EXPEDITION_GATE, FIND_HOURS, LAYERS, MAX_STANDING, SEALED_RELIC, SITES, siteOf, STRATA, TRAIL,
+  ANCIENT_DATA, chamberActionId, CULTURES, cultureDef, EXPEDITION_GATE, FIND_HOURS, MAX_STANDING, SEALED_RELIC, SITES, siteOf, siteOfAction, TRAIL,
   type CultureDef, type SiteDef, type WareDef,
 } from '../../data/expedition';
+import { formChapter, scriptDef, SECRET_CHAPTERS } from '../../data/deciphering';
 import { materialDef } from '../../data/materials';
 import { affixDef } from '../../data/affixes';
 import { baseDef } from '../../data/bases';
 import { RELIC_FORMS, RELIC_ILVL, RELIC_SLOTS, relicForm, type RelicForm } from '../../data/relics';
 import {
-  artifactsPerDig, buyWare, caveInChance, chosenLayer, clueProgress, commitMult, dataPerDig, exchangeFragments, expeditionOpen, hasPassport, passportReason, reachedLayer,
-  relicChoices, relicCost, relicLinePrice, relicReason, relicTiers, restoreRelic, setLayer, setOrder, shelvesFor, siteStratum, standing, stratumProgress, unsealRelic,
+  artifactsPerDig, buyWare, exchangeFragments, expeditionOpen, hasPassport, passportReason,
+  relicChoices, relicCost, relicLinePrice, relicReason, relicTiers, restoreRelic, setOrder, shelvesFor, siteStratum, standing, stratumProgress, unsealRelic,
   warePrice, wareLeft, wareReason, type RelicLine,
 } from '../../engine/expedition';
+import { relicFormUnlocked } from '../../engine/deciphering';
 import { actionBlocker, actionIntervalMs, skillLevel, startSkillAction, stopAction } from '../../engine/skills';
 import { relicFragment } from '../../data/archaeology';
 import { actionDef } from '../../data/skills';
@@ -20,12 +22,8 @@ import type { GameState, Item } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { Badge, fmt, fmtTime, MatIcon, ProgressBar } from './common';
 import { ItemTip } from './ItemView';
+import { ChaptersView, CodexView, DeskView } from './ScholarsDesk';
 import '../archaeology.css';
-
-const HOUR = 3_600_000;
-const LAYER_GLYPH = ['◇', '◈', '◆'];
-
-const pct = (x: number, digits = 1) => `${(x * 100).toFixed(digits)}%`;
 
 function siteArtifacts(site: SiteDef) {
   return site.relic ? CULTURES.map((c) => c.artifact) : [cultureDef(site.culture).artifact];
@@ -45,7 +43,7 @@ function TrailMap({ s, selected, onSelect }: { s: GameState; selected: string; o
         const site = siteOf(id)!;
         const stamped = hasPassport(s, id);
         const leveled = level >= site.level;
-        const state = digging(s, id) ? 'active' : stamped && leveled ? 'open' : stamped ? 'stamped' : 'locked';
+        const state = digging(s, id) || digging(s, chamberActionId(id)) ? 'active' : stamped && leveled ? 'open' : stamped ? 'stamped' : 'locked';
         const finds = siteStratum(s, site);
         return (
           <div key={id} className="trail-step">
@@ -74,182 +72,81 @@ function TrailMap({ s, selected, onSelect }: { s: GameState; selected: string; o
   );
 }
 
-function HazardPips({ value }: { value: number }) {
-  return (
-    <span className="hazard-pips" title={`Hazard ${value} of 7: how often trenches cave in`}>
-      {Array.from({ length: 7 }, (_, i) => <i key={i} className={i < value ? 'on' : ''} />)}
-    </span>
-  );
-}
-
-function StrataColumn({ s, site, open }: { s: GameState; site: SiteDef; open: boolean }) {
-  const reached = reachedLayer(s, site);
-  const chosen = chosenLayer(s, site);
-  const stratum = siteStratum(s, site);
-  const { progress, digsLeft } = stratumProgress(s, site);
-  const d = deriveStats(s);
-  const a = actionDef(site.id);
-  const active = digging(s, site.id);
-  return (
-    <div className="strata">
-      <div className="strata-sky" aria-hidden />
-      {LAYERS.map((L, i) => {
-        const locked = i > reached;
-        const frontier = i === reached && stratum < FIND_HOURS.length;
-        const cleared = i < stratum;
-        // rates as if this layer were picked
-        const interval = (actionIntervalMs(s, a, d) / LAYERS[chosen].speed) * L.speed;
-        const perHour = HOUR / interval;
-        const art = artifactsPerDig(s, site, L) * perHour;
-        const data = dataPerDig(s, site, i) * perHour;
-        const pick = () => game.act((st, ctx) => {
-          if (setLayer(st, site.id, i)) return;
-          if (open && !digging(st, site.id)) startSkillAction(st, ctx, site.id);
-        });
-        return (
-          <button
-            key={L.id}
-            className={`stratum layer-${L.id} ${locked ? 'locked' : ''} ${i === chosen ? 'chosen' : ''} ${i === chosen && active ? 'digging' : ''}`}
-            disabled={locked}
-            onClick={pick}
-            aria-pressed={i === chosen}
-          >
-            <div className="stratum-head">
-              <span className="stratum-glyph" aria-hidden>{LAYER_GLYPH[i]}</span>
-              <b>{L.name}</b>
-              <span className="spacer" />
-              {locked ? (
-                <span className="stratum-state">Reach {L.name} with the {['first', 'second', 'third'][i - 1]} find</span>
-              ) : cleared ? (
-                <span className="stratum-state good">Find: {site.finds[i]}</span>
-              ) : frontier ? (
-                <span className="stratum-state">Frontier · {digsLeft ? `next find in ${fmtTime(digsLeft * interval)}` : ''}</span>
-              ) : (
-                <span className="stratum-state good">Fully excavated</span>
-              )}
-            </div>
-            {!locked && (
-              <>
-                <p className="stratum-blurb">{L.blurb}</p>
-                <div className="stratum-stats num">
-                  <span title="Time per dig">⏱ {(interval / 1000).toFixed(1)}s</span>
-                  <span title="Artifacts an hour">{siteArtifacts(site).map((id) => <MatIcon key={id} id={id} size={11} />)} {fmt(art)}/h</span>
-                  <span title="Ancient Data an hour, with your Commitment here" className="data">⌬ {data.toFixed(1)}/h</span>
-                  <span title="Chance a dig caves in" className="hz">⚠ {pct(caveInChance(site, L), 2)}</span>
-                </div>
-                {frontier && <ProgressBar value={progress} color={L.color} className="stratum-depth" />}
-              </>
-            )}
-          </button>
-        );
-      })}
-      {stratum >= FIND_HOURS.length && <div className="strata-floor">{STRATA[3]}: every layer is open, and keeps paying</div>}
-    </div>
-  );
+function DigButton({ s, id, label }: { s: GameState; id: string; label: string }) {
+  const a = actionDef(id);
+  const reason = actionBlocker(s, a);
+  if (reason) return <button className="btn dig-btn" disabled title={reason}>Locked</button>;
+  if (digging(s, id)) return <button className="btn dig-btn stop" onClick={() => game.act((st) => stopAction(st))}>Stop digging</button>;
+  return <button className="btn primary dig-btn" onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, id))}>{label}</button>;
 }
 
 function SitePanel({ s, site }: { s: GameState; site: SiteDef }) {
   const a = actionDef(site.id);
   const reason = actionBlocker(s, a);
   const open = !reason;
-  const active = digging(s, site.id);
   const interval = actionIntervalMs(s, a, deriveStats(s));
-  const layer = chosenLayer(s, site);
-  const commit = commitMult(s, site, layer);
-  const clues = clueProgress(s, site);
-  const people = site.relic ? 'All three peoples' : cultureDef(site.culture).name;
+  const chamber = s.archaeology.chambers.includes(site.id);
+  const script = scriptDef(site.relic ? 'first' : site.culture);
+  const { progress, digsLeft } = stratumProgress(s, site);
+  const finds = siteStratum(s, site);
+  const running = digging(s, site.id) ? site.id : digging(s, chamberActionId(site.id)) ? chamberActionId(site.id) : null;
+  const perHour = (3_600_000 / interval) * artifactsPerDig(s, site);
   return (
     <div className="dig-panel" style={{ ['--site' as string]: site.color }}>
       <header className="dig-head">
         <div>
           <div className="dig-kicker">
-            Site {TRAIL.indexOf(site.id) + 1} of {TRAIL.length} · {people}
+            Site {TRAIL.indexOf(site.id) + 1} of {TRAIL.length} · {site.relic ? 'All three peoples' : cultureDef(site.culture).name} · writes in {script.name}
           </div>
           <h3 className="dig-title">{site.name}</h3>
           <p className="dig-desc">{site.desc}</p>
         </div>
         <div className="dig-side">
-          <div className="dig-hazard">
-            Hazard <HazardPips value={site.hazard} />
-          </div>
-          {open ? (
-            active ? (
-              <button className="btn dig-btn stop" onClick={() => game.act((st) => stopAction(st))}>Stop digging</button>
-            ) : (
-              <button className="btn primary dig-btn" onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, site.id))}>
-                Dig {LAYERS[layer].name}
-              </button>
-            )
-          ) : (
-            <button className="btn dig-btn" disabled title={reason ?? ''}>Locked</button>
-          )}
+          <DigButton s={s} id={site.id} label="Dig" />
+          {chamber && <DigButton s={s} id={chamberActionId(site.id)} label="Dig the hidden chamber" />}
         </div>
       </header>
 
       {!open && <p className="lock-note">{reason}</p>}
-      {active && s.action?.kind === 'skill' && (
+      {running && s.action?.kind === 'skill' && (
         <ProgressBar value={s.action.progress / interval} color="var(--success)" className="action-progress dig-progress" />
       )}
 
-      <div className="dig-body">
-        <StrataColumn s={s} site={site} open={open} />
-
+      <div className="dig-body single">
         <aside className="dig-aside">
           <section className="dig-card">
             <div className="dig-card-head">
-              <span>Commitment</span>
-              <b className="num commit-mult">×{commit.toFixed(2)}</b>
-            </div>
-            <div className="commit-meter" aria-hidden>
-              <span style={{ width: `${((commit - 1) / (COMMIT_MAX - 1)) * 100}%` }} />
-            </div>
-            <p className="dig-note">
-              Stay on one layer to multiply Ancient Data, up to ×{COMMIT_MAX} after two hours. Switching layer or site starts again. A cave-in costs a quarter.
-            </p>
-          </section>
-
-          <section className="dig-card passport">
-            <div className="dig-card-head">
-              <span>Expedition Passport</span>
-              {clues.next ? <span className="dim small">{clues.next.name}</span> : <span className="dim small">End of the trail</span>}
-            </div>
-            {clues.next ? (
-              <>
-                <div className="clue-slots">
-                  {Array.from({ length: CLUES_PER_PASSPORT }, (_, i) => (
-                    <span key={i} className={`clue ${i < clues.clues ? 'found' : ''}`}>
-                      {i < clues.clues ? '❖' : ''}
-                      {i === clues.clues && !clues.done && <span className="clue-fill" style={{ height: `${clues.progress * 100}%` }} />}
-                    </span>
-                  ))}
-                  <span className={`stamp ${clues.done ? 'on' : ''}`}>{clues.done ? 'Stamped' : 'Unstamped'}</span>
-                </div>
-                <p className="dig-note">
-                  {clues.done
-                    ? `${clues.next.name} is on your passport${skillLevel(s, 'archaeology') < clues.next.level ? `, from Archaeology ${clues.next.level}` : ''}.`
-                    : `Clue Fragments turn up as you dig here, on any layer. ${CLUES_PER_PASSPORT} stamp the passport for the next site.`}
-                </p>
-              </>
-            ) : (
-              <p className="dig-note">Sealed Relics lie in this site's Bedrock. The first find here opens a door with one behind it.</p>
-            )}
-          </section>
-
-          <section className="dig-card">
-            <div className="dig-card-head">
               <span>Logbook</span>
-              <span className="dim small num">{siteStratum(s, site)}/3 finds</span>
+              <span className="dim small num">{finds}/{FIND_HOURS.length} finds</span>
             </div>
             <ol className="logbook">
               {site.finds.map((f, i) => (
-                <li key={f} className={i < siteStratum(s, site) ? 'found' : ''}>
-                  <span className="log-layer">{LAYERS[i].name}</span>
-                  {i < siteStratum(s, site) ? f : 'Undiscovered'}
+                <li key={f} className={i < finds ? 'found' : ''}>
+                  <span className="log-layer">Find {i + 1}</span>
+                  {i < finds ? f : 'Undiscovered'}
                 </li>
               ))}
             </ol>
+            {finds < FIND_HOURS.length && (
+              <p className="dig-note">Next find in {fmtTime(digsLeft * interval)}.</p>
+            )}
+            {finds < FIND_HOURS.length && <ProgressBar value={progress} color="var(--accent)" className="stratum-depth" />}
             <p className="dig-note">
               {site.relic ? 'Finds here pay no standing: the Reliquary belongs to everyone.' : `Each find is +1 standing with ${cultureDef(site.culture).merchant} and +25% Artifacts here.`}
+              {' '}About <MatIcon id={siteArtifacts(site)[0]} size={11} /> {fmt(perHour)} Artifacts an hour.
+            </p>
+          </section>
+          <section className="dig-card passport">
+            <div className="dig-card-head"><span>Expedition Passport</span></div>
+            <p className="dig-note">
+              {hasPassport(s, site.id)
+                ? `${site.name} is on your passport${skillLevel(s, 'archaeology') < site.level ? `, from Archaeology ${site.level}` : ''}.`
+                : passportReason(site.id)}
+            </p>
+            <p className="dig-note">
+              {site.relic
+                ? 'Sealed Relics come out of the Reliquary: one with its first find, then now and then as you dig.'
+                : 'Digging here turns up inscriptions for the Scholar\'s desk. Chapters of the story open the rest of the trail.'}
             </p>
           </section>
         </aside>
@@ -259,7 +156,7 @@ function SitePanel({ s, site }: { s: GameState; site: SiteDef }) {
 }
 
 function TrailView({ s }: { s: GameState }) {
-  const current = s.action?.kind === 'skill' && siteOf(s.action.actionId) ? s.action.actionId : undefined;
+  const current = s.action?.kind === 'skill' ? siteOfAction(s.action.actionId)?.id : undefined;
   const furthest = [...TRAIL].reverse().find((id) => hasPassport(s, id) && skillLevel(s, 'archaeology') >= siteOf(id)!.level) ?? TRAIL[0];
   const [picked, setPicked] = useState<string | undefined>();
   const selected = picked ?? current ?? furthest;
@@ -430,21 +327,31 @@ function ForgeView({ s }: { s: GameState }) {
             </p>
             {!sealed && (
               <p className="lock-note">
-                No Sealed Relics yet. They lie at the end of the trail, in the Bedrock of {siteOf('dig_reliquary')!.name} (Archaeology {siteOf('dig_reliquary')!.level}), and its first find guarantees one.
+                No Sealed Relics yet. They lie at the end of the trail, in {siteOf('dig_reliquary')!.name} (Archaeology {siteOf('dig_reliquary')!.level}), and its first find guarantees one. New relic forms open as you finish each people's story.
               </p>
             )}
           </div>
           <div className="relic-forms">
-            {RELIC_FORMS.map((f) => (
-              <div key={f.id} className="relic-form" style={{ ['--site' as string]: f.culture === 'all' ? '#e0b25c' : cultureDef(f.culture).color }}>
-                <div className="relic-form-kicker">{f.culture === 'all' ? 'All three peoples' : cultureDef(f.culture).name} · {baseDef(f.baseId).name}</div>
-                <b className="relic-form-name">{f.name}</b>
-                <p className="relic-form-lore">{f.lore}</p>
-                <button className="btn sm" disabled={!sealed} onClick={() => game.act((st, ctx) => unsealRelic(st, ctx, f.id))}>
-                  Break the seal
-                </button>
-              </div>
-            ))}
+            {RELIC_FORMS.map((f) => {
+              const open = relicFormUnlocked(s, f.id);
+              const from = formChapter(f.id);
+              const glow = !!from && !!s.archaeology.secret[from.script];
+              return (
+                <div key={f.id} className={`relic-form ${open ? '' : 'locked'} ${glow ? 'glow' : ''}`} style={{ ['--site' as string]: f.culture === 'all' ? '#e0b25c' : cultureDef(f.culture).color }}>
+                  <div className="relic-form-kicker">{f.culture === 'all' ? 'All three peoples' : cultureDef(f.culture).name} · {baseDef(f.baseId).name}</div>
+                  <b className="relic-form-name">{f.name}</b>
+                  <p className="relic-form-lore">{f.lore}</p>
+                  {glow && from && <p className="small dim">Glowing: {SECRET_CHAPTERS[from.script].title}</p>}
+                  {open ? (
+                    <button className="btn sm" disabled={!sealed} onClick={() => game.act((st, ctx) => unsealRelic(st, ctx, f.id))}>
+                      Break the seal
+                    </button>
+                  ) : (
+                    <p className="lock-note small">Locked: translate {from ? `${scriptDef(from.script).name} chapter ${from.n}` : 'more of the story'}</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </>
       )}
@@ -495,7 +402,7 @@ function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
       <p className="dim small">
         {culture.deals}, for <MatIcon id={culture.artifact} size={12} /> {culture.artifactName}. You have <b className="num">{fmt(s.storage.bank[culture.artifact] ?? 0)}</b>.
       </p>
-      <p className="small">Relic fragments: {s.storage.bank[relicFragment(culture.id)] ?? 0}. One every 60 matching digs (Bedrock digs count three); {60 - (s.professionProgress.counters[`archaeology.fragments.${culture.id}`] ?? 0) % 60} to the next.</p>
+      <p className="small">Relic fragments: {s.storage.bank[relicFragment(culture.id)] ?? 0}. One every 60 matching digs;{60 - (s.professionProgress.counters[`archaeology.fragments.${culture.id}`] ?? 0) % 60} to the next.</p>
       <button className="btn sm" disabled={(s.storage.bank[relicFragment(culture.id)] ?? 0) < 5} onClick={() => game.act((st, ctx) => exchangeFragments(st, ctx, culture.id))}>Exchange 5 fragments for 25 artifacts</button>
       {open.map((w) => (
         <WareRow key={w.id} s={s} culture={culture} w={w} />
@@ -510,11 +417,14 @@ function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
 }
 
 /** Archaeology's board: the Expedition Trail and its digs, the Relic Forge, and the merchants who take what comes up. */
-export function ExpeditionBoard({ view = 'sites' }: { view?: 'sites' | 'forge' | 'merchants' }) {
+export function ExpeditionBoard({ view = 'desk' }: { view?: 'desk' | 'codex' | 'chapters' | 'sites' | 'forge' | 'merchants' }) {
   const s = useGame();
   if (!expeditionOpen(s)) {
     return <div className="callout skill-note">The dig sites are up in the Hollow Peaks, in {EXPEDITION_GATE.label}. Reach them to start digging.</div>;
   }
+  if (view === 'desk') return <DeskView />;
+  if (view === 'codex') return <CodexView />;
+  if (view === 'chapters') return <ChaptersView />;
   if (view === 'sites') return <TrailView s={s} />;
   if (view === 'forge') return <ForgeView s={s} />;
   return (

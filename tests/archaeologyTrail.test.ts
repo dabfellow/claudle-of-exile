@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { ANCIENT_DATA, CLUE_HOURS, CLUES_PER_PASSPORT, findDigs, LAYERS, SEALED_RELIC, siteOf, TRAIL } from '../src/data/expedition';
+import { ANCIENT_DATA, findDigs, SEALED_RELIC, siteOf, TRAIL } from '../src/data/expedition';
 import { RELIC_FORMS, RELIC_ILVL, RELIC_TIER_COST } from '../src/data/relics';
 import { actionDef } from '../src/data/skills';
 import type { Ctx } from '../src/engine/context';
 import {
-  chosenLayer, clueProgress, commitMult, dataPerDig, hasPassport, relicChoices, relicCost, relicReason, relicTiers, restoreRelic, setLayer, settleExpedition, standing, unsealRelic,
+  hasPassport, relicChoices, relicCost, relicReason, relicTiers, restoreRelic, settleExpedition, standing, unsealRelic,
 } from '../src/engine/expedition';
-import { seeded, type Rng } from '../src/engine/rng';
+import type { Rng } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { actionBlocker, actionIntervalMs, skillStep, startSkillAction } from '../src/engine/skills';
 import { newGame } from '../src/engine/state';
@@ -14,9 +14,8 @@ import { deriveStats } from '../src/engine/stats';
 import type { GameState } from '../src/engine/types';
 import { xpForLevel } from '../src/engine/xp';
 
-/** never a cave-in, never a lucky roll */
+/** never a lucky roll */
 const ctx = (): Ctx => ({ now: 0, rng: { next: () => 0.999 } as Rng, emit: () => {} });
-const HOUR = 3_600_000;
 const CAIRN = siteOf('dig_cairn')!;
 
 function digger(level = 99): GameState {
@@ -32,20 +31,14 @@ describe('the Regional Trail', () => {
     const levels = TRAIL.map((id) => siteOf(id)!.level);
     expect([...levels].sort((a, b) => a - b)).toEqual(levels);
     expect(siteOf(TRAIL.at(-1)!)!.relic).toBe(true);
-    const hazards = TRAIL.map((id) => siteOf(id)!.hazard);
-    expect([...hazards].sort((a, b) => a - b)).toEqual(hazards);
   });
 
-  it('stamps the next Passport after three Clue Fragments, about when the first find came before', () => {
+  it('opens only the first site until a chapter hands out a Passport', () => {
     const s = digger();
     expect(hasPassport(s, 'dig_cutting')).toBe(false);
-    expect(actionBlocker(s, actionDef('dig_cutting'))).toMatch(/Passport/);
-    startSkillAction(s, ctx(), 'dig_cairn');
-    work(s, CLUE_HOURS * HOUR);
-    expect(clueProgress(s, CAIRN).clues).toBe(1);
-    work(s, (CLUES_PER_PASSPORT - 1) * CLUE_HOURS * HOUR);
-    expect(hasPassport(s, 'dig_cutting')).toBe(true);
-    expect(clueProgress(s, CAIRN).done).toBe(true);
+    expect(actionBlocker(s, actionDef('dig_cutting'))).toMatch(/Passport: translate Giants chapter 2/);
+    expect(actionBlocker(s, actionDef('dig_cairn'))).toBeNull();
+    s.expedition.passports = { dig_cutting: true };
     expect(actionBlocker(s, actionDef('dig_cutting'))).toBeNull();
     expect(hasPassport(s, 'dig_barrow')).toBe(false);
   });
@@ -55,7 +48,7 @@ describe('the Regional Trail', () => {
     s.expedition.dug.dig_cairn = findDigs(CAIRN)[0];
     s.expedition.dug.dig_cutting = 10;
     const raw = JSON.parse(serialize(s));
-    for (const k of ['layer', 'clues', 'clueMs', 'passports', 'commit', 'forge', 'caveIns', 'relicsRestored', 'trailSchema']) delete raw.expedition[k];
+    for (const k of ['passports', 'forge', 'relicsRestored', 'trailSchema']) delete raw.expedition[k];
     const old = deserialize(JSON.stringify(raw));
     // Cairn's first find opened the Cutting and the Colossus; the Cutting had been dug
     for (const id of ['dig_cutting', 'dig_colossus']) expect(hasPassport(old, id)).toBe(true);
@@ -64,70 +57,26 @@ describe('the Regional Trail', () => {
   });
 });
 
-describe('Layers of History', () => {
-  it('opens a layer at each find, and lets you go back up', () => {
-    const s = digger();
-    expect(chosenLayer(s, CAIRN)).toBe(0);
-    expect(setLayer(s, 'dig_cairn', 2)).toMatch(/first/);
-    s.expedition.dug.dig_cairn = findDigs(CAIRN)[1];
-    expect(chosenLayer(s, CAIRN)).toBe(2);
-    expect(setLayer(s, 'dig_cairn', 0)).toBeNull();
-    expect(chosenLayer(s, CAIRN)).toBe(0);
-  });
-
-  it('digs Bedrock slower and Surface faster', () => {
-    const s = digger();
-    s.expedition.dug.dig_cairn = findDigs(CAIRN)[1];
-    const a = actionDef('dig_cairn');
-    const at = (layer: number) => { setLayer(s, 'dig_cairn', layer); return actionIntervalMs(s, a, deriveStats(s)); };
-    expect(at(0) / at(1)).toBeCloseTo(LAYERS[0].speed);
-    expect(at(2) / at(1)).toBeCloseTo(LAYERS[2].speed);
-  });
-
-  it('only the deepest layer goes deeper', () => {
-    const s = digger();
-    s.expedition.dug.dig_cairn = findDigs(CAIRN)[1];
-    setLayer(s, 'dig_cairn', 0);
-    startSkillAction(s, ctx(), 'dig_cairn');
-    work(s, HOUR);
-    expect(s.expedition.dug.dig_cairn).toBe(findDigs(CAIRN)[1]);
-  });
-
-  it('builds Commitment on one layer, which multiplies Ancient Data, and loses it on a switch', () => {
-    const s = digger();
-    s.expedition.dug.dig_cairn = findDigs(CAIRN)[1];
-    const fresh = dataPerDig(s, CAIRN);
-    startSkillAction(s, ctx(), 'dig_cairn');
-    // real rolls, so Ancient Data turns up; a cave-in or two may shave Commitment
-    skillStep(s, { ...ctx(), rng: seeded(7) }, 2 * HOUR, deriveStats(s));
-    expect(commitMult(s, CAIRN)).toBeGreaterThan(2.5);
-    expect(dataPerDig(s, CAIRN)).toBeGreaterThan(fresh * 2.4);
-    expect(s.storage.bank[ANCIENT_DATA]).toBeGreaterThan(0);
-    setLayer(s, 'dig_cairn', 1);
-    expect(commitMult(s, CAIRN)).toBe(1);
-  });
-
-  it('a cave-in shakes Commitment but the dig still counts', () => {
-    const s = digger();
-    s.expedition.commit = { key: 'dig_cairn:0', ms: HOUR };
-    startSkillAction(s, ctx(), 'dig_cairn');
-    if (s.action?.kind !== 'skill') throw new Error('not digging');
-    s.action.progress = actionIntervalMs(s, actionDef('dig_cairn'), deriveStats(s));
-    skillStep(s, { ...ctx(), rng: { next: () => 0 } as Rng }, 0, deriveStats(s));
-    expect(s.expedition.caveIns).toBe(1);
-    expect(s.expedition.commit.ms).toBeCloseTo(HOUR * 0.75);
-    expect(s.expedition.dug.dig_cairn).toBeGreaterThan(0);
-  });
-
-  it('pays no standing at the Relic Site, and its first find holds a Sealed Relic', () => {
+describe('the Relic Site', () => {
+  it('pays no standing, and its first find holds a Sealed Relic', () => {
     const s = digger();
     s.expedition.passports = { dig_reliquary: true };
     const site = siteOf('dig_reliquary')!;
-    s.expedition.dug.dig_reliquary = findDigs(site)[0] - 0.8;
+    s.expedition.dug.dig_reliquary = findDigs(site)[0] - 1;
     startSkillAction(s, ctx(), 'dig_reliquary');
     work(s, actionIntervalMs(s, actionDef('dig_reliquary'), deriveStats(s)));
     expect(s.storage.bank[SEALED_RELIC]).toBe(1);
     expect(standing(s, 'giant')).toBe(0);
+  });
+
+  it('gives more Sealed Relics as you dig it, one per 12 base hours', () => {
+    const s = digger();
+    s.expedition.passports = { dig_reliquary: true };
+    startSkillAction(s, { ...ctx(), rng: { next: () => 0 } as Rng }, 'dig_reliquary');
+    if (s.action?.kind !== 'skill') throw new Error('not digging');
+    s.action.progress = actionIntervalMs(s, actionDef('dig_reliquary'), deriveStats(s));
+    skillStep(s, { ...ctx(), rng: { next: () => 0 } as Rng }, 0, deriveStats(s));
+    expect(s.storage.bank[SEALED_RELIC]).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -136,6 +85,7 @@ describe('the Relic Forge', () => {
 
   function forge(): GameState {
     const s = digger();
+    s.archaeology.forms.push(form.id);
     s.storage.bank[SEALED_RELIC] = 1;
     s.storage.bank[ANCIENT_DATA] = 2000;
     expect(unsealRelic(s, ctx(), form.id)).toBeNull();
@@ -151,6 +101,9 @@ describe('the Relic Forge', () => {
 
   it('needs a Sealed Relic, and holds one relic at a time', () => {
     const s = digger();
+    s.storage.bank[SEALED_RELIC] = 0;
+    expect(unsealRelic(s, ctx(), form.id)).toMatch(/story/);
+    s.archaeology.forms.push(form.id);
     expect(unsealRelic(s, ctx(), form.id)).toMatch(/Sealed Relic/);
     const t = forge();
     t.storage.bank[SEALED_RELIC] = 1;

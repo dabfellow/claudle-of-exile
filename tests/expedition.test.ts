@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CULTURES, digChance, EXPEDITION_GATE, findDigs, MAX_STANDING, SITES, siteOf, STRATA, STRATUM_YIELD, wareDef, WARES, WHETSTONE } from '../src/data/expedition';
+import { CULTURES, digChance, EXPEDITION_GATE, findDigs, MAX_STANDING, SITES, siteOf, STRATUM_YIELD, wareDef, WARES, WHETSTONE } from '../src/data/expedition';
 import { actionDef, actionsFor, SKILLS, UPCOMING_SKILLS } from '../src/data/skills';
 import { SKILL_TREE_NODES } from '../src/data/skillTree';
 import type { Ctx } from '../src/engine/context';
@@ -49,7 +49,7 @@ describe('Archaeology', () => {
     const s = newGame(1, { name: 'A', classId: 'warrior' });
     s.skills.archaeology = 1e7;
     expect(expeditionOpen(s)).toBe(true);
-    expect(actionBlocker(s, actionDef('dig_cutting'))).toMatch(/Needs an Expedition Passport: find 3 Clue Fragments at Giant's Cairn/);
+    expect(actionBlocker(s, actionDef('dig_cutting'))).toMatch(/Needs an Expedition Passport: translate Giants chapter 2/);
     expect(startSkillAction(s, ctx(), 'dig_cairn')).toBeNull();
     expect(s.action?.kind).toBe('skill');
     expect(wareReason(s, 'giant_regal') ?? '').not.toMatch(/Act 4/);
@@ -93,7 +93,7 @@ describe('sites', () => {
     startSkillAction(s, ctx(), 'dig_cairn');
     dig(s, fixed(0));
     expect(s.storage.bank[TALLY]).toBeGreaterThanOrEqual(1);
-    expect(s.expedition.dug.dig_cairn).toBe(0.8) // a Surface dig is quicker, so it goes less deep;
+    expect(s.expedition.dug.dig_cairn).toBe(1);
     expect(s.skills.archaeology).toBeGreaterThan(xpForLevel(1));
   });
 
@@ -102,7 +102,7 @@ describe('sites', () => {
     startSkillAction(s, ctx(), 'dig_cairn');
     for (let i = 0; i < 50; i++) dig(s, fixed(0.99));
     expect(s.storage.bank[TALLY] ?? 0).toBe(0);
-    expect(s.expedition.dug.dig_cairn).toBe(40);
+    expect(s.expedition.dug.dig_cairn).toBe(50);
     expect(s.action?.kind).toBe('skill');
   });
 
@@ -112,7 +112,7 @@ describe('sites', () => {
     expect(steps[0]).toBeLessThan(steps[1]);
     expect(siteStratum(s, CAIRN)).toBe(0);
     expect(artifactsPerDig(s, CAIRN)).toBeCloseTo(digChance(CAIRN));
-    s.expedition.dug.dig_cairn = steps[0] - 0.8;
+    s.expedition.dug.dig_cairn = steps[0] - 1;
     expect(stratumProgress(s, CAIRN).digsLeft).toBe(1);
     let told = '';
     startSkillAction(s, ctx(), 'dig_cairn');
@@ -122,7 +122,7 @@ describe('sites', () => {
     expect(s.expedition.tally.finds).toBe(1);
     expect(artifactsPerDig(s, CAIRN)).toBeCloseTo(digChance(CAIRN) * (1 + STRATUM_YIELD));
     s.expedition.dug.dig_cairn = steps[2];
-    expect(siteStratum(s, CAIRN)).toBe(STRATA.length - 1);
+    expect(siteStratum(s, CAIRN)).toBe(steps.length);
     expect(stratumProgress(s, CAIRN)).toEqual({ progress: 1, digsLeft: 0 });
   });
 
@@ -154,7 +154,7 @@ describe('sites', () => {
     expect(actionIntervalMs(s, actionDef('dig_cairn'), deriveStats(s))).toBeCloseTo(slow * 1.25);
     startSkillAction(s, ctx(), 'dig_cairn');
     dig(s, ctx());
-    expect(s.expedition.dug.dig_cairn).toBe(1.6);
+    expect(s.expedition.dug.dig_cairn).toBe(2);
   });
 });
 

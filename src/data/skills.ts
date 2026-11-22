@@ -11,7 +11,7 @@ import { purposeRecipes, SMITH_COMPONENTS, type SmithPurpose } from './smithing'
 import { BASES, type BaseDef } from './bases';
 import { CARTOGRAPHY_GATE, CHART_TIERS, FOLIO_COST, FOLIO_LEVEL, FOLIO_SIZE, SEXTANT_RECIPES } from './cartography';
 import { COOKING_GATE } from './cooking';
-import { CULTURES, digChance, EXPEDITION_GATE, SITES, TRAIL } from './expedition';
+import { chamberActionId, CULTURES, digChance, EXPEDITION_GATE, SITES, TRAIL } from './expedition';
 import { MAP_TIERS } from './maps';
 import { MARKER, SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
 import { RUNE_FAMILIES, RUNES } from './runes';
@@ -38,7 +38,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   harvesting: { id: 'harvesting', name: 'Foraging', group: 'gathering', color: '#d9b84a', verb: 'Foraging', desc: 'Pick herbs off the ground for Alchemy.' },
   thieving: { id: 'thieving', name: 'Thieving', group: 'gathering', color: '#c9a35a', verb: 'Thieving', desc: "Lift purses for gold and Rogue's Markers, then spend them on Heists against the Khanate." },
   agility: { id: 'agility', name: 'Agility', group: 'gathering', color: '#5fc4b0', verb: 'Running', desc: 'Run courses across Veyrath. Levels open shortcuts: faster Heist rooms, quicker footwork in fights and hidden gathering spots.' },
-  archaeology: { id: 'archaeology', name: 'Archaeology', group: 'gathering', color: '#b0784a', verb: 'Digging', desc: 'Dig sites in the Hollow Peaks for Artifacts, then trade them with the merchants of the Expedition for currency.' },
+  archaeology: { id: 'archaeology', name: 'Archaeology', group: 'gathering', color: '#b0784a', verb: 'Digging', desc: "Dig sites in the Hollow Peaks for Artifacts and inscriptions. Decipher the lost peoples' scripts at the Scholar's desk, and trade Artifacts with the merchants of the Expedition for currency." },
   smelting: { id: 'smelting', name: 'Smelting', group: 'production', color: '#d07a3a', verb: 'Smelting', desc: 'Smelt mined ores into pure metal bars and blend defensive alloys in the crucible.' },
   smithing: { id: 'smithing', name: 'Forging', group: 'production', color: '#b8b8c8', verb: 'Forging', desc: 'Hammer refined metal bars into martial weapons, shields, plate armour, and jewellery.' },
   woodcrafting: { id: 'woodcrafting', name: 'Woodcrafting', group: 'production', color: '#9c7a4c', verb: 'Woodcrafting', desc: 'Carve harvested logs and refined timber into staves, wands, bows, cloth robes, and leather gear.' },
@@ -200,19 +200,24 @@ const THIEVING: SkillAction[] = [
 ];
 
 /** Digs: no inputs. Most of a dig is dirt, so `outputChance` is how often it turns up an Artifact; the Reliquary's come from every people, in digDone. */
-const ARCHAEOLOGY: SkillAction[] = SITES.map((x) => ({
-  accomplishments: TRAIL.indexOf(x.id) > 0 ? [`passport.${x.id}`] : [],
-  id: x.id,
-  skill: 'archaeology' as const,
-  name: x.name,
-  level: x.level,
-  intervalMs: x.intervalMs,
-  xp: x.xp,
-  outputs: x.relic ? {} : { [CULTURES.find((c) => c.id === x.culture)!.artifact]: 1 },
-  outputChance: x.relic ? 0 : digChance(x),
-  color: x.color,
-  gate: EXPEDITION_GATE,
-}));
+const ARCHAEOLOGY: SkillAction[] = SITES.flatMap((x) => {
+  const dig: SkillAction = {
+    accomplishments: TRAIL.indexOf(x.id) > 0 ? [`passport.${x.id}`] : [],
+    id: x.id,
+    skill: 'archaeology' as const,
+    name: x.name,
+    level: x.level,
+    intervalMs: x.intervalMs,
+    xp: x.xp,
+    outputs: x.relic ? {} : { [CULTURES.find((c) => c.id === x.culture)!.artifact]: 1 },
+    outputChance: x.relic ? 0 : digChance(x),
+    color: x.color,
+    gate: EXPEDITION_GATE,
+  };
+  // the hidden chamber a story chapter opens: the same dig, with twice the chance of an inscription (engine/deciphering.ts)
+  const chamber: SkillAction = { ...dig, id: chamberActionId(x.id), name: `Hidden chamber: ${x.name}`, accomplishments: [...(dig.accomplishments ?? []), `chamber.${x.id}`] };
+  return [dig, chamber];
+});
 
 /** Stargazing: no inputs, level-only. Stardust is spent on the Star Chart (engine/astrology.ts). */
 const ASTROLOGY: SkillAction[] = CONSTELLATIONS.map((x) => ({
