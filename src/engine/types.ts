@@ -4,6 +4,7 @@ import type { SkillNumbers, CombinedMods } from './gems';
 import type { AscendancyId } from '../data/ascendancies';
 import type { ClassId } from '../data/classes';
 import type { CultureId } from '../data/expedition';
+import type { ScriptId } from '../data/deciphering';
 import type { RuleUnlock, SkillPriority, TacticRule } from '../data/gems';
 import type { BossMechanic, MonsterSkill } from '../data/zones';
 import type { FishingPort } from './fishing';
@@ -1127,23 +1128,59 @@ export interface ExpeditionState {
   /** one standing order per people, as a ware id */
   orders: Partial<Record<CultureId, string>>;
   tally: { finds: number; traded: number };
-  /** the layer chosen at each site, 0 Surface to 2 Bedrock; no entry digs the deepest one reached */
-  layer?: Record<string, number>;
-  /** Clue Fragments found at each site towards the next site's Passport */
-  clues?: Record<string, number>;
-  /** base ms of digging towards each site's next Clue Fragment */
-  clueMs?: Record<string, number>;
-  /** sites whose Expedition Passport is stamped */
+  /** sites whose Expedition Passport is stamped (a chapter reward in engine/deciphering.ts) */
   passports?: Record<string, true>;
-  /** uninterrupted digging on one layer of one site, in base ms; it feeds Ancient Data */
-  commit?: { key: string; ms: number };
   /** a Sealed Relic opened at the Relic Forge and waiting to be programmed */
   forge?: { formId: string } | null;
   /** totals for the Logbook */
-  caveIns?: number;
   relicsRestored?: number;
   /** settle has turned old site access into Passports */
   trailSchema?: number;
+}
+
+/** What the player has worked out about one glyph of a script. */
+export interface GlyphState {
+  cracked: boolean;
+  /** the meaning the player has pencilled in; the true one once cracked */
+  guess?: string;
+  evidence: number;
+}
+
+/** A rubbing from a dig: glyphs of one script, and picture hints (true meanings, shuffled) for some of them. */
+export interface Inscription {
+  id: string;
+  culture: ScriptId;
+  glyphs: string[];
+  hints: string[];
+}
+
+/** Archaeology's Deciphering (engine/deciphering.ts). Keys are script ids. */
+export interface ArchaeologyState {
+  /** fixes every glyph's true meaning for this character */
+  seed: number;
+  glyphs: Record<string, Record<string, GlyphState>>;
+  /** glyphs cracked per script, kept in step with `glyphs` so the codex perks are cheap to read */
+  cracks: Record<string, number>;
+  /** untranslated inscriptions, oldest first */
+  inscriptions: Inscription[];
+  nextId: number;
+  /** chapters finished */
+  chapters: Record<string, number>;
+  /** translated inscriptions since the last chapter */
+  sinceChapter: Record<string, number>;
+  /** inscriptions translated, ever */
+  translated: Record<string, number>;
+  /** secret chapters opened by a Rosetta stone */
+  secret: Record<string, boolean>;
+  /** sites whose hidden chamber is open */
+  chambers: string[];
+  /** relic forms unlocked at the Relic Forge */
+  forms: string[];
+  title?: string;
+  /** inscriptions that came since the desk was last opened */
+  newSince: number;
+  /** what the return card reports, until the desk is opened */
+  arrivals: { inscriptions: Record<string, number>; hints: number; revealed: { culture: string; glyph: string }[] };
 }
 
 /** Thieving's Heist board (engine/heist.ts). The job under way lives on `action`, so anything else you start ends it. */
@@ -1248,6 +1285,7 @@ export interface GameState {
   maps: MapState;
   heist: HeistState;
   expedition: ExpeditionState;
+  archaeology: ArchaeologyState;
   /** Astrology: researched sky regions, unlocked stars, fallen stars and the charted constellation (engine/astrology.ts) */
   astrology: AstrologyState;
   skillBar: (SkillGemInstance | null)[];

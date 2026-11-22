@@ -739,6 +739,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - Hidden gathering spots go with the Mining, Woodcutting and Foraging rebuilds, which replace those spots anyway.
   - Drop the close-in and Heist room speed bonuses entirely (owner chose A, 2026-11-21).
 - [ ] Build Archaeology as Deciphering the lost peoples, from [Archaeology: Deciphering the lost peoples](ARCHAEOLOGY_DECIPHERING.md).
+  - Built 2026-11-21 on a worktree branch, unreleased: tests and build pass, but it has not been playtested at desktop and phone width yet. The hidden collectible per dig site waits on the shared collectibles system (`// TODO collectibles` in `digDone`). Left to check: the desk on a realistic mid-game save, and the pace of inscriptions (4% a dig) against the 4/5/6/7 translations a chapter needs.
   - Glyph scripts per culture, inscriptions with picture hints, the matching puzzle and auto-reveal from piled-up evidence.
   - Story chapters with set rewards replacing Clue Fragments and Passports; full translation opens the culture's relic.
   - Brushing minigame for digs; retire layers, Commitment and cave-ins without losing save progress.

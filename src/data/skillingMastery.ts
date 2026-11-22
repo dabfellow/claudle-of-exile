@@ -1,5 +1,5 @@
 import { baseDef } from './bases';
-import { siteOf } from './expedition';
+import { siteOfAction } from './expedition';
 import type { HeistJob } from './heist';
 import type { SkillAction } from './skills';
 
@@ -341,7 +341,7 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
   }
   if (a.skill === 'agility') return undefined; // Added after the band-based saves.
   if (a.skill === 'archaeology') {
-    const culture = siteOf(a.id)?.culture;
+    const culture = siteOfAction(a.id)?.culture;
     if (!culture) return undefined; // These recipes did not exist in the old band-based saves.
     return gathering(`archaeology.${culture}`, `${materialName(culture)} Archaeology`, a.skill, out, a);
   }
@@ -416,7 +416,7 @@ export function legacyMasteryForHeist(job: HeistJob): MasterySpec {
 /** One stable track per action or recipe. A bulk recipe shares its single recipe's track. */
 export function masteryForAction(a: SkillAction): MasterySpec | undefined {
   if (a.skill === 'combat' || a.skill === 'fishing' || a.soon) return undefined;
-  if (siteOf(a.id)) return undefined;
+  if (siteOfAction(a.id)) return undefined;
   const id = a.batchOf ?? a.id;
   const name = a.batchOf ? a.name.replace(/\s+×\d+$/u, '') : a.name;
   if (a.protectedOutputs) return spec(`task.${id}`, name, a.skill, 'project', {}, a);

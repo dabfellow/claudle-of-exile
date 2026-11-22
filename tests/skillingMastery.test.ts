@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SITES, siteOf } from '../src/data/expedition';
+import { SITES, siteOfAction } from '../src/data/expedition';
 import { HEIST_JOBS } from '../src/data/heist';
 import { ACTIONS, actionDef } from '../src/data/skills';
 import { ZONES } from '../src/data/zones';
@@ -40,13 +40,13 @@ function start(id: string, amount = 1_000_000) {
 
 describe('non-combat action mastery', () => {
   it('has one track per eligible task, with only bulk recipes sharing', () => {
-    const eligible = ACTIONS.filter((a) => a.skill !== 'fishing' && !a.soon && !siteOf(a.id));
+    const eligible = ACTIONS.filter((a) => a.skill !== 'fishing' && !a.soon && !siteOfAction(a.id));
     expect(eligible.every((a) => !!a.mastery)).toBe(true);
     expect(HEIST_JOBS.every((j) => !!j.mastery)).toBe(true);
     const ids = new Set([...eligible.map((a) => a.mastery!.id), ...HEIST_JOBS.map((j) => j.mastery!.id)]);
     const tasks = new Set([...eligible.map((a) => a.batchOf ?? a.id), ...HEIST_JOBS.map((j) => `heist.${j.id}`)]);
     expect(ids.size).toBe(tasks.size);
-    expect(ACTIONS.filter((a) => a.skill === 'combat' || a.skill === 'fishing' || !!siteOf(a.id)).every((a) => !a.mastery)).toBe(true);
+    expect(ACTIONS.filter((a) => a.skill === 'combat' || a.skill === 'fishing' || !!siteOfAction(a.id)).every((a) => !a.mastery)).toBe(true);
     expect(SITES.every((site) => !actionDef(site.id).mastery)).toBe(true);
   });
 

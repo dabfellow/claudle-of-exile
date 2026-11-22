@@ -20,7 +20,7 @@ import { CURRENCIES, MATERIALS, type CurrencyDef } from '../src/data/materials';
 import { MONSTER_MODS } from '../src/data/monsterMods';
 import { MONSTER_PROFILES } from '../src/data/monsterProfiles';
 import { MEALS, MEAL_MS } from '../src/data/cooking';
-import { CULTURES, FIND_HOURS, SITES, STRATA } from '../src/data/expedition';
+import { CULTURES, FIND_HOURS, SITES } from '../src/data/expedition';
 import { ALARM_KEEPS, HEIST_JOBS, prepBoard, STEALTH_FLOOR } from '../src/data/heist';
 import { ROGUES } from '../src/data/rogues';
 import { ATLAS_NODES, ATLAS_POINT_CAP, DOOMED_MODS, DOOMED_TIERS, MAP_TIERS, NORMAL_MAP_MODS, SEXTANTS, SEXTANT_BASE_CHARGES, SEXTANT_MODS } from '../src/data/maps';
@@ -1047,7 +1047,6 @@ const GUIDE_DATA: Record<string, () => string> = {
   'heist-keeps': () => String(ALARM_KEEPS * 100),
   'heist-stealth-floor': () => String(STEALTH_FLOOR * 100),
   'expedition-hours': () => FIND_HOURS.join(', '),
-  'expedition-strata': () => STRATA.join(', '),
   'map-tiers': mapTiersBlock,
   'normal-map-mods': normalMapModsBlock,
   sextants: sextantsBlock,

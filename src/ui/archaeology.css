@@ -713,3 +713,159 @@
     animation: none;
   }
 }
+
+/* ==========================================================================
+   Deciphering: the Scholar's desk, codex, chapters and the brushing patch.
+   --script is the script's colour.
+   ========================================================================== */
+
+.desk-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(220px, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .desk-layout { grid-template-columns: 1fr; }
+}
+.dig-body.single { grid-template-columns: 1fr; }
+.exp-stat { --script: var(--accent); }
+
+.desk-paper {
+  --script: var(--accent);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-2);
+  border-left: 3px solid var(--script);
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+}
+.desk-paper.empty { min-height: 140px; justify-content: center; }
+.desk-paper-head { display: flex; align-items: center; gap: 8px; }
+
+.inscription-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  padding: 10px 6px;
+  border-radius: 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+}
+.inscription-glyph {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 64px;
+}
+.glyph-guess { min-height: 20px; font-size: 12px; }
+.glyph-check { color: var(--good); }
+
+.glyph-tile {
+  --script: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  background: var(--bg-2);
+  color: var(--script);
+  cursor: default;
+  position: relative;
+}
+button.glyph-tile { cursor: pointer; }
+button.glyph-tile:hover { border-color: var(--script); }
+.glyph-tile.selected { outline: 2px solid var(--script); outline-offset: 1px; background: var(--panel-3); }
+.glyph-tile.cracked { border-style: double; border-width: 3px; }
+.glyph-shape { width: 100%; height: 100%; }
+.glyph-shape * { stroke: currentColor; stroke-width: 2; fill: currentColor; stroke-linecap: round; }
+.glyph-shape.frost *, .glyph-shape.nested * { fill: none; }
+.glyph-shape.ruled * { fill: none; stroke-width: 2.4; }
+.glyph-shape.blocky * { stroke: none; }
+
+.meaning { display: inline-flex; align-items: center; gap: 4px; }
+.meaning.sm { font-size: 12px; }
+.meaning-icon { font-size: 18px; line-height: 1; }
+.meaning.sm .meaning-icon { font-size: 14px; }
+
+.hints { display: flex; flex-direction: column; gap: 6px; }
+.hint-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.hint-glyph { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; }
+.hint-glyph.unknown .glyph-tile { opacity: 0.7; border-style: dashed; }
+
+.picker { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--bg-2); }
+.picker-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.picker-opt { padding: 4px 8px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--panel-2); color: var(--text); cursor: pointer; min-height: 32px; }
+.picker-opt.on { border-color: var(--accent); background: var(--accent-soft); }
+
+.read-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.read-result { font-weight: 600; }
+.read-result.good { color: var(--good); }
+
+.dig-side-panel { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--panel); }
+.dig-select { width: 100%; }
+
+.rubbings-card { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; padding: 10px 14px; border: 1px solid var(--accent-line); border-radius: 8px; background: var(--accent-soft); }
+.away .rubbings-card { margin: 8px 0; }
+.rubbings-line, .rubbings-note { margin: 0; font-size: 13px; display: flex; gap: 6px; align-items: center; }
+
+.codex-page { --script: var(--accent); border-top: 3px solid var(--script); }
+.codex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; margin: 8px 0; }
+.codex-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; border-radius: 6px; background: var(--bg-2); text-align: center; }
+.codex-cell.done { background: var(--panel-2); }
+.evidence-bar { width: 100%; }
+.codex-perks { margin: 0; padding-left: 0; list-style: none; font-size: 12px; display: grid; gap: 2px; }
+.codex-perks li { color: var(--dim); }
+.codex-perks li.on { color: var(--good); }
+.codex-perks li.on::before { content: '✓ '; }
+
+.chapters-card { --script: var(--accent); border-top: 3px solid var(--script); }
+.chapter-list { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 8px; }
+.chapter-list li.later { color: var(--dim); }
+.chapter-list li.done b { color: var(--script); }
+.chapter-lore { margin: 2px 0; font-size: 12px; font-style: italic; }
+.chapter-progress { margin: 4px 0; }
+.secret-chapter { margin-top: 10px; padding: 8px; border: 1px dashed var(--script); border-radius: 6px; }
+
+.relic-form.locked { opacity: 0.6; }
+.relic-form.glow { box-shadow: 0 0 14px 1px var(--site); }
+
+/* the brushing patch */
+.mini-brush-wrap { display: flex; flex-direction: column; gap: 6px; align-items: center; width: 100%; }
+.mini-brush {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  max-width: 320px;
+  padding: 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  touch-action: manipulation;
+}
+.mini-brush-tile {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 3px;
+  font-size: 14px;
+  padding: 0;
+  cursor: pointer;
+  background: #5a4632;
+  color: rgba(255, 255, 255, 0.55);
+}
+.mini-brush-tile.ghost { background: #6a5238; color: rgba(255, 235, 200, 0.55); }
+.mini-brush-tile.crack:not(.open) { background: repeating-linear-gradient(55deg, #5a4632 0 7px, #4a3a28 7px 8px); color: rgba(20, 14, 8, 0.6); }
+.mini-brush-tile.open { background: #2a2620; cursor: default; }
+.mini-brush-tile.open.find { background: #7a6a3a; color: #f0d890; }
+.mini-brush-tile.open.chipped { background: #3a2220; color: var(--bad); }
+.mini-brush-chips { display: flex; gap: 6px; align-items: center; font-size: 12px; }
+.mini-brush-pip { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--line-2); }
+.mini-brush-pip.used { background: var(--bad); border-color: var(--bad); }

@@ -45,6 +45,73 @@ export const FOCUS_DOUBLE_OFFSET = 0.03;
 export const FOCUS_HIT_OFFSET = 0.09;
 export const FOCUS_WEAK_OFFSET = 0.15;
 
+/** Archaeology: a soil grid over a find. Brushing a fragile crack chips the find. */
+export const BRUSH_COLS = 5;
+export const BRUSH_ROWS = 4;
+export const BRUSH_FIND_MIN = 5;
+export const BRUSH_FIND_MAX = 7;
+export const BRUSH_CRACKS_MIN = 3;
+export const BRUSH_CRACKS_MAX = 5;
+
+/** How a brushed find came out, by the cracks chipped: clean is a double, one chip a hit, two weak, three or more a miss. */
+export function brushResult(chips: number): SwingResult {
+  return chips <= 0 ? 'double' : chips === 1 ? 'hit' : chips === 2 ? 'weak' : 'miss';
+}
+
+export interface BrushPatch {
+  /** squares the find covers */
+  find: number[];
+  /** fragile cracks, on squares next to the find */
+  cracks: number[];
+}
+
+/**
+ * A new patch: the find is a connected blob of 5–7 squares, and the cracks are on squares touching it.
+ * `crackCut` is how many cracks the codex takes off; there is always at least one.
+ */
+export function brushPatch(rng: { next(): number }, crackCut = 0): BrushPatch {
+  const tiles = BRUSH_COLS * BRUSH_ROWS;
+  const touching = (t: number, diagonal: boolean): number[] => {
+    const x = t % BRUSH_COLS;
+    const y = Math.floor(t / BRUSH_COLS);
+    const out: number[] = [];
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        if (!diagonal && dx && dy) continue;
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && nx < BRUSH_COLS && ny >= 0 && ny < BRUSH_ROWS) out.push(ny * BRUSH_COLS + nx);
+      }
+    }
+    return out;
+  };
+  const size = BRUSH_FIND_MIN + Math.floor(rng.next() * (BRUSH_FIND_MAX - BRUSH_FIND_MIN + 1));
+  const find = [Math.floor(rng.next() * tiles)];
+  while (find.length < size) {
+    const edge = [...new Set(find.flatMap((t) => touching(t, false)))].filter((t) => !find.includes(t));
+    find.push(edge[Math.floor(rng.next() * edge.length)]);
+  }
+  const near = [...new Set(find.flatMap((t) => touching(t, true)))].filter((t) => !find.includes(t));
+  const want = Math.max(1, BRUSH_CRACKS_MIN + Math.floor(rng.next() * (BRUSH_CRACKS_MAX - BRUSH_CRACKS_MIN + 1)) - crackCut);
+  const cracks: number[] = [];
+  while (cracks.length < Math.min(want, near.length)) {
+    const t = near.splice(Math.floor(rng.next() * near.length), 1)[0];
+    cracks.push(t);
+  }
+  return { find: find.sort((a, b) => a - b), cracks: cracks.sort((a, b) => a - b) };
+}
+
+/** Chips so far: the cracks that have been brushed. */
+export function brushChips(patch: BrushPatch, brushed: ReadonlySet<number>): number {
+  return patch.cracks.filter((t) => brushed.has(t)).length;
+}
+
+/** The attempt ends when every square over the find is brushed. */
+export function brushDone(patch: BrushPatch, brushed: ReadonlySet<number>): boolean {
+  return patch.find.every((t) => brushed.has(t));
+}
+
 const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'agility', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology'];
 
 export type SwingResult = 'double' | 'hit' | 'weak' | 'miss';

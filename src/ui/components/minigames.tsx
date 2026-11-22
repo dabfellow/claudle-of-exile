@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
+  BRUSH_COLS,
+  BRUSH_ROWS,
+  brushChips,
+  brushDone,
+  brushPatch,
+  brushResult,
   CHARGE_ZONE_WIDTH,
   chargeResult,
   focusResult,
@@ -20,8 +26,11 @@ import {
   type SwingResult,
 } from '../../engine/minigame';
 import type { SkillId } from '../../engine/types';
+import { brushCrackCut } from '../../engine/deciphering';
+import { useGame } from '../../game';
 import { MatIcon } from './common';
 import './star-chart.css';
+import '../archaeology.css';
 
 const CHARGE_MS = 1100;
 const SWEEP_MS = 1200;
@@ -49,9 +58,6 @@ const HEAT_BAND = 0.26;
 const HEAT_HOLD_MS = 1250;
 const FACETS = 3;
 const STONE_SETTLES_MS = 5200;
-const PLOT_TILES = 15;
-const PLOT_CRACKS = 4;
-const PLOT_PATIENCE_MS = 7000;
 const STROKE_W = 300;
 const STROKE_H = 120;
 const STROKE_STEP = 5;
@@ -556,63 +562,58 @@ function LiftGame({ markLevel, onSwing }: { markLevel: number; onSwing: OnSwing 
   );
 }
 
-/** Drag across the plot to brush the soil away. Clearing it finds the piece; touching a cracked stone breaks it. */
+/** Tap soil squares to brush them away and free the find. Brushing a fragile crack chips it: clean is a double. */
 function ArchaeologyGame({ onSwing }: { onSwing: OnSwing }) {
-  const newPlot = () => ({ id: Math.random(), at: performance.now(), cracked: new Set([...Array(PLOT_TILES).keys()].sort(() => Math.random() - 0.5).slice(0, PLOT_CRACKS)) });
-  const [plot, setPlot] = useState(newPlot);
+  const s = useGame();
+  const cut = brushCrackCut(s.archaeology);
+  const newPatch = () => {
+    const patch = brushPatch({ next: Math.random }, cut);
+    // the find shows through as a faint silhouette over about 60% of its squares
+    const shown = new Set([...patch.find].sort(() => Math.random() - 0.5).slice(0, Math.ceil(patch.find.length * 0.6)));
+    return { id: Math.random(), patch, shown };
+  };
+  const [round, setRound] = useState(newPatch);
   const [brushed, setBrushed] = useState<Set<number>>(new Set());
-  const held = useRef(false);
+  const [finished, setFinished] = useState(false);
 
-  const next = () => {
-    setPlot(newPlot());
-    setBrushed(new Set());
+  const brush = (n: number) => {
+    if (finished || brushed.has(n)) return;
+    const next = new Set(brushed).add(n);
+    setBrushed(next);
+    if (!brushDone(round.patch, next)) return;
+    setFinished(true);
+    onSwing(brushResult(brushChips(round.patch, next)));
+    setTimeout(() => {
+      setRound(newPatch());
+      setBrushed(new Set());
+      setFinished(false);
+    }, 500);
   };
 
-  useEffect(() => {
-    const giveUp = setTimeout(next, PLOT_PATIENCE_MS);
-    return () => clearTimeout(giveUp);
-  }, [plot]);
-
-  const brush = (x: number, y: number) => {
-    const tile = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-tile]');
-    if (!held.current || !tile) return;
-    const n = Number(tile.dataset.tile);
-    if (brushed.has(n)) return;
-    if (plot.cracked.has(n)) {
-      held.current = false;
-      onSwing('miss');
-      next();
-      return;
-    }
-    const done = new Set(brushed).add(n);
-    setBrushed(done);
-    if (done.size < PLOT_TILES - PLOT_CRACKS) return;
-    // a plot takes a few seconds to clear, so it's worth two swings
-    held.current = false;
-    onSwing(quick(plot.at, PLOT_PATIENCE_MS) ? 'double' : 'hit');
-    onSwing('hit');
-    next();
-  };
-
+  const chips = brushChips(round.patch, brushed);
   return (
-    <div className="mini-timed">
-      <div
-        className="mini-plot"
-        onPointerDown={(e) => {
-          // a touch captures the pointer to whatever it landed on: let go so the drag reaches every tile
-          (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
-          held.current = true;
-          brush(e.clientX, e.clientY);
-        }}
-        onPointerMove={(e) => brush(e.clientX, e.clientY)}
-        onPointerUp={() => (held.current = false)}
-        onPointerLeave={() => (held.current = false)}
-      >
-        {[...Array(PLOT_TILES).keys()].map((n) => (
-          <span key={n} data-tile={n} className={`mini-tile ${plot.cracked.has(n) ? 'cracked' : ''} ${brushed.has(n) ? 'brushed' : ''}`} />
-        ))}
+    <div className="mini-brush-wrap">
+      <div className="mini-brush" style={{ gridTemplateColumns: `repeat(${BRUSH_COLS}, minmax(0, 1fr))` }} role="group" aria-label="Soil over a find">
+        {[...Array(BRUSH_COLS * BRUSH_ROWS).keys()].map((n) => {
+          const isFind = round.patch.find.includes(n);
+          const isCrack = round.patch.cracks.includes(n);
+          const open = brushed.has(n);
+          const cls = ['mini-brush-tile', open ? 'open' : 'soil', open && isFind ? 'find' : '', !open && isFind && round.shown.has(n) ? 'ghost' : '', isCrack ? 'crack' : '', open && isCrack ? 'chipped' : ''].filter(Boolean).join(' ');
+          return (
+            <button key={n} type="button" className={cls} onClick={() => brush(n)} aria-label={open ? (isFind ? 'Brushed find' : isCrack ? 'Chipped crack' : 'Bare earth') : 'Soil'}>
+              {open && isFind && <span aria-hidden>◆</span>}
+              {open && isCrack && <span aria-hidden>✕</span>}
+              {!open && isFind && round.shown.has(n) && <span aria-hidden>◇</span>}
+              {!open && isCrack && <span aria-hidden>╱</span>}
+            </button>
+          );
+        })}
       </div>
-      <Patience key={plot.id} ms={PLOT_PATIENCE_MS} />
+      <div className="mini-brush-chips" aria-label={`${chips} chips`}>
+        <span>Chips {chips}</span>
+        {[0, 1, 2].map((i) => <span key={i} className={`mini-brush-pip ${i < chips ? 'used' : ''}`} />)}
+        <span className="dim small">0 is a double</span>
+      </div>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { ZONES } from '../data/zones';
 import { settleGems } from './gems';
 import { settleItemMarks } from './items';
 import { newExpeditionState, settleExpedition } from './expedition';
+import { convertLegacyArchaeology } from './deciphering';
 import { newHeistState, settleHeist } from './heist';
 import { settleMaps } from './maps';
 import { connectedWithout, settleForbiddenAllowance, settlePassivePoints, settleTreeLayout } from './passives';
@@ -47,6 +48,14 @@ function resetAscendancyPoints(raw: Record<string, unknown>): void {
   if (!asc) return;
   asc.points = TRIALS.filter((t) => t.n <= asc.trials).reduce((a, t) => a + t.points, 0);
   if (asc.nodes.length > asc.points) asc.nodes = [];
+}
+
+/**
+ * Version 51 to 52: Archaeology became Deciphering the lost peoples. The layers, Commitment, cave-ins and Clue Fragments
+ * are retired; chapters, rubbings and the glyph tables take their place (engine/deciphering.ts).
+ */
+function migrateArchaeologyToDeciphering(raw: Record<string, unknown>): void {
+  convertLegacyArchaeology(raw);
 }
 
 const MIGRATIONS: Record<number, Migration> = {
@@ -437,6 +446,7 @@ const MIGRATIONS: Record<number, Migration> = {
   },
   51: (raw) => { retireMarkers(raw); },
   52: migrateAstrologyConstellations,
+  53: migrateArchaeologyToDeciphering,
 };
 
 /**

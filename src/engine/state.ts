@@ -12,6 +12,7 @@ import { checkAchievements } from './achievements';
 import { isMealClockRunning, mealStep } from './cooking';
 import { autoNextZoneStep, combatStep, tickDebt } from './combat';
 import { fillOrders, newExpeditionState } from './expedition';
+import { newArchaeologyState } from './deciphering';
 import { heistAutoStep, heistStep, newHeistState } from './heist';
 import { checkCampaignDone, refreshVendor, vendorTick } from './hideout';
 import { createItem } from './items';
@@ -31,7 +32,7 @@ export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 53;
+export const SAVE_VERSION = 54;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -112,6 +113,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     maps: newMapState(),
     heist: newHeistState(),
     expedition: newExpeditionState(),
+    archaeology: newArchaeologyState(Math.imul(seed | 0, 2654435761) >>> 1),
     vendor: { stock: [], refreshAt: 0 },
     settings: {
       autoSalvage: { normal: false, magic: false, rare: false, unique: false },

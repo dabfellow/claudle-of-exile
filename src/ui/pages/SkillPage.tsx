@@ -8,6 +8,8 @@ import { materialDef } from '../../data/materials';
 import { isMapId } from '../../data/maps';
 import { CULTURES, SEALED_RELIC, TRAIL } from '../../data/expedition';
 import { hasPassport } from '../../engine/expedition';
+import { crackedCount } from '../../engine/deciphering';
+import { SCRIPT_IDS, SCRIPTS } from '../../data/deciphering';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { zoneDef } from '../../data/zones';
 import { cartographyPreview, upgradeCost } from '../../engine/cartography';
@@ -517,8 +519,11 @@ const THIEVING_TABS: { id: string; label: string }[] = [
 ];
 
 const ARCHAEOLOGY_TABS: { id: string; label: string }[] = [
-  { id: 'sites', label: 'Expedition Trail' },
+  { id: 'desk', label: 'Desk' },
+  { id: 'codex', label: 'Codex' },
+  { id: 'chapters', label: 'Chapters' },
   { id: 'forge', label: 'Relic Forge' },
+  { id: 'sites', label: 'Sites' },
   { id: 'restoration', label: 'Restoration & Sifting' },
   { id: 'merchants', label: 'Culture Merchants' },
 ];
@@ -579,7 +584,7 @@ function defaultSkillTab(skill: SkillId): string {
   if (skill === 'woodcrafting') return WOODCRAFT_TABS[0].id;
   if (skill === 'smelting') return SMELTING_TABS[0].id;
   if (skill === 'thieving') return 'marks';
-  if (skill === 'archaeology') return 'sites';
+  if (skill === 'archaeology') return 'desk';
   if (skill === 'harvesting') return 'forage';
   if (skill === 'cartography') return 'charts';
   if (skill === 'woodcutting') return 'trees';
@@ -968,7 +973,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
   return (
     <div className={`page ${skill === 'thieving' ? 'thieving-page' : `profession-page profession-${skill}`}`} style={{ ['--profession' as string]: SKILLS[skill].color }}>
       {skill === 'thieving' ? <ThievingHeader /> : <SkillHeader skill={skill} />}
-      {skill !== 'thieving' && !showActivities && <SkillMinigame skill={skill} />}
+      {skill !== 'thieving' && skill !== 'archaeology' && !showActivities && <SkillMinigame skill={skill} />}
 
       {tabs && (
         <div className="smith-tabs" style={{ marginTop: 8 }}>
@@ -994,7 +999,10 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
               const list = selectedActions.filter((a) => smeltingTab(a) === x.id);
               countText = `${list.filter(isUnlocked).length}/${list.length}`;
             } else if (skill === 'archaeology') {
-              if (x.id === 'sites') countText = `${TRAIL.filter((id) => hasPassport(s, id)).length}/${TRAIL.length}`;
+              if (x.id === 'desk') countText = `${s.archaeology.inscriptions.length}`;
+              else if (x.id === 'codex') countText = `${SCRIPT_IDS.reduce((n, id) => n + crackedCount(s.archaeology, id), 0)}/${SCRIPTS.reduce((n, x) => n + x.glyphs, 0)}`;
+              else if (x.id === 'chapters') countText = `${SCRIPT_IDS.reduce((n, id) => n + (s.archaeology.chapters[id] ?? 0), 0)}/${SCRIPTS.reduce((n, x) => n + x.chapters, 0)}`;
+              else if (x.id === 'sites') countText = `${TRAIL.filter((id) => hasPassport(s, id)).length}/${TRAIL.length}`;
               else if (x.id === 'forge') countText = s.expedition.forge ? '1 open' : `${s.storage.bank[SEALED_RELIC] ?? 0}`;
               else if (x.id === 'restoration') {
                 const list = selectedActions.filter((a) => a.id.startsWith('sift_') || a.id.startsWith('restore_'));
@@ -1106,7 +1114,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
       {skill === 'thieving' && tab === 'heists' && <HeistBoard view="jobs" />}
       {skill === 'thieving' && tab === 'crew' && <HeistBoard view="crew" />}
 
-      {skill === 'archaeology' && (tab === 'sites' || tab === 'forge' || tab === 'merchants') && <ExpeditionBoard view={tab as 'sites' | 'forge' | 'merchants'} />}
+      {skill === 'archaeology' && tab !== 'restoration' && <ExpeditionBoard view={tab as 'desk' | 'codex' | 'chapters' | 'sites' | 'forge' | 'merchants'} />}
       {skill === 'fishing' && (
         <div className="callout skill-note">
           Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.

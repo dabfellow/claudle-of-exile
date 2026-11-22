@@ -13,6 +13,7 @@ export interface NewsEntry {
 export const UPCOMING: string[] = [
   'Heists now need prep (keys, ledgers, schedules) found by working street marks, instead of Rogue\'s Markers; marks also have a new lift minigame, and any Markers you hold convert to prep and gold.',
   'Astrology is rebuilt around charting your own constellation: research the sky to unlock stars, watch them to rank them up, and link them in one constellation for a small buff to everything you do. Focus the telescope for bonus speed, and watch for fallen stars.',
+  "Archaeology is now about deciphering the lost peoples: digs turn up inscriptions in each culture's own script, you match the glyphs to picture hints at the new Scholar's desk, and every translated chapter opens the next site, hidden chambers and relic forms. Surface, Buried and Bedrock layers, Commitment and cave-ins are gone; everything you had unlocked stays.",
 ];
 
 export const NEWS: NewsEntry[] = [
