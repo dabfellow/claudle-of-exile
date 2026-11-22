@@ -730,7 +730,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - Move existing herbs, essences, blooms, seeds and the remembered Greenhouse crop over without losses; keep offline and live results matching.
 
 - [ ] Build Thieving casing, from [Thieving: Casing the job](THIEVING_CASING.md).
-  - Built 2026-11-21 (engine, lift minigame, prep board screen; 1,922 tests pass), not yet checked in the running game or shipped. Open owner call: rogue hire and rank costs became gold-only (15 gold per old Marker).
+  - Built and playtested 2026-11-21 (prep drops, board, planned-job auto-run, job start using prep, lift scoring, phone width, no console errors; 1,922 tests pass). Not shipped yet. Marker conversion on a real old save was covered by tests only. Open owner call: rogue hire and rank costs became gold-only (15 gold per old Marker).
   - Prep board per Heist (three to five named items from specific marks), minimum prep to start, extra prep effects.
   - Remove Markers as entry cost and convert existing Markers fairly.
   - The lift minigame on marks; Heist rooms keep the lockpick.
