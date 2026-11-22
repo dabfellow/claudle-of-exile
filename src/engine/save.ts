@@ -31,6 +31,7 @@ import { migrateLegacyLootFilters, settleLootFilters } from './lootFilter';
 import { migrateSettingsProfiles, settleTreeProfiles } from './treeProfiles';
 import { settleProfessionProgress } from './professions';
 import { migrateForagingToBreeding, settleForaging } from './foraging';
+import { migrateAlchemyInfusions, settleAlchemy } from './alchemy';
 import { newCampaignQuestState, settleCampaignQuests } from './campaignQuests';
 import { newAstrologyState } from './astrology';
 import { migrateDelve } from './delve';
@@ -496,6 +497,7 @@ const MIGRATIONS: Record<number, Migration> = {
   58: (raw) => { raw.woodcrafting ??= freshWoodcrafting(); },
   59: (raw) => { raw.gemcutting ??= freshGemcutting(); },
   60: migrateForagingToBreeding,
+  61: migrateAlchemyInfusions,
 };
 
 /**
@@ -654,6 +656,7 @@ export function deserialize(json: string): GameState {
   settleSkillingMastery(s);
   settleProfessionProgress(s);
   settleForaging(s);
+  settleAlchemy(s);
   migrateSettingsProfiles(s);
   settleTreeLayout(s);
   settlePassivePoints(s);

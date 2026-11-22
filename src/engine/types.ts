@@ -15,6 +15,7 @@ import type { ForgeSignature } from '../data/forging';
 import type { WoodcraftingState, WoodPlan } from './woodcrafting';
 import type { CutSetup, GemcuttingState } from './gemFacets';
 import type { ForagingState } from './foraging';
+import type { AlchemyState } from './alchemy';
 import type { RoughGem } from './roughGems';
 
 export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'agility' | 'archaeology' | 'smelting' | 'smithing' | 'woodcrafting' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'astrology' | 'fishing';
@@ -222,6 +223,12 @@ export interface FlaskMod {
   value: number;
 }
 
+export interface FlaskInfusion {
+  id: string;
+  strength: number;
+  strain: string;
+}
+
 export interface FlaskInstance {
   uid: number;
   flaskId: string;
@@ -229,6 +236,9 @@ export interface FlaskInstance {
   /** flasks are normal, magic (1 prefix + 1 suffix), or unique */
   rarity: 'normal' | 'magic' | 'unique';
   ilvl: number;
+  /** Alchemy overhaul: up to 2 infusions, or 3 on a grand flask */
+  infusions?: FlaskInfusion[];
+  grand?: boolean;
   prefixes: FlaskMod[];
   suffixes: FlaskMod[];
   /** enchantment from an Instilling Orb: use automatically on this condition */
@@ -1373,6 +1383,7 @@ export interface GameState {
   woodcrafting: WoodcraftingState;
   gemcutting: GemcuttingState;
   foraging: ForagingState;
+  alchemy: AlchemyState;
   skillBar: (SkillGemInstance | null)[];
   loadouts: Loadouts;
   action: Action;

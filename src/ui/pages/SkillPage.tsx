@@ -43,6 +43,7 @@ import { AnvilView } from '../components/AnvilView';
 import { WoodBench } from '../components/WoodBench';
 import { LapidaryBench } from '../components/LapidaryBench';
 import { ForagingBench } from '../components/ForagingBench';
+import { AlchemyBench } from '../components/AlchemyBench';
 import { ProfessionWorkbench, PROFESSION_THEMES } from '../components/ProfessionWorkbench';
 import { Icon, Orb, Swatch } from '../components/Icon';
 import { MasteryProgress } from '../components/MasteryProgress';
@@ -732,7 +733,7 @@ export function SkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId)
   const s = useGame();
   const lockedAt = skillLock(s, skill);
   if (lockedAt) return <LockedSkill skill={skill} place={lockedAt} />;
-  if (skill === 'mining' || skill === 'smelting' || skill === 'smithing' || skill === 'woodcrafting' || skill === 'gemcutting' || skill === 'harvesting') return <WorkshopPage key={skill} skill={skill} go={go} />;
+  if (skill === 'mining' || skill === 'smelting' || skill === 'smithing' || skill === 'woodcrafting' || skill === 'gemcutting' || skill === 'harvesting' || skill === 'alchemy') return <WorkshopPage key={skill} skill={skill} go={go} />;
   return <OpenSkillPage skill={skill} go={go} />;
 }
 
@@ -750,7 +751,7 @@ function QuickForgeRecipes() {
   </>;
 }
 
-function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'gemcutting' | 'harvesting'; go?: (skill: SkillId) => void }) {
+function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'gemcutting' | 'harvesting' | 'alchemy'; go?: (skill: SkillId) => void }) {
   const s = useGame();
   const activeProject = s.professionProgress.activeProject?.project.skill === skill;
   const projects = <ProjectBoard skill={skill} go={go} />;
@@ -763,6 +764,7 @@ function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing'
     {skill === 'woodcrafting' && <WoodBench catalysts={catalysts} masterworks={projects} />}
     {skill === 'gemcutting' && <LapidaryBench masterworks={projects} />}
     {skill === 'harvesting' && <ForagingBench masterworks={projects} />}
+    {skill === 'alchemy' && <AlchemyBench masterworks={projects} />}
     {skill === 'mining' && <details className="profession-supplies" open={activeProject}><summary>Masterworks</summary>{projects}</details>}
   </div>;
 }

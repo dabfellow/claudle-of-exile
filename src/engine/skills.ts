@@ -38,6 +38,7 @@ import { roughDropBundle, type RoughGem } from './roughGems';
 import { giantCut, woodcuttingAccessHint } from './woodcutting';
 import { createPurposeItem } from './smithing';
 import { foragingDone } from './foraging';
+import { finishQueuedInfusion, flawlessBarStack, GRAND_FLAWLESS_BARS, infusionQueueBlocker } from './alchemy';
 import { weaponComponentProgress } from './weaponProjects';
 import { gemFamilyPool, gemcuttingAccessHint, isGemEquipped, recycleGemExecution } from './gemcutting';
 import { runecarvingAccessHint, runecarvingDone } from './runes';
@@ -182,6 +183,13 @@ export function actionBlocker(s: GameState, a: SkillAction, cut: CutSetup | null
   if (staged) {
     const forge = forgeActionBlocker(s, a);
     if (forge) return forge;
+  }
+  if (a.id === 'brew_infusion') {
+    const infBlocker = infusionQueueBlocker(s);
+    if (infBlocker) return infBlocker;
+  }
+  if (a.grandFlask && !flawlessBarStack(s, GRAND_FLAWLESS_BARS)) {
+    return `Needs ${GRAND_FLAWLESS_BARS} Flawless bars of any metal`;
   }
   const nominalCost = a.skill === 'smelting' ? smeltingCost(s, a, a.inputs ?? {}) : a.inputs;
   if (a.skill === 'gemcutting' && a.inputs) {
@@ -633,7 +641,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
     const extraCharges = (chargesMilestone ? chargesMilestone.value : 0) + globalCharges;
     const extraDuration = durMilestone ? durMilestone.value : 0;
     for (let i = 0; i < flaskCount; i++) {
-      const f = newFlask(s, a.flaskId, skillLevel(s, 'alchemy'));
+      const f = newFlask(s, a.flaskId, skillLevel(s, 'alchemy'), !!a.grandFlask);
       if (t.qualityBrews && chance(ctx.rng, t.qualityBrews / 100)) {
         f.rarity = 'magic';
         rerollMagic(f, ctx.rng);
@@ -655,6 +663,13 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
   if (a.skill === 'smithing') rollCollectible(s, ctx, 'smithing', 'forge');
   if (a.skill === 'woodcrafting') rollCollectible(s, ctx, 'woodcrafting', 'workbench');
   if (a.skill === 'gemcutting') rollCollectible(s, ctx, 'gemcutting', 'wheel');
+  if (a.skill === 'alchemy') rollCollectible(s, ctx, 'alchemy', 'bench');
+  if (a.id === 'brew_infusion') finishQueuedInfusion(s, ctx);
+  if (a.grandFlask) {
+    const barId = flawlessBarStack(s, GRAND_FLAWLESS_BARS);
+    if (!barId) { s.action = null; return; }
+    payResolvedCost(s, { [barId]: GRAND_FLAWLESS_BARS });
+  }
   const heartwoodXp = a.skill === 'woodcutting' && t.heartwood ? 0.8 : 1;
   const branchXp = a.skill === 'gemcutting' ? (t.gemcuttingXp ?? 0) : 0;
   grantXp(s, ctx, a.skill, a.xp * (1 + (d.skillXp + (t.skillXp ?? 0) + branchXp + astrologyXp(s)) / 100) * heartwoodXp);

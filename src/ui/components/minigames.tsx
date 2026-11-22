@@ -5,6 +5,7 @@ import {
   curveResult,
   fertiliseResult,
   fertiliseWindowMs,
+  pourResult,
   BRUSH_COLS,
   BRUSH_ROWS,
   brushChips,
@@ -51,10 +52,6 @@ const LOCK_LENGTH = 3;
 const PIN_SHOW_MS = 380;
 const LOCK_PATIENCE_MS = 3000;
 const LOCK_NEXT_MS = 250;
-const HEAT_RISE_PER_SEC = 0.7;
-const HEAT_FALL_PER_SEC = 0.55;
-const HEAT_BAND = 0.26;
-const HEAT_HOLD_MS = 1250;
 const STROKE_W = 300;
 const STROKE_H = 120;
 const STROKE_STEP = 5;
@@ -686,72 +683,58 @@ function ArchaeologyGame({ onSwing }: { onSwing: OnSwing }) {
   );
 }
 
-/** Hold to heat, let go to cool, and keep the needle in a band that drifts along the bar. Mostly in its gold middle is a double. */
+/** Hold to pour the infusion and release at the marked target line. */
 function AlchemyGame({ onSwing }: { onSwing: OnSwing }) {
-  const needle = useRef<HTMLSpanElement>(null);
-  const band = useRef<HTMLSpanElement>(null);
-  const core = useRef<HTMLSpanElement>(null);
-  const steady = useRef<HTMLSpanElement>(null);
-  const brew = useRef({ heating: false, heat: 0.4, t: 0, held: 0, inCore: 0 });
+  const [target, setTarget] = useState(() => 0.5 + Math.random() * 0.35);
+  const [level, setLevel] = useState(0);
+  const pouring = useRef(false);
+  const levelRef = useRef(0);
+  const targetRef = useRef(target);
+  targetRef.current = target;
 
-  const heat = () => {
-    brew.current.heating = true;
-  };
-  const cool = () => {
-    brew.current.heating = false;
+  const reset = () => {
+    pouring.current = false;
+    levelRef.current = 0;
+    setLevel(0);
+    setTarget(0.5 + Math.random() * 0.35);
   };
 
   useFrame((dt) => {
-    const b = brew.current;
-    b.t += dt;
-    b.heat = Math.min(1, Math.max(0, b.heat + ((b.heating ? HEAT_RISE_PER_SEC : -HEAT_FALL_PER_SEC) * dt) / 1000));
-    const low = 0.37 + 0.33 * Math.sin(b.t / 1900) * Math.cos(b.t / 4300);
-    if (b.heat >= low && b.heat <= low + HEAT_BAND) {
-      b.held += dt;
-      if (inDoubleZone(b.heat, low, HEAT_BAND)) b.inCore += dt;
-    } else {
-      b.held = 0;
-      b.inCore = 0;
+    if (!pouring.current) return;
+    const next = levelRef.current + (dt / 1800);
+    if (next > 1) {
+      onSwing(pourResult(1, true));
+      reset();
+      return;
     }
-    if (b.held >= HEAT_HOLD_MS) {
-      onSwing(b.inCore >= HEAT_HOLD_MS / 2 ? 'double' : 'hit');
-      b.held = 0;
-      b.inCore = 0;
-    }
-    if (needle.current) needle.current.style.left = `${b.heat * 100}%`;
-    if (band.current) {
-      band.current.style.left = `${low * 100}%`;
-      band.current.style.width = `${HEAT_BAND * 100}%`;
-    }
-    if (core.current) {
-      core.current.style.left = `${doubleZoneStart(low, HEAT_BAND) * 100}%`;
-      core.current.style.width = `${HEAT_BAND * DOUBLE_SHARE * 100}%`;
-    }
-    if (steady.current) {
-      steady.current.style.width = `${(b.held / HEAT_HOLD_MS) * 100}%`;
-      steady.current.classList.toggle('double', b.inCore >= HEAT_HOLD_MS / 2);
-    }
+    levelRef.current = next;
+    setLevel(next);
   });
-  useSpace(heat, cool);
+
+  const startPour = () => { pouring.current = true; };
+  const stopPour = () => {
+    if (!pouring.current) return;
+    onSwing(pourResult(levelRef.current - targetRef.current, false));
+    reset();
+  };
+  useSpace(startPour, stopPour);
 
   return (
-    <button
-      className="mini-heat"
-      aria-label="Hold to heat the brew"
-      onPointerDown={(e) => {
-        e.currentTarget.setPointerCapture(e.pointerId);
-        heat();
-      }}
-      onPointerUp={cool}
-      onPointerCancel={cool}
-    >
-      <span className="mini-tube">
-        <span className="mini-tube-band" ref={band} />
-        <span className="mini-double" ref={core} />
-        <span className="mini-needle" ref={needle} />
-      </span>
-      <span className="mini-steady" ref={steady} />
-    </button>
+    <div className="alchemy-pour-wrap">
+      <div className="alchemy-vial" aria-label="Infusion vial">
+        <span className="alchemy-liquid" style={{ height: `${Math.min(100, level * 100)}%` }} />
+        <span className="alchemy-target" style={{ bottom: `${target * 100}%` }} />
+      </div>
+      <button
+        type="button"
+        className="btn primary"
+        onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); startPour(); }}
+        onPointerUp={stopPour}
+        onPointerCancel={stopPour}
+      >
+        Hold to pour
+      </button>
+    </div>
   );
 }
 

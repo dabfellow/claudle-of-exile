@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { angleResult, bellowsResult, braceResult, fertiliseResult, fertiliseWindowMs, gemTurnMs, liftResult, liftWindowMs } from '../src/engine/minigame';
+import { angleResult, bellowsResult, braceResult, fertiliseResult, fertiliseWindowMs, gemTurnMs, liftResult, liftWindowMs, pourResult } from '../src/engine/minigame';
+
+describe('Alchemy pour to the line', () => {
+  it('scores double, hit, weak, miss and spills accurately', () => {
+    expect(pourResult(0, false)).toBe('double');
+    expect(pourResult(0.02, false)).toBe('double');
+    expect(pourResult(-0.02, false)).toBe('double');
+    expect(pourResult(0.021, false)).toBe('hit');
+    expect(pourResult(0.06, false)).toBe('hit');
+    expect(pourResult(0.061, false)).toBe('weak');
+    expect(pourResult(0.12, false)).toBe('weak');
+    expect(pourResult(0.121, false)).toBe('miss');
+    expect(pourResult(0, true)).toBe('miss');
+  });
+});
 
 describe('Foraging whack-a-mole fertilising', () => {
   it('scores double, hit, weak and miss and tightens window for deeper species', () => {

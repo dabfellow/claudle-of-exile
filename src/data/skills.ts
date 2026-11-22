@@ -10,7 +10,6 @@ import { ALCHEMY_EXPANSION_ACTIONS } from './alchemy';
 import { purposeRecipes, SMITH_COMPONENTS, type SmithPurpose } from './smithing';
 import { BASES, type BaseDef } from './bases';
 import { CARTOGRAPHY_GATE, CHART_TIERS, FOLIO_COST, FOLIO_LEVEL, FOLIO_SIZE, SEXTANT_RECIPES } from './cartography';
-import { COOKING_GATE } from './cooking';
 import { chamberActionId, CULTURES, digChance, EXPEDITION_GATE, SITES, TRAIL } from './expedition';
 import { MAP_TIERS } from './maps';
 import { SEAL, SHARD_CHANCE, SHARD_FOR, SHARD_ORB, SHARDS_PER_ORB, WAX } from './craftMats';
@@ -77,6 +76,8 @@ export interface SkillAction {
   alchemyTable?: number;
   /** alchemy: produces a flask */
   flaskId?: string;
+  /** alchemy Lv 80: produces a Grand flask (3 infusion slots), requiring 10 Flawless bars */
+  grandFlask?: boolean;
   /** gemcutting: produces a random gem of this kind or a targeted family/exact cut */
   gem?: { kind: 'skill' | 'support' | 'signature' | 'family' | 'exact'; family?: GemFamily; exactId?: string };
   color: string;
@@ -280,9 +281,9 @@ const ALCHEMY: SkillAction[] = [
   { id: 'brew_amethyst', skill: 'alchemy', name: 'Amethyst Flask', level: 30, intervalMs: 5500, xp: 65, inputs: { voidbloom: 5, rough_gem: 1 }, flaskId: 'amethyst', color: '#a36bdc', area: 'shipgrave' },
   { id: 'brew_life_grand', skill: 'alchemy', name: 'Grand Life Flask', level: 32, intervalMs: 6000, xp: 80, inputs: { emberroot: 10, yew_log: 3 }, flaskId: 'life_grand', color: '#d6453d', area: 'shipgrave' },
   { id: 'brew_diamond', skill: 'alchemy', name: 'Diamond Flask', level: 36, intervalMs: 6000, xp: 90, inputs: { voidbloom: 6, rough_gem: 2 }, flaskId: 'diamond', color: '#bfe3ff', area: 'stormcliffs' },
-  { id: 'brew_mana_sacred', skill: 'alchemy', name: 'Sacred Mana Flask', level: 42, intervalMs: 6000, xp: 110, inputs: { frost_extract: 3, yew_log: 2 }, flaskId: 'mana_sacred', color: '#4f82e8', gate: COOKING_GATE },
-  { id: 'brew_life_sacred', skill: 'alchemy', name: 'Sacred Life Flask', level: 46, intervalMs: 7000, xp: 140, inputs: { ember_reduction: 3, yew_log: 3 }, flaskId: 'life_sacred', color: '#e0584f', gate: COOKING_GATE },
-  { id: 'brew_sulphur', skill: 'alchemy', name: 'Sulphur Flask', level: 50, intervalMs: 7000, xp: 170, inputs: { void_distillate: 3, rough_gem: 3 }, flaskId: 'sulphur', color: '#d8c94a', gate: COOKING_GATE },
+  { id: 'brew_mana_sacred', skill: 'alchemy', name: 'Sacred Mana Flask', level: 42, intervalMs: 6000, xp: 110, inputs: { frostleaf: 9, yew_log: 2 }, flaskId: 'mana_sacred', color: '#4f82e8' },
+  { id: 'brew_life_sacred', skill: 'alchemy', name: 'Sacred Life Flask', level: 46, intervalMs: 7000, xp: 140, inputs: { emberroot: 9, yew_log: 3 }, flaskId: 'life_sacred', color: '#e0584f' },
+  { id: 'brew_sulphur', skill: 'alchemy', name: 'Sulphur Flask', level: 50, intervalMs: 7000, xp: 170, inputs: { voidbloom: 9, rough_gem: 3 }, flaskId: 'sulphur', color: '#d8c94a' },
   { id: 'orb_alchemy', skill: 'alchemy', name: 'Orb of Alchemy', level: 40, intervalMs: 6000, xp: 90, inputs: { arcane_dust: 25, voidbloom: 2 }, outputs: { alchemy: 1 }, color: '#f0c14b', area: 'shipgrave' },
 ];
 

@@ -4,12 +4,13 @@ import type { Ctx } from './context';
 import { accountUid } from './items';
 import { chance, pick, pickWeighted, rInt, type Rng } from './rng';
 import type { AccountState, FlaskInstance, FlaskMod, GameState, InstillCondition } from './types';
+import { flaskInfusionDurationPct } from './alchemy';
 
 // ---------- creation ----------
 
-export function newFlask(s: GameState, flaskId: string, ilvl = 1): FlaskInstance {
+export function newFlask(s: GameState, flaskId: string, ilvl = 1, grand = false): FlaskInstance {
   const def = flaskDef(flaskId);
-  return { uid: accountUid(s), flaskId, charges: 0, rarity: def.unique ? 'unique' : 'normal', ilvl, prefixes: [], suffixes: [], instill: null };
+  return { uid: accountUid(s), flaskId, charges: 0, rarity: def.unique ? 'unique' : 'normal', ilvl, prefixes: [], suffixes: [], instill: null, infusions: [], ...(grand ? { grand: true } : {}) };
 }
 
 export function rollUniqueFlask(s: GameState, ilvl: number, rng: Rng, flaskId?: string): FlaskInstance {
@@ -83,7 +84,7 @@ export function flaskStats(f: FlaskInstance): FlaskStats {
     def,
     maxCharges: Math.round(def.maxCharges * (1 + total(f, 'capacity') / 100)) + (f.extraCharges ?? 0),
     chargesPerUse: Math.max(1, Math.round(def.chargesPerUse * (1 - total(f, 'saving') / 100))),
-    durationMs: Math.round(def.durationMs * (1 + (total(f, 'duration') + (f.extraDurationPct ?? 0)) / 100)),
+    durationMs: Math.round(def.durationMs * (1 + (total(f, 'duration') + (f.extraDurationPct ?? 0) + flaskInfusionDurationPct(f)) / 100)),
     effectMult: 1 + total(f, 'recovery') / 100,
     gainMult: 1 + total(f, 'gain') / 100,
   };

@@ -1,5 +1,6 @@
 import { ACTIVE_GEMS, activeGemDef, DEFAULT_ATTACK, gemReqLevel, SKILL_BAR_SLOTS, supportGemDef, type ActiveGemDef, type SkillAim, type TacticRule, type TargetStatus } from '../data/gems';
 import { isHardcore } from './challenge';
+import { flaskHasInfusion, flaskInfusionBuffStats } from './alchemy';
 import { agilityCut } from '../data/agility';
 import { CAMPAIGN_GEAR_CHECKS } from '../data/campaignGearChecks';
 import { levelOf } from './xp';
@@ -879,24 +880,60 @@ export function useFlask(s: GameState, ctx: Ctx, slot: number, auto = false): st
   const effect = flaskPotency(d, f);
   const duration = st.durationMs * (kind === 'utility' ? 1 + d.raw.utilityFlaskDuration / 100 : 1);
   const c = s.combat;
+  const infStats = flaskInfusionBuffStats(s, f);
   c.buffs = c.buffs.filter((b) => !(b.source === 'flask' && b.id === f.flaskId));
-  c.buffs.push({ id: f.flaskId, source: 'flask', remainingMs: duration, durationMs: duration, mult: st.effectMult });
+  c.buffs.push({
+    id: f.flaskId,
+    source: 'flask',
+    remainingMs: duration,
+    durationMs: duration,
+    mult: st.effectMult,
+    ...(Object.keys(infStats).length ? { stats: infStats } : {}),
+  });
+  if (flaskHasInfusion(f, 'cleansing') && c.playerDots) {
+    c.playerDots = c.playerDots.filter((dot) => dot.kind !== 'bleed' && dot.kind !== 'poison');
+  }
+  const echoInf = flaskHasInfusion(f, 'echo');
+  if (echoInf) {
+    const nextFlask = s.flaskSlots[(slot + 1) % s.flaskSlots.length];
+    if (nextFlask && nextFlask.uid !== f.uid) {
+      const nextStats = flaskInfusionBuffStats(s, nextFlask, 0.3 * echoInf.strength, false);
+      if (Object.keys(nextStats).length) {
+        c.buffs = c.buffs.filter((b) => b.id !== `echo_${nextFlask.flaskId}`);
+        c.buffs.push({ id: `echo_${nextFlask.flaskId}`, source: 'flask', remainingMs: duration, durationMs: duration, stats: nextStats });
+      }
+    }
+  }
   if (st.def.heal && d.raw.doomedWitheredVeins <= 0) {
     const resource = kind === 'mana' ? 'mana' : 'life';
+    const instantInf = flaskHasInfusion(f, 'instant');
+    const overflowInf = flaskHasInfusion(f, 'overflow');
     if (f.flaskId === 'u_flask_still_heart') {
       c.heals = c.heals.filter((h) => !(h.isFlask && h.flaskId === f.flaskId));
     }
     if (resource === 'life' && d.raw.borrowedTomorrow > 0) {
       ctx.emit({ t: 'info', text: 'Borrowed Tomorrow blocks Life recovery from flasks.', tone: 'warn' });
     }
-    c.heals.push({
-      resource,
-      perMs: (st.def.heal * effect) / duration,
-      remainingMs: duration,
-      isFlask: true,
-      flaskId: f.flaskId,
-      karuiEndFull: !!st.def.buff?.karuiBlood || undefined,
-    });
+    if (instantInf) {
+      const amount = st.def.heal * effect * 0.7;
+      if (resource === 'life' && d.raw.borrowedTomorrow <= 0) {
+        const before = s.life;
+        s.life = Math.min(d.maxLife, s.life + amount);
+        const excess = Math.max(0, amount - (s.life - before));
+        if (overflowInf && excess > 0) s.es = Math.min(d.maxEs, s.es + excess * 0.2 * overflowInf.strength);
+      } else if (resource === 'mana') {
+        s.mana = Math.min(d.maxMana, s.mana + amount);
+      }
+    } else {
+      c.heals.push({
+        resource,
+        perMs: (st.def.heal * effect) / duration,
+        remainingMs: duration,
+        isFlask: true,
+        flaskId: f.flaskId,
+        karuiEndFull: !!st.def.buff?.karuiBlood || undefined,
+      });
+    }
   }
   if (kind === 'utility' && d.raw.flaskReel > 0) {
     for (const m of aliveMonsters(c)) {
@@ -4971,9 +5008,18 @@ function bossCasts(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance, dt:
 export function combatStep(s: GameState, ctx: Ctx, dt: number, d: Derived): boolean {
   const c = s.combat;
   if (!c) return false;
-  for (const flask of s.flaskSlots) {
-    if (flask?.flaskId === FISHING_FLASK && hasFishingPrize(s, 4)) {
+  for (let i = 0; i < s.flaskSlots.length; i++) {
+    const flask = s.flaskSlots[i];
+    if (!flask) continue;
+    if (flask.flaskId === FISHING_FLASK && hasFishingPrize(s, 4)) {
       flask.charges = Math.min(flaskCapacity(s, flask), flask.charges + dt / 100);
+    }
+    const evergreen = flaskHasInfusion(flask, 'evergreen');
+    if (evergreen) {
+      flask.charges = Math.min(flaskCapacity(s, flask), flask.charges + (dt / 5000) * evergreen.strength);
+    }
+    if (flaskHasInfusion(flask, 'last_breath') && d.maxLife > 0 && s.life / d.maxLife < 0.35 && !flaskActive(s, flask.flaskId)) {
+      useFlask(s, ctx, i, true);
     }
   }
   if (isKeyedBossZone(c.zoneId) && c.monsters.some((m) => m.isBoss && m.life > 0)) {

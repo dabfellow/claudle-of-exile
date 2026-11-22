@@ -78,6 +78,7 @@ export const COLLECTIBLES: CollectibleDef[] = [
   row('harvesting', 'star_bloom', 'Star Bloom Patch', 'A dry star-pod', 'Rattles softly like glass beads when shaken.'),
   row('harvesting', 'glimmermoss', 'Glimmermoss Patch', 'A bottled tuft of moss', 'Glows pale green in the dark long after picking.'),
   row('harvesting', 'wraithlily', 'Wraithlily Patch', 'A translucent petal', 'Clear as oiled paper, with veins like frost.'),
+  row('alchemy', 'bench', 'The Alchemy Bench', 'A cracked vial', "An old alchemist's label is still legible on the glass."),
 ];
 
 export function collectibleDef(id: string): CollectibleDef | undefined {

@@ -35,11 +35,12 @@ import { freshForging } from './forging';
 import { freshWoodcrafting, woodGrowthStep } from './woodcrafting';
 import { freshGemcutting } from './gemFacets';
 import { freshForaging } from './foraging';
+import { freshAlchemy } from './alchemy';
 export { enterZone } from './combat';
 export { challengeName };
 import type { AccountState, ChallengeFlags, EquipSlot, GameState } from './types';
 
-export const SAVE_VERSION = 61;
+export const SAVE_VERSION = 62;
 export const STEP_MS = 50;
 /** out of combat, life refills this fraction of max per second */
 export const TOWN_REGEN = 0.25;
@@ -85,6 +86,7 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
     woodcrafting: freshWoodcrafting(),
     gemcutting: freshGemcutting(),
     foraging: freshForaging(),
+    alchemy: freshAlchemy(),
     skillingMastery: {},
     professionProgress: newProfessionProgress(),
     inventory: [],
