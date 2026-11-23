@@ -10,7 +10,14 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
+export const UPCOMING: string[] = [];
+
+export const NEWS: NewsEntry[] = [
+  {
+    version: '6.0.0',
+    date: '23 Nov 2026',
+    title: 'Skilling Revamp',
+    items: [
   'Street Marks now go up to level 90. The Gilded Mint and The Sovereign’s Vault add two endgame Heists, and the Thieving ledger adds four Stolen Keepsakes and a more forgiving Lantern Alley Pickpocket minigame.',
   'Woodcutting’s Lodge has six upgradeable buildings, each woods has its own mastery perks, and a felled giant leaves a glowing heart you can chop out.',
   'Start digging from the Scholar’s Desk in one click. Archaeology now groups translations and chapters in Codex & Story, and puts Restoration, Sifting and the Relic Forge together in Relics.',
@@ -44,9 +51,8 @@ export const UPCOMING: string[] = [
   'Smelting bellows needles now start all the way to the left with an inline Quick Smelt picker; Forging swaps flat blank dropdowns for category filters and a High Crucible Master Forms workshop; Woodcrafting removes stray elemental resistance shields and refreshes the Recipes tab.',
   'Alchemy lets you Brew Now in one click from Infusions and fixes a crash when opening The Still Heart on Masterworks (which now uses Emberroots).',
   'Gemcutting lets you toggle facets on the fly without saved plan forms, and Cartography widens sighting rings and shows map/material requirements clearly. Former Rune-carving Masterworks (The Second Heresy, The Sum of All Things, Hands of the Forgotten Choir, and Hollow Circuit) can now be crafted in Cartography.',
-];
-
-export const NEWS: NewsEntry[] = [
+    ],
+  },
   {
     version: '0.5.11',
     date: '20 Nov 2026',
