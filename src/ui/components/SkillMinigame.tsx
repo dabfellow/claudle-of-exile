@@ -18,7 +18,7 @@ const HOW_TO: Partial<Record<SkillId, string>> = {
   gemcutting: 'Tap when the turning facet line meets the fixed guide. An exact cut earns a double.',
   runecarving: 'Drag from the circle along the whole stroke without leaving the line. Hug the gold middle for a double.',
   cooking: 'Three pots are heating up. Stir each one in the bright band, or its gold middle for a double, before it boils over.',
-  astrology: 'Drag the outer brass focus ring around the scope until the star in the centre sharpens, then Lock Focus.',
+  astrology: 'Turn the brass ring until the star in the centre sharpens, then release to lock focus.',
   cartography: 'Tap when the vertical line crosses the landmark, then tap when the horizontal line crosses it. Hitting the gold centre earns a double.',
 };
 

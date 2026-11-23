@@ -190,6 +190,8 @@ export interface ChartEntry {
 }
 
 export interface ChartReport {
+  /** Bonus per matching connection, before other star effects. */
+  lineBonus: number;
   size: number;
   entries: (ChartEntry | null)[];
   lines: { a: number; b: number; active: boolean; matching: boolean }[];
@@ -272,7 +274,7 @@ export function chartReport(s: GameState, slotsOverride?: (string | null)[]): Ch
     for (const e of effects) totals[e.key] = (totals[e.key] ?? 0) + e.value;
     entries[i] = { slot: i, id: c.id, name: c.kind === 'fallen' ? fallenKind(c.fallen!.effect)?.name ?? 'Fallen star' : c.star!.name, family: familyOf(c), multiplier, working, effects };
   });
-  return { size, entries, lines, totals };
+  return { size, entries, lines, totals, lineBonus };
 }
 
 const cache = new WeakMap<object, { key: string; totals: Record<string, number> }>();

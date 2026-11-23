@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   angleResult,
   gemTurnMs,
@@ -389,10 +389,7 @@ const TELESCOPE_LOCK_TEXT: Record<SwingResult, string> = {
   miss: 'Locked — Out of focus',
 };
 
-/**
- * Focus the telescope: a square optical eyepiece with two turnable brass outer rings.
- * Drag around the outer ring, scroll wheel, drag the dial, or use arrow keys/buttons, then press Lock Focus.
- */
+/** Turn the telescope's focus ring and release to record the observation. */
 function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
   const newTarget = (avoid: number) => {
     let t = random(0.12, 0.88);
@@ -402,8 +399,9 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
   const ring = useRef(0.5);
   const target = useRef(newTarget(0.5));
   const turning = useRef(0);
-  const sliderDrag = useRef(false);
-  const ringDrag = useRef<{ pointerId: number; lastAngle: number | null } | null>(null);
+  const turnPointer = useRef<number | null>(null);
+  const sliderDrag = useRef<number | null>(null);
+  const ringDrag = useRef<{ pointerId: number; lastAngle: number | null; start: number } | null>(null);
   const track = useRef<HTMLDivElement>(null);
   const scopeRef = useRef<HTMLDivElement>(null);
   const onSwingRef = useRef(onSwing);
@@ -422,7 +420,9 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
     onSwingRef.current(r);
     setFeedback({ id: Math.random(), r });
     target.current = newTarget(ring.current);
-    sliderDrag.current = false;
+    turning.current = 0;
+    turnPointer.current = null;
+    sliderDrag.current = null;
     ringDrag.current = null;
   };
 
@@ -453,19 +453,22 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
   useEffect(() => {
     const typing = (e: KeyboardEvent) => e.target instanceof HTMLElement && e.target.matches('input, textarea, select');
     const onKeyDown = (e: KeyboardEvent) => {
-      if (typing(e)) return;
+      if (typing(e) || turnPointer.current !== null || sliderDrag.current !== null || ringDrag.current) return;
       if (e.key === 'ArrowLeft') { e.preventDefault(); turning.current = -1; }
       else if (e.key === 'ArrowRight') { e.preventDefault(); turning.current = 1; }
     };
     const onKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft' && turning.current === -1) turning.current = 0;
-      else if (e.key === 'ArrowRight' && turning.current === 1) turning.current = 0;
+      if (turnPointer.current !== null) return;
+      if ((e.key === 'ArrowLeft' && turning.current === -1) || (e.key === 'ArrowRight' && turning.current === 1)) lock();
     };
+    const onBlur = () => { turning.current = 0; };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
     };
   }, []);
 
@@ -473,6 +476,28 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
     if (turning.current) move(ring.current + (turning.current * TELESCOPE_TURN_PER_SEC * dt) / 1000);
   });
   useSpace(lock);
+
+  const turnButton = (direction: -1 | 1) => ({
+    onPointerDown: (e: ReactPointerEvent<HTMLButtonElement>) => {
+      if (!e.isPrimary || e.button !== 0) return;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      turnPointer.current = e.pointerId;
+      turning.current = direction;
+    },
+    onPointerUp: (e: ReactPointerEvent<HTMLButtonElement>) => {
+      if (turnPointer.current === e.pointerId && turning.current) lock();
+    },
+    onLostPointerCapture: (e: ReactPointerEvent<HTMLButtonElement>) => {
+      if (turnPointer.current !== e.pointerId) return;
+      turnPointer.current = null;
+      turning.current = 0;
+    },
+    onClick: (e: ReactMouseEvent<HTMLButtonElement>) => {
+      if (e.detail !== 0) return;
+      move(ring.current + direction * 0.015);
+      lock();
+    },
+  });
 
   const blur = Math.abs(pos - target.current) * TELESCOPE_BLUR_PX;
   return (
@@ -482,11 +507,11 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
         className="telescope-scope-box"
         tabIndex={0}
         role="application"
-        aria-label="Telescope optical scope. Drag the outer brass ring or scroll to focus the star, then press Lock Focus or Space."
+        aria-label="Telescope optical scope. Turn the ring until the star is sharp, then release to lock focus."
         onPointerDown={(e) => {
-          if (e.pointerType === 'mouse' && e.button !== 0) return;
+          if (!e.isPrimary || e.button !== 0) return;
           e.currentTarget.setPointerCapture(e.pointerId);
-          ringDrag.current = { pointerId: e.pointerId, lastAngle: angleFromCenter(e) };
+          ringDrag.current = { pointerId: e.pointerId, lastAngle: angleFromCenter(e), start: ring.current };
         }}
         onPointerMove={(e) => {
           const drag = ringDrag.current;
@@ -503,9 +528,11 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
           drag.lastAngle = angle;
           move(ring.current + delta / (Math.PI * 2));
         }}
-        onPointerUp={(e) => { if (ringDrag.current?.pointerId === e.pointerId) ringDrag.current = null; }}
-        onPointerCancel={(e) => { if (ringDrag.current?.pointerId === e.pointerId) ringDrag.current = null; }}
-        onLostPointerCapture={() => { ringDrag.current = null; }}
+          onPointerUp={(e) => {
+            const drag = ringDrag.current;
+            if (drag?.pointerId === e.pointerId && Math.abs(drag.start - ring.current) > 0.001) lock();
+          }}
+          onLostPointerCapture={(e) => { if (ringDrag.current?.pointerId === e.pointerId) ringDrag.current = null; }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.repeat) {
             e.preventDefault();
@@ -536,10 +563,7 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
           type="button"
           className="btn sm"
           aria-label="Turn the focus ring down"
-          onPointerDown={() => { turning.current = -1; }}
-          onPointerUp={() => { turning.current = 0; }}
-          onPointerLeave={() => { turning.current = 0; }}
-          onPointerCancel={() => { turning.current = 0; }}
+          {...turnButton(-1)}
         >
           ◀
         </button>
@@ -547,20 +571,24 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
           ref={track}
           className="telescope-ring"
           role="slider"
+          tabIndex={0}
           aria-label="Fine focus dial"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(pos * 100)}
           onPointerDown={(e) => {
-            if (e.pointerType === 'mouse' && e.button !== 0) return;
-            sliderDrag.current = true;
+            if (!e.isPrimary || e.button !== 0) return;
+            sliderDrag.current = e.pointerId;
             e.currentTarget.setPointerCapture(e.pointerId);
             fromSliderPointer(e);
           }}
-          onPointerMove={(e) => { if (sliderDrag.current) fromSliderPointer(e); }}
-          onPointerUp={() => { sliderDrag.current = false; }}
-          onPointerCancel={() => { sliderDrag.current = false; }}
-          onLostPointerCapture={() => { sliderDrag.current = false; }}
+          onPointerMove={(e) => { if (sliderDrag.current === e.pointerId) fromSliderPointer(e); }}
+          onPointerUp={(e) => {
+            if (sliderDrag.current !== e.pointerId) return;
+            fromSliderPointer(e);
+            lock();
+          }}
+          onLostPointerCapture={(e) => { if (sliderDrag.current === e.pointerId) sliderDrag.current = null; }}
         >
           <span className="telescope-knob" style={{ left: `${pos * 100}%` }} />
         </div>
@@ -568,19 +596,16 @@ function TelescopeGame({ onSwing }: { onSwing: OnSwing }) {
           type="button"
           className="btn sm"
           aria-label="Turn the focus ring up"
-          onPointerDown={() => { turning.current = 1; }}
-          onPointerUp={() => { turning.current = 0; }}
-          onPointerLeave={() => { turning.current = 0; }}
-          onPointerCancel={() => { turning.current = 0; }}
+          {...turnButton(1)}
         >
           ▶
         </button>
-        <button type="button" className="btn sm primary" onClick={lock}>Lock Focus</button>
+        <button type="button" className="btn sm ghost" onClick={lock} title="Use after adjusting with the scroll wheel">Lock Focus</button>
       </div>
       <div className="telescope-status" aria-live="polite">
         {feedback
           ? <span key={feedback.id} className={`telescope-lock-msg ${feedback.r}`}>{TELESCOPE_LOCK_TEXT[feedback.r]}</span>
-          : <span>Turn ring or scroll to sharpen star, then Lock Focus</span>}
+          : <span>Release the ring or dial when the star is sharp. If you scroll to focus, press Space or Lock Focus.</span>}
       </div>
     </div>
   );

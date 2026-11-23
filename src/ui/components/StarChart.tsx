@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   BINARY_PARTNER, chartLayout, fallenKind, GILDED_STARDUST, MAX_GILDED_RANK, MAX_RANK, rankXp, REGIONS, regionDef, researchNeeded, skillLabel, STARDUST, starDef, STARS,
-  type SkyRegion, type StarDef,
+  type SkyRegion, type StarDef, type StarFamily,
 } from '../../data/astrology';
 import { actionDef } from '../../data/skills';
 import {
@@ -13,10 +13,24 @@ import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { EmptyState, fmt, GameIcon, MatIcon, ProgressBar } from './common';
-import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
+import { LockedBadge, SkillIntro } from './SkillHelp';
 import './star-chart.css';
 
 const num = (v: number) => Number(v.toFixed(2));
+const familyLabel: Record<StarFamily, string> = {
+  skill: 'Profession', combat: 'Combat', wealth: 'Wealth', skilling: 'Skilling', conditional: 'Conditional',
+};
+
+function StarGlyph({ className }: { className?: string }) {
+  return (
+    <g className={className} aria-hidden="true">
+      <circle r="3.6" className="astro-glow" />
+      <path className="astro-ray" d="M0 -4.6 Q.65 -.65 3.55 0 Q.65 .65 0 4.6 Q-.65 .65 -3.55 0 Q-.65 -.65 0 -4.6Z" />
+      <path className="astro-flare" d="M-1.8 -1.8 0 -.6 1.8 -1.8 .6 0 1.8 1.8 0 .6 -1.8 1.8 -.6 0Z" />
+      <circle r=".65" fill="#fff8e9" />
+    </g>
+  );
+}
 
 /** One line of the buff, e.g. `+1.5% Mining yield`. `key` is an effect key from the chart report. */
 export function effectText(key: string, v: number): string {
@@ -108,9 +122,9 @@ function ChartTab({ s, onTab }: { s: GameState; onTab?: (next: string) => void }
     if (slots[i]) propose({ kind: 'clear', slot: i });
   };
 
-  const tray: { id: string; name: string; sub: string; rank?: number; placed: number }[] = [
-    ...STARS.filter((x) => isUnlocked(s, x.id)).map((x) => ({ id: x.id, name: x.name, sub: starEffectNow(x, starRank(s, x.id)), rank: starRank(s, x.id), placed: slots.indexOf(x.id) })),
-    ...s.astrology.fallen.map((f) => ({ id: f.uid, name: fallenKind(f.effect)?.name ?? 'Fallen star', sub: fallenKind(f.effect)?.desc(f.value) ?? '', placed: slots.indexOf(f.uid) })),
+  const tray: { id: string; name: string; sub: string; family: string; rank?: number; placed: number }[] = [
+    ...STARS.filter((x) => isUnlocked(s, x.id)).map((x) => ({ id: x.id, name: x.name, sub: starEffectNow(x, starRank(s, x.id)), family: x.family ? familyLabel[x.family] : 'Wonder', rank: starRank(s, x.id), placed: slots.indexOf(x.id) })),
+    ...s.astrology.fallen.map((f) => ({ id: f.uid, name: fallenKind(f.effect)?.name ?? 'Fallen star', sub: fallenKind(f.effect)?.desc(f.value) ?? '', family: 'Fallen · matches any family', placed: slots.indexOf(f.uid) })),
   ];
   const noStarsYet = tray.length === 0;
   const near = pairFirst !== null ? adjacentSlots(slots.length, pairFirst) : [];
@@ -118,10 +132,6 @@ function ChartTab({ s, onTab }: { s: GameState; onTab?: (next: string) => void }
 
   return (
     <div className="star-chart">
-      <SkillIntro step="Constellation">
-        Slot unlocked stars into nodes — adjacent stars of the same family empower one another.{' '}
-        <HelpTip tip="Stars from the same sky region placed on connected nodes boost each other's bonuses." />
-      </SkillIntro>
       {noStarsYet && (
         <div className="card star-first-step" role="region" aria-label="First step in Astrology">
           <EmptyState
@@ -141,13 +151,18 @@ function ChartTab({ s, onTab }: { s: GameState; onTab?: (next: string) => void }
       )}
       <Wallet s={s} />
       <div className="card star-night">
-        <div className="card-title">Your constellation <span className="grow" /><span className="card-hint">{slots.length} slots · linked stars of one family feed each other</span></div>
-        <svg className="star-sky star-night-sky" viewBox="0 0 100 60" role="group" aria-label="Constellation chart">
-          {layout.lines.map(([a, b]) => {
-            const l = report.lines.find((x) => x.a === a && x.b === b)!;
+        <div className="card-title">Your constellation <span className="grow" /><span className="card-hint">{slots.filter(Boolean).length} / {slots.length} slots filled</span></div>
+        <svg className={`star-sky star-night-sky ${slots.length > 8 ? 'dense' : ''}`} viewBox={`0 -3 100 ${Math.max(...layout.points.map(([, y]) => y)) + 15}`} role="group" aria-label="Constellation chart">
+          <g className="astro-chart-grid" aria-hidden="true">
+            <circle cx="50" cy="19" r="10" />
+            <circle cx="50" cy="19" r="20" />
+            <circle cx="50" cy="19" r="31" />
+            <path d="M4 19H96 M50 0V63 M12 0L88 54 M88 0L12 54" />
+          </g>
+          {report.lines.map(({ a, b, active, matching }) => {
             const [x1, y1] = layout.points[a];
             const [x2, y2] = layout.points[b];
-            return <line key={`${a}-${b}`} x1={x1} y1={y1} x2={x2} y2={y2} className={`star-line ${l.active ? (l.matching ? 'matching' : 'active') : 'possible'}`} />;
+            return <line key={`${a}-${b}`} x1={x1} y1={y1} x2={x2} y2={y2} className={`star-line ${active ? (matching ? 'matching' : 'active') : 'possible'}`} />;
           })}
           {layout.points.map(([x, y], i) => {
             const id = slots[i];
@@ -156,6 +171,8 @@ function ChartTab({ s, onTab }: { s: GameState; onTab?: (next: string) => void }
             return (
               <g
                 key={i}
+                transform={`translate(${x} ${y})`}
+                style={{ color: colorOf(id) }}
                 className={`star-slot ${id ? 'filled' : ''} ${picked && !id ? 'open' : ''} ${isNear ? 'near' : ''} ${live ? 'live' : ''}`}
                 role="button"
                 tabIndex={0}
@@ -163,13 +180,17 @@ function ChartTab({ s, onTab }: { s: GameState; onTab?: (next: string) => void }
                 onClick={() => onSlot(i)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSlot(i); } }}
               >
-                <circle cx={x} cy={y} r={5.5} className="star-hit" />
-                <circle cx={x} cy={y} r={id ? 3 : 2} className={id ? 'star-lit' : 'star-dim'} style={id ? { fill: colorOf(id) } : undefined} />
-                {id && <text x={x} y={y + 7.5} className="star-label" textAnchor="middle">{nameOf(id)}</text>}
+                <circle r="5.5" className="star-hit" />
+                <circle r="4.45" className="astro-socket" />
+                {id
+                  ? <StarGlyph className="astro-star" />
+                  : <path className="astro-empty" d="M0 -2.8 2.8 0 0 2.8 -2.8 0Z M-1 0H1 M0 -1V1" />}
+                <text y="8" className="star-label" textAnchor={x < 16 ? 'start' : x > 84 ? 'end' : 'middle'}>{id ? nameOf(id) : 'Empty slot'}</text>
               </g>
             );
           })}
         </svg>
+        <p className="astro-link-note"><b>+{num(report.lineBonus * 100)}% effect per matching link.</b> Connect stars of the same family to make a gold link.</p>
         {(pairFirst !== null || pending || error) && (
           <div className="star-action">
             {pairFirst !== null && !pending && <span>Pick the slot next to it for the Binary Pair's second half.</span>}
@@ -181,7 +202,7 @@ function ChartTab({ s, onTab }: { s: GameState; onTab?: (next: string) => void }
             <button className="btn sm ghost" onClick={reset}>Cancel</button>
           </div>
         )}
-        {!picked && !pending && !error && <p className="muted star-hint">Pick a star below, then a slot. Tap a charted star to take it off. Moving or removing a star costs Stardust; filling an empty slot is free.</p>}
+        {!picked && !pending && !error && <p className="muted star-hint">Pick an uncharted star below, then an empty slot to place it for free. Moving or removing charted stars costs Stardust.</p>}
         {picked && !pending && pairFirst === null && <p className="muted star-hint">Now pick a slot for {nameOf(picked)}.</p>}
       </div>
 
@@ -196,10 +217,12 @@ function ChartTab({ s, onTab }: { s: GameState; onTab?: (next: string) => void }
               aria-pressed={picked === t.id}
               onClick={() => { setPicked(picked === t.id ? null : t.id); setPairFirst(null); setPending(null); setError(null); }}
             >
-              <b>{t.name}</b>
-              {t.rank !== undefined && <span className="dim num"> rank {t.rank}</span>}
-              <span className="star-chip-sub">{t.sub}</span>
-              {t.placed >= 0 && <span className="star-chip-tag">Slot {t.placed + 1}</span>}
+              <svg className="star-chip-glyph" viewBox="-6 -6 12 12" style={{ color: colorOf(t.id) }} aria-hidden="true"><StarGlyph /></svg>
+              <span className="star-chip-copy">
+                <b>{t.name}</b>
+                <span className="star-chip-tag">{t.family}{t.rank !== undefined && ` · Rank ${t.rank}`}{t.placed >= 0 && ` · Slot ${t.placed + 1}`}</span>
+                <span className="star-chip-sub">{t.sub}</span>
+              </span>
             </button>
           ))}
         </div>
@@ -245,6 +268,37 @@ function RunButton({ actionId, label }: { actionId: string; label: string }) {
   );
 }
 
+const regionPlots: Record<string, [number, number][]> = {
+  lantern: [[24, 33], [45, 17], [64, 28], [84, 13]],
+  sower: [[22, 15], [39, 31], [61, 35], [82, 23]],
+  buried_king: [[19, 31], [37, 13], [57, 32], [80, 17]],
+  anvil: [[23, 17], [76, 17], [61, 36], [43, 36]],
+  alembic: [[28, 15], [43, 21], [58, 35], [80, 25]],
+  scribe: [[18, 34], [38, 23], [61, 26], [81, 12]],
+  wanderer: [[19, 26], [49, 12], [80, 23], [53, 37]],
+};
+
+function RegionPlate({ region, discovered, locked }: { region: SkyRegion; discovered: boolean[]; locked: boolean }) {
+  const points = regionPlots[region.id] ?? [[50, 25]];
+  return (
+    <svg className={`astro-plate ${region.deep ? 'deep' : ''}`} viewBox="0 0 100 50" aria-hidden="true">
+      <g className="astro-chart-grid">
+        <circle cx="50" cy="25" r="21" />
+        <circle cx="50" cy="25" r="16" />
+        <path d="M5 25H95 M50 2V48 M15 10L85 40 M85 10L15 40" />
+      </g>
+      {points.slice(1).map(([x, y], i) => (
+        <line key={i} x1={points[i][0]} y1={points[i][1]} x2={x} y2={y} className={`star-line ${discovered[i] && discovered[i + 1] ? 'active' : 'possible'}`} />
+      ))}
+      {points.map(([x, y], i) => (
+        <g key={i} transform={`translate(${x} ${y})`}>
+          {discovered[i] ? <StarGlyph /> : <circle r={locked ? 1 : 1.55} className="astro-undiscovered" />}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 function RegionCard({ s, r }: { s: GameState; r: SkyRegion }) {
   const level = astrologyLevel(s);
   const locked = level < r.level;
@@ -252,7 +306,8 @@ function RegionCard({ s, r }: { s: GameState; r: SkyRegion }) {
   const id = `research_${r.id}`;
   const a = actionDef(id);
   const d = deriveStats(s);
-  const nextIdx = r.stars.findIndex((x) => !isUnlocked(s, x));
+  const discovered = r.stars.map((x) => isUnlocked(s, x));
+  const nextIdx = discovered.indexOf(false);
   const next = nextIdx >= 0 ? researchNeeded(r, nextIdx) : null;
   const running = s.action?.kind === 'skill' && s.action.actionId === id;
   return (
@@ -263,25 +318,28 @@ function RegionCard({ s, r }: { s: GameState; r: SkyRegion }) {
           ? <LockedBadge level={r.level} reason={`Requires Astrology level ${r.level}`} />
           : <span className="dim num">{r.deep ? 'Deep sky' : `${unlockedInRegion(s, r.id)}/${r.stars.length} stars`}</span>}
       </div>
+      <RegionPlate region={r} discovered={discovered} locked={locked} />
       <p className="muted star-lore">{r.lore}</p>
       {!locked && (
         <>
-          <ProgressBar value={next ? Math.min(1, points / next) : 1} color={r.color} label={next ? `${fmt(points)} / ${fmt(next)} research` : `${fmt(points)} research · all found`} />
-          <ul className="star-bonus">
+          <div className="astro-research-progress">
+            <span>{next ? `Next discovery: ${starDef(r.stars[nextIdx])!.name}` : 'All stars discovered'}</span>
+            <ProgressBar value={next ? Math.min(1, points / next) : 1} color={r.color} label={next ? `${fmt(points)} / ${fmt(next)} research` : `${fmt(points)} research`} />
+          </div>
+          <ul className="astro-discoveries" aria-label="Stars in this region">
             {r.stars.map((x, i) => (
-              <li key={x} className={isUnlocked(s, x) ? '' : 'dim'}>
-                {isUnlocked(s, x) ? '✦' : '◇'} {starDef(x)!.name} <span className="dim">{isUnlocked(s, x) ? '' : `at ${fmt(researchNeeded(r, i))} research`}</span>
+              <li key={x}>
+                <span className={discovered[i] ? 'astro-found' : 'dim'}><span aria-hidden="true">{discovered[i] ? '✦' : '◇'}</span> {starDef(x)!.name}</span>
+                <span className="dim">{discovered[i] ? 'Found' : `${fmt(researchNeeded(r, i))} research`}</span>
               </li>
             ))}
           </ul>
-          <div className="row">
+          <div className="astro-region-footer">
             <span className="dim num small">{(actionIntervalMs(s, a, d) / 1000).toFixed(1)}s · {r.dust} Stardust · {a.xp} XP</span>
-            <span className="grow" />
             <RunButton actionId={id} label="Research" />
           </div>
         </>
       )}
-      {locked && <p className="muted small">Requires Astrology level {r.level}.</p>}
     </div>
   );
 }
@@ -291,11 +349,10 @@ function ResearchTab({ s }: { s: GameState }) {
   const deep = REGIONS.filter((r) => r.deep);
   return (
     <div className="star-chart">
-      <SkillIntro step="Step 1 · Research">
-        Start here: Study a sky region to discover stars and gather Stardust.
+      <SkillIntro step="Research">
+        Study a sky region to earn research and Stardust. Each discovery adds a star to your charting collection.
       </SkillIntro>
       <Wallet s={s} />
-      <div className="callout skill-note">Each research finishes with a research point for the region and some Stardust. Enough points unlock the region's stars, and the deep-sky regions hold a rare wonder.</div>
       <div className="star-grid">{seen.map((r) => <RegionCard key={r.id} s={s} r={r} />)}</div>
       <div className="card-title" style={{ marginTop: 14 }}>Deep sky</div>
       <div className="star-grid">{deep.map((r) => <RegionCard key={r.id} s={s} r={r} />)}</div>
