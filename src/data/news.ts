@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Open Report below Settings from any game screen. Your draft and its original screen details are kept while you browse or close and reopen the popup.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '6.0.1',
+    date: '23 Nov 2026',
+    title: 'Report from Anywhere',
+    items: [
+      'Open Report below Settings from any game screen. Your draft and its original screen details are kept while you browse or close and reopen the popup.',
+    ],
+  },
   {
     version: '6.0.0',
     date: '23 Nov 2026',
