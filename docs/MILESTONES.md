@@ -4,11 +4,11 @@ Last updated 2026-11-23. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-The 12-skill Skilling Revamp is assembled for the 6.0 release. It includes the Woodcutting Lodge and giant-heart pass, Archaeology's updated Scholar’s Desk and tabs, Astrology's chart and telescope polish, and Thieving's new high-level marks, heists and ledger. Owner feedback on the menus will follow after release.
+The 12-skill Skilling Revamp is live in **6.0.0**. The next skilling changes will follow the owner's review of the live menus. See the [UI pass notes](SKILLING_UI_PASS_NOTES.md).
 
 The Delve, Woodcutting Forest pass, and Foraging look-and-feel pass share the local preview (2026-11-22). Mining includes trait filters, separate Focus and installation unlocks earned through security at the chosen depth. Foraging adds a CC0 farmstead backdrop, always-present click-to-start Focus soil beds, all nine wild patches visible up front, a clearer Herbarium pressed-plant journal, a lush CC0 Glasshouse conservatory with raised planter beds, a tactile visual Potting Bench & Seed Satchel (zero dropdowns), procedural Web Audio rain-on-glass & droplet soundscapes with planting/harvesting SFX, seed finds routed straight to the Activity sidebar, Normal/Magic/Rare/Unique/Legendary mutation and seed rarities, and a redesigned Seeds tab separating Plantable Seeds from Grown Herbs with direct `Plant in Glasshouse` links. The Masterworks visual pass is still open.
 
-All 12 reworked skills, Agility/Cooking/Rune-carving removals, 12-skill skilling tree revamp, and the **Skilling UX, Tree Art & Minigame Polish Pass** (2026-11-22, unreleased on local worktree) are complete:
+The 12 skill reworks, retirement of Agility, Cooking and Rune-carving, rebuilt skilling passive tree, and UI and minigame polish shipped together in **6.0.0**:
 - Added `<SkillIntro>`, `<HelpTip>`, locked high-level tabs, consistent `Masterworks` tab placement, modern `SawmillView`/`RestorationView`/Forging `High Crucible`/Woodcrafting `Recipes`, CC0 tree artwork across all 7 Woodcutting species, bar-based Mining pick upgrades, zero-start Rogue recruitment via Street Marks, spam-click Pickpocket / 4×3 Brush / Square Optical Scope / 3×3 Garden Bed / Forgiving Cartography Sighting minigames, `Bellows` needle starting left, one-click Alchemy `Brew now`, fixed `The Still Heart` crash, and on-the-fly Gemcutting facets.
 - **Owner review needed:** See [SKILLING_UI_PASS_NOTES.md](SKILLING_UI_PASS_NOTES.md) for full UI polish recommendations, tutorial blueprint, and the 4 former Rune-carving Masterworks (`The Second Heresy`, `The Sum of All Things` using `5× Gilded Stardust`, `Hands of the Forgotten Choir`, `Hollow Circuit`) relocated onto Cartography (with `The Still Heart` updated from deleted `Emberroot Reduction` to `30× Emberroot`).
 
@@ -32,7 +32,9 @@ The seven-act zone naming and gear-check pack passes are live in **0.5.10**. The
 
 Veyrath campaign is live in **0.5.5** (2026-11-19): 70 zones across seven fuller chapters, revised level bands, matching rewards/gem access, saved journal, world/regional paintings, territory navigation, readable banners, character-specific unlock fog and the harsh surrounding ocean. All 113 test files / 1,795 tests, typecheck and production build pass. Earlier desktop/390px campaign navigation checks passed 2026-11-18; the latest artwork/fog was inspected through native previews because the local browser stayed blank, so live hover/desktop acceptance remains open. Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
-Latest confirmed live release: **0.5.11, Polish and Story Catch-up**, deployed 2026-11-20. Steadier combat DPS readouts, readable World Map act captions without the Act 2/3 banner overlap, a Hideout Stash link that lands on the stash, clearer Guild Stash withdrawal messages, and story catch-up for characters from before the journal. All 1,894 tests passed; fixes were checked in the local game on desktop. The deploy confirmed the live version and login configuration.
+Latest confirmed live release is **6.0.0, Skilling Revamp**, deployed 2026-11-23. It includes all 12 reworked skills and the new skilling passive tree. All 2,023 tests passed across 133 files, and the production build passed. A local browser check opened all 12 menus, started a dig from the Scholar’s Desk and opened The Sovereign’s Vault. The deploy confirmed the live version and login configuration.
+
+Previous release: **0.5.11, Polish and Story Catch-up**, deployed 2026-11-20. Steadier combat DPS readouts, readable World Map act captions without the Act 2/3 banner overlap, a Hideout Stash link that lands on the stash, clearer Guild Stash withdrawal messages, and story catch-up for characters from before the journal. All 1,894 tests passed; fixes were checked in the local game on desktop. The deploy confirmed the live version and login configuration.
 
 Previous release: **0.5.10, Illustrated Battlefields and Easier Stashes**, deployed 2026-11-20. Includes illustrated and dimmed combat scenery, combat pace and matchup, clearer act maps and quests, campaign gear checks, build-specific modifiers, Inventory and Hideout refinements, and direct Guild Stash shortcuts. All 1,893 tests, typecheck and production build passed. Local browser checks covered the combat backdrop, Inventory shortcuts and the Map Device link. The deploy confirmed the live version and login configuration.
 
@@ -89,7 +91,7 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented. Level 1–99 skilling rework across all 12 skills, retired skill removals, skilling tree revamp, and the 2026-11-22 UX/minigame/tree-art polish pass are complete locally on the skilling overhaul branch. The Delve visuals and Focus timing have also been updated locally. [UI pass notes](SKILLING_UI_PASS_NOTES.md) await final owner review before shipping. |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented. The 12-skill rework, skill retirements, new skilling passive tree, and menu and minigame polish are live in 6.0.0. Owner review of the live menus is next. |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
@@ -1017,6 +1019,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Ship Skilling Revamp 6.0.0 with all 12 reworked skills and the new skilling passive tree. Included the Woodcutting Lodge and giant-heart pass, Archaeology’s Scholar’s Desk and tabs, Astrology’s chart and telescope polish, and Thieving’s new high-level marks, heists and ledger. — done 2026-11-23
 
 - [x] Finished the Mining layout with full-width Focus below the shaft and worksite, a Mine Upgrades tab, actual payout popups, and mine history and replays in the Activity bar. Verified the payout, depth selection, and breakthrough history in the local preview. — done 2026-11-22
 
