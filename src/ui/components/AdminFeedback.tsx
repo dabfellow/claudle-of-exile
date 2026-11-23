@@ -23,7 +23,11 @@ export function AdminFeedback({ onChange, onInspect }: { onChange: () => void; o
   useEffect(load, [load]);
   useEffect(() => { void adminFeedback('all', 'all', 'all').then((all) => setVersions([...new Set(all.map((r) => textValue(r.context?.version)))].sort().reverse()), () => undefined); }, []);
   const mark = async (id: number, next: FeedbackStatus) => {
-    try { await setFeedbackStatus(id, next); load(); onChange(); } catch (e) { setError(errorText(e)); }
+    try { await setFeedbackStatus(id, next); load(); onChange(); }
+    catch (e) {
+      const text = errorText(e);
+      setError(next === 'working' && /check constraint/i.test(text) ? `${text}. Run docs/ops/feedback-tracking.sql in the Supabase SQL Editor first.` : text);
+    }
   };
   const bulk = async () => {
     setBusy(true); setError('');
@@ -32,7 +36,7 @@ export function AdminFeedback({ onChange, onInspect }: { onChange: () => void; o
     finally { setBusy(false); }
   };
   return <>
-    <Tabs compact tabs={['new','read','resolved','all'].map((id) => ({ id, label: id[0].toUpperCase() + id.slice(1) }))} value={status} onChange={(id) => setStatus(id as FeedbackStatus | 'all')} />
+    <Tabs compact tabs={['new','read','working','resolved','all'].map((id) => ({ id, label: id === 'working' ? 'Working on it' : id[0].toUpperCase() + id.slice(1) }))} value={status} onChange={(id) => setStatus(id as FeedbackStatus | 'all')} />
     <div className="card row wrap">
       <label>Type <select className="input" value={kind} onChange={(e) => setKind(e.target.value)}>{['all','bug','idea','other'].map((id) => <option key={id}>{id}</option>)}</select></label>
       <label>Version <select className="input" value={version} onChange={(e) => setVersion(e.target.value)}><option value="all">All versions</option>{versions.map((v) => <option key={v}>{v}</option>)}</select></label>
@@ -46,8 +50,9 @@ export function AdminFeedback({ onChange, onInspect }: { onChange: () => void; o
       const context = row.context ?? { version: 'unknown' };
       const snapshot = context.snapshot && typeof context.snapshot === 'object' ? context.snapshot : null;
       return <div key={row.id} className="card admin-feedback">
-        <div className="row wrap"><Badge tone={row.kind === 'bug' ? 'danger' : 'neutral'}>{row.kind}</Badge><Badge>{row.status}</Badge><span className="dim small">{new Date(row.created_at).toLocaleString()}</span><span className="spacer" />
-          {row.status !== 'read' && <button className="btn sm ghost" onClick={() => void mark(row.id, 'read')}>Mark read</button>}
+        <div className="row wrap"><Badge tone={row.kind === 'bug' ? 'danger' : 'neutral'}>{row.kind}</Badge><Badge tone={row.status === 'working' ? 'warn' : 'neutral'}>{row.status === 'working' ? 'working on it' : row.status}</Badge><span className="dim small">{new Date(row.created_at).toLocaleString()}</span><span className="spacer" />
+          {row.status === 'new' && <button className="btn sm ghost" onClick={() => void mark(row.id, 'read')}>Mark read</button>}
+          {row.status !== 'working' && row.status !== 'resolved' && <button className="btn sm ghost" onClick={() => void mark(row.id, 'working')}>Working on it</button>}
           <button className="btn sm" onClick={() => void mark(row.id, row.status === 'resolved' ? 'new' : 'resolved')}>{row.status === 'resolved' ? 'Reopen' : 'Resolve'}</button>
         </div>
         <p className="admin-message">{row.message}</p>

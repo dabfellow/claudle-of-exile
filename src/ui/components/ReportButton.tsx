@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { game } from '../../game';
 import { errorText, FEEDBACK_MAX, feedbackContext, sendFeedback, type FeedbackContext, type FeedbackKind } from '../../platform/feedback';
 import { cloudConfigured } from '../../platform/supabase';
+import { isCloudAccount } from '../../platform/accounts';
 import { GameIcon } from './common';
 import './report.css';
 
@@ -50,7 +51,8 @@ export function ReportButton({ page }: { page: string }) {
       await sendFeedback(kind, message, context);
       setMessage('');
       close();
-      game.pushToast('Thanks! Your report was sent.', 'good');
+      window.dispatchEvent(new Event('feedback-sent'));
+      game.pushToast(isCloudAccount(game.account) ? 'Thanks! Your report was sent. Follow it in Settings → Feedback.' : 'Thanks! Your report was sent.', 'good');
     } catch (err) {
       setError(errorText(err, 'Could not send your report. Try again.'));
     } finally {

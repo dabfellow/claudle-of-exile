@@ -154,7 +154,7 @@ What it gives you:
 
 - **Overview**: accounts, players, characters, active today / this week, Act 1 clears, characters by class and level, average review.
   Accounts only: demos aren't saved, and older guest saves never leave the browser.
-- **Feedback**: bug reports and ideas players send from **Settings → Feedback** (demo players and guests too). Filter New / Read / Resolved, and mark them as you go.
+- **Feedback**: bug reports and ideas players send from **Settings → Feedback** (demo players and guests too). Filter New / Read / Working on it / Resolved, and mark them as you go. Signed-in players see their own reports, the status (New and Read both show as "Open") and replies sent from the report; this needs [feedback-tracking.sql](feedback-tracking.sql) run once in the SQL Editor after `admin.sql` (safe to rerun).
   Each note carries the game version, class, level and area, but no name or email.
 - **Reviews**: 1–5 stars and an optional comment, one per signed-in account (sending again updates it).
 - **Errors**: crashes go to Sentry, which groups them, counts them and tracks resolved / ignored. The tab links there.

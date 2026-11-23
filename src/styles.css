@@ -9747,6 +9747,12 @@ button.hx-mat:hover {
 .admin-table th, .admin-table td { padding: 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
 .admin-snapshot, .admin-message-form, .admin-mail { margin-top: 12px; padding: 10px 0; }
 .admin-snapshot summary, .admin-message-form summary, .admin-mail summary { cursor: pointer; }
+.my-report { padding: 8px 0; border-top: 1px solid var(--line); }
+.my-report:first-of-type { border-top: 0; }
+.my-report summary { cursor: pointer; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.my-report-title { flex: 1; min-width: 0; }
+.my-report-message { white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0 4px; }
+.my-report-reply { margin-top: 8px; padding: 8px 10px; border-left: 2px solid var(--line); }
 .admin-snapshot pre { max-height: 440px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; }
 .admin-event-builder { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end; }
 .admin-event-builder label, .admin-message-form label { display: grid; gap: 5px; font-size: 12px; }

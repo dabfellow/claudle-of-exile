@@ -3,7 +3,54 @@ import { AdminInbox } from './AdminInbox';
 import { game } from '../../game';
 import { isCloudAccount } from '../../platform/accounts';
 import { cloudConfigured } from '../../platform/supabase';
-import { errorText, myReview, REVIEW_MAX, saveReview } from '../../platform/feedback';
+import { errorText, myFeedback, myReview, playerStatus, REVIEW_MAX, saveReview, type MyFeedbackRow } from '../../platform/feedback';
+import { Badge } from './common';
+
+const KIND_LABEL = { bug: 'Bug report', idea: 'Idea', other: 'Something else' } as const;
+
+/** The player's own reports: what they wrote, where it stands, and the developer's replies. */
+function MyReports() {
+  const account = game.account;
+  const signedIn = isCloudAccount(account) && !game.sandbox;
+  const [rows, setRows] = useState<MyFeedbackRow[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (!signedIn) return;
+    const load = () => myFeedback().then((r) => { setRows(r); setFailed(false); }, () => setFailed(true));
+    void load();
+    window.addEventListener('feedback-sent', load);
+    return () => window.removeEventListener('feedback-sent', load);
+  }, [signedIn]);
+
+  if (!signedIn) {
+    return <div className="card"><div className="card-title">Your reports</div>
+      <p className="dim small" style={{ marginBottom: 0 }}>Sign in with Google or Discord to keep copies of your reports, see where they stand and read replies.</p>
+    </div>;
+  }
+  // Until the database side is installed, quietly leave the section out rather than show an error.
+  if (failed) return null;
+  return <div className="card"><div className="card-title">Your reports</div>
+    {!rows && <p className="dim small">Loading your reports…</p>}
+    {rows?.length === 0 && <p className="dim small" style={{ marginBottom: 0 }}>Reports you send with the Report button show up here, with their status and any reply.</p>}
+    {rows?.map((row) => {
+      const status = playerStatus(row.status);
+      const replies = row.replies ?? [];
+      return <details key={row.id} className="my-report" open={row.status !== 'resolved' && replies.length > 0}>
+        <summary>
+          <Badge tone={status.tone}>{status.label}</Badge>
+          <span className="my-report-title">{KIND_LABEL[row.kind] ?? row.kind}{replies.length ? ` · ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}` : ''}</span>
+          <span className="dim small">{new Date(row.created_at).toLocaleDateString()}</span>
+        </summary>
+        <p className="my-report-message">{row.message}</p>
+        <p className="dim small">Sent {new Date(row.created_at).toLocaleString()}{row.version ? ` · v${row.version}` : ''}{row.character_name ? ` · ${row.character_name}` : ''}</p>
+        {replies.map((reply) => <div key={reply.id} className="my-report-reply">
+          <div className="small"><b>Reply from the developer</b> <span className="dim">· {new Date(reply.created_at).toLocaleString()}</span></div>
+          <p className="my-report-message">{reply.message}</p>
+        </div>)}
+      </details>;
+    })}
+  </div>;
+}
 
 export function Stars({ value, onChange, size = 20 }: { value: number; onChange?: (n: number) => void; size?: number }) {
   return (
@@ -61,7 +108,7 @@ export function FeedbackCard() {
   };
 
   return (
-    <><AdminInbox /><div className="card">
+    <><AdminInbox /><MyReports /><div className="card">
       <div className="card-title">Rate the game</div>
       {signedIn ? (
         <>

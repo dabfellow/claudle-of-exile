@@ -711,6 +711,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [ ] Players follow their reports: Settings → Feedback lists each signed-in player's reports with status (Open / Working on it / Resolved) and the developer's replies; Admin gains a "Working on it" status.
+  - Built 2026-11-23, tests pass. Owner to run `docs/ops/feedback-tracking.sql` once in the Supabase SQL Editor; until then the list stays hidden and "Working on it" is refused. Not yet checked with a signed-in account.
+
 - [x] 0.5.10 polish sweep: desktop and 390px playtest of combat, act maps, Quests, Inventory, Hideout and Guild Stash; fixed the flickering DPS readout, unreadable World Map act captions, the Act 2/3 banner overlap, the Hideout Stash link and the withdraw message — done 2026-11-20 (live in 0.5.11).
   - Open owner calls from the sweep are under Ideas / later.
 - [x] Story journal catch-up: every story step before the furthest objective a character has cleared counts as done, so characters from before the journal resume where they are; the next conversation still waits for the player and nothing is written to the save — done 2026-11-20 (live in 0.5.11). Owner chose this over keeping Act 1 as the starting point.

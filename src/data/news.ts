@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Settings → Feedback now keeps a copy of every report you send while signed in, shows whether it is open, being worked on or resolved, and shows the developer\'s replies.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

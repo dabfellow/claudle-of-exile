@@ -94,7 +94,7 @@ export function AdminMessage({ user, realm, feedback, onSent }: { user: string; 
     {feedback && <label><input type="checkbox" checked={resolve} onChange={(e) => setResolve(e.target.checked)} /> Resolve report with this reply</label>}
     <button className="btn" disabled={busy || !message.trim() || (!!currency && (!Number.isSafeInteger(amount) || amount < 1 || amount > 1000000)) || (!!item && (!Number.isSafeInteger(ilvl) || ilvl < 1 || ilvl > 200))} onClick={() => void send()}>{busy ? 'Sending…' : 'Send message / compensation'}</button>
     {error && <p className="warn">{error}</p>}
-    <p className="dim small">The player gets the message under Settings → Feedback, with a Collect button for anything sent. Outside Solo Self-Found, a character in that realm also collects it by itself the next time it loads.</p>
+    <p className="dim small">The player gets the message under Settings → Feedback, with a Collect button for anything sent.{feedback ? ' The reply also shows under their copy of this report.' : ''} Outside Solo Self-Found, a character in that realm also collects it by itself the next time it loads.</p>
   </>}</details>;
 }
 

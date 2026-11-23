@@ -10,7 +10,26 @@ import { feedbackSnapshot, type FeedbackSnapshot } from './admin';
  */
 
 export type FeedbackKind = 'bug' | 'idea' | 'other';
-export type FeedbackStatus = 'new' | 'read' | 'resolved';
+export type FeedbackStatus = 'new' | 'read' | 'working' | 'resolved';
+
+/** What players see: they don't need to know whether a report has been read yet. */
+export function playerStatus(status: FeedbackStatus): { label: string; tone: 'neutral' | 'warn' | 'success' } {
+  if (status === 'working') return { label: 'Working on it', tone: 'warn' };
+  if (status === 'resolved') return { label: 'Resolved', tone: 'success' };
+  return { label: 'Open', tone: 'neutral' };
+}
+
+/** A player's own report, as they see it: no snapshot, plus any replies sent from it. */
+export interface MyFeedbackRow {
+  id: number;
+  kind: FeedbackKind;
+  message: string;
+  status: FeedbackStatus;
+  created_at: string;
+  version: string | null;
+  character_name: string | null;
+  replies: { id: string; message: string; created_at: string }[];
+}
 
 export const FEEDBACK_MAX = 2000;
 export const REVIEW_MAX = 1000;
@@ -86,6 +105,13 @@ export async function sendFeedback(kind: FeedbackKind, message: string, context:
     return;
   }
   if (error) throw error;
+}
+
+/** The signed-in player's recent reports with status and replies (docs/ops/feedback-tracking.sql). */
+export async function myFeedback(): Promise<MyFeedbackRow[]> {
+  const { data, error } = await db().rpc('my_feedback');
+  if (error) throw error;
+  return Array.isArray(data) ? (data as MyFeedbackRow[]) : [];
 }
 
 /** The signed-in player's own review, if they've left one. */
