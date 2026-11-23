@@ -6,7 +6,7 @@ export const ARCHAEOLOGY_RECIPES: SkillAction[] = [
   ...CULTURES.map((c): SkillAction => ({
     id: `sift_${c.id}`, name: `Sift ${c.artifactName}`, skill: 'archaeology', level: c.id === 'giant' ? 1 : c.id === 'surveyor' ? 12 : 24,
     accomplishments: c.id === 'giant' ? [] : [`expedition.${c.id === 'surveyor' ? 'dig_cairn' : 'dig_cutting'}.0`],
-    intervalMs: 10_000, xp: 7, protectedOutputs: { [c.artifact]: 1 }, color: c.color,
+    intervalMs: 10_000, xp: 7, inputs: { rubble: 1 }, protectedOutputs: { [c.artifact]: 1 }, color: c.color,
   })),
   ...(['fire', 'cold', 'light'] as const).map((element): SkillAction => ({
     id: `restore_surveyors_guard_${element}`, name: `Restore Surveyor's Guard · ${element === 'light' ? 'lightning' : element} resistance`,

@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { actionDef } from '../src/data/skills';
 import { recipeStock } from '../src/data/smelting';
 import { findDigs, siteOf } from '../src/data/expedition';
+import { startDelve } from '../src/engine/delve';
 import { exchangeFragments, standing } from '../src/engine/expedition';
 import { newGame } from '../src/engine/state';
-import { actionBlocker, skillStep, startSkillAction } from '../src/engine/skills';
+import { actionBlocker, actionIntervalMs, skillStep, startSkillAction } from '../src/engine/skills';
 import { deriveStats } from '../src/engine/stats';
 import { deserialize, serialize } from '../src/engine/save';
 import { simulateOffline } from '../src/engine/offline';
@@ -27,9 +28,16 @@ describe('Phase 12 restoration', () => {
     expect(startSkillAction(s, ctx(), 'dig_cutting')).toBeNull();
     work(s, 300 * 3500); // 300 digs
     expect(s.storage.bank.survey_relic_fragment).toBe(5);
-    startSkillAction(s, ctx(), 'sift_giant'); work(s, 50 * 10_000);
-    // Independently produce the only supporting profession input.
-    startSkillAction(s, ctx(), 'mine_copper'); work(s, 25 * 3000);
+    expect(startSkillAction(s, ctx(), 'sift_giant')).toBe('Missing materials');
+    expect(startDelve(s, ctx(), 'work')).toBeNull();
+    work(s, 25 * actionIntervalMs(s, actionDef('delve_work'), deriveStats(s)));
+    expect(s.storage.bank.rubble).toBe(50);
+    const tallyBefore = s.storage.bank.giant_tally ?? 0;
+    expect(startSkillAction(s, ctx(), 'sift_giant')).toBeNull();
+    work(s, 51 * 10_000);
+    expect(s.storage.bank.rubble).toBe(0);
+    expect(s.storage.bank.giant_tally).toBe(tallyBefore + 50);
+    expect(s.action).toBeNull();
     startSkillAction(s, ctx(), 'smelt_copper'); work(s, 30_000);
     const before = { ...s.storage.bank };
     expect(startSkillAction(s, ctx(), 'restore_surveyors_guard_cold')).toBeNull();

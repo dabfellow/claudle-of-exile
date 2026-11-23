@@ -505,13 +505,11 @@ function RestorationCard({ s, a }: { s: GameState; a: SkillAction }) {
         )}
       </div>
 
-      {a.inputs ? (
+      {a.inputs && (
         <div className="restoration-cost">
           <span className="dim small">Cost:</span>
           <Cost cost={a.inputs} have={s.storage.bank} />
         </div>
-      ) : (
-        <div className="dim small">No materials required — steady Artifact sifting.</div>
       )}
 
       {lockReason && <p className="lock-note small" style={{ margin: 0 }}>{lockReason}</p>}

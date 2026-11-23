@@ -10,7 +10,11 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Master volume starts at 15% if you have no saved volume setting, and it now controls the loot-filter chime.',
+  'Kills now roll base flask charges by enemy rarity. Normal gives 1–4, Magic 4–8, Rare 8–15 and Unique 15–20.',
+  'Archaeology sifting spends one Rubble from the Delve for one artifact.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

@@ -4,6 +4,8 @@ Last updated 2026-11-23. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
+Master volume, rarity-based flask charges and Archaeology sifting with Delve Rubble are ready for the next patch.
+
 The sidebar Report update is live in **6.0.1**. It keeps drafts and captures the screen where you opened the report.
 
 The 12-skill Skilling Revamp is live in **6.0.0**. The next skilling changes will follow the owner's review of the live menus. See the [UI pass notes](SKILLING_UI_PASS_NOTES.md).

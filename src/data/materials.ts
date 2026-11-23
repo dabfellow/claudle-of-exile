@@ -43,7 +43,7 @@ export const MATERIALS: MaterialDef[] = [
   ...DELVE_ROUGH_SIZES.filter(({ id }) => id !== 'rough_gem').map(({ id, name, carats }): MaterialDef => ({
     id, name, kind: 'gem', color: '#d0569b', value: 25, desc: `${carats} carat${carats === 1 ? '' : 's'}. Can be used in recipes that call for rough gems.`,
   })),
-  { id: 'rubble', name: 'Rubble', kind: 'ore', color: '#927b69', value: 0, desc: 'Gathered in the Delve. Spent when digging deeper and used in installations and furnace supplies.' },
+  { id: 'rubble', name: 'Rubble', kind: 'ore', color: '#927b69', value: 0, desc: 'Gathered in the Delve. Used for digging deeper, mine installations, furnace supplies and sifting for artifacts in Archaeology.' },
   { id: 'mine_support', name: 'Mine Support', kind: 'component', color: '#a88a62', value: 0, desc: 'Existing supports are used before rubble when bracing the mine shaft.' },
   { id: 'heartstone', name: 'Heartstone', kind: 'ore', color: '#e97575', value: 0, desc: 'Rarely found in deep Delve caverns. Used in Wound Alloy and Stone Alloy.' },
   ...FURNACE_MATERIALS,

@@ -25,7 +25,7 @@ export interface MusicPrefs {
   muted: boolean;
 }
 
-export const DEFAULT_MUSIC: MusicPrefs = { volume: 0.4, muted: false };
+export const DEFAULT_MUSIC: MusicPrefs = { volume: 0.15, muted: false };
 const PREFS_KEY = 'coe-music';
 export const FADE_MS = 2500;
 const FADE_TICK_MS = 50;

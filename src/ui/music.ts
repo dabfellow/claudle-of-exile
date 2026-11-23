@@ -8,6 +8,29 @@ const BOSS_LINGER_MS = 8000;
 
 export const music = new MusicPlayer<MusicCue>(MUSIC_TRACKS, (url) => new Audio(url), loadMusicPrefs(localStorage));
 
+/** The loot-filter chime follows the same volume and mute settings as the rest of the game. */
+function playLootFilterSound() {
+  const { volume, muted } = music.prefs;
+  if (muted || volume <= 0) return;
+  try {
+    const AudioCtx = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return;
+    const audio = new AudioCtx();
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.frequency.setValueAtTime(740, audio.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(1100, audio.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.08 * volume, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001 * volume, audio.currentTime + 0.22);
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start();
+    oscillator.stop(audio.currentTime + 0.22);
+    oscillator.addEventListener('ended', () => void audio.close());
+  } catch {
+    // Sound is optional on browsers that block Web Audio.
+  }
+}
+
 export function startMusic() {
   let bossSeen = 0;
   const update = () => {
@@ -17,6 +40,9 @@ export function startMusic() {
     music.play(lingering ? 'boss' : musicCue(game.state, inGame));
   };
   game.subscribe(update);
+  game.onGameEvent((event) => {
+    if (event.t === 'loot' && event.filterSound) playLootFilterSound();
+  });
   update();
   const unlock = () => music.unlock();
   window.addEventListener('pointerup', unlock, true);

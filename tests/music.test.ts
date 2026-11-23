@@ -117,7 +117,7 @@ describe('music prefs', () => {
 
   it('defaults to a modest volume, unmuted', () => {
     expect(loadMusicPrefs(store(null))).toEqual(DEFAULT_MUSIC);
-    expect(DEFAULT_MUSIC.volume).toBeLessThan(0.5);
+    expect(DEFAULT_MUSIC.volume).toBe(0.15);
   });
 
   it('survives junk and clamps volume', () => {

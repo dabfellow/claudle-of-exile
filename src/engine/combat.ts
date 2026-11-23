@@ -1004,6 +1004,13 @@ function triggerInstilled(s: GameState, ctx: Ctx, cond: InstillCondition): void 
   });
 }
 
+const KILL_FLASK_CHARGES = {
+  normal: [1, 4],
+  magic: [4, 8],
+  rare: [8, 15],
+  unique: [15, 20],
+} as const satisfies Record<MonsterInstance['rarity'], readonly [number, number]>;
+
 function gainCharges(s: GameState, amount: number, d: Derived): void {
   for (const f of s.flaskSlots) {
     if (!f) continue;
@@ -3292,7 +3299,9 @@ function onMonsterDeath(s: GameState, ctx: Ctx, d: Derived, mon: MonsterInstance
   const xp =monsterXp(mon) * areaXpMultiplier(characterLevel(s), zone.levelRange);
   grantXp(s, ctx, 'combat', xp * (1 + d.charXp / 100));
   grantGemXp(s, ctx, xp, d.attributes);
-  gainCharges(s, mon.isBoss ? 8 : 1, d);
+  const rarity = mon.rarity ?? (mon.isBoss ? 'unique' : 'normal');
+  const [minCharges, maxCharges] = KILL_FLASK_CHARGES[rarity];
+  gainCharges(s, rInt(ctx.rng, minCharges, maxCharges), d);
   const deathsDoorBonus = d.raw.deathsDoor > 0 && (mon.isBoss || (mon.lootMult ?? 1) > 1);
   const prevLootMult = mon.lootMult;
   const goldBefore = s.storage.bank.gold ?? 0;

@@ -170,7 +170,7 @@ describe('wind-ups', () => {
     expect(s.combat!.monsters).toHaveLength(0);
     expect(s.combat!.windup).toBeTruthy();
     expect(s.combat!.actionMs).toBe(0);
-    const next = makeMonster(zoneDef('cinderroad').monsters[0], false, 9);
+    const next = trainingDummy(makeMonster(zoneDef('cinderroad').monsters[0], false, 9));
     next.life = next.maxLife = 1e7;
     next.attackMs = 1e9;
     next.cell = 0;

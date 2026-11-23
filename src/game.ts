@@ -117,27 +117,6 @@ const EVENT_CHECK_MS = 30 * 1000;
 /** XP per hour readouts update this often. */
 const XP_RATE_HOLD_MS = 2000;
 
-/** A short, generated chime: no asset download, and a blocked browser audio context simply stays silent. */
-function playLootFilterSound(): void {
-  try {
-    const AudioCtx = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
-    const audio = new AudioCtx();
-    const oscillator = audio.createOscillator();
-    const gain = audio.createGain();
-    oscillator.frequency.setValueAtTime(740, audio.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(1100, audio.currentTime + 0.12);
-    gain.gain.setValueAtTime(0.08, audio.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.22);
-    oscillator.connect(gain).connect(audio.destination);
-    oscillator.start();
-    oscillator.stop(audio.currentTime + 0.22);
-    oscillator.addEventListener('ended', () => void audio.close());
-  } catch {
-    // Sound is an enhancement; filtering must still work where Web Audio is unavailable.
-  }
-}
-
 /** Says where a withdrawal landed, since it isn't the bag: materials, the map supply or the character's own stash. */
 function withdrawnToast(move: GuildTransfer): string {
   if (move.kind === 'bank') return 'Withdrawn to your materials';
@@ -1197,7 +1176,6 @@ class GameStore {
         this.addFeed(`${activeGemDef(e.gemId).name} can be upgraded to level ${e.level} (Skill Gems)`, 'level');
         break;
       case 'loot':
-        if (e.filterSound) playLootFilterSound();
         if ((e.item && !e.hidden) || e.currencyId || e.gemId || e.supportId) {
           this.lootLog = [
             { id: this.nextId++, at: Date.now(), item: e.item, currencyId: e.currencyId, gemId: e.gemId, supportId: e.supportId, salvaged: e.salvaged },

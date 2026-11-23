@@ -198,13 +198,13 @@ function SoundTab() {
       <div className="card-title">Sound</div>
       <div className="row wrap">
         <label className="muted row" style={{ cursor: 'pointer' }}>
-          Music
+          Master volume
           <input
             type="range"
             min={0}
             max={100}
             value={Math.round(music.volume * 100)}
-            aria-label="Music volume"
+            aria-label="Master volume"
             style={{ accentColor: 'var(--accent)', width: 180, maxWidth: '50vw' }}
             onChange={(e) => setMusic({ ...music, volume: Number(e.target.value) / 100 })}
           />

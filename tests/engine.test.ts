@@ -312,7 +312,31 @@ describe('combat', () => {
     s.combat!.actionMs = 0;
     s.skillBar = s.skillBar.map(() => null); // default attack only, so the hit can't be a guard skill
     combatStep(s, c, 50, deriveStats(s));
-    expect(f.charges).toBe(max - 6);
+    expect(f.charges - (max - 7)).toBeGreaterThanOrEqual(1);
+    expect(f.charges - (max - 7)).toBeLessThanOrEqual(4);
+  });
+
+  it.each([
+    ['normal', 1, 4],
+    ['magic', 4, 8],
+    ['rare', 8, 15],
+    ['unique', 15, 20],
+  ] as const)('grants %s kills both endpoints of their flask charge range', (rarity, min, max) => {
+    for (const [roll, expected] of [[0, min], [0.999, max]]) {
+      const s = newGame(1);
+      const c = makeCtx({ next: () => roll });
+      startCombat(s, c, 'mudflats');
+      const zone = zoneDef('mudflats');
+      const isBoss = rarity === 'unique';
+      const mon = makeMonster(isBoss ? zone.boss : zone.monsters[0], isBoss);
+      mon.rarity = rarity;
+      mon.life = 0;
+      s.combat!.monsters = [mon];
+      const flask = s.flaskSlots[0]!;
+      flask.charges = 0;
+      combatStep(s, c, 50, deriveStats(s));
+      expect(flask.charges).toBe(expected);
+    }
   });
 
   it('instilled flasks only trigger on their condition', () => {
