@@ -7,8 +7,7 @@ import { HEIST_JOBS, heistJob } from '../../data/heist';
 import { materialDef } from '../../data/materials';
 import { recipeMaterialCount } from '../../engine/bank';
 import { isMapId } from '../../data/maps';
-import { CULTURES, SEALED_RELIC } from '../../data/expedition';
-import { crackedCount } from '../../engine/deciphering';
+import { SEALED_RELIC } from '../../data/expedition';
 import { SCRIPT_IDS, SCRIPTS } from '../../data/deciphering';
 import { actionsFor, SKILLS, type SkillAction } from '../../data/skills';
 import { zoneDef } from '../../data/zones';
@@ -28,7 +27,7 @@ import type { GameState } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
 import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/common';
-import { ExpeditionBoard, RestorationView } from '../components/ExpeditionBoard';
+import { ExpeditionBoard } from '../components/ExpeditionBoard';
 import { HeistBoard } from '../components/HeistBoard';
 import { MapCaseBoard } from '../components/MapCaseBoard';
 import { Observatory } from '../components/StarChart';
@@ -501,11 +500,9 @@ const THIEVING_TABS: { id: string; label: string }[] = [
 
 const ARCHAEOLOGY_TABS: { id: string; label: string }[] = [
   { id: 'desk', label: 'Desk' },
-  { id: 'codex', label: 'Codex' },
-  { id: 'chapters', label: 'Chapters' },
-  { id: 'forge', label: 'Relic Forge' },
-  { id: 'restoration', label: 'Restoration & Sifting' },
-  { id: 'merchants', label: 'Culture Merchants' },
+  { id: 'codex', label: 'Codex & Story' },
+  { id: 'relics', label: 'Relics' },
+  { id: 'merchants', label: 'Merchants' },
 ];
 
 const ALCHEMY_TABS: { id: string; label: string }[] = [
@@ -801,8 +798,6 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
     inTab = selectedActions.filter((a) => gemcuttingCategory(a) === tab);
   } else if (skill === 'runecarving' && tab !== 'all') {
     inTab = selectedActions.filter((a) => runecarvingCategory(a) === tab);
-  } else if (skill === 'archaeology' && tab === 'restoration') {
-    inTab = selectedActions.filter((a) => a.id.startsWith('sift_') || a.id.startsWith('restore_'));
   } else if (skill === 'woodcutting') {
     inTab = selectedActions.filter((a) => a.woodcutting?.mode === 'sawmill');
   }
@@ -839,13 +834,12 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
               else if (x.id === 'crew') countText = `${s.heist.crew.length}/${crewSlots(s)}`;
             } else if (skill === 'archaeology') {
               if (x.id === 'desk') countText = `${s.archaeology.inscriptions.length}`;
-              else if (x.id === 'codex') countText = `${SCRIPT_IDS.reduce((n, id) => n + crackedCount(s.archaeology, id), 0)}/${SCRIPTS.reduce((n, x) => n + x.glyphs, 0)}`;
-              else if (x.id === 'chapters') countText = `${SCRIPT_IDS.reduce((n, id) => n + (s.archaeology.chapters[id] ?? 0), 0)}/${SCRIPTS.reduce((n, x) => n + x.chapters, 0)}`;
-              else if (x.id === 'forge') countText = s.expedition.forge ? '1 open' : `${s.storage.bank[SEALED_RELIC] ?? 0}`;
-              else if (x.id === 'restoration') {
+              else if (x.id === 'codex') countText = `${SCRIPT_IDS.reduce((n, id) => n + (s.archaeology.chapters[id] ?? 0), 0)}/${SCRIPTS.reduce((n, x) => n + x.chapters, 0)}`;
+              else if (x.id === 'relics') {
                 const list = selectedActions.filter((a) => a.id.startsWith('sift_') || a.id.startsWith('restore_'));
-                countText = `${list.filter(isUnlocked).length}/${list.length}`;
-              } else if (x.id === 'merchants') countText = `${CULTURES.length}`;
+                const sealed = s.storage.bank[SEALED_RELIC] ?? 0;
+                countText = s.expedition.forge ? '1 on the forge' : sealed ? `${sealed} sealed` : `${list.filter(isUnlocked).length}/${list.length}`;
+              }
             } else if (skill === 'alchemy' || skill === 'cooking' || skill === 'gemcutting' || skill === 'runecarving') {
               if (x.id !== 'all') {
                 const list = skill === 'alchemy' ? selectedActions.filter((a) => alchemyCategory(a) === x.id)
@@ -931,8 +925,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
       {skill === 'thieving' && tab === 'heists' && <HeistBoard view="jobs" />}
       {skill === 'thieving' && tab === 'crew' && <HeistBoard view="crew" />}
 
-      {skill === 'archaeology' && tab === 'restoration' && <RestorationView />}
-      {skill === 'archaeology' && tab !== 'restoration' && tab !== 'masterworks' && <ExpeditionBoard view={tab as 'desk' | 'codex' | 'chapters' | 'forge' | 'merchants'} />}
+      {skill === 'archaeology' && tab !== 'masterworks' && <ExpeditionBoard view={tab as 'desk' | 'codex' | 'relics' | 'merchants'} />}
       {skill === 'fishing' && (
         <div className="callout skill-note">
           Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.

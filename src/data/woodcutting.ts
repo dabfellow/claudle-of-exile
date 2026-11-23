@@ -59,7 +59,7 @@ export const QUIRKS: QuirkDef[] = [
   { id: 'resin', name: 'Resin-weeping', adjective: 'Resin-weeping', desc: 'Crown resin chance x3.' },
   { id: 'hollow', name: 'Hollow heart', adjective: 'Hollow-hearted', desc: 'Trunk HP x0.7, heart HP x0.5.' },
   { id: 'lightning', name: 'Lightning-struck', adjective: 'Lightning-struck', desc: 'No crown; trunk yields +25%.' },
-  { id: 'twisted', name: 'Twisted grain', adjective: 'Twisted', desc: 'Limb yield x1.5; split logs get extra knobs.' },
+  { id: 'twisted', name: 'Twisted grain', adjective: 'Twisted', desc: 'Limb yield x1.5; its logs come in odder lengths, harder to split evenly.' },
   { id: 'towering', name: 'Towering', adjective: 'Towering', desc: 'All HP, yields and XP x1.5.' },
   { id: 'burled', name: 'Burled', adjective: 'Burled', desc: 'Heart HP x2, heartwood fragment chance x2.' },
 ];
@@ -105,12 +105,50 @@ export const LODGE: LodgeDef[] = [
     ],
   },
   {
-    id: 'trophyWall', name: 'Trophy Wall', desc: 'Shows the legends you have felled. Needed to plant a World Tree seed.',
-    tiers: [{ level: 1, cost: {}, effect: 'Displays felled legends with date and yields.' }],
+    id: 'whetstone', name: 'Whetstone', desc: 'Keeps your axe edge keen between swings.',
+    tiers: [
+      { level: 1, cost: { ash_log: 60 }, effect: 'Cuts 3% faster.' },
+      { level: 25, cost: { oak_log: 250 }, effect: 'Cuts 6% faster.' },
+      { level: 50, cost: { ironwood_log: 350 }, effect: 'Cuts 9% faster.' },
+    ],
+  },
+  {
+    id: 'sapBuckets', name: 'Sap Buckets', desc: 'Hung under the crown to catch what weeps from it.',
+    tiers: [
+      { level: 8, cost: { ash_log: 120 }, effect: 'Crown resin chance +10%.' },
+      { level: 35, cost: { yew_log: 250, ash_resin: 10 }, effect: 'Crown resin chance +20%.' },
+      { level: 65, cost: { ancient_log: 300, yew_resin: 20 }, effect: 'Crown resin chance +30%.' },
+    ],
+  },
+  {
+    id: 'logRack', name: 'Log Rack', desc: 'Stacks trunk timber neatly so less of it is wasted.',
+    tiers: [
+      { level: 12, cost: { ash_log: 200 }, effect: 'Trunk cuts have a 5% chance of an extra log.' },
+      { level: 40, cost: { yew_log: 300 }, effect: 'Trunk cuts have a 10% chance of an extra log.' },
+      { level: 75, cost: { spirit_log: 300 }, effect: 'Trunk cuts have a 15% chance of an extra log.' },
+    ],
+  },
+  {
+    id: 'heartChisel', name: 'Heart Chisel', desc: 'Fine tools for working heartwood out cleanly.',
+    tiers: [
+      { level: 18, cost: { oak_log: 150, heartwood_fragment: 10 }, effect: 'Heartwood fragments turn up 10% more often.' },
+      { level: 45, cost: { ironwood_log: 250, heartwood_fragment: 30 }, effect: 'Heartwood fragments turn up 20% more often.' },
+      { level: 80, cost: { spirit_log: 250, heartwood_fragment: 80 }, effect: 'Heartwood fragments turn up 30% more often.' },
+    ],
   },
 ];
+/** The Trophy Wall, built in the Trophies tab rather than the lodge yard. */
+export const TROPHY_WALL: LodgeDef = {
+  id: 'trophyWall', name: 'Trophy Wall', desc: 'Shows the legends you have felled. Needed to plant a World Tree seed.',
+  tiers: [{ level: 1, cost: {}, effect: 'Displays felled legends with date and yields.' }],
+};
+/** Per tier of each small lodge bonus. */
+export const WHETSTONE_SPEED = 3;
+export const SAP_BUCKET_RESIN = 10;
+export const LOG_RACK_CHANCE = 0.05;
+export const HEART_CHISEL_MULT = 0.1;
 export function lodgeDef(id: LodgeId): LodgeDef {
-  return LODGE.find((l) => l.id === id)!;
+  return id === 'trophyWall' ? TROPHY_WALL : LODGE.find((l) => l.id === id)!;
 }
 export const TROPHY_WALL_PLANKS = 100;
 

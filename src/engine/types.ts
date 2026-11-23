@@ -838,7 +838,7 @@ export interface FellingCard {
   at: number;
 }
 /** `sawmill` is kept only so old saves load: planks moved to Woodcrafting (2026-11-22). */
-export type LodgeId = 'scoutTower' | 'dryingShed' | 'sawmill' | 'trophyWall';
+export type LodgeId = 'scoutTower' | 'dryingShed' | 'whetstone' | 'sapBuckets' | 'logRack' | 'heartChisel' | 'sawmill' | 'trophyWall';
 export interface GiantState {
   current: Giant | null;
   /** giants left part-cut when you moved to another region, by region; you pick them back up when you return */

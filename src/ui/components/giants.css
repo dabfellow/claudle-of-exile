@@ -27,16 +27,10 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-.split-stump-side { fill: #3a2716; stroke: #24180d; stroke-width: 1.5; }
-.split-stump-top { fill: #8a6a44; stroke: #5a4128; stroke-width: 1.5; }
-.split-stump-ring { fill: none; stroke: rgba(70, 48, 26, 0.55); stroke-width: 1; }
-.split-stump-bark { stroke: #24180d; stroke-width: 2; fill: none; }
-.split-bark { fill: #5b3f25; stroke: #2e1f11; stroke-width: 2; stroke-linejoin: round; }
-.split-bark-line { fill: none; stroke: rgba(30, 20, 10, 0.55); stroke-width: 2; stroke-linecap: round; }
-.split-knot { fill: #3b2715; stroke: rgba(0, 0, 0, 0.35); stroke-width: 1; }
-.split-grain { fill: #c9a774; stroke: #8f6d42; stroke-width: 1.5; }
-.split-grain-ring { fill: none; stroke: rgba(120, 86, 46, 0.6); stroke-width: 1; }
-.split-face { fill: #d8b783; }
+.split-shadow { fill: rgba(0, 0, 0, 0.45); }
+.split-block { fill: #2c2118; stroke: #18110b; stroke-width: 1.5; }
+.split-block-grain { fill: none; stroke: rgba(255, 220, 170, 0.07); stroke-width: 2; stroke-linecap: round; }
+.split-axe-art { image-rendering: pixelated; }
 .mini-split-aim {
   stroke: var(--accent-2);
   stroke-width: 1.5;
@@ -48,10 +42,6 @@
   pointer-events: none;
 }
 .mini-split-log.strike .split-axe { transition-timing-function: cubic-bezier(0.6, 0, 1, 0.6); }
-.split-axe-handle { fill: #8a5d34; stroke: #3f2a15; stroke-width: 1; }
-.split-axe-poll { fill: #6c7378; }
-.split-axe-head { fill: #9aa4aa; stroke: #4b5257; stroke-width: 1; }
-.split-axe-edge { fill: #e7eef2; }
 .split-half {
   transform-box: view-box;
   animation-duration: 420ms;
@@ -232,6 +222,54 @@
 .forest-special {
   margin: 0 4px;
 }
+.forest-cutbar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm, 6px);
+}
+.forest-cutbar.idle {
+  grid-template-columns: minmax(0, 1fr);
+}
+.forest-cutbar .num {
+  text-align: right;
+}
+.forest-mastery {
+  display: grid;
+  gap: 8px;
+}
+.forest-mastery p {
+  margin: 0;
+}
+.forest-mastery-perks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.forest-mastery-perks li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 6px;
+  align-items: baseline;
+  opacity: 0.6;
+}
+.forest-mastery-perks li.on {
+  opacity: 1;
+}
+.forest-mastery-perks li .num {
+  font-weight: 700;
+  color: var(--accent-2);
+}
+.forest-mastery-perks li.on .num {
+  color: var(--good);
+}
 
 /* the giant in its clearing, with each part pinned where it grows */
 .giant-stage {
@@ -281,7 +319,69 @@
 }
 .giant-stage-tree.fallen {
   transform: translateX(-50%) rotate(-82deg);
-  opacity: 0.6;
+  opacity: 0.8;
+}
+/* Once the giant is down, its heart lies where it grew: a gnarled, rooted knot of the
+   tree's own wood with a glowing core in the cut end, until the Heart is chopped out. */
+.giant-core {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  width: 160px;
+  height: 160px;
+  transform: translateX(-50%);
+  z-index: 2;
+  animation: giant-core-in 0.6s 0.5s ease-out both;
+}
+.giant-core img,
+.giant-core-tint {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.giant-core img { filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.7)); }
+/* Colours the knot toward this woods' own wood, so a yew giant leaves a yew heart. */
+.giant-core-tint {
+  background: var(--giant, #8a6338);
+  -webkit-mask: var(--core-art) center / 100% 100% no-repeat;
+  mask: var(--core-art) center / 100% 100% no-repeat;
+  mix-blend-mode: multiply;
+  opacity: 0.85;
+}
+.giant-core-glow {
+  position: absolute;
+  inset: -20%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side at 32% 32%, rgba(255, 170, 70, 0.45), transparent 70%);
+  animation: giant-heart-glow 2.4s ease-in-out infinite;
+}
+/* The living core, in the cut end of the knot. */
+.giant-core-eye {
+  position: absolute;
+  left: 29%;
+  top: 27%;
+  width: 22%;
+  height: 22%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fff4c8, #ffb648 45%, rgba(230, 110, 30, 0.5) 70%, transparent);
+  mix-blend-mode: screen;
+  animation: giant-heart-glow 2.4s ease-in-out infinite;
+}
+.giant-core.spent .giant-core-glow,
+.giant-core.spent .giant-core-eye {
+  animation: none;
+  opacity: 0;
+}
+.giant-core.spent img { filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.7)) brightness(0.7); }
+@keyframes giant-core-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+}
+@keyframes giant-heart-glow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
 }
 .giant-mark {
   position: absolute;
@@ -304,24 +404,9 @@
 .giant-mark.limbs { left: 58%; top: 44%; }
 .giant-mark.trunk { left: 50%; top: 72%; }
 .giant-mark.heart { left: 50%; top: 84%; }
-.giant-stage.fallen .giant-mark.heart { top: 88%; }
+.giant-stage.fallen .giant-mark.heart { left: calc(50% - 34px); top: calc(100% - 135px); z-index: 3; }
 @keyframes giant-mark-pulse {
   50% { transform: scale(1.5); border-color: rgba(230, 200, 148, 0.95); }
-}
-.giant-stage-banner {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  transform: translateX(-50%);
-  z-index: 3;
-  padding: 5px 14px;
-  border-radius: var(--r-pill, 999px);
-  border: 1px solid rgba(209, 173, 114, 0.75);
-  background: rgba(45, 28, 14, 0.92);
-  color: var(--accent-2);
-  font-weight: 700;
-  white-space: nowrap;
-  box-shadow: 0 0 18px rgba(230, 200, 148, 0.35);
 }
 .giant-pins {
   position: absolute;
@@ -404,7 +489,7 @@
     height: 270px;
   }
   .giant-stage-ground { top: 270px; bottom: auto; }
-  .giant-stage-banner { top: 130px; }
+  .giant-core { top: 140px; bottom: auto; width: 130px; height: 130px; }
   .giant-mark { display: none; }
   .giant-pins {
     position: relative;

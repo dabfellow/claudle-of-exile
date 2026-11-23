@@ -111,11 +111,12 @@ function generateMilestones(skill: string, taskId: string, _taskName: string, _o
         { level: 100, id: mid(100, 'steward'), name: 'Forest Stewardship', desc: '+2% global woodcraft conservation', scope: 'global', kind: 'global_conserve', value: 0.02 },
       ];
     }
+    // one track per woods (giant_<wood>); its 50 and 100 perks are read by engine/woodcutting.ts
     return [
-      { level: 25, id: mid(25, 'felling'), name: 'Heavy Felling', desc: '8% chance to instantly fell an extra log', scope: 'task', kind: 'vein_strike', value: 0.08 },
-      { level: 50, id: mid(50, 'cleave'), name: 'Heartwood Cleave', desc: '12% Heavy Felling chance plus tree resin sap', scope: 'task', kind: 'vein_strike', value: 0.12 },
-      { level: 75, id: mid(75, 'speed'), name: "Lumberjack's Rhythm", desc: '+2% global Woodcutting speed', scope: 'global', kind: 'global_speed', value: 2 },
-      { level: 100, id: mid(100, 'canopy'), name: 'Ancient Canopies', desc: '+1.5% global resin & sap yield', scope: 'global', kind: 'global_find', value: 0.015 },
+      { level: 25, id: mid(25, 'felling'), name: 'Heavy Felling', desc: '8% chance a cut in these woods drops an extra log', scope: 'task', kind: 'vein_strike', value: 0.08 },
+      { level: 50, id: mid(50, 'sap'), name: 'Sap Sense', desc: 'Crown resin chance +25% in these woods', scope: 'task', kind: 'rare_find', value: 0.25 },
+      { level: 75, id: mid(75, 'speed'), name: "Lumberjack's Rhythm", desc: '+2% Woodcutting speed in every woods', scope: 'global', kind: 'global_speed', value: 2 },
+      { level: 100, id: mid(100, 'eye'), name: 'Old Friend', desc: 'Special giants are 25% more common in these woods', scope: 'task', kind: 'rare_find', value: 0.25 },
     ];
   }
 

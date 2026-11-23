@@ -131,6 +131,7 @@ True glyph meanings come from a fixed seed per character, so every player's scri
 - **Scholar's desk** (default tab): the current inscription large, with its glyph tiles, the picture-hint row under it, a meaning picker when a glyph is tapped, and the **Read** button with its "N of M" answer. Previous and next arrows step through the inscription stack.
 - A side panel shows the current dig site, the dig progress bar and an **Open the dig** button that opens the brushing grid. On phones the panel sits below.
 - Tabs: **Desk**, **Codex** (glyph grid per culture), **Chapters**, **Relic Forge**, **Sites**, **Merchants**.
+  - Page pass (2026-11-23, owner asked for fewer tabs): now **Desk** (with the trail under it), **Codex & Story** (pick a people; their chapters beside their glyphs), **Relics** (sifting and restorations, then the Relic Forge) and **Merchants**. The desk banner is Rembrandt's *Faust* (CC0), a scholar watching a disc of strange letters light up.
 
 ### Coming back: the stack of rubbings
 

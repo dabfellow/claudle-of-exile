@@ -1,9 +1,13 @@
 import { collectibleFor } from '../../data/collectibles';
 import { materialDef } from '../../data/materials';
 import {
-  GIANT_PARTS, LEGENDS, LODGE, PART_NAMES, quirkDef, SIZE_NAMES, WOODS, WORLD_TREE_GROWTH_MS, woodDef, type LodgeDef,
+  GIANT_PARTS, LEGENDS, LODGE, PART_NAMES, quirkDef, SIZE_NAMES, TROPHY_WALL, WOODS, WORLD_TREE_GROWTH_MS, woodDef, type LodgeDef,
 } from '../../data/woodcutting';
-import { startSkillAction, stopAction } from '../../engine/skills';
+import { actionDef } from '../../data/skills';
+import { masteryLevel } from '../../engine/skillingMastery';
+import { actionIntervalMs, startSkillAction, stopAction } from '../../engine/skills';
+import { deriveStats } from '../../engine/stats';
+import { MasteryProgress } from './MasteryProgress';
 import {
   buildLodge, chooseRegion, familiarityMult, felledIn, fellingTime, fellWorldTree, giantName, isGiantActionId, isLegend,
   lodgeBlocker, lodgeTierOf, moveOn, nextLodgeTier, nextPart, partWorkable, plantBlocker, plantWorldTree, quirkChanceMult,
@@ -15,7 +19,8 @@ import { TREE_ART } from '../assets';
 import { Badge, fmt, MatIcon, ProgressBar } from './common';
 import { LockedBadge, SkillIntro } from './SkillHelp';
 import { SkillMinigame } from './SkillMinigame';
-import { SplitIdle } from './minigames';
+import { SplitIdle } from './SplitLog';
+import CORE_ART from '../../assets/items/pixel/a-275.png';
 import './giants.css';
 
 export type GiantTab = 'giant' | 'lodge' | 'trophies';
@@ -123,6 +128,7 @@ function RegionStrip({ s }: { s: GameState }) {
               ) : (
                 <span className="dim small">{felled ? `${fmt(felled)} felled` : 'Not cut yet'}</span>
               )}
+              {open && <span className="dim small">Mastery {masteryLevel(s, `task.giant_${w.id}`)}</span>}
               {open && bonus > 0 && <span className="small forest-region-bonus">Special +{bonus}%</span>}
             </span>
           </button>
@@ -186,7 +192,18 @@ function GiantStage({ g, active, locked }: { g: Giant; active: GiantPart | null 
       <img src={TREE_ART[g.region] ?? TREE_ART.ash} alt="" className={`giant-stage-tree ${g.fallen ? 'fallen' : ''}`} draggable={false} />
       {GIANT_PARTS.map((p) => <span key={p} className={`giant-mark ${p} ${active === p ? 'active' : ''}`} aria-hidden="true" />)}
       <div className="giant-stage-ground" aria-hidden="true" />
-      {g.fallen && <div className="giant-stage-banner">Timber! The heart is open</div>}
+      {g.fallen && (
+        <div
+          className={`giant-core ${g.parts.heart.hp <= 0 ? 'spent' : ''}`}
+          style={{ ['--core-art' as string]: `url("${CORE_ART}")` }}
+          aria-hidden="true"
+        >
+          <span className="giant-core-glow" />
+          <img src={CORE_ART} alt="" draggable={false} />
+          <span className="giant-core-tint" />
+          <span className="giant-core-eye" />
+        </div>
+      )}
       <div className="giant-pins">
         {GIANT_PARTS.map((p) => <PartPin key={p} g={g} p={p} active={active === p} locked={locked} />)}
       </div>
@@ -210,6 +227,45 @@ function Tally({ g }: { g: Giant }) {
           ))}
         </ul>
       ) : <p className="dim small">Nothing yet. Every cut drops something from the part you are chopping.</p>}
+    </div>
+  );
+}
+
+/** The cut in progress: which part, and how far through this swing. */
+function CutBar({ s }: { s: GameState }) {
+  const a = s.action?.kind === 'skill' && isGiantActionId(s.action.actionId) ? s.action : null;
+  if (!a) {
+    return <div className="forest-cutbar idle"><span className="dim small">Not felling. Press Start felling, or tap a part of the tree.</span></div>;
+  }
+  const interval = actionIntervalMs(s, actionDef(a.actionId), deriveStats(s));
+  const left = Math.max(0, (interval - a.progress) / 1000);
+  return (
+    <div className="forest-cutbar">
+      <span className="small"><b>Chopping the {a.part ? PART_NAMES[a.part] : 'giant'}</b></span>
+      <ProgressBar value={a.progress / interval} color="var(--success)" smooth />
+      <span className="dim small num">{left.toFixed(1)}s</span>
+    </div>
+  );
+}
+
+/** Mastery in the woods you are cutting: its level, what it gives now, and the perks to come. */
+function WoodsMastery({ s, region }: { s: GameState; region: string }) {
+  const spec = actionDef(`giant_${region}`).mastery;
+  if (!spec) return null;
+  const level = masteryLevel(s, spec.id);
+  return (
+    <div className="card forest-mastery">
+      <div className="card-title">{woodDef(region).region} mastery <span className="grow" /><span className="num">{level} / 100</span></div>
+      <MasteryProgress s={s} mastery={spec} />
+      <ul className="forest-mastery-perks">
+        {spec.milestones.map((m) => (
+          <li key={m.id} className={level >= m.level ? 'on' : ''}>
+            <span className="num">{m.level}</span>
+            <span><b>{m.name}</b> <span className="dim">{m.desc}</span></span>
+          </li>
+        ))}
+      </ul>
+      <p className="dim small">Mastery grows with time spent cutting in these woods, and each woods has its own.</p>
     </div>
   );
 }
@@ -245,8 +301,9 @@ function ForestTab({ s }: { s: GameState }) {
               <button className="btn forest-go" onClick={() => game.act((st) => stopAction(st))}>Stop</button>
             )}
           </header>
+          <CutBar s={s} />
           <GiantStage g={g} active={running ?? undefined} locked={locked} />
-          <ProgressBar value={max > 0 ? 1 - left / max : 1} color={w.color} label={`${fmt(max - left)} / ${fmt(max)} cuts`} />
+          <ProgressBar value={max > 0 ? 1 - left / max : 1} color={w.color} label={`Whole giant: ${fmt(max - left)} / ${fmt(max)} cuts`} />
           <div className="forest-foot">
             <p className="muted small">
               {g.fallen
@@ -264,11 +321,11 @@ function ForestTab({ s }: { s: GameState }) {
             <div className="card forest-block-idle">
               <div className="card-title">Chopping block</div>
               <SplitIdle />
-              <p className="muted small">Split logs while you fell: an even split builds Focus, which speeds the felling up and can double a cut.</p>
-              <button className="btn primary" disabled={locked} onClick={() => fell()}>Start felling</button>
+              <p className="muted small">Logs land here while you fell. Split them evenly to build Focus, which speeds the felling up and can double a cut.</p>
             </div>
           )}
           <Tally g={g} />
+          <WoodsMastery s={s} region={g.region} />
           <p className="dim small forest-special">
             Special giants{special > 0 ? ` are ${special}% more common here` : ' turn up now and then'}: the more you fell in one woods, the more often they appear.
           </p>
@@ -304,7 +361,7 @@ function LodgeCard({ s, def }: { s: GameState; def: LodgeDef }) {
   return (
     <div className={`giant-card ${levelLocked || legendLocked ? 'locked' : ''}`}>
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3>{def.name} <span className="dim small num">{tier}/{def.tiers.length}</span></h3>
+        <h3>{def.name} <span className="dim small num">Level {tier}/{def.tiers.length}</span></h3>
         {levelLocked ? (
           <LockedBadge level={next.level} />
         ) : legendLocked ? (
@@ -316,7 +373,6 @@ function LodgeCard({ s, def }: { s: GameState; def: LodgeDef }) {
       {next ? (
         <>
           <span className="small">Next: {next.effect}</span>
-          <span className="dim small">Needs Woodcutting level {next.level}</span>
           <CostRow s={s} cost={next.cost} />
           <button
             className="btn sm primary"
@@ -324,7 +380,7 @@ function LodgeCard({ s, def }: { s: GameState; def: LodgeDef }) {
             title={blocker ?? undefined}
             onClick={() => game.act((st, ctx) => buildLodge(st, ctx, def.id))}
           >
-            {blocker && blocker !== 'Missing materials' ? blocker : `Build${def.tiers.length > 1 ? ` tier ${next.tier}` : ''}`}
+            {blocker && blocker !== 'Missing materials' ? blocker : `Build${def.tiers.length > 1 ? ` level ${next.tier}` : ''}`}
           </button>
         </>
       ) : <Badge tone="success">Fully built</Badge>}
@@ -366,11 +422,10 @@ function LodgeTab({ s }: { s: GameState }) {
   return (
     <div className="grid" style={{ gap: 12 }}>
       <SkillIntro step="Woodcutter's Lodge">
-        Build lasting Woodcutting upgrades from your own timber: a <b>Lookout Tower</b> for more special giants, a <b>Drying Shed</b> for bonus logs, and the <b>Trophy Wall</b> for your legends.
+        Spend your own timber on lasting upgrades. Each building has levels: the first ones are cheap, and the later ones need wood from deeper woods.
       </SkillIntro>
       <div className="card">
-        <div className="card-title">The woodcutter&apos;s lodge</div>
-        <p className="muted small">A camp at the forest&apos;s edge, built from your own timber. Bigger buildings need wood from deeper woods.</p>
+        <div className="card-title">The woodcutter&apos;s lodge <span className="grow" /><span className="card-hint">{LODGE.reduce((n, d) => n + lodgeTierOf(s, d.id), 0)} / {LODGE.reduce((n, d) => n + d.tiers.length, 0)} levels built</span></div>
         <div className="giant-grid">
           {LODGE.map((def) => <LodgeCard key={def.id} s={s} def={def} />)}
         </div>
@@ -391,12 +446,12 @@ function TrophiesTab({ s }: { s: GameState }) {
         <div className="card-title">
           Trophy Wall
           <span className="grow" />
-          {wall ? <Badge tone="success">Wall built</Badge> : <LockedBadge reason="Build Trophy Wall in Lodge" />}
+          {wall && <Badge tone="success">Wall built</Badge>}
         </div>
         {!wall && (
-          <p className="muted small">
-            {s.giant.legends.length ? 'Build the Trophy Wall in the Lodge to display your felled legends.' : 'Fell a legendary giant (level 80+, in the deep woods) to unlock the Trophy Wall in the Lodge.'}
-          </p>
+          <div className="giant-grid" style={{ marginBottom: 8 }}>
+            <LodgeCard s={s} def={TROPHY_WALL} />
+          </div>
         )}
         <div className="giant-grid">
           {LEGENDS.map((l) => {
@@ -415,7 +470,7 @@ function TrophiesTab({ s }: { s: GameState }) {
                     {log && <span className="small">Felled {new Date(log.at).toLocaleDateString()}: {yieldWords(log.yields)}</span>}
                   </>
                 ) : (
-                  <span className="muted small">{felled ? 'Hidden until the Trophy Wall is built in the Lodge.' : `Cut in the ${woodDef(l.region).region} and this legend may turn up.`}</span>
+                  <span className="muted small">{felled ? 'Hidden until the Trophy Wall is built.' : `Cut in the ${woodDef(l.region).region} and this legend may turn up.`}</span>
                 )}
               </div>
             );

@@ -25,7 +25,7 @@ import { game, useGame } from '../../game';
 import { Art, Badge, Cost, fmt, fmtTime, MatIcon, ProgressBar } from './common';
 import { Icon } from './Icon';
 import { ItemTip } from './ItemView';
-import { ChaptersView, CodexView, DeskView } from './ScholarsDesk';
+import { CodexView, DeskView } from './ScholarsDesk';
 import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
 import { SkillMinigame } from './SkillMinigame';
 import '../archaeology.css';
@@ -177,8 +177,9 @@ export function TrailView({ s }: { s: GameState }) {
     <section className="expedition">
       <div className="expedition-banner">
         <div>
-          <div className="dig-kicker">The Hollow Peaks</div>
-          <h3 className="expedition-title">Dig Sites & Expedition Trail</h3>
+          <div className="dig-kicker">The Expedition Trail</div>
+          <h3 className="expedition-title">Dig sites</h3>
+          <p className="banner-sub">Pick a site and press Dig. Translating the story opens the next site on the trail.</p>
         </div>
         <div className="expedition-stats">
           <Stat label="Passports" value={`${stamped}/${TRAIL.length}`} />
@@ -336,18 +337,17 @@ function ForgeView({ s }: { s: GameState }) {
   const job = s.expedition.forge;
   const sealed = s.storage.bank[SEALED_RELIC] ?? 0;
   const form = job ? relicForm(job.formId) : undefined;
-  const [hideLocked, setHideLocked] = useState(false);
+  // a newcomer with no Sealed Relic yet sees the forge folded: the locked forms are a click away
+  const [hideLocked, setHideLocked] = useState(() => !sealed && !(s.expedition.relicsRestored ?? 0));
   const lockedCount = RELIC_FORMS.filter((f) => !relicFormUnlocked(s, f.id)).length;
   const forms = hideLocked ? RELIC_FORMS.filter((f) => relicFormUnlocked(s, f.id)) : RELIC_FORMS;
   return (
     <section className="expedition">
-      <SkillIntro step="Custom ilvl 80 Relics">
-        Use a Sealed Relic from the Reliquary + Ancient Data to hand-build custom ilvl 80 rare gear
-      </SkillIntro>
       <div className="expedition-banner forge">
         <div>
-          <div className="dig-kicker">Relic Restoration</div>
+          <div className="dig-kicker">Late game · from the Sealed Reliquary</div>
           <h3 className="expedition-title">The Relic Forge</h3>
+          <p className="banner-sub">Break open a Sealed Relic and build your own item level {RELIC_ILVL} gear with Ancient Data.</p>
         </div>
         <div className="expedition-stats">
           <Stat label="Sealed Relics" value={fmt(sealed)} icon={SEALED_RELIC} />
@@ -377,8 +377,8 @@ function ForgeView({ s }: { s: GameState }) {
           </div>
           {forms.length === 0 ? (
             <div className="dig-card">
-              <p className="small dim">No Relic Forms unlocked yet. Translate story chapters to unlock Relic Forge forms.</p>
-              <button className="btn sm" onClick={() => setHideLocked(false)}>Show locked forms ({lockedCount})</button>
+              <p className="small dim">No relic forms open yet. Each people's story opens forms as you translate it.</p>
+              <button className="btn sm" onClick={() => setHideLocked(false)}>See all {lockedCount} forms</button>
             </div>
           ) : (
             <div className="relic-forms">
@@ -523,8 +523,7 @@ function RestorationCard({ s, a }: { s: GameState; a: SkillAction }) {
 }
 
 /** Archaeology's Soil Sifting and Relic Restoration bench in Archaeology's own aesthetic. */
-export function RestorationView() {
-  const s = useGame();
+function RestorationView({ s }: { s: GameState }) {
   const [showLocked, setShowLocked] = useState(false);
   const all = actionsFor('archaeology').filter((a) => a.id.startsWith('sift_') || a.id.startsWith('restore_'));
   const sifting = all.filter((a) => a.id.startsWith('sift_'));
@@ -549,26 +548,21 @@ export function RestorationView() {
 
   return (
     <section className="expedition">
-      <SkillIntro
-        step="Sift & Restore"
-        action={(totalHidden > 0 || showLocked) ? (
-          <button className="btn sm ghost" onClick={() => setShowLocked((v) => !v)}>
-            {showLocked ? 'Hide locked' : `Show locked (+${totalHidden})`}
-          </button>
-        ) : undefined}
-      >
-        Sift extra Artifacts directly from the soil, or combine Relic Fragments and Artifacts into permanent gear and relics
-      </SkillIntro>
-
       <div className="expedition-banner">
         <div>
-          <div className="dig-kicker">Field Bench</div>
-          <h3 className="expedition-title">Sifting & Relic Restoration</h3>
+          <div className="dig-kicker">Field bench</div>
+          <h3 className="expedition-title">Sifting & Restoration</h3>
+          <p className="banner-sub">Sift soil for extra Artifacts, or mend Relic fragments and Artifacts into gear.</p>
         </div>
         <div className="expedition-stats">
           {CULTURES.map((c) => (
             <Stat key={c.id} label={c.artifactName} value={fmt(s.storage.bank[c.artifact] ?? 0)} icon={c.artifact} />
           ))}
+          {(totalHidden > 0 || showLocked) && (
+            <button className="btn sm ghost" onClick={() => setShowLocked((v) => !v)}>
+              {showLocked ? 'Hide locked' : `Show locked (+${totalHidden})`}
+            </button>
+          )}
         </div>
       </div>
 
@@ -647,7 +641,6 @@ function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
       <ProgressBar
         value={Math.min(1, have / MAX_STANDING)}
         color={culture.color}
-        label={`Standing ${have} of ${MAX_STANDING}`}
         className="merchant-standing-bar"
       />
 
@@ -692,7 +685,7 @@ function MerchantCard({ s, culture }: { s: GameState; culture: CultureDef }) {
 }
 
 /** Archaeology's board: the Expedition Trail and its digs, the Relic Forge, and the merchants who take what comes up. */
-export function ExpeditionBoard({ view = 'desk' }: { view?: 'desk' | 'codex' | 'chapters' | 'sites' | 'forge' | 'merchants' | 'restoration' }) {
+export function ExpeditionBoard({ view = 'desk' }: { view?: 'desk' | 'codex' | 'relics' | 'merchants' }) {
   const s = useGame();
   if (!expeditionOpen(s)) {
     return <div className="callout skill-note">The dig sites are up in the Hollow Peaks, in {EXPEDITION_GATE.label}. Reach them to start digging.</div>;
@@ -706,14 +699,21 @@ export function ExpeditionBoard({ view = 'desk' }: { view?: 'desk' | 'codex' | '
     );
   }
   if (view === 'codex') return <CodexView />;
-  if (view === 'chapters') return <ChaptersView />;
-  if (view === 'sites') return <TrailView s={s} />;
-  if (view === 'forge') return <ForgeView s={s} />;
-  if (view === 'restoration') return <RestorationView />;
+  if (view === 'relics') {
+    return (
+      <>
+        <SkillIntro step="Relics">
+          Turn what you dig up into gear: sift and restore on the field bench, and late on, build relics of your own at the Relic Forge.
+        </SkillIntro>
+        <RestorationView s={s} />
+        <ForgeView s={s} />
+      </>
+    );
+  }
   return (
     <section className="expedition">
-      <SkillIntro step="Culture Merchants">
-        Spend Excavated Artifacts here. Raise Standing by completing Finds at each culture's Dig Sites
+      <SkillIntro step="Merchants">
+        Each people's merchant takes their own Artifacts. Finds at that people's dig sites raise your standing and open better shelves.
       </SkillIntro>
       <div className="section-head">
         <h3>Merchants</h3>

@@ -2,7 +2,7 @@ import {
   BASE_HP, CROWN_LOG_CHANCE, CROWN_RESIN_CHANCE, FALL_XP_MULT, FAMILIARITY_CAP, FAMILIARITY_STEP, GIANT_PARTS, HEART_FRAGMENT_CHANCE, LEGEND_CHANCE, LEGEND_FALL_XP_MULT,
   LEGEND_HEART_MAX, LEGEND_HEART_MIN, LEGEND_MIN_LEVEL, LEGENDS, LODGE, lodgeDef, MAX_QUIRKS, QUIRK_CHANCE, QUIRKS, SIZE_MULT, SIZE_WEIGHTS,
   TRUNK_BONUS_LOG_CHANCE, TROPHY_WALL_PLANKS, WOODS, WORLD_TREE_GROWTH_MS, WORLD_TREE_HEARTWOOD, WORLD_TREE_SEED_CHANCE, legendDef, woodDef,
-  type LodgeTier,
+  HEART_CHISEL_MULT, LOG_RACK_CHANCE, SAP_BUCKET_RESIN, WHETSTONE_SPEED, type LodgeTier,
 } from '../data/woodcutting';
 import type { SkillAction } from '../data/skills';
 import { canAfford, addBank, hasItem, payCost } from './bank';
@@ -10,7 +10,7 @@ import type { Ctx } from './context';
 import { minigameSwing, type SwingResult } from './minigame';
 import { rollCollectible } from './collectibles';
 import { chance, pick, pickWeighted, rInt, type Rng } from './rng';
-import { stochasticRound } from './skillingMastery';
+import { masteryLevel, stochasticRound } from './skillingMastery';
 import type { FellingCard, Giant, GiantPart, GiantSize, GiantState, GameState, LodgeId } from './types';
 import { levelOf } from './xp';
 
@@ -25,7 +25,7 @@ export function newGiantState(): GiantState {
     waiting: {},
     felled: {},
     order: { region: 'auto' },
-    lodge: { scoutTower: 0, dryingShed: 0, sawmill: 0, trophyWall: 0 },
+    lodge: { scoutTower: 0, dryingShed: 0, whetstone: 0, sapBuckets: 0, logRack: 0, heartChisel: 0, sawmill: 0, trophyWall: 0 },
     legends: [],
     legendLog: {},
     pendingCards: [],
@@ -62,10 +62,34 @@ export function familiarityMult(s: GameState, region: string): number {
   return 1 + Math.min(FAMILIARITY_CAP, felledIn(s, region)) * FAMILIARITY_STEP;
 }
 
+/** The mastery track for cutting in a woods. */
+export const woodsMasteryId = (region: string): string => `task.giant_${region}`;
+
+/** Mastery 100 in a woods: its special giants are 25% more common. */
+export const WOODS_MASTERY_SPECIAL = 1.25;
+/** Mastery 50 in a woods: crown resin chance +25% there. */
+export const WOODS_MASTERY_RESIN = 25;
+
 /** Everything that makes special (quirked) giants more common in a region. */
 export function quirkChanceMult(s: GameState, region: string): number {
-  return familiarityMult(s, region) * (s.giant.lodge.scoutTower >= 1 ? 1.5 : 1);
+  return familiarityMult(s, region)
+    * (s.giant.lodge.scoutTower >= 1 ? 1.5 : 1)
+    * (masteryLevel(s, woodsMasteryId(region)) >= 100 ? WOODS_MASTERY_SPECIAL : 1);
 }
+
+// ---- small lodge bonuses
+
+export const lodgeTier = (s: GameState, id: LodgeId): number => s.giant.lodge[id] ?? 0;
+/** Whetstone: % faster cuts on any giant. */
+export const whetstoneSpeed = (s: GameState): number => lodgeTier(s, 'whetstone') * WHETSTONE_SPEED;
+/** Crown resin chance bonus, in %: Sap Buckets, plus mastery 50 in that woods. */
+export function resinBonusPct(s: GameState, region: string): number {
+  return lodgeTier(s, 'sapBuckets') * SAP_BUCKET_RESIN + (masteryLevel(s, woodsMasteryId(region)) >= 50 ? WOODS_MASTERY_RESIN : 0);
+}
+/** Log Rack: chance a trunk cut gives one extra log. */
+export const logRackChance = (s: GameState): number => lodgeTier(s, 'logRack') * LOG_RACK_CHANCE;
+/** Heart Chisel: multiplier on the heartwood fragment chance. */
+export const heartChiselMult = (s: GameState): number => 1 + lodgeTier(s, 'heartChisel') * HEART_CHISEL_MULT;
 
 /** The chance per roll that a giant gets a quirk in this region, after familiarity and the Lookout Tower. */
 export function quirkChance(s: GameState, region: string): number {
@@ -135,6 +159,7 @@ export function settleGiant(s: GameState, rng: Rng): void {
   if (!st) return;
   st.waiting ??= {};
   st.felled ??= {};
+  st.lodge = { ...newGiantState().lodge, ...st.lodge };
   st.order = { region: typeof st.order?.region === 'string' ? st.order.region : 'auto' };
   delete (st as unknown as { options?: unknown }).options;
   if (!st.current) st.current = takeGiant(s, rng, targetRegion(s));
@@ -292,7 +317,7 @@ export function giantCut(s: GameState, ctx: Ctx, focusDouble = false, resinBoost
   };
   switch (part) {
     case 'crown':
-      if (chance(ctx.rng, Math.min(1, CROWN_RESIN_CHANCE * (hasQuirk(g, 'resin') ? 3 : 1) * (1 + resinBoost / 100)))) give(`${g.region}_resin`, 1);
+      if (chance(ctx.rng, Math.min(1, CROWN_RESIN_CHANCE * (hasQuirk(g, 'resin') ? 3 : 1) * (1 + (resinBoost + resinBonusPct(s, g.region)) / 100)))) give(`${g.region}_resin`, 1);
       if (chance(ctx.rng, CROWN_LOG_CHANCE)) give(log, 1);
       break;
     case 'limbs':
@@ -300,10 +325,11 @@ export function giantCut(s: GameState, ctx: Ctx, focusDouble = false, resinBoost
       break;
     case 'trunk':
       give(log, (1 + (chance(ctx.rng, TRUNK_BONUS_LOG_CHANCE) ? 1 : 0)) * (hasQuirk(g, 'lightning') ? 1.25 : 1));
+      if (logRackChance(s) > 0 && chance(ctx.rng, logRackChance(s))) give(log, 1);
       break;
     case 'heart':
       give(log, 1);
-      if (chance(ctx.rng, Math.min(1, HEART_FRAGMENT_CHANCE * (hasQuirk(g, 'burled') ? 2 : 1)))) give('heartwood_fragment', 1);
+      if (chance(ctx.rng, Math.min(1, HEART_FRAGMENT_CHANCE * (hasQuirk(g, 'burled') ? 2 : 1) * heartChiselMult(s)))) give('heartwood_fragment', 1);
       break;
   }
   if (hasQuirk(g, 'towering')) res.xpUnits *= 1.5;

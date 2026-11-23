@@ -3,13 +3,15 @@ import {
   CHAPTERS, chapterNeed, CODEX_TIERS, EARLY_SCRIPTS, FIRST_SCRIPT_GATE, INSCRIPTION_CHANCE, meaningDef, SCRIPTS, SECRET_CHAPTERS, SECRET_DATA,
   type ChapterReward, type ScriptDef, type ScriptId,
 } from '../../data/deciphering';
-import { isChamberAction, ROSETTA_STONE, SITES, siteOfAction } from '../../data/expedition';
+import { isChamberAction, ROSETTA_STONE, SITES, siteOf, siteOfAction, TRAIL } from '../../data/expedition';
 import { actionDef } from '../../data/skills';
+import { hasPassport } from '../../engine/expedition';
+import DESK_ART from '../../assets/scenes/scholars-desk.webp';
 import {
   clearArrivals, codexDigSpeed, codexTier, crackedCount, firstScriptHintSource, firstScriptOpen, glyphOf, meaningName, readInscription, revealThreshold, seenMeanings, setGuess,
   trueMeaning, useRosetta, type ReadResult,
 } from '../../engine/deciphering';
-import { actionIntervalMs, stopAction } from '../../engine/skills';
+import { actionIntervalMs, skillLevel, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import { glyphIds } from '../../data/deciphering';
 import type { GameState, Inscription } from '../../engine/types';
@@ -126,8 +128,8 @@ function Inscriptions({ s }: { s: GameState }) {
     return (
       <div className="desk-paper empty">
         {result?.r.translated && <p className="read-result good">Translated. +{SCRIPTS.find((x) => x.id === result.script)!.data} Ancient Data</p>}
-        <p>No inscriptions to read. Dig, and rubbings turn up now and then: about 1 dig in {Math.round(1 / INSCRIPTION_CHANCE)}.</p>
-        <p className="dim small">Each find carries glyphs and a few picture hints. Match them up, press Read, and see how many you got right.</p>
+        <p>Nothing on the desk yet. About 1 dig in {Math.round(1 / INSCRIPTION_CHANCE)} brings up an inscription, and it lands here.</p>
+        <p className="dim small">Each one carries a few glyphs and picture hints. Match each glyph to a picture, press Read, and see how many you got right. Glyphs you keep getting right crack for good.</p>
       </div>
     );
   }
@@ -191,6 +193,10 @@ function DigStatusPanel({ s }: { s: GameState }) {
   const interval = activeAction ? actionIntervalMs(s, activeAction, deriveStats(s)) : 0;
   const speed = codexDigSpeed(s);
   const rosettas = s.storage.bank[ROSETTA_STONE] ?? 0;
+  const level = skillLevel(s, 'archaeology');
+  // the furthest site you can dig right now, for the one-tap start
+  const startId = [...TRAIL].reverse().find((id) => hasPassport(s, id) && level >= siteOf(id)!.level);
+  const startSite = startId ? siteOf(startId) : undefined;
 
   return (
     <aside className="dig-side-panel">
@@ -220,9 +226,14 @@ function DigStatusPanel({ s }: { s: GameState }) {
         </>
       ) : (
         <div className="dig-idle-note">
-          <p className="small">No dig running right now.</p>
+          <p className="small">No dig running.</p>
+          {startSite ? (
+            <button className="btn primary" onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, startSite.id))}>
+              Dig at {startSite.name}
+            </button>
+          ) : null}
           <p className="small dim">
-            Choose a site on the <b>Expedition Trail</b> below and click <b>Dig</b>. Active dig progress and the Focus brushing minigame appear right here.
+            Or pick another site on the trail below. While you dig, its progress and the brushing minigame show here.
           </p>
         </div>
       )}
@@ -238,29 +249,36 @@ function DigStatusPanel({ s }: { s: GameState }) {
   );
 }
 
+/** A script shows on the desk once you have met it: the first is always there, the rest once something of theirs turns up. */
+function scriptMet(s: GameState, id: ScriptId): boolean {
+  const a = s.archaeology;
+  return id === EARLY_SCRIPTS[0] || crackedCount(a, id) > 0 || (a.chapters[id] ?? 0) > 0 || a.inscriptions.some((x) => x.culture === id);
+}
+
 export function DeskView() {
   const s = useGame();
   const a = s.archaeology;
+  const met = SCRIPTS.filter((x) => scriptMet(s, x.id));
   return (
     <section className="expedition desk">
-      <SkillIntro step="Start here: Dig a site below → read rubbings here">
-        Dig at the sites below for Artifacts and stone Inscriptions, then match glyphs to picture hints on the Scholar's Desk to crack scripts and unlock the trail
+      <SkillIntro step="Start here">
+        Dig at a site on the trail below. About one dig in {Math.round(1 / INSCRIPTION_CHANCE)} brings up an inscription. Read it here: tap each glyph, pencil in the picture you think it means, then press Read.
       </SkillIntro>
-      <div className="expedition-banner">
+      <div className="expedition-banner desk-banner" style={{ ['--desk-art' as string]: `url("${DESK_ART}")` }}>
         <div>
           <div className="dig-kicker">The Hollow Peaks</div>
           <h3 className="expedition-title">The Scholar's Desk</h3>
-          {a.title && <div className="dig-kicker">{a.title}</div>}
+          {a.title ? <div className="dig-kicker desk-title">{a.title}</div> : <p className="banner-sub">Where the dead peoples' writing gives up its meaning, one glyph at a time.</p>}
         </div>
         <div className="expedition-stats">
-          {SCRIPTS.map((x) => (
+          {met.map((x) => (
             <div key={x.id} className="exp-stat" style={{ ['--script' as string]: x.color }}>
               <span className="exp-stat-label">{x.name}</span>
               <b className="num">{crackedCount(a, x.id)}/{x.glyphs} glyphs</b>
             </div>
           ))}
           <div className="exp-stat">
-            <span className="exp-stat-label">Stack</span>
+            <span className="exp-stat-label">To read</span>
             <b className="num">{a.inscriptions.length}</b>
           </div>
         </div>
@@ -284,7 +302,7 @@ function CodexPage({ s, script }: { s: GameState; script: ScriptDef }) {
   return (
     <div className="card codex-page" style={{ ['--script' as string]: script.color }}>
       <div className="card-title">
-        {script.name}
+        Glyphs
         <span className="grow" />
         <span className="num dim">{cracked}/{script.glyphs} cracked</span>
       </div>
@@ -295,12 +313,12 @@ function CodexPage({ s, script }: { s: GameState; script: ScriptDef }) {
         {glyphIds(script.id).map((g) => {
           const st = glyphOf(a, script.id, g);
           return (
-            <div key={g} className={`codex-cell ${st.cracked ? 'done' : ''}`}>
+            <div key={g} className={`codex-cell ${st.cracked ? 'done' : ''}`} title={st.cracked ? undefined : `${st.evidence} of ${need} evidence`}>
               <GlyphTile script={script.id} glyph={g} size={40} cracked={st.cracked} />
               {st.cracked ? <Meaning id={trueMeaning(a, script.id, g)} size="sm" /> : (
                 <>
                   <span className="dim small">{st.guess ? meaningName(st.guess) : '?'}</span>
-                  <ProgressBar value={Math.min(1, st.evidence / need)} color={script.color} className="evidence-bar" label={`${st.evidence} of ${need} evidence`} />
+                  <ProgressBar value={Math.min(1, st.evidence / need)} color={script.color} className="evidence-bar" />
                 </>
               )}
             </div>
@@ -310,7 +328,7 @@ function CodexPage({ s, script }: { s: GameState; script: ScriptDef }) {
       <ul className="codex-perks">
         {CODEX_TIERS.map((t, i) => (
           <li key={t.share} className={i < tier ? 'on' : ''}>
-            <span className="num">{t.share * 100}%</span> {t.text}
+            <span className="num">{t.share * 100}% cracked:</span> {t.text}
           </li>
         ))}
       </ul>
@@ -318,23 +336,53 @@ function CodexPage({ s, script }: { s: GameState; script: ScriptDef }) {
   );
 }
 
+/** The codex and the story, one people at a time: their glyph dictionary beside the chapters it has translated. */
 export function CodexView() {
   const s = useGame();
+  const a = s.archaeology;
+  const order = [...EARLY_SCRIPTS, 'first' as ScriptId].map((id) => SCRIPTS.find((x) => x.id === id)!);
+  const working = order.find((x) => (a.chapters[x.id] ?? 0) < x.chapters && (x.id !== 'first' || firstScriptOpen(a))) ?? order[0];
+  const [picked, setPicked] = useState<ScriptId | null>(null);
+  const script = order.find((x) => x.id === picked) ?? working;
   return (
-    <section>
-      <SkillIntro step="Glyph Dictionary">
-        Your dictionary of translated glyphs across 4 lost cultures — cracking glyphs permanently speeds up digging and yields
+    <section className="expedition">
+      <SkillIntro step="Codex & Story">
+        Every glyph you crack goes in the codex and makes digging faster. Every inscription you translate moves that people's story on, and each chapter opens something new: a site, a hidden chamber, a better shelf or a relic form.
       </SkillIntro>
-      <div className="section-head">
-        <h3>Codex</h3>
-        <span className="dim small">
-          Every glyph that reaches {revealThreshold(s.archaeology)} evidence reveals itself. Perks stack across scripts.{' '}
-          <HelpTip tip="Each time you press Read on an inscription at the Scholar's Desk, every correct glyph gains 1 evidence toward revealing its true meaning permanently." />
-        </span>
+      <div className="script-tabs" role="tablist" aria-label="Choose a people">
+        {order.map((x) => {
+          const gated = x.id === 'first' && !firstScriptOpen(a);
+          return (
+            <button
+              key={x.id}
+              type="button"
+              role="tab"
+              aria-selected={x.id === script.id}
+              className={`script-tab ${x.id === script.id ? 'on' : ''} ${gated ? 'gated' : ''}`}
+              style={{ ['--script' as string]: x.color }}
+              onClick={() => setPicked(x.id)}
+            >
+              <b>{x.name}</b>
+              <span className="small dim num">
+                {gated ? 'Not yet' : `Chapter ${a.chapters[x.id] ?? 0} of ${x.chapters} · ${crackedCount(a, x.id)}/${x.glyphs} glyphs`}
+              </span>
+            </button>
+          );
+        })}
       </div>
-      <div className="card-grid" style={{ ['--card-min' as string]: '320px', gap: 8 }}>
-        {SCRIPTS.map((x) => <CodexPage key={x.id} s={s} script={x} />)}
+      <div className="codex-story">
+        <StoryCard s={s} script={script} />
+        <div>
+          <CodexPage s={s} script={script} />
+          <p className="small dim codex-help">
+            A glyph reveals itself once it reaches {revealThreshold(a)} evidence.{' '}
+            <HelpTip tip="Each time you press Read on an inscription at the Scholar's Desk, every glyph you got right gains 1 evidence. Codex perks stack across scripts." />
+          </p>
+        </div>
       </div>
+      <p className="small dim">
+        <MatIcon id={ROSETTA_STONE} size={12} /> A Rosetta Stone, found very rarely at the Imperial Adit, the Hollow Heart or the Sealed Reliquary, cracks glyphs in every script and opens a people's secret chapter once you are three chapters in.
+      </p>
     </section>
   );
 }
@@ -349,7 +397,7 @@ function StoryCard({ s, script }: { s: GameState; script: ScriptDef }) {
   return (
     <div className="card chapters-card" style={{ ['--script' as string]: script.color }}>
       <div className="card-title">
-        {script.name}
+        The story
         <span className="grow" />
         <span className="num dim">chapter {done} of {script.chapters}</span>
       </div>
@@ -385,23 +433,3 @@ function StoryCard({ s, script }: { s: GameState; script: ScriptDef }) {
   );
 }
 
-export function ChaptersView() {
-  const s = useGame();
-  return (
-    <section>
-      <SkillIntro step="Story Progression">
-        Translating inscriptions completes story chapters, unlocking new Dig Sites, hidden chambers, merchant stock & Relic Forge forms
-      </SkillIntro>
-      <div className="section-head">
-        <h3>Chapters</h3>
-        <span className="dim small">Each chapter needs more translated inscriptions than the one before. Rewards open the trail.</span>
-      </div>
-      <div className="card-grid" style={{ ['--card-min' as string]: '320px', gap: 8 }}>
-        {[...EARLY_SCRIPTS, 'first' as ScriptId].map((id) => <StoryCard key={id} s={s} script={SCRIPTS.find((x) => x.id === id)!} />)}
-      </div>
-      <p className="small dim">
-        <MatIcon id={ROSETTA_STONE} size={12} /> A Rosetta Stone, found very rarely at the Imperial Adit, the Hollow Heart or the Sealed Reliquary, cracks glyphs in every script and opens a culture's secret chapter once you are three chapters in.
-      </p>
-    </section>
-  );
-}

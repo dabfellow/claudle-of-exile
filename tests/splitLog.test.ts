@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LOG_SAMPLES, balancePoint, logProfile, massShare, splitResult } from '../src/engine/minigame';
+import { LOG_SAMPLES, balancePoint, columnProfile, logProfile, logWindow, massShare, splitResult } from '../src/engine/minigame';
 import { seeded } from '../src/engine/rng';
 
 describe('Woodcutting: split the log', () => {
@@ -62,5 +62,19 @@ describe('Woodcutting: split the log', () => {
         expect(splitResult(massShare(p, balancePoint(p)))).toBe('double');
       }
     }
+  });
+});
+
+describe('Woodcutting: weighing the log picture', () => {
+  it('weighs each pixel column by how solid it is, and trims and mirrors what you see', () => {
+    // a 4x2 picture: column 0 fully solid, column 1 half, columns 2 and 3 empty
+    const px = (a: number) => [0, 0, 0, a];
+    const rgba = [...px(255), ...px(255), ...px(0), ...px(0), ...px(255), ...px(0), ...px(0), ...px(0)];
+    expect(columnProfile(rgba, 4, 2)).toEqual([2, 1, 0, 0]);
+    const p = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    expect(logWindow(p, false, 0, 0)).toEqual(p);
+    expect(logWindow(p, true, 0, 0)).toEqual([...p].reverse());
+    expect(logWindow(p, false, 0.2, 0.3)).toEqual([3, 4, 5, 6, 7]);
+    expect(logWindow(p, true, 0.2, 0)).toEqual([8, 7, 6, 5, 4, 3, 2, 1]);
   });
 });

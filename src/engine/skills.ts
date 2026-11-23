@@ -36,7 +36,7 @@ import { rollCollectible } from './collectibles';
 import { finishWoodcraft, runningWoodPlan, woodBias, woodCraftDials } from './woodcrafting';
 import { catalogueSpeed, cutBlocker, cutCost, finishFacetedGem, roughForCut, runningCut, type CutSetup } from './gemFacets';
 import { roughDropBundle, type RoughGem } from './roughGems';
-import { giantCut, woodcuttingAccessHint } from './woodcutting';
+import { giantCut, whetstoneSpeed, woodcuttingAccessHint } from './woodcutting';
 import { createPurposeItem } from './smithing';
 import { foragingDone } from './foraging';
 import { finishQueuedInfusion, flawlessBarStack, GRAND_FLAWLESS_BARS, infusionQueueBlocker } from './alchemy';
@@ -87,6 +87,7 @@ export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): numb
   if (a.skill === 'archaeology') speed += codexDigSpeed(s);
   if (a.skill === 'smithing') speed += forgingSpeed(s);
   if (a.skill === 'gemcutting') speed += catalogueSpeed(s);
+  if (a.woodcutting?.mode === 'giant') speed += whetstoneSpeed(s);
   const interval = a.skill === 'smelting' ? a.intervalMs * smeltingInterval(s, a) : a.intervalMs;
   return (interval / (1 + speed / 100)) * keystoneSlow(a.skill, t);
 }
@@ -456,6 +457,9 @@ function completeGiantCut(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, t:
   }
   if (chance(ctx.rng, SHARD_CHANCE)) give(s, outputs, SHARD_FOR.woodcutting!, focusDouble ? 2 : 1);
   if (t.birdsNest && chance(ctx.rng, t.birdsNest / 100)) give(s, outputs, pick(ctx.rng, HERB_TIERS.slice(0, 2)), 1);
+  // mastery in these woods: a small chance of an extra log that grows with the level, and the milestone perks
+  const yieldChance = masteryYield(s, a.mastery);
+  if (cut.log && yieldChance > 0 && chance(ctx.rng, yieldChance)) give(s, outputs, cut.log, 1);
   for (const m of unlockedMilestones(s, a.mastery)) {
     if (m.kind === 'vein_strike' && cut.log && chance(ctx.rng, m.value)) {
       give(s, outputs, cut.log, 1);

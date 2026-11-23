@@ -42,6 +42,8 @@ The `zones/terrain-*.webp` images are existing illustrations, paintings and prin
 | Forge | Charles-Émile Jacque, [The Blacksmith Shop](https://www.clevelandart.org/art/1921.1444) | CC0 |
 | Underworks | Giovanni Battista Piranesi, [The Prisons: An Immense Interior with a Drawbridge](https://www.clevelandart.org/art/1941.26.5) | CC0 |
 
+- **scenes/scholars-desk.webp**: Rembrandt van Rijn, [Faust](https://www.clevelandart.org/art/1961.317) (etching, c. 1652), Cleveland Museum of Art, CC0. The print-size scan, cropped to the scholar and the glowing disc, toned warm and resized to 1600px for Archaeology's Scholar's Desk banner.
+
 ## Woodcutting Giant Trees
 
 The `trees/*.png` pixel tree sprites are sourced from OpenGameArt packs under CC0:
@@ -53,6 +55,7 @@ The `trees/*.png` pixel tree sprites are sourced from OpenGameArt packs under CC
 | `ironwood.png` | cemkalyoncu, [Haunted Forest Trees](https://opengameart.org/content/haunted-forest-trees) | CC0 | Tinted cool iron-slate |
 | `spirit.png` | Snabisch, [Some Pixel Trees](https://opengameart.org/content/some-pixel-trees) | CC0 | Background removed, tinted moonlight blue |
 
+- **woodcutting/split-log.png**: "Wood log" by EyAxeMan ([OpenGameArt](https://opengameart.org/content/wood-log)), CC0. The high-res version, turned to lie flat, cropped and resized to 640px for Woodcutting's chopping block.
 - **music/\*.ogg**: 10 Medieval Tracks by AlkaKrab (itch.io), free pack, the looping versions of Silverbrook, Emberlight, Elven Dawn and Throne of Storms, re-encoded to 96 kbps Opus. Assumed free for public use while the game isn't sold. The pack's licence PDF goes further: royalty-free, commercial use allowed, credit appreciated, edits for timing, volume or EQ allowed. The files may not be redistributed as-is, and open-source games need the author's permission (alkakrab04@gmail.com), so ask before making this repo public.
 
 Current game-id mappings are in `src/ui/assets.ts`; custom overrides are in `src/assets/art`. Historical recolour recipes are retained below; they are provenance, not a current art coverage report.

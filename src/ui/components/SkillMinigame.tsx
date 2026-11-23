@@ -8,7 +8,7 @@ import { ProgressBar } from './common';
 import { SkillGame } from './minigames';
 
 const HOW_TO: Partial<Record<SkillId, string>> = {
-  woodcutting: 'Swing the axe down to split each round into two equal halves. Within 3% of even is a double, 7% a hit, 15% weak.',
+  woodcutting: 'Swing the axe down to split each log into two halves that weigh the same. Within 3% of even is a double, 7% a hit, 15% weak.',
   harvesting: 'Tap lit soil beds quickly to fertilise them before they fade. Tap while glowing gold for a double.',
   thieving: 'Marks: spam-click while their back is turned to fill Focus and earn a double — stop the moment they look back! Heist rooms: watch the pins light up, then tap them back in order.',
   agility: 'Jump while the marker is in the bright band, or its gold middle for a double.',

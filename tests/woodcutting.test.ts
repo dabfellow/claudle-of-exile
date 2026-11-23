@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
-  BASE_HP, LEGENDS, LODGE, SIZE_MULT, WOODS, WORLD_TREE_GROWTH_MS,
+  BASE_HP, LEGENDS, LODGE, SIZE_MULT, WOODS, WORLD_TREE_GROWTH_MS, lodgeDef,
 } from '../src/data/woodcutting';
 import { COLLECTIBLES, collectibleFor } from '../src/data/collectibles';
 import { actionDef, actionsFor } from '../src/data/skills';
@@ -17,11 +17,12 @@ import { simulateOffline } from '../src/engine/offline';
 import { advanceProject, startProject } from '../src/engine/professions';
 import { equip } from '../src/engine/equipment';
 import { seeded } from '../src/engine/rng';
+import { masteryThreshold } from '../src/engine/skillingMastery';
 import { rollCollectible } from '../src/engine/collectibles';
 import {
   buildLodge, chooseRegion, familiarityMult, fellWorldTree, giantCut, legendChance, lodgeBlocker, makeGiant, moveOn, nextPart, partWorkable,
   plantBlocker, plantWorldTree, quirkChance, quirkChanceMult, rollGiant, setGiantPart, splitSwing, targetRegion, woodcuttingAccessHint,
-  worldTreeGrowth, worldTreeReady, legendChanceMult,
+  worldTreeGrowth, worldTreeReady, legendChanceMult, whetstoneSpeed, resinBonusPct, logRackChance, heartChiselMult, woodsMasteryId,
 } from '../src/engine/woodcutting';
 import type { Giant, GameState } from '../src/engine/types';
 
@@ -314,6 +315,55 @@ describe('Felling giants: regions, special giants and legends', () => {
 });
 
 describe('Felling giants: the lodge and the World Tree', () => {
+  it('has six levelled lodge buildings, with the Trophy Wall kept apart', () => {
+    expect(LODGE).toHaveLength(6);
+    for (const def of LODGE) expect(def.tiers.length).toBeGreaterThanOrEqual(2);
+    expect(lodgeDef('trophyWall').name).toBe('Trophy Wall');
+    // the Whetstone is the first thing a new woodcutter can build
+    const s = newGame(1);
+    expect(lodgeBlocker(s, 'whetstone')).toBe('Missing materials');
+    s.storage.bank.ash_log = 60;
+    expect(buildLodge(s, fixed(0.5), 'whetstone')).toBeNull();
+    expect(lodgeBlocker(s, 'whetstone')).toMatch(/level 25/);
+  });
+
+  it('cuts faster with the Whetstone', () => {
+    const s = newGame(1);
+    const a = actionDef('giant_ash');
+    const before = actionIntervalMs(s, a, deriveStats(s));
+    s.giant.lodge.whetstone = 3;
+    expect(whetstoneSpeed(s)).toBe(9);
+    expect(actionIntervalMs(s, a, deriveStats(s))).toBeCloseTo(before / 1.09, 0);
+  });
+
+  it('adds resin with Sap Buckets, trunk logs with the Log Rack and heartwood with the Heart Chisel', () => {
+    const s = newGame(1);
+    s.giant.lodge.sapBuckets = 2;
+    expect(resinBonusPct(s, 'ash')).toBe(20);
+    // resin 0.3 x 1.2 = 0.36: a roll of 0.35 now finds resin
+    s.giant.current = tinyGiant(s, 'ash', 5);
+    work(s, 'crown');
+    expect(giantCut(s, fixed(0.35)).drops.ash_resin).toBe(1);
+    s.giant.lodge.logRack = 3;
+    expect(logRackChance(s)).toBeCloseTo(0.15);
+    work(s, 'trunk');
+    expect(giantCut(s, fixed(0.1)).drops.ash_log).toBe(3); // 2 from the trunk's bonus roll, 1 from the rack
+    s.giant.lodge.heartChisel = 2;
+    expect(heartChiselMult(s)).toBeCloseTo(1.2);
+  });
+
+  it('gives woods mastery perks: resin at 50 and more special giants at 100, only in those woods', () => {
+    const s = newGame(1);
+    expect(actionDef('giant_ash').mastery?.milestones.map((m) => m.name)).toEqual(['Heavy Felling', 'Sap Sense', "Lumberjack's Rhythm", 'Old Friend']);
+    s.skillingMastery[woodsMasteryId('ash')] = masteryThreshold(50);
+    expect(resinBonusPct(s, 'ash')).toBe(25);
+    expect(resinBonusPct(s, 'oak')).toBe(0);
+    expect(quirkChanceMult(s, 'ash')).toBe(1);
+    s.skillingMastery[woodsMasteryId('ash')] = masteryThreshold(100);
+    expect(quirkChanceMult(s, 'ash')).toBeCloseTo(1.25);
+    expect(quirkChanceMult(s, 'oak')).toBe(1);
+  });
+
   it('builds each building once its level and logs are there', () => {
     const s = newGame(1);
     expect(lodgeBlocker(s, 'scoutTower')).toMatch(/level 20/);
@@ -325,7 +375,7 @@ describe('Felling giants: the lodge and the World Tree', () => {
     expect(s.giant.lodge.scoutTower).toBe(1);
     expect(quirkChanceMult(s, 'ash')).toBe(1.5);
     expect(lodgeBlocker(s, 'scoutTower')).toMatch(/level 70/);
-    expect(LODGE.map((l) => l.id)).toEqual(['scoutTower', 'dryingShed', 'trophyWall']);
+    expect(LODGE.map((l) => l.id)).toEqual(['scoutTower', 'dryingShed', 'whetstone', 'sapBuckets', 'logRack', 'heartChisel']);
     expect(lodgeBlocker(s, 'trophyWall')).toBe('Fell a legend first');
   });
 
@@ -477,7 +527,7 @@ describe('Felling giants: coming back and migration', () => {
     expect(s.collectibles).toEqual([]);
     // one fresh Medium giant in the highest region
     expect(s.giant.current).toMatchObject({ region: 'ironwood', size: 'medium', fallen: false });
-    expect(s.giant.lodge).toEqual({ scoutTower: 0, dryingShed: 0, sawmill: 0, trophyWall: 0 });
+    expect(s.giant.lodge).toEqual({ scoutTower: 0, dryingShed: 0, whetstone: 0, sapBuckets: 0, logRack: 0, heartChisel: 0, sawmill: 0, trophyWall: 0 });
     expect(s.giant.order).toEqual({ region: 'auto' });
     // the highest of each wood's old tracks; plank and other tracks keep their ids
     expect(s.skillingMastery['task.giant_ash']).toBe(500);

@@ -278,6 +278,26 @@ export function logProfile(kind: LogKind, rand: () => number, extraKnobs = 0): n
   return profile;
 }
 
+/**
+ * A log picture's mass along its length: for each pixel column, how much of it is solid (alpha, 0 to 255, row-major
+ * RGBA as from `getImageData`). Branches and bumps count where they stick out, so the split is judged on what you see.
+ */
+export function columnProfile(rgba: ArrayLike<number>, width: number, height: number): number[] {
+  const out = new Array<number>(width).fill(0);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) out[x] += rgba[(y * width + x) * 4 + 3] / 255;
+  }
+  return out;
+}
+
+/** The part of a log profile you see: mirrored if the picture is flipped, with a share trimmed off each end. */
+export function logWindow(profile: number[], flip: boolean, trimLeft: number, trimRight: number): number[] {
+  const p = flip ? [...profile].reverse() : profile;
+  const from = Math.round(p.length * trimLeft);
+  const to = Math.round(p.length * (1 - trimRight));
+  return p.slice(from, Math.max(from + 1, to));
+}
+
 /** The left share of a log's mass, 0 to 100, when it is cut `at` of the way along it (0 to 1). */
 export function massShare(profile: number[], at: number): number {
   const total = profile.reduce((a, b) => a + b, 0);
