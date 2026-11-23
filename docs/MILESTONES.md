@@ -4,6 +4,8 @@ Last updated 2026-11-23. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
+The sidebar Report update is queued for the next patch. It keeps drafts and captures the screen where you opened the report.
+
 The 12-skill Skilling Revamp is live in **6.0.0**. The next skilling changes will follow the owner's review of the live menus. See the [UI pass notes](SKILLING_UI_PASS_NOTES.md).
 
 The Delve, Woodcutting Forest pass, and Foraging look-and-feel pass share the local preview (2026-11-22). Mining includes trait filters, separate Focus and installation unlocks earned through security at the chosen depth. Foraging adds a CC0 farmstead backdrop, always-present click-to-start Focus soil beds, all nine wild patches visible up front, a clearer Herbarium pressed-plant journal, a lush CC0 Glasshouse conservatory with raised planter beds, a tactile visual Potting Bench & Seed Satchel (zero dropdowns), procedural Web Audio rain-on-glass & droplet soundscapes with planting/harvesting SFX, seed finds routed straight to the Activity sidebar, Normal/Magic/Rare/Unique/Legendary mutation and seed rarities, and a redesigned Seeds tab separating Plantable Seeds from Grown Herbs with direct `Plant in Glasshouse` links. The Masterworks visual pass is still open.

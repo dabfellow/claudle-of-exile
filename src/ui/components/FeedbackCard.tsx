@@ -3,13 +3,7 @@ import { AdminInbox } from './AdminInbox';
 import { game } from '../../game';
 import { isCloudAccount } from '../../platform/accounts';
 import { cloudConfigured } from '../../platform/supabase';
-import { errorText, FEEDBACK_MAX, feedbackContext, myReview, REVIEW_MAX, saveReview, sendFeedback, type FeedbackKind } from '../../platform/feedback';
-
-const KINDS: { id: FeedbackKind; label: string }[] = [
-  { id: 'bug', label: 'Bug report' },
-  { id: 'idea', label: 'Idea' },
-  { id: 'other', label: 'Something else' },
-];
+import { errorText, myReview, REVIEW_MAX, saveReview } from '../../platform/feedback';
 
 export function Stars({ value, onChange, size = 20 }: { value: number; onChange?: (n: number) => void; size?: number }) {
   return (
@@ -29,10 +23,8 @@ export function Stars({ value, onChange, size = 20 }: { value: number; onChange?
   );
 }
 
-/** Settings: send a bug report or idea, and (signed in) rate the game. */
+/** Settings keeps developer replies and game reviews. */
 export function FeedbackCard() {
-  const [kind, setKind] = useState<FeedbackKind>('bug');
-  const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const account = game.account;
   const signedIn = isCloudAccount(account);
@@ -55,18 +47,6 @@ export function FeedbackCard() {
 
   if (!cloudConfigured()) return null;
 
-  const send = async () => {
-    setBusy(true);
-    try {
-      await sendFeedback(kind, message, feedbackContext(game.state, 'settings', game.combatLog.map((line) => line.text)));
-      setMessage('');
-      game.pushToast('Thanks! Your feedback was sent.', 'good');
-    } catch (err) {
-      game.pushToast(errorText(err, 'Could not send feedback'), 'bad');
-    }
-    setBusy(false);
-  };
-
   const review = async () => {
     if (!account || !stars) return;
     setBusy(true);
@@ -82,40 +62,7 @@ export function FeedbackCard() {
 
   return (
     <><AdminInbox /><div className="card">
-      <div className="card-title">Feedback</div>
-      <p className="muted" style={{ marginTop: 0 }}>
-        Found a bug or have an idea? Your report includes your character name, gear, skills, passives, combat state and recent combat log for debugging. Signed-in reports are linked to your account so the developer can reply and help recover progress. Only administrators can read them.
-      </p>
-      <div className="row wrap" style={{ marginBottom: 8 }}>
-        <select className="input" value={kind} onChange={(e) => setKind(e.target.value as FeedbackKind)}>
-          {KINDS.map((k) => (
-            <option key={k.id} value={k.id}>
-              {k.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <textarea
-        className="input textarea"
-        rows={4}
-        maxLength={FEEDBACK_MAX}
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        placeholder={kind === 'bug' ? 'What happened, and what did you expect?' : 'Tell us…'}
-      />
-      <div className="row" style={{ marginTop: 8 }}>
-        <span className="dim small">
-          {message.length}/{FEEDBACK_MAX}
-        </span>
-        <span className="spacer" />
-        <button className="btn" disabled={busy || !message.trim()} onClick={send}>
-          Send
-        </button>
-      </div>
-
-      <div className="section-label" style={{ marginTop: 16 }}>
-        Rate the game
-      </div>
+      <div className="card-title">Rate the game</div>
       {signedIn ? (
         <>
           <Stars value={stars} onChange={setStars} size={24} />

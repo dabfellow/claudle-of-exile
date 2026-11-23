@@ -1,0 +1,28 @@
+.card.report-popup {
+  position: fixed;
+  inset: auto 16px 48px auto;
+  z-index: 145;
+  width: min(390px, calc(100% - 32px));
+  max-height: min(550px, calc(100dvh - 64px));
+  margin: 0;
+  overflow: auto;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.report-popup form, .report-popup label {
+  display: grid;
+  gap: 8px;
+}
+
+.report-popup form { gap: 12px; }
+.report-popup label { font-size: var(--fs-sm); }
+.report-popup p, .report-popup h2 { margin: 0; }
+.report-popup .textarea { min-height: 94px; max-height: 40dvh; resize: vertical; }
+
+.report-popup-head, .report-popup-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

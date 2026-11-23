@@ -45,6 +45,7 @@ import { skillLock } from './skillLock';
 import { fishingOpen } from '../engine/fishing';
 import { stationLockReason } from '../engine/hideout';
 import { professionProgressLabel } from '../engine/professions';
+import { ReportButton } from './components/ReportButton';
 
 export type Page =
   | 'hideout'
@@ -230,6 +231,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
           </span>
           <span className="nav-name">Settings</span>
         </button>
+        <ReportButton page={page} />
         {game.isAdmin && (
           <button className={`nav-item ${page === 'admin' ? 'active' : ''}`} onClick={() => go('admin')}>
             <span className="nav-icon">
