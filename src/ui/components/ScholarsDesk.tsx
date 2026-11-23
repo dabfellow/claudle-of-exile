@@ -432,4 +432,3 @@ function StoryCard({ s, script }: { s: GameState; script: ScriptDef }) {
     </div>
   );
 }
-
