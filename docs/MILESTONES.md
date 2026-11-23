@@ -4,7 +4,7 @@ Last updated 2026-11-23. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Master volume, rarity-based flask charges and Archaeology sifting with Delve Rubble are ready for the next patch.
+Master volume, rarity-based flask charges and Archaeology sifting with Delve Rubble are live in **6.0.2**.
 
 The sidebar Report update is live in **6.0.1**. It keeps drafts and captures the screen where you opened the report.
 
@@ -36,7 +36,9 @@ The seven-act zone naming and gear-check pack passes are live in **0.5.10**. The
 
 Veyrath campaign is live in **0.5.5** (2026-11-19): 70 zones across seven fuller chapters, revised level bands, matching rewards/gem access, saved journal, world/regional paintings, territory navigation, readable banners, character-specific unlock fog and the harsh surrounding ocean. All 113 test files / 1,795 tests, typecheck and production build pass. Earlier desktop/390px campaign navigation checks passed 2026-11-18; the latest artwork/fog was inspected through native previews because the local browser stayed blank, so live hover/desktop acceptance remains open. Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
-Latest confirmed live release is **6.0.1, Report from Anywhere**, deployed 2026-11-23. All 2,023 tests passed, and desktop and phone browser checks verified draft persistence, the original screen details and submission against a test endpoint. The deploy confirmed the live version and login configuration.
+Latest confirmed live release is **6.0.2, Master Volume, Flask Charges and Rubble Sifting**, deployed 2026-11-23. All 2,027 tests passed, including the flask charge endpoints for every rarity. A browser check verified the volume default, chime gain and mute, mined Rubble and sifted it into an artifact, and confirmed inventory overflow onto the ground. The deploy confirmed the live version and login configuration.
+
+Previous release: **6.0.1, Report from Anywhere**, deployed 2026-11-23. All 2,023 tests passed, and desktop and phone browser checks verified draft persistence, the original screen details and submission against a test endpoint. The deploy confirmed the live version and login configuration.
 
 Previous release: **6.0.0, Skilling Revamp**, deployed 2026-11-23. It includes all 12 reworked skills and the new skilling passive tree. All 2,023 tests passed across 133 files, and the production build passed. A local browser check opened all 12 menus, started a dig from the Scholar’s Desk and opened The Sovereign’s Vault. The deploy confirmed the live version and login configuration.
 
@@ -1025,6 +1027,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Ship the 15% master volume default and loot-filter volume control, kill-based flask charge ranges by rarity, and a one-Rubble material cost for Archaeology sifting. — done 2026-11-23
 
 - [x] Ship the sidebar Report popup in 6.0.1. Drafts survive navigation and reopening, and reports keep the screen details captured when opened. — done 2026-11-23
 
