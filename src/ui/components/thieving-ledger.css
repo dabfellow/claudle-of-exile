@@ -1,12 +1,17 @@
-/* Thieving: a quiet ledger beside a paper dossier. No large artwork assets. */
+/* Thieving: tavern & alley noir atmosphere framing ledger + parchment dossiers. */
 .page.thieving-page { gap: 18px; --gold: var(--accent); }
-.thief-header { display: flex; align-items: center; gap: 22px; padding: 22px 24px; background: linear-gradient(110deg, #202321, #161a1d); border-color: #45443a; }
-.thief-emblem { display: grid; place-items: center; color: var(--gold); width: 58px; height: 58px; border: 1px solid #62553b; border-radius: 6px; flex-shrink: 0; }
-.thief-heading { flex: 1; }
+.thief-header { display: flex; flex-direction: column; align-items: stretch; gap: 14px; padding: 20px 24px; background: linear-gradient(108deg, rgba(20, 22, 22, 0.9), rgba(18, 20, 22, 0.82)), url('../../assets/zones/gegx-tavern-fog.webp') center / cover; border-color: #45443a; }
+.thief-header-main { display: flex; align-items: center; gap: 22px; }
+.thief-emblem { display: grid; place-items: center; color: var(--gold); width: 58px; height: 58px; border: 1px solid #62553b; border-radius: 6px; flex-shrink: 0; background: rgba(18, 20, 20, 0.65); }
+.thief-heading { flex: 1; min-width: 0; }
 .thief-heading h1 { margin: 0 0 5px; font-size: 28px; }
 .thief-heading > span { font-family: var(--font-display, Georgia, serif); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #b3aa96; }
 .thief-xp { display: grid; gap: 8px; flex: 0 1 300px; color: var(--muted); }
 .thief-xp b { font-size: 22px; color: var(--gold); margin: 0 4px; }
+.thief-status-strip { display: flex; flex-wrap: wrap; gap: 8px 12px; padding-top: 12px; border-top: 1px solid rgba(180, 148, 92, 0.22); }
+.thief-status-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(180, 148, 92, 0.26); background: rgba(15, 17, 19, 0.68); font-size: 11px; }
+.thief-status-label { text-transform: uppercase; letter-spacing: .08em; font-size: 9px; color: #a79e8c; }
+.thief-status-chip b { color: #e4cfa2; font-weight: 600; }
 .thief-marker-total { display: flex; align-items: center; gap: 12px; padding-left: 22px; border-left: 1px solid #444139; }
 .thief-marker-total b { display: block; color: var(--gold); font: 26px Georgia, serif; }
 .thief-marker-total span { display: block; color: #b3aa96; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
@@ -57,7 +62,15 @@ html .thieving-page .thief-portrait img { filter: grayscale(1) sepia(.2); }
 .thief-reward b { font-weight: 600; }
 .thief-reward .num { font-size: 11px; }
 .thief-reward-note { color: #65553d; font-size: 10px; line-height: 1.6; margin: 12px 0 0; }
-.thief-dossier-action { padding: 14px 0; border-bottom: 1px solid #8d785b70; }
+.thief-dossier-action { position: relative; padding: 14px 0; border-bottom: 1px solid #8d785b70; }
+.thief-wax-seal { position: absolute; top: 14px; right: 18px; padding: 4px 10px; border-radius: 999px; background: radial-gradient(circle at 30% 30%, #9b372f, #68211c); border: 1px solid #c9735a; color: #f6e4c5; font: 600 10px/1 Georgia, serif; letter-spacing: .1em; text-transform: uppercase; box-shadow: 0 2px 6px rgba(45, 22, 16, 0.45); transform: rotate(-4deg); pointer-events: none; }
+.thief-pop { position: absolute; right: 10px; top: 4px; padding: 3px 9px; border-radius: 999px; background: #2d2518; border: 1px solid #a98643; color: #f2d99a; font-size: 11px; font-weight: 600; pointer-events: none; z-index: 2; animation: thiefPopUp 1.05s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+@keyframes thiefPopUp {
+  0% { opacity: 0; transform: translateY(8px) scale(0.92); }
+  16% { opacity: 1; transform: translateY(0) scale(1); }
+  80% { opacity: 1; transform: translateY(-16px); }
+  100% { opacity: 0; transform: translateY(-24px); }
+}
 .thief-dossier .thief-pickpocket { width: 100%; display: flex; justify-content: center; align-items: center; gap: 10px; min-height: 42px; border: 1px solid #672f2b; border-radius: 4px; background: linear-gradient(#713f39, #512c29); color: #ecdcba; box-shadow: inset 0 0 0 2px #bd9c6526; font: 14px Georgia, serif; letter-spacing: .08em; }
 .thief-dossier .thief-pickpocket:hover:not(:disabled) { background: #804b40; border-color: #946942; }
 .thief-dossier .thief-pickpocket:disabled { opacity: .5; cursor: not-allowed; }
@@ -110,7 +123,7 @@ div.thief-group-heading { cursor: default; }
 .thief-dossier .thief-focus { margin-top: 12px; }
 .thief-target:focus-visible,.thief-group-heading:focus-visible, .thief-return:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 @container (max-width: 1000px) {
-  .thief-header { flex-wrap: wrap; gap: 16px; }
+  .thief-header-main { flex-wrap: wrap; gap: 16px; }
   .thief-xp { flex: 1 1 230px; }
   .thief-marker-total { padding-left: 12px; }
   .thief-workspace { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; }
@@ -129,9 +142,11 @@ div.thief-group-heading { cursor: default; }
   .thief-xp { flex-basis: 170px; }
   .thief-marker-total b { font-size: 22px; }
   .thief-marker-total span { max-width: 80px; }
+  .thief-safehouse-slots, .thief-keepsakes-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @container (max-width: 420px) {
-  .thief-header { gap: 12px; }
+  .thief-header { gap: 10px; }
+  .thief-header-main { gap: 10px; }
   .thief-marker-total { border-left: 0; padding-left: 0; }
   .thief-columns, .thief-target { grid-template-columns: minmax(0, 2.3fr) repeat(3, minmax(0, .6fr)) minmax(0, .75fr); gap: 3px; }
   .thief-columns { font-size: 9px; padding-inline: 5px; }
@@ -141,6 +156,7 @@ div.thief-group-heading { cursor: default; }
   .thief-target-name b { font-size: 11px; }
   .thief-dossier-heading h2 { font-size: 22px; }
   .thief-portrait.large { width: 52px; height: 64px; }
+  .thief-prep-item { flex-wrap: wrap; }
 }
 .thief-prep-head{display:flex;align-items:center;gap:8px}
 .thief-prep-head h3{margin:0}
@@ -148,8 +164,58 @@ div.thief-group-heading { cursor: default; }
 .thief-prep-text{flex:1;min-width:0;display:flex;flex-direction:column}
 .thief-prep-text small{font-size:11px;opacity:.8}
 .thief-prep-name{display:inline-flex;align-items:center;gap:5px}
-.thief-prep-held{min-width:30px;text-align:right}
+.thief-prep-held{min-width:26px;text-align:right}
+.thief-prep-held-wrap{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+.thief-prep-monogram{width:24px;height:24px;border-radius:4px;border:1px solid #8a7044;background:#dfcfa9;color:#4d3a1f;display:grid;place-items:center;font:700 12px Georgia,serif;flex-shrink:0}
+.thief-prep-cell{display:inline-flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap}
+.thief-prep-pips{display:inline-flex;align-items:center;gap:3px}
+.thief-prep-pip{width:6px;height:6px;border-radius:50%;background:rgba(141,120,91,.35);border:1px solid rgba(141,120,91,.65)}
+.thief-prep-pip.on{background:#c59b49;border-color:#e2be72}
 .thief-prep-badge{display:block;color:#7a5a1c;font-size:10px}
 .thief-workspace.single{grid-template-columns:minmax(0,1fr)}
 .thief-dossier .help-tip-q{background:#cbb78c;border-color:#8d785b;color:#3f3122}
 .thief-dossier .help-tip:hover .help-tip-q,.thief-dossier .help-tip:focus-visible .help-tip-q{border-color:#4b3a20;color:#241b11}
+.thief-casing-intel{padding:12px 0;border-bottom:1px solid #8d785b70}
+.thief-casing-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.thief-casing-head h3{margin:0;color:#4d3e2b;font:12px Georgia,serif;letter-spacing:.13em;text-transform:uppercase}
+.thief-double-pill{display:inline-block;padding:2px 7px;border-radius:999px;background:#64502f;color:#f1dfba;font-size:10px;font-weight:600}
+.thief-intel-list{display:grid;gap:5px}
+.thief-intel-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#3c3123}
+.thief-recruit-progress{padding:10px 0 12px;border-bottom:1px solid #8d785b70;display:grid;gap:6px;font-size:11px;color:#4c3d2a}
+.thief-alley-stage{margin-top:12px;padding:10px;border-radius:8px;border:1px solid #6b5839;background:linear-gradient(180deg,rgba(13,14,17,.74),rgba(16,17,20,.88)),url('../../assets/zones/terrain-town.webp') center / cover;box-shadow:inset 0 0 24px rgba(0,0,0,.55)}
+.thief-alley-stage .minigame{background:rgba(18,21,24,.82);border-color:rgba(180,148,92,.34)}
+.thief-alley-stage .lift-arena{background:rgba(16,19,23,.78)}
+.thief-alley-stage .lift-arena.idle{width:100%;border-style:dashed;color:#d8c8a8;cursor:pointer}
+.thief-keepsakes{margin-top:16px;border:1px solid #3c3f3d;border-radius:5px;background:#191d1f;padding:8px 12px}
+.thief-keepsakes summary{display:flex;align-items:center;gap:8px;cursor:pointer;font:600 12px Georgia,serif;color:#d5c7a7}
+.thief-keepsakes-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.thief-keepsake-item{padding:8px;border-radius:4px;border:1px dashed #434643;background:#14181a;color:#9c9586;font-size:11px}
+.thief-keepsake-item.found{border-style:solid;border-color:#7c6741;background:linear-gradient(135deg,#25221a,#1a1c1d);color:#ddd1b6}
+.thief-keepsake-item b{display:block;margin-bottom:4px;font-size:12px}
+.thief-keepsake-item p{margin:0;line-height:1.4}
+.thief-blueprint{margin:14px 0 4px;padding:12px;border:1px solid #6b593c;border-radius:5px;background:linear-gradient(125deg,rgba(22,20,18,.88),rgba(28,24,19,.82)),url('../../assets/zones/terrain-underworks.webp') center / cover;color:#e2d4b5}
+.thief-blueprint-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;margin-bottom:10px;font:600 11px Georgia,serif;letter-spacing:.1em;text-transform:uppercase;color:#d5be8f}
+.thief-blueprint-track{display:flex;flex-wrap:wrap;align-items:center;gap:6px 2px}
+.thief-blueprint-step{display:inline-flex;align-items:center}
+.thief-blueprint-link{width:12px;height:2px;background:rgba(180,148,92,.35);margin:0 2px}
+.thief-blueprint-link.lit{background:#d8af5b}
+.thief-blueprint-node{display:inline-flex;flex-direction:column;align-items:center;min-width:36px;padding:4px 6px;border-radius:4px;border:1px solid rgba(180,148,92,.42);background:rgba(20,21,22,.84);font-size:10px;line-height:1.2}
+.thief-blueprint-node.hidden{border-style:dashed;border-color:#c59b49}
+.thief-blueprint-node.vault{border-color:#d9ae54;background:rgba(62,47,23,.88);color:#f6e1b2}
+.thief-blueprint-node.cleared{border-color:#6a9660;background:rgba(41,60,38,.88);color:#cce6c5}
+.thief-blueprint-node.active{border-color:#f4d27d;box-shadow:0 0 10px rgba(244,210,125,.45)}
+.thief-bp-key,.thief-bp-exit{font-size:8px;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.thief-bp-key{color:#f1cb73}
+.thief-bp-exit{color:#8fd291}
+.thief-safehouse{padding:14px 18px;background:linear-gradient(108deg,rgba(22,23,24,.9),rgba(16,18,20,.84)),url('../../assets/zones/gegx-tavern-fog.webp') center / cover;border-color:#45443a}
+.thief-safehouse-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.thief-safehouse-head h3{margin:0;font:600 14px Georgia,serif;color:#e2d3b1}
+.thief-safehouse-slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.thief-safehouse-slot{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:5px;border:1px solid #49473d;background:rgba(18,21,23,.8);color:#ddd2bc;text-align:left;cursor:pointer}
+.thief-safehouse-slot.filled:hover{border-color:#9e8149}
+.thief-safehouse-slot.filled.selected{border-color:#bc9b57;background:rgba(45,40,29,.9)}
+.thief-safehouse-slot.empty{justify-content:center;border-style:dashed;color:var(--dim);font-size:12px;cursor:default}
+.thief-safehouse-slot small{display:block;font-size:10px;color:#a79e8c}
+.thief-mentor-pills{display:flex;flex-wrap:wrap;gap:6px}
+.thief-talent-tier{margin:10px 0 4px;font:600 10px Georgia,serif;letter-spacing:.12em;text-transform:uppercase;color:#675234}
+@media (prefers-reduced-motion: reduce){.thief-pop{animation:none}}

@@ -135,7 +135,7 @@ function generateMilestones(skill: string, taskId: string, _taskName: string, _o
         { level: 25, id: mid(25, 'lock'), name: 'Fast Lockpick', desc: '+8% room clearance speed', scope: 'task', kind: 'vein_strike', value: 0.08 },
         { level: 50, id: mid(50, 'silent'), name: 'Silent Step', desc: '-15% alarm rate across this heist', scope: 'task', kind: 'alarm_mitigation', value: 15 },
         { level: 75, id: mid(75, 'speed'), name: 'Blueprint Insight', desc: '+2% global Heist speed across all jobs', scope: 'global', kind: 'global_speed', value: 2 },
-        { level: 100, id: mid(100, 'infil'), name: 'Master Infiltrator', desc: '+5% bonus Rogue\'s Markers & Seals from all vaults', scope: 'global', kind: 'inside_knowledge', value: 5 },
+        { level: 100, id: mid(100, 'infil'), name: 'Master Infiltrator', desc: '+5% bonus Gold & Seals from all vaults', scope: 'global', kind: 'inside_knowledge', value: 5 },
       ];
     }
     return [

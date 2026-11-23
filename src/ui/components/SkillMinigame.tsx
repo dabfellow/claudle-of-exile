@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { actionDef, SKILLS } from '../../data/skills';
-import { doubleReady, focusMult, focusOf, hasMinigame, maxFocusSpeed, minigameSwing, overflowOf, type SwingResult } from '../../engine/minigame';
+import { doubleReady, focusHoldSeconds, focusMult, focusOf, focusRemainingSeconds, hasMinigame, maxFocusSpeed, minigameSwing, overflowOf, type SwingResult } from '../../engine/minigame';
 import { splitSwing } from '../../engine/woodcutting';
 import type { GameState, SkillId } from '../../engine/types';
 import { game, useGame } from '../../game';
@@ -10,7 +10,7 @@ import { SkillGame } from './minigames';
 const HOW_TO: Partial<Record<SkillId, string>> = {
   woodcutting: 'Swing the axe down to split each log into two halves that weigh the same. Within 3% of even is a double, 7% a hit, 15% weak.',
   harvesting: 'Tap lit soil beds quickly to fertilise them before they fade. Tap while glowing gold for a double.',
-  thieving: 'Marks: spam-click while their back is turned to fill Focus and earn a double — stop the moment they look back! Heist rooms: watch the pins light up, then tap them back in order.',
+  thieving: 'Marks: tap rapidly while their back is turned to fill Focus and trigger ×2 lifts — pause when they look back! Focus speed holds for nearly a minute. Heist rooms: tap the lit pins in order.',
   agility: 'Jump while the marker is in the bright band, or its gold middle for a double.',
   archaeology: 'Brush soil squares to uncover the find. Avoid hairline cracks: 0 chips is a double, 1 a hit, 2 weak, 3+ a miss.',
   woodcrafting: 'Trace the marked line from start to finish in four seconds. A close trace earns a double.',
@@ -33,7 +33,7 @@ function runningSkill(s: GameState): SkillId | null {
 }
 
 /** The manual side of a skill: play it for Focus, or leave it running. */
-export function SkillMinigame({ skill }: { skill: SkillId }) {
+export function SkillMinigame({ skill, portrait, targetName }: { skill: SkillId; portrait?: string; targetName?: string }) {
   const s = useGame();
   const [result, setResult] = useState<{ id: number; r: SwingResult } | null>(null);
   if (skill === 'mining' || skill === 'smelting' || skill === 'smithing') return null;
@@ -47,6 +47,11 @@ export function SkillMinigame({ skill }: { skill: SkillId }) {
   const color = SKILLS[skill].color;
   const action = s.action?.kind === 'skill' ? actionDef(s.action.actionId) : undefined;
   const matId = Object.keys(action?.outputs ?? {})[0];
+  const hold = skill === 'thieving' ? focusHoldSeconds(s, skill) : 0;
+  const rem = skill === 'thieving' ? focusRemainingSeconds(s, skill) : 0;
+  const timerText = skill === 'thieving' && rem > 0
+    ? (hold > 0.5 ? `${Math.ceil(hold)}s full · ${Math.ceil(rem)}s left` : `${Math.ceil(rem)}s left`)
+    : null;
   return (
     <div className="card minigame">
       <div className="card-title">
@@ -54,7 +59,14 @@ export function SkillMinigame({ skill }: { skill: SkillId }) {
         <span className="grow" />
         <span className="card-hint">{HOW_TO[skill]}</span>
       </div>
-      <SkillGame skill={skill} matId={matId} markLevel={skill === 'thieving' && s.action?.kind === 'skill' ? actionDef(s.action.actionId).level : undefined} onSwing={onSwing} />
+      <SkillGame
+        skill={skill}
+        matId={matId}
+        markLevel={skill === 'thieving' && s.action?.kind === 'skill' ? actionDef(s.action.actionId).level : undefined}
+        portrait={portrait}
+        targetName={targetName}
+        onSwing={onSwing}
+      />
       <div className="row minigame-foot">
         <div className="minigame-bars grow">
           <ProgressBar value={focusOf(s)} color={color} />
@@ -69,6 +81,11 @@ export function SkillMinigame({ skill }: { skill: SkillId }) {
         >
           +{Math.round((focusMult(s, skill) - 1) * 100)}% speed
         </span>
+        {timerText && (
+          <span className="num small minigame-timer" title="Full-speed Focus hold and total time remaining">
+            {timerText}
+          </span>
+        )}
         {result && (
           <span key={result.id} className={`minigame-result ${result.r}`}>
             {RESULT_TEXT[result.r]}

@@ -29,6 +29,7 @@ import { SplitGame } from './SplitLog';
 import { brushCrackCut } from '../../engine/deciphering';
 import { useGame } from '../../game';
 import { levelOf } from '../../engine/xp';
+import { Art, GameIcon } from './common';
 import './star-chart.css';
 import '../archaeology.css';
 import './giants.css';
@@ -826,10 +827,10 @@ const LIFT_BADGE: Record<LiftPhase, string> = {
 };
 
 /**
- * Street marks: spam-click to pickpocket while their back is turned; stop when they glance back or watch!
- * Phase durations randomize each cycle so players react to the mark rather than counting fixed beats.
+ * Street marks: tap rapidly while their back is turned; stop when they glance back or watch!
+ * Starts immediately in the open window and awards partial 2–3 click snags when they start turning.
  */
-function LiftGame({ markLevel, onSwing }: { markLevel: number; onSwing: OnSwing }) {
+function LiftGame({ markLevel, portrait, targetName, onSwing }: { markLevel: number; portrait?: string; targetName?: string; onSwing: OnSwing }) {
   const markLevelRef = useRef(markLevel);
   markLevelRef.current = markLevel;
   const onSwingRef = useRef(onSwing);
@@ -837,18 +838,18 @@ function LiftGame({ markLevel, onSwing }: { markLevel: number; onSwing: OnSwing 
 
   const durationFor = (next: LiftPhase) => {
     if (next === 'away') {
-      const min = Math.max(950, 1100 - Math.floor(markLevelRef.current * 1.5));
-      const max = Math.max(1700, 3312 - markLevelRef.current * 12);
+      const min = Math.max(1350, 1600 - Math.floor(markLevelRef.current * 2.5));
+      const max = Math.max(2400, 3500 - markLevelRef.current * 10);
       return random(min, max);
     }
-    if (next === 'glancing') return random(420, 700);
-    return random(800, 2200);
+    if (next === 'glancing') return random(460, 720);
+    return random(650, 1550);
   };
 
   const stateRef = useRef({
-    phase: 'watching' as LiftPhase,
+    phase: 'away' as LiftPhase,
     startedAt: performance.now(),
-    duration: random(800, 1500),
+    duration: durationFor('away'),
     clicks: 0,
     total: 0,
     glanced: false,
@@ -856,7 +857,7 @@ function LiftGame({ markLevel, onSwing }: { markLevel: number; onSwing: OnSwing 
   const uidRef = useRef(0);
   const timers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
-  const [phase, setPhase] = useState<LiftPhase>('watching');
+  const [phase, setPhase] = useState<LiftPhase>('away');
   const [clicks, setClicks] = useState(0);
   const [total, setTotal] = useState(0);
   const [caughtFlash, setCaughtFlash] = useState(false);
@@ -870,12 +871,12 @@ function LiftGame({ markLevel, onSwing }: { markLevel: number; onSwing: OnSwing 
 
   useEffect(() => {
     const st = stateRef.current;
-    st.phase = 'watching';
+    st.phase = 'away';
     st.startedAt = performance.now();
-    st.duration = random(800, 1500);
+    st.duration = durationFor('away');
     st.clicks = 0;
     st.glanced = false;
-    setPhase('watching');
+    setPhase('away');
     setClicks(0);
     setAlert(null);
   }, [markLevel]);
@@ -894,6 +895,13 @@ function LiftGame({ markLevel, onSwing }: { markLevel: number; onSwing: OnSwing 
       setClicks(0);
       setAlert(null);
     } else if (next === 'glancing') {
+      if (st.clicks > 0 && st.clicks < LIFT_CLICKS_HIT) {
+        const partial = liftSpamResult(st.clicks, false);
+        if (partial) {
+          onSwingRef.current(partial);
+          setAlert({ id: ++uidRef.current, kind: 'hit', text: 'Quick snag · +5% Focus' });
+        }
+      }
       st.glanced = false;
     }
     setPhase(next);
@@ -965,7 +973,7 @@ function LiftGame({ markLevel, onSwing }: { markLevel: number; onSwing: OnSwing 
       className={`lift-arena ${phase} ${caughtFlash ? 'caught-flash' : ''}`}
       role="button"
       tabIndex={0}
-      aria-label="Pickpocket mark: spam click while looking away, stop when watching"
+      aria-label="Pickpocket mark: tap rapidly while looking away, stop when watching"
       onPointerDown={(e) => {
         if (e.pointerType === 'mouse' && e.button !== 0) return;
         tap();
@@ -980,15 +988,26 @@ function LiftGame({ markLevel, onSwing }: { markLevel: number; onSwing: OnSwing 
       <span className={`lift-badge ${phase}`}>{LIFT_BADGE[phase]}</span>
       <div className="lift-gaze-wrap">
         <svg className="lift-gaze-svg" viewBox="0 0 110 110" aria-hidden>
-          <circle cx="55" cy="55" r="46" fill="none" stroke={coneColor} strokeOpacity="0.3" strokeWidth="2" strokeDasharray={phase === 'away' ? '5 4' : undefined} />
+          <circle cx="55" cy="55" r="46" fill="none" stroke={coneColor} strokeOpacity="0.32" strokeWidth="2" strokeDasharray={phase === 'away' ? '5 4' : undefined} />
           <g className="lift-head-group" style={{ transform: `rotate(${headDeg}deg)` }}>
-            <path d="M55,55 L27,92 A46,46 0 0 0 83,92 Z" fill={coneColor} opacity="0.28" />
-            <circle cx="55" cy="55" r="18" fill="#1e222b" stroke={coneColor} strokeWidth="2.8" />
-            <circle cx="49" cy="61" r="2.3" fill={phase === 'watching' ? '#ff7c70' : coneColor} />
-            <circle cx="61" cy="61" r="2.3" fill={phase === 'watching' ? '#ff7c70' : coneColor} />
-            <path d="M55,73 L50,67 L60,67 Z" fill={coneColor} opacity="0.85" />
+            <path d="M55,55 L27,92 A46,46 0 0 0 83,92 Z" fill={coneColor} opacity="0.3" />
+            {portrait ? (
+              <circle cx="55" cy="94" r="3.4" fill={phase === 'watching' ? '#ff7c70' : coneColor} />
+            ) : (
+              <>
+                <circle cx="55" cy="55" r="18" fill="#1e222b" stroke={coneColor} strokeWidth="2.8" />
+                <circle cx="49" cy="61" r="2.3" fill={phase === 'watching' ? '#ff7c70' : coneColor} />
+                <circle cx="61" cy="61" r="2.3" fill={phase === 'watching' ? '#ff7c70' : coneColor} />
+                <path d="M55,73 L50,67 L60,67 Z" fill={coneColor} opacity="0.85" />
+              </>
+            )}
           </g>
         </svg>
+        {portrait && (
+          <span className={`lift-portrait-token ${phase}`} aria-hidden>
+            <Art src={portrait} alt={targetName ?? ''} size={38} fallback={<GameIcon name="thieving" size={20} />} />
+          </span>
+        )}
         {popups.map((p) => (
           <span key={p.id} className="lift-pop" style={{ left: `${p.x}%`, top: `${p.y}%` }} aria-hidden>+1</span>
         ))}
@@ -1006,9 +1025,56 @@ function LiftGame({ markLevel, onSwing }: { markLevel: number; onSwing: OnSwing 
         <span className="lift-streak num">Streak: {total}</span>
       </div>
       <div className={`lift-feedback ${alert?.kind ?? ''}`} aria-live="polite">
-        {alert ? <span key={alert.id}>{alert.text}</span> : (phase === 'away' ? 'Spam click or press Space!' : 'Hands off until they turn away')}
+        {alert ? <span key={alert.id}>{alert.text}</span> : (phase === 'away' ? 'Tap or press Space while back is turned!' : 'Hands off until they turn away')}
       </div>
     </div>
+  );
+}
+
+/** Always-present idle alley stage matching `LiftGame` geometry so clicking starts pickpocketing immediately. */
+export function LiftGameIdle({
+  targetName,
+  portrait,
+  locked,
+  onStart,
+}: {
+  targetName: string;
+  portrait?: string;
+  locked?: boolean;
+  onStart: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="lift-arena idle"
+      disabled={locked}
+      title={locked ? `${targetName} is locked` : `Start pickpocketing ${targetName}`}
+      aria-label={locked ? `${targetName} (locked)` : `Start pickpocketing ${targetName}`}
+      onClick={onStart}
+    >
+      <span className="lift-badge idle">{locked ? 'Target Locked' : 'Lantern Alley · Ready'}</span>
+      <div className="lift-gaze-wrap">
+        <svg className="lift-gaze-svg" viewBox="0 0 110 110" aria-hidden>
+          <circle cx="55" cy="55" r="46" fill="none" stroke="#c9a35a" strokeOpacity="0.32" strokeWidth="2" strokeDasharray="5 4" />
+          <path d="M55,55 L27,18 A46,46 0 0 1 83,18 Z" fill="#c9a35a" opacity="0.16" />
+          {!portrait && (
+            <>
+              <circle cx="55" cy="55" r="18" fill="#1e222b" stroke="#c9a35a" strokeWidth="2.4" />
+              <circle cx="49" cy="49" r="2.2" fill="#c9a35a" />
+              <circle cx="61" cy="49" r="2.2" fill="#c9a35a" />
+            </>
+          )}
+        </svg>
+        {portrait && (
+          <span className="lift-portrait-token idle" aria-hidden>
+            <Art src={portrait} alt="" size={38} fallback={<GameIcon name="thieving" size={20} />} />
+          </span>
+        )}
+      </div>
+      <div className="lift-feedback idle">
+        {locked ? `Reach the required level to work ${targetName}` : `Click or press Pickpocket to start working ${targetName}`}
+      </div>
+    </button>
   );
 }
 
@@ -1302,14 +1368,14 @@ function CurveGame({ onSwing }: { onSwing: OnSwing }) {
 }
 
 /** The game for a skill. `matId` is what the running action gathers. */
-export function SkillGame({ skill, matId, markLevel, onSwing }: { skill: SkillId; matId?: string; /** set while a Thieving mark (not a Heist room) runs */ markLevel?: number; onSwing: OnSwing }) {
+export function SkillGame({ skill, matId, markLevel, portrait, targetName, onSwing }: { skill: SkillId; matId?: string; /** set while a Thieving mark (not a Heist room) runs */ markLevel?: number; portrait?: string; targetName?: string; onSwing: OnSwing }) {
   switch (skill) {
     case 'woodcutting':
       return <SplitGame onSwing={onSwing} />;
     case 'harvesting':
       return <ForagingGame matId={matId} onSwing={onSwing} />;
     case 'thieving':
-      return markLevel !== undefined ? <LiftGame markLevel={markLevel} onSwing={onSwing} /> : <ThievingGame onSwing={onSwing} />;
+      return markLevel !== undefined ? <LiftGame markLevel={markLevel} portrait={portrait} targetName={targetName} onSwing={onSwing} /> : <ThievingGame onSwing={onSwing} />;
     case 'agility':
       return <WoodcuttingGame onSwing={onSwing} />;
     case 'archaeology':

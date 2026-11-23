@@ -68,6 +68,7 @@ import { skillTreeStats } from './skillTree';
 import { deriveStats } from './stats';
 import { astrologyMapDrops } from './astrology';
 import { atlasSpecialPerks, rollMapBossScraps } from './cartography';
+import { rollVaultMapPrep } from './heist';
 import type { AtlasState, EquipSlot, GameState, GroundKind, MapSettings, MapState, MonsterInstance, SextantSlot } from './types';
 import { charXpForLevel } from './xp';
 
@@ -956,6 +957,7 @@ export function mapStep(s: GameState, ctx: Ctx): void {
         const cur = pick(ctx.rng, currencyTable);
         addBank(s, cur, 1);
       }
+      rollVaultMapPrep(s, ctx);
     } else if (run.specialKind === 'guardian') {
       addBank(s, 'guardian_trophy', 1);
       ctx.emit({ t: 'loot', currencyId: 'guardian_trophy', qty: 1 });

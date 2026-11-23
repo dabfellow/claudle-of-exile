@@ -8,12 +8,23 @@ import type { GameState, SkillId } from './types';
  * normal idle rate. It can only ever add speed, and it never runs offline.
  */
 export const MAX_FOCUS_SPEED = 0.45;
-/** Focus past full: adds no speed, but buys this much drain time before speed starts to fall (5 s). */
+/** Focus past full: adds no speed, but buys this much drain time before speed starts to fall (5 s for most skills). */
 const FOCUS_OVERFLOW = 0.5;
 const FOCUS_HIT = 0.25;
 const FOCUS_WEAK = 0.05;
 const FOCUS_MISS = 0.1;
 const FOCUS_DRAIN_PER_SEC = 0.1;
+/** Thieving holds Focus much longer (~28.6 s at peak, ~57 s total) so waiting out glances feels rewarding. */
+export const THIEVING_FOCUS_OVERFLOW = 1.0;
+export const THIEVING_FOCUS_DRAIN_PER_SEC = 0.035;
+
+export function focusOverflowCap(skill?: SkillId | null): number {
+  return skill === 'thieving' ? THIEVING_FOCUS_OVERFLOW : FOCUS_OVERFLOW;
+}
+
+export function focusDrainPerSec(skill?: SkillId | null): number {
+  return skill === 'thieving' ? THIEVING_FOCUS_DRAIN_PER_SEC : FOCUS_DRAIN_PER_SEC;
+}
 
 /** Mining: an early release under this much charge does nothing; the sweet spot is this wide. */
 export const CHARGE_MIN = 0.5;
@@ -356,7 +367,20 @@ export function focusOf(s: GameState): number {
 
 /** How full the overflow bar is, 0–1. */
 export function overflowOf(s: GameState): number {
-  return Math.max(0, (manualAction(s)?.focus ?? 0) - 1) / FOCUS_OVERFLOW;
+  const cap = focusOverflowCap(currentMinigameSkill(s));
+  return Math.max(0, (manualAction(s)?.focus ?? 0) - 1) / cap;
+}
+
+/** Seconds of full-speed Focus overflow remaining. */
+export function focusHoldSeconds(s: GameState, skill?: SkillId | null): number {
+  const rate = focusDrainPerSec(skill ?? currentMinigameSkill(s));
+  return Math.max(0, (manualAction(s)?.focus ?? 0) - 1) / rate;
+}
+
+/** Total seconds until Focus drains back to idle. */
+export function focusRemainingSeconds(s: GameState, skill?: SkillId | null): number {
+  const rate = focusDrainPerSec(skill ?? currentMinigameSkill(s));
+  return (manualAction(s)?.focus ?? 0) / rate;
 }
 
 /**
@@ -377,8 +401,9 @@ export function focusMult(s: GameState, skill?: SkillId | null): number {
 export function minigameSwing(s: GameState, result: SwingResult): void {
   const a = manualAction(s);
   if (!a) return;
+  const cap = focusOverflowCap(currentMinigameSkill(s));
   const change = result === 'hit' || result === 'double' ? FOCUS_HIT : result === 'weak' ? FOCUS_WEAK : -FOCUS_MISS;
-  a.focus = Math.min(1 + FOCUS_OVERFLOW, Math.max(0, (a.focus ?? 0) + change));
+  a.focus = Math.min(1 + cap, Math.max(0, (a.focus ?? 0) + change));
   // one double waits for the next finish: more doubles before it lands don't stack
   if (result === 'double') a.double = true;
 }
@@ -400,5 +425,6 @@ export function takeDouble(s: GameState, ctx: Ctx): boolean {
 export function focusStep(s: GameState, ctx: Ctx, dt: number): void {
   const a = manualAction(s);
   if (!a?.focus) return;
-  a.focus = ctx.offline ? 0 : Math.max(0, a.focus - (FOCUS_DRAIN_PER_SEC * dt) / 1000);
+  const rate = focusDrainPerSec(currentMinigameSkill(s));
+  a.focus = ctx.offline ? 0 : Math.max(0, a.focus - (rate * dt) / 1000);
 }

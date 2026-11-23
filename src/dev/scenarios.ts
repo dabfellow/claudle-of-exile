@@ -8,6 +8,8 @@
  */
 import { BASES } from '../data/bases';
 import { DOOMED_TIERS, SEXTANTS, UNIQUE_MAPS } from '../data/maps';
+import { prepBoard, prepId } from '../data/heist';
+import { ROGUES } from '../data/rogues';
 import { ZONES } from '../data/zones';
 import { addBank } from '../engine/bank';
 import { FINAL_ACT } from '../engine/hideout';
@@ -63,8 +65,31 @@ const PRESETS: Record<string, Setup> = {
       s.skills.thieving = xpForLevel(60);
       s.storage.bank.gold = 100000;
       s.storage.bank.rogues_marker = 1000;
+      s.heist.unlockedRogues = ROGUES.map((r) => r.id);
       s.heist.crew = ['bruiser', 'locksmith', 'lookout'];
       for (const rogue of Object.values(s.heist.roster!)) rogue.level = 60;
+      for (const e of prepBoard('pyre_vault').items.slice(0, 4)) s.heist.prep[prepId('pyre_vault', e.kind)] = 2;
+      s.heist.planned = 'pyre_vault';
+    },
+  },
+  thievingEndgame: {
+    classId: 'shadow', level: 90, zone: 'caravan',
+    prepare: (s) => {
+      s.combat = null; s.action = null;
+      s.skills.thieving = xpForLevel(90);
+      s.storage.bank.gold = 250000;
+      s.storage.bank.treasury_fragment = 45;
+      s.storage.bank.oath_fragment = 2;
+      s.heist.unlockedRogues = ROGUES.map((r) => r.id);
+      s.heist.crew = ['locksmith', 'lookout', 'hacker'];
+      for (const rogue of Object.values(s.heist.roster!)) rogue.level = 40;
+      for (const jobId of ['cinder_toll', 'salt_tithe', 'last_wagon', 'pyre_vault', 'khans_tribute', 'occult_treasury', 'gilded_mint']) {
+        s.professionProgress.discoveries[`heist_clean_${jobId}`] = true;
+      }
+      for (const e of prepBoard('gilded_mint').items) s.heist.prep[prepId('gilded_mint', e.kind)] = 2;
+      for (const e of prepBoard('sovereign_vault').items.slice(0, 4)) s.heist.prep[prepId('sovereign_vault', e.kind)] = 2;
+      s.heist.planned = 'sovereign_vault';
+      s.collectibles = [...new Set([...s.collectibles, 'thieving.street', 'thieving.civic'])];
     },
   },
   foragingStarter: {

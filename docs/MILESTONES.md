@@ -1,8 +1,10 @@
 # Roadmap and decisions
 
-Last updated 2026-11-22. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-23. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
+
+The 12-skill Skilling Revamp is assembled for the 6.0 release. It includes the Woodcutting Lodge and giant-heart pass, Archaeology's updated Scholar’s Desk and tabs, Astrology's chart and telescope polish, and Thieving's new high-level marks, heists and ledger. Owner feedback on the menus will follow after release.
 
 The Delve, Woodcutting Forest pass, and Foraging look-and-feel pass share the local preview (2026-11-22). Mining includes trait filters, separate Focus and installation unlocks earned through security at the chosen depth. Foraging adds a CC0 farmstead backdrop, always-present click-to-start Focus soil beds, all nine wild patches visible up front, a clearer Herbarium pressed-plant journal, a lush CC0 Glasshouse conservatory with raised planter beds, a tactile visual Potting Bench & Seed Satchel (zero dropdowns), procedural Web Audio rain-on-glass & droplet soundscapes with planting/harvesting SFX, seed finds routed straight to the Activity sidebar, Normal/Magic/Rare/Unique/Legendary mutation and seed rarities, and a redesigned Seeds tab separating Plantable Seeds from Grown Herbs with direct `Plant in Glasshouse` links. The Masterworks visual pass is still open.
 

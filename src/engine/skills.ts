@@ -33,6 +33,7 @@ import { delveActionSpec, delveStep, isDelveAction, startDelve } from './delve';
 import { finishSmelt, smeltingBlocker, smeltingCost, smeltingInterval } from './smelting';
 import { applyBarPurity, completeStagedForge, forgeAction, forgeActionBlocker, forgingSpeed, isStagedForge } from './forging';
 import { rollCollectible } from './collectibles';
+import { thievingZoneForLevel } from '../data/collectibles';
 import { finishWoodcraft, runningWoodPlan, woodBias, woodCraftDials } from './woodcrafting';
 import { catalogueSpeed, cutBlocker, cutCost, finishFacetedGem, roughForCut, runningCut, type CutSetup } from './gemFacets';
 import { roughDropBundle, type RoughGem } from './roughGems';
@@ -83,7 +84,7 @@ export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): numb
   const t = skillTreeStats(s);
   const mealGathering = GATHERING_SET.has(a.skill) ? (d.gatheringSpeed ?? 0) : 0;
   const mealProduction = PRODUCTION_SET.has(a.skill) ? (d.productionSpeed ?? 0) : 0;
-  let speed = d.skillSpeed + mealGathering + mealProduction + (t.skillSpeed ?? 0) + (t[`${a.skill}Speed` as keyof TreeStats] ?? 0) + masterySpeed(s, a.mastery) + astrologySpeed(s, a.skill);
+  let speed = d.skillSpeed + mealGathering + mealProduction + (t.skillSpeed ?? 0) + (t[`${a.skill}Speed` as keyof TreeStats] ?? 0) + (a.skill === 'thieving' ? (t['thieving.quickLift'] ?? 0) : 0) + masterySpeed(s, a.mastery) + astrologySpeed(s, a.skill);
   if (a.skill === 'archaeology') speed += codexDigSpeed(s);
   if (a.skill === 'smithing') speed += forgingSpeed(s);
   if (a.skill === 'gemcutting') speed += catalogueSpeed(s);
@@ -515,11 +516,13 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
 
   // alternate nodes trade some of their base material for a better secondary
   const yields = a.outputChance === undefined || chance(ctx.rng, a.outputChance);
+  const markGoldMult = a.skill === 'thieving' ? (1 + (t['thieving.deepPockets'] ?? 0) / 100) * (t['bridge.inside_job'] ? 0.75 : 1) : 1;
   for (const [id, n] of Object.entries(yields ? { ...a.outputs, ...miningOutput } : {})) {
     let qty = n * mult;
     qty += stochasticRound(ctx.rng, (qty * astrologyYield(s, a.skill)) / 100);
     if (a.skill === 'mining' && id.endsWith('_ore') && t.motherlode) qty *= 2;
     if (id === a.mastery?.primaryOutput) qty += stochasticRound(ctx.rng, n * masteryYield(s, a.mastery));
+    if (a.skill === 'thieving' && id === 'gold' && markGoldMult !== 1) qty = Math.max(1, Math.round(qty * markGoldMult));
     // Transmuter / Alchemy table L8: crafted orbs sometimes come out one tier higher
     const tier = ORB_TIERS.indexOf(id);
     const alchElevate = a.skill === 'alchemy' && alchLvl >= 8 && chance(ctx.rng, 0.1);
@@ -602,6 +605,7 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
     s.professionProgress.counters['thieving.markers'] = (s.professionProgress.counters['thieving.markers'] ?? 0) + 1;
     rollPrep(s, ctx, a);
     rollRogueRecruit(s, ctx);
+    rollCollectible(s, ctx, 'thieving', thievingZoneForLevel(a.level));
   }
 
   // a doubled base is a second full base, catalysts and all; a Craft-until stop on the first ends it there

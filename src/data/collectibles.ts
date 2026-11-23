@@ -60,10 +60,22 @@ const ASTROLOGY_COLLECTIBLES: CollectibleDef[] = [
   row('astrology', 'deep_black', 'The Black Reach', 'A page of nothing', 'Perfectly black. Stare long enough and a star looks back.'),
 ];
 
+const THIEVING_COLLECTIBLES: CollectibleDef[] = [
+  row('thieving', 'street', 'Street Targets', 'A weighted copper coin', 'Always lands heads when you flick it with your left thumb.'),
+  row('thieving', 'civic', 'Civic & Wealthy', 'A wax signet ring, filed smooth', 'The crest is gone, but the gold band still smells faintly of lamp oil.'),
+  row('thieving', 'underworld', 'Underworld Figures', 'A ciphered chalk tally', 'Three short lines and a bent hook — the old sign for an open back door.'),
+  row('thieving', 'highcourt', 'High Court & Vaults', 'A skeleton key with no bow', 'Cut from blackened steel, polished bright at the teeth from decades of quiet work.'),
+];
+
+export function thievingZoneForLevel(level: number): string {
+  return level <= 16 ? 'street' : level <= 35 ? 'civic' : level <= 60 ? 'underworld' : 'highcourt';
+}
+
 export const COLLECTIBLES: CollectibleDef[] = [
   ...WOODCUTTING_COLLECTIBLES,
   ...ARCHAEOLOGY_COLLECTIBLES,
   ...ASTROLOGY_COLLECTIBLES,
+  ...THIEVING_COLLECTIBLES,
   row('mining', 'delve', 'The Delve', "A lost miner's lantern", 'The wick is dry, and the handle is polished smooth.'),
   row('smelting', 'furnace', 'The Furnace', "An old smith's maker's mark", 'An unfamiliar stamp baked into a loose firebrick.'),
   row('smithing', 'forge', 'The Forge', "A master smith's broken hammerhead", 'Someone kept it behind the quench barrel. The striking face still shines.'),

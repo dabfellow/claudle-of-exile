@@ -294,7 +294,7 @@ function getSfxContext(): { ctx: AudioContext; scale: number } | null {
   try {
     if (!sfxCtx || sfxCtx.state === 'closed') sfxCtx = new Ctor();
     if (sfxCtx.state === 'suspended') void sfxCtx.resume().catch(() => {});
-    return { ctx: sfxCtx, scale: Math.min(1, Math.max(0.15, music.prefs.volume)) };
+    return { ctx: sfxCtx, scale: music.prefs.volume };
   } catch {
     return null;
   }

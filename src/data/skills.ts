@@ -36,7 +36,7 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   woodcutting: { id: 'woodcutting', name: 'Woodcutting', group: 'gathering', color: '#6fae4a', verb: 'Chopping', desc: 'Fell giant trees part by part: resin from the crown, logs from limbs and trunk, heartwood from the heart. Build a lodge from your own timber.' },
   // id kept as `harvesting` so saves, tree nodes and the Greenhouse don't need migrating
   harvesting: { id: 'harvesting', name: 'Foraging', group: 'gathering', color: '#d9b84a', verb: 'Foraging', desc: 'Pick herbs off the ground for Alchemy.' },
-  thieving: { id: 'thieving', name: 'Thieving', group: 'gathering', color: '#c9a35a', verb: 'Thieving', desc: "Lift purses for gold and Rogue's Markers, then spend them on Heists against the Khanate." },
+  thieving: { id: 'thieving', name: 'Thieving', group: 'gathering', color: '#c9a35a', verb: 'Thieving', desc: 'Lift purses for gold and Heist prep, recruit rogues, and plan jobs against the vaults.' },
   agility: { id: 'agility', name: 'Agility', group: 'gathering', color: '#5fc4b0', verb: 'Running', desc: 'Run courses across Veyrath. Levels open shortcuts: faster Heist rooms, quicker footwork in fights and hidden gathering spots.' },
   archaeology: { id: 'archaeology', name: 'Archaeology', group: 'gathering', color: '#b0784a', verb: 'Digging', desc: "Dig sites in the Hollow Peaks for Artifacts and inscriptions. Decipher the lost peoples' scripts at the Scholar's desk, and trade Artifacts with the merchants of the Expedition for currency." },
   smelting: { id: 'smelting', name: 'Smelting', group: 'production', color: '#d07a3a', verb: 'Smelting', desc: 'Load fuel and flux, improve your furnace, and smelt metal from Crude bars to master alloys.' },
@@ -151,6 +151,11 @@ const THIEVING: SkillAction[] = [
   mark('mark_collector', 'Tax Collector', 35, 4500, 34, 48, '#6a78a0'),
   mark('mark_acolyte', 'Pyre Acolyte', 42, 5000, 41, 75, '#c0502a', [{ id: SEAL, chance: 0.003, qty: 1 }, { id: WAX, chance: 0.002, qty: 1 }]),
   mark('mark_steward', "Khan's Steward", 52, 5000, 46, 110, '#e0702a', [{ id: SEAL, chance: 0.004, qty: 1 }, { id: WAX, chance: 0.003, qty: 1 }]),
+  mark('mark_assayer', 'Royal Assayer', 60, 5500, 68, 155, '#c99c4e', [{ id: SEAL, chance: 0.0045, qty: 1 }, { id: WAX, chance: 0.0035, qty: 1 }]),
+  { ...mark('mark_broker', 'Shadow Broker', 68, 5500, 74, 160, '#d6b267', [{ id: SEAL, chance: 0.0035, qty: 1 }, { id: WAX, chance: 0.0035, qty: 1 }]), outputChance: ALT_YIELD },
+  mark('mark_mintmaster', 'Imperial Mintmaster', 75, 6000, 88, 235, '#b89552', [{ id: SEAL, chance: 0.005, qty: 1 }, { id: WAX, chance: 0.004, qty: 1 }]),
+  mark('mark_chamberlain', 'High Chamberlain', 82, 6500, 102, 310, '#a07ad8', [{ id: SEAL, chance: 0.006, qty: 1 }, { id: WAX, chance: 0.005, qty: 1 }]),
+  mark('mark_archivist', 'Grand Vaultkeeper', 90, 7000, 118, 420, '#e0b85a', [{ id: SEAL, chance: 0.0075, qty: 1 }, { id: WAX, chance: 0.006, qty: 1 }]),
 ];
 
 /** Digs: no inputs. Most of a dig is dirt, so `outputChance` is how often it turns up an Artifact; the Reliquary's come from every people, in digDone. */

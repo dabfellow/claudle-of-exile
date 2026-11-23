@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { COLLECTIBLES, thievingZoneForLevel } from '../src/data/collectibles';
 import { HEIST_JOBS, heistJob, PREP_CAP, prepBoard, prepId, rogueRankCost, type PrepKind } from '../src/data/heist';
 import { actionsFor } from '../src/data/skills';
 import type { Ctx } from '../src/engine/context';
-import { alarmChance, canStartJob, heistStep, prepChance, prepHeld, prepMark, rollPrep, roomMs, setPlannedJob, startHeist, stopHeistRepeat } from '../src/engine/heist';
+import { alarmChance, canStartJob, heistStep, jobBlocker, prepChance, prepHeld, prepMark, prepStrength, rollPrep, rollVaultMapPrep, roomMs, setPlannedJob, startHeist, stopHeistRepeat } from '../src/engine/heist';
+import { actionIntervalMs, skillStep, startSkillAction } from '../src/engine/skills';
 import { retireMarkers } from '../src/engine/save';
 import { seeded, type Rng } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -284,5 +286,123 @@ describe('Marker conversion', () => {
     const back = deserialize(serialize(s));
     expect(back.heist.prep).toEqual({});
     expect(back.storage.bank.rogues_marker).toBe(50);
+  });
+});
+
+describe('Lv 60-90 progression, keepsakes & skill tree wiring', () => {
+  it('supports Lv 60-90 marks, double prep on Shadow Broker, and Gilded Mint / Sovereign Vault gating', () => {
+    const marks = actionsFor('thieving');
+    expect(marks.map((m) => m.level)).toContain(60);
+    expect(marks.map((m) => m.level)).toContain(68);
+    expect(marks.map((m) => m.level)).toContain(75);
+    expect(marks.map((m) => m.level)).toContain(82);
+    expect(marks.map((m) => m.level)).toContain(90);
+
+    const s = thief(90);
+    expect(prepChance(s, 'mark_broker')).toBeCloseTo(0.1);
+    delete s.professionProgress.discoveries['heist_clean_occult_treasury'];
+    delete s.professionProgress.discoveries['heist_clean_gilded_mint'];
+    expect(jobBlocker(s, heistJob('gilded_mint'))).toBe('Complete a clean exit from The Occult Treasury to unlock');
+    s.professionProgress.discoveries['heist_clean_occult_treasury'] = true;
+    expect(jobBlocker(s, heistJob('gilded_mint'))).toBeNull();
+    expect(jobBlocker(s, heistJob('sovereign_vault'))).toBe('Complete a clean exit from The Gilded Mint to unlock');
+    s.professionProgress.discoveries['heist_clean_gilded_mint'] = true;
+    expect(jobBlocker(s, heistJob('sovereign_vault'))).toBeNull();
+
+    // Prep board works and vault completion pays Sovereign Vault rewards
+    hold(s, 'sovereign_vault', 'key', 'ledger', 'patrol');
+    expect(startHeist(s, fixed(0.99), 'sovereign_vault')).toBeNull();
+    stopHeistRepeat(s);
+    while (s.action?.kind === 'heist') clearRoom(s, fixed(0.99));
+    expect(s.professionProgress.discoveries['heist_clean_sovereign_vault']).toBe(true);
+  });
+
+  it('defines 4 Thieving keepsakes across level bands and rolls them on mark completion', () => {
+    const keepsakes = COLLECTIBLES.filter((c) => c.skill === 'thieving');
+    expect(keepsakes).toHaveLength(4);
+    expect(thievingZoneForLevel(1)).toBe('street');
+    expect(thievingZoneForLevel(24)).toBe('civic');
+    expect(thievingZoneForLevel(52)).toBe('underworld');
+    expect(thievingZoneForLevel(90)).toBe('highcourt');
+
+    const s = thief(90);
+    const archivist = actionsFor('thieving').find((a) => a.id === 'mark_archivist')!;
+    startSkillAction(s, ctx(), archivist.id);
+    if (s.action?.kind === 'skill') s.action.progress = archivist.intervalMs;
+    skillStep(s, fixed(0), 1, deriveStats(s));
+    expect(s.collectibles).toContain('thieving.highcourt');
+  });
+
+  it('wires all 7 Thieving tree passives plus Inside Job and Fences Eye bridges', () => {
+    // 1. prepChance, thoroughCasing, insideKnowledge, perfectPlan
+    const base = thief(65);
+    const full = thief(65);
+    full.skillPassives = ['thieving_t0', 'thieving_f0_n0', 'thieving_f0_n1', 'thieving_f0_ks'];
+    expect(prepChance(full, 'mark_peddler')).toBeGreaterThan(prepChance(base, 'mark_peddler'));
+    expect(prepStrength(full)).toBeCloseTo(1.15);
+
+    const job = heistJob('pyre_vault');
+    const items = prepBoard(job.id).items; // 5 items, min 3
+    hold(full, job.id, items[0].kind, items[1].kind, items[2].kind, items[3].kind); // 4 held + 1 free = 5 (full board)
+    expect(canStartJob(full, job.id)).toBeNull();
+    startHeist(full, fixed(0.99), job.id);
+    expect(full.action?.kind === 'heist' && full.action.prep).toHaveLength(5);
+    expect(alarmChance(full, job, 1)).toBe(0);
+
+    // Perfect Plan blocks under-prepped starts when missing >= 2 items
+    const under = thief(65);
+    under.skillPassives = ['thieving_f0_n1', 'thieving_f0_ks'];
+    hold(under, job.id, items[0].kind, items[1].kind, items[2].kind); // 3 + 1 free = 4 < 5
+    expect(canStartJob(under, job.id)).toContain('Perfect Plan');
+
+    // 2. quickLift, deepPockets, opportunist
+    const swift = thief(65);
+    const peddler = actionsFor('thieving').find((a) => a.id === 'mark_peddler')!;
+    const baseMs = actionIntervalMs(base, peddler, deriveStats(base));
+    swift.skillPassives = ['thieving_f1_n0', 'thieving_f1_n1', 'thieving_f1_ks'];
+    expect(actionIntervalMs(swift, peddler, deriveStats(swift))).toBeLessThan(baseMs);
+    expect(prepStrength(swift)).toBeCloseTo(0.75);
+
+    startSkillAction(swift, ctx(), peddler.id);
+    if (swift.action?.kind === 'skill') swift.action.progress = peddler.intervalMs;
+    skillStep(swift, fixed(0), 1, deriveStats(swift));
+    expect(swift.storage.bank.gold).toBeGreaterThan(peddler.outputs!.gold);
+    // Opportunist rolls prep from an unrelated job (mark_peddler does not supply pyre_vault)
+    swift.heist.planned = 'pyre_vault';
+    rollPrep(swift, fixed(0), peddler);
+    expect(Object.keys(swift.heist.prep).some((k) => k.startsWith('prep_pyre_vault_'))).toBe(true);
+
+    // 3. bridge_inside_job: 25% mark gold cut + Vault Atlas map prep drop
+    const inside = thief(65);
+    const goldBeforeInside = inside.storage.bank.gold ?? 0;
+    inside.skillPassives = ['bridge_inside_job'];
+    inside.heist.planned = 'pyre_vault';
+    startSkillAction(inside, ctx(), peddler.id);
+    if (inside.action?.kind === 'skill') inside.action.progress = peddler.intervalMs;
+    skillStep(inside, fixed(0.999), 1, deriveStats(inside));
+    expect((inside.storage.bank.gold ?? 0) - goldBeforeInside).toBe(Math.round(peddler.outputs!.gold * 0.75));
+    rollVaultMapPrep(inside, fixed(0));
+    expect(Object.keys(inside.heist.prep).some((k) => k.startsWith('prep_pyre_vault_'))).toBe(true);
+
+    // 4. bridge_fences_eye: 25% room/vault gold cut + rough gem drop
+    const plain = thief(65);
+    const goldBeforePlain = plain.storage.bank.gold ?? 0;
+    hold(plain, 'cinder_toll', 'key', 'patrol');
+    startHeist(plain, fixed(0.99), 'cinder_toll');
+    stopHeistRepeat(plain);
+    while (plain.action?.kind === 'heist') clearRoom(plain, fixed(0.99));
+    const plainGoldEarned = (plain.storage.bank.gold ?? 0) - goldBeforePlain;
+
+    const fence = thief(65);
+    const goldBeforeFence = fence.storage.bank.gold ?? 0;
+    fence.skillPassives = ['bridge_fences_eye'];
+    hold(fence, 'cinder_toll', 'key', 'patrol');
+    startHeist(fence, fixed(0.99), 'cinder_toll');
+    stopHeistRepeat(fence);
+    while (fence.action?.kind === 'heist') clearRoom(fence, fixed(0.99));
+    const fenceGoldEarned = (fence.storage.bank.gold ?? 0) - goldBeforeFence;
+    expect(fenceGoldEarned).toBeLessThan(plainGoldEarned);
+    const hasRoughGem = Object.keys(fence.storage.bank).some((k) => k.startsWith('rough_') && (fence.storage.bank[k] ?? 0) > 0);
+    expect(hasRoughGem).toBe(true);
   });
 });

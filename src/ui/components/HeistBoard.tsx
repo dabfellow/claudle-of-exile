@@ -18,6 +18,8 @@ import './thieving-ledger.css';
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const takeName = (id: string) => (id === GEAR ? 'Stolen rare gear' : materialDef(id).name);
+const PREP_MONOGRAM: Record<string, string> = { key: 'K', ledger: 'L', patrol: 'P', uniform: 'U', plan: 'F' };
+const TALENT_TIERS: Record<number, string> = { 1: 'Tier 1 · Expertise', 5: 'Tier 2 · Greed Mastery', 10: 'Tier 3 · Signature' };
 
 // Existing asset-pack art only, washed grey by the ledger's portrait style.
 const ROGUE_PORTRAITS: Record<string, string> = {
@@ -80,7 +82,7 @@ function JobRunning({ s, job }: { s: GameState; job: HeistJob }) {
       </div>
       <div className="row wrap" style={{ gap: 8, marginTop: 10 }}>
         {s.heist.auto && <button className="btn sm" onClick={() => game.act((st) => stopHeistRepeat(st))}>Stop after this job</button>}
-        <button className="btn sm danger" title="The Markers stay spent and the take is left behind" onClick={() => game.act((st) => stopAction(st))}>Abandon</button>
+        <button className="btn sm danger" title="The prep stays spent and the take is left behind" onClick={() => game.act((st) => stopAction(st))}>Abandon</button>
       </div>
     </div>
   );
@@ -115,6 +117,42 @@ function JobDossier({ s, job }: { s: GameState; job: HeistJob }) {
       </div>
       <p className="thief-dossier-desc">{job.desc}</p>
 
+      {(() => {
+        const activePrep = s.action?.kind === 'heist' && s.action.jobId === job.id ? (s.action.prep ?? []) : null;
+        const hasLedger = activePrep ? activePrep.includes('ledger') : (held.ledger ?? 0) > 0;
+        const hasKey = activePrep ? activePrep.includes('key') : (held.key ?? 0) > 0;
+        const currentRoom = onJob && s.action?.kind === 'heist' ? s.action.room : 0;
+        const nodes: { roomNumber: number; label: string; kind: 'room' | 'hidden' | 'vault' }[] = [];
+        for (let r = 1; r < job.rooms; r++) nodes.push({ roomNumber: r, label: `R${r}`, kind: 'room' });
+        if (hasLedger) nodes.push({ roomNumber: job.rooms, label: 'Hidden', kind: 'hidden' });
+        nodes.push({ roomNumber: job.rooms + (hasLedger ? 1 : 0), label: 'Vault', kind: 'vault' });
+        return (
+          <div className="thief-blueprint" aria-label="Vault blueprint corridor">
+            <div className="thief-blueprint-head">
+              <span>Vault Blueprint</span>
+              <span className="num small">{nodes.length} stages{hasKey ? ' · Vault keyed' : ''}</span>
+            </div>
+            <div className="thief-blueprint-track">
+              {nodes.map((node, idx) => {
+                const cleared = onJob && node.roomNumber < currentRoom;
+                const active = onJob && node.roomNumber === currentRoom;
+                const isExit = exit >= job.rooms ? node.kind === 'vault' : node.roomNumber === exit;
+                return (
+                  <div className="thief-blueprint-step" key={`${node.kind}:${node.roomNumber}`}>
+                    {idx > 0 && <span className={`thief-blueprint-link ${cleared || active ? 'lit' : ''}`} aria-hidden />}
+                    <span className={`thief-blueprint-node ${node.kind} ${cleared ? 'cleared' : ''} ${active ? 'active' : ''}`}>
+                      <b>{node.label}</b>
+                      {node.kind === 'vault' && hasKey && <small className="thief-bp-key">Key</small>}
+                      {isExit && <small className="thief-bp-exit">Exit</small>}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="thief-rewards">
         <h3>Vault</h3>
         {job.vault.map((d) => <div className="thief-reward" key={d.id}>{d.id !== GEAR && <MatIcon id={d.id} size={20} />}<b>{takeName(d.id)}</b><span className="spacer" /><span className="num">×{fmt(d.qty)}{d.chance < 1 && ` · ${pct(d.chance)}`}</span></div>)}
@@ -139,6 +177,7 @@ function JobDossier({ s, job }: { s: GameState; job: HeistJob }) {
           const working = workingMark === e.mark;
           const dropPct = +(prepChance(s, e.mark) * 100).toFixed(1);
           return <div className="thief-prep-item" key={e.kind}>
+            <span className="thief-prep-monogram" aria-hidden>{PREP_MONOGRAM[e.kind] ?? '?'}</span>
             <div className="thief-prep-text">
               <span className="thief-prep-name">
                 <b>{def.name}</b>
@@ -147,7 +186,12 @@ function JobDossier({ s, job }: { s: GameState; job: HeistJob }) {
               <small>{def.effect}</small>
               <small>From {mark?.name ?? e.mark} ({dropPct}%)</small>
             </div>
-            <span className="num thief-prep-held" title="Held">{n}/{PREP_CAP}</span>
+            <span className="thief-prep-held-wrap" title="Held">
+              <span className="thief-prep-pips" aria-hidden>
+                {Array.from({ length: PREP_CAP }, (_, i) => <span key={i} className={`thief-prep-pip ${i < n ? 'on' : ''}`} />)}
+              </span>
+              <span className="num thief-prep-held">{n}/{PREP_CAP}</span>
+            </span>
             <button className="btn sm" disabled={!mark || working} onClick={() => game.act((st, ctx) => { startSkillAction(st, ctx, e.mark); })}>{working ? 'Working' : 'Work this mark'}</button>
           </div>;
         })}
@@ -220,7 +264,14 @@ function HeistLedger() {
             <span className="thief-target-name"><JobPortrait job={j} /><span><b>{j.name}</b>{runningId === j.id ? <small className="thief-working">{s.action?.kind === 'heist' ? `On the job · room ${s.action.room}` : 'Casing the job'}</small> : <small className="thief-sub">{j.favours}</small>}</span>{reason && <LockedBadge level={j.level} reason={reason} />}</span>
             <span className="num thief-cell" data-label="Level">{j.level}</span>
             <span className="num thief-cell" data-label="Rooms">{j.rooms}</span>
-            <span className="num thief-cell" data-label="Prep">{prepKindsHeld(s, j.id)}/{prepBoard(j.id).min}</span>
+            <span className="num thief-cell thief-prep-cell" data-label="Prep">
+              <span className="thief-prep-pips" aria-hidden>
+                {Array.from({ length: prepBoard(j.id).min }, (_, idx) => (
+                  <span key={idx} className={`thief-prep-pip ${idx < prepKindsHeld(s, j.id) ? 'on' : ''}`} />
+                ))}
+              </span>
+              <span>{prepKindsHeld(s, j.id)}/{prepBoard(j.id).min}</span>
+            </span>
             <span className="num thief-cell thief-mastery-number" data-label="Mastery">{j.mastery ? masteryLevel(s, j.mastery.id) : '—'}</span>
           </button>;
         })}
@@ -237,12 +288,14 @@ function HeistLedger() {
 }
 
 function RogueDossier({ s, rogue }: { s: GameState; rogue: Rogue }) {
-  const [specialty, setSpecialty] = useState(SPECIALTIES.find((x) => x !== rogue.primary)!);
   const r = s.heist.roster?.[rogue.id];
+  const availableSpecialties = SPECIALTIES.filter((x) => x !== rogue.primary && !(r?.mastered ?? []).includes(x));
+  const [specialty, setSpecialty] = useState(availableSpecialties[0] ?? '');
   if (!r) return null;
+  const chosenSpecialty = availableSpecialties.includes(specialty) ? specialty : (availableSpecialties[0] ?? '');
   const onCrew = s.heist.crew.includes(rogue.id);
   const running = s.action?.kind === 'heist';
-  const reason = trainReason(s, rogue.id, specialty);
+  const reason = chosenSpecialty ? trainReason(s, rogue.id, chosenSpecialty) : 'All room specialties mastered';
   return (
     <section className="thief-dossier" aria-label={`${rogue.name} dossier`}>
       <div className="thief-paper-clip" aria-hidden />
@@ -273,11 +326,32 @@ function RogueDossier({ s, rogue }: { s: GameState; rogue: Rogue }) {
           <h3>Mentor training</h3>
           <HelpTip tip="Pay 5,000 gold to teach this rogue an extra room specialty. They step off the active crew for 2 completed heists (even if an alarm sounds) and keep the mastery permanently." />
         </div>
-        {r.training ? <p className="thief-reward-note">Training {r.training.specialty}: away for {r.training.remaining} more completed heists.</p> : <div className="thief-plan">
-          <select aria-label={`${rogue.name} mentor specialty`} value={specialty} onChange={(e) => setSpecialty(e.target.value)}>{SPECIALTIES.filter((x) => x !== rogue.primary).map((x) => <option key={x}>{x}</option>)}</select>
-          <span className="spacer" />
-          <button className="btn sm" disabled={!!reason} title={reason ?? 'Away for two completed heists'} onClick={() => game.act((st) => trainRogue(st, rogue.id, specialty))}>Train · 5,000 gold</button>
-        </div>}
+        {r.training ? (
+          <p className="thief-reward-note">Training {r.training.specialty}: away for {r.training.remaining} more completed heists.</p>
+        ) : availableSpecialties.length === 0 ? (
+          <p className="thief-reward-note">All room specialties mastered.</p>
+        ) : (
+          <div className="thief-mentor-wrap">
+            <div className="thief-mentor-pills" role="radiogroup" aria-label={`${rogue.name} mentor specialty`}>
+              {availableSpecialties.map((x) => (
+                <button
+                  key={x}
+                  type="button"
+                  role="radio"
+                  aria-checked={chosenSpecialty === x}
+                  className={`btn sm ${chosenSpecialty === x ? 'selected' : 'ghost'}`}
+                  onClick={() => setSpecialty(x)}
+                >
+                  {x}
+                </button>
+              ))}
+            </div>
+            <div className="thief-plan" style={{ marginTop: 8, marginBottom: 0 }}>
+              <span className="spacer" />
+              <button className="btn sm" disabled={!!reason} title={reason ?? 'Away for two completed heists'} onClick={() => game.act((st) => trainRogue(st, rogue.id, chosenSpecialty))}>Train {chosenSpecialty} · 5,000 gold</button>
+            </div>
+          </div>
+        )}
       </div>
       <div className="thief-dossier-section">
         <h3>Talents · {talentPoints(r)} {talentPoints(r) === 1 ? 'point' : 'points'} to spend</h3>
@@ -285,10 +359,14 @@ function RogueDossier({ s, rogue }: { s: GameState; rogue: Rogue }) {
         {rogue.talentTree.map((node) => {
           const learned = r.talents.includes(node.id);
           const learnable = !running && node.id === r.talents.length + 1 && talentPoints(r) >= 1;
-          return <div key={node.id} className={`thief-talent ${learned ? 'learned' : ''}`}>
-            <span className="num">{node.id}</span>
-            <span><b>{node.name}</b><small>Tier {node.tier} · {node.effect}</small></span>
-            {learned ? <span className="num">✓</span> : <button className="btn sm" disabled={!learnable} onClick={() => game.act((st) => learnTalent(st, rogue.id, node.id))}>Learn</button>}
+          const tierHeader = TALENT_TIERS[node.id];
+          return <div key={node.id}>
+            {tierHeader && <div className="thief-talent-tier">{tierHeader}</div>}
+            <div className={`thief-talent ${learned ? 'learned' : ''}`}>
+              <span className="num">{node.id}</span>
+              <span><b>{node.name}</b><small>Tier {node.tier} · {node.effect}</small></span>
+              {learned ? <span className="num">✓</span> : <button className="btn sm" disabled={!learnable} onClick={() => game.act((st) => learnTalent(st, rogue.id, node.id))}>Learn</button>}
+            </div>
           </div>;
         })}
       </div>
@@ -333,8 +411,40 @@ function CrewLedger() {
         </section>
       </div>
     ) : (
-      <div className="thief-workspace">
-        <section className="card thief-ledger" aria-label="Rogue crew ledger">
+      <>
+        <section className="card thief-safehouse" aria-label="Active heist crew">
+          <div className="thief-safehouse-head">
+            <h3>Safehouse Bench</h3>
+            <span className="dim small num">{s.heist.crew.length}/{crewSlots(s)} slots filled</span>
+          </div>
+          <div className="thief-safehouse-slots">
+            {[0, 1, 2].map((slotIdx) => {
+              const slotId = s.heist.crew[slotIdx];
+              const slotRogue = slotId ? ROGUES.find((r) => r.id === slotId) : undefined;
+              const rp = slotRogue ? s.heist.roster?.[slotRogue.id] : undefined;
+              if (!slotRogue) {
+                return <div key={slotIdx} className="thief-safehouse-slot empty">
+                  <GameIcon name="thieving" size={18} color="var(--dim)" />
+                  <span>Open Slot</span>
+                </div>;
+              }
+              return <button
+                key={slotRogue.id}
+                type="button"
+                className={`thief-safehouse-slot filled ${rogue?.id === slotRogue.id ? 'selected' : ''}`}
+                onClick={() => setSelectedId(slotRogue.id)}
+              >
+                <Portrait src={ROGUE_PORTRAITS[slotRogue.id]} icon="thieving" />
+                <span>
+                  <b>{slotRogue.name}</b>
+                  <small>{slotRogue.class} · Lv {rp?.level ?? 1}</small>
+                </span>
+              </button>;
+            })}
+          </div>
+        </section>
+        <div className="thief-workspace">
+          <section className="card thief-ledger" aria-label="Rogue crew ledger">
           <div className="thief-ledger-title">
             <h2>Rogue Crew</h2>
             <span className="dim small num">Recruited {unlockedRogues.length} / {ROGUES.length} · {s.heist.crew.length}/{crewSlots(s)} on crew</span>
@@ -357,6 +467,7 @@ function CrewLedger() {
         </section>
         {rogue && <RogueDossier key={rogue.id} s={s} rogue={rogue} />}
       </div>
+      </>
     )}
   </>;
 }

@@ -15,6 +15,7 @@ import { cartographyPreview, upgradeCost } from '../../engine/cartography';
 import { mapsHeld } from '../../engine/maps';
 import { BENCH_UNBUILT, benchBuilt } from '../../engine/crafting';
 import { crewSlots, jobBlocker } from '../../engine/heist';
+import { talentPoints } from '../../data/rogues';
 import { AGILITY_SHORTCUTS } from '../../data/agility';
 import { actionBlocker, actionIntervalMs, actionPlaceNeeded, agilityBlocker, gemCutPool, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
@@ -599,14 +600,16 @@ function tiersOf(skill: SkillId, actions: SkillAction[]): Tier[] {
   }
   if (skill === 'thieving') {
     const groups: Tier[] = [
-      { key: 'street', label: 'Street Targets (Lv 1â€“16)', actions: [] },
-      { key: 'civic', label: 'Civic & Wealthy (Lv 24â€“40)', actions: [] },
-      { key: 'underworld', label: 'Underworld Figures (Lv 48+)', actions: [] },
+      { key: 'street', label: 'Street Targets (Lv 1–16)', actions: [] },
+      { key: 'civic', label: 'Civic & Wealthy (Lv 17–35)', actions: [] },
+      { key: 'underworld', label: 'Underworld Figures (Lv 36–60)', actions: [] },
+      { key: 'highcourt', label: 'High Court & Vaults (Lv 61–90)', actions: [] },
     ];
     for (const a of actions) {
       if (a.level <= 16) groups[0].actions.push(a);
-      else if (a.level <= 40) groups[1].actions.push(a);
-      else groups[2].actions.push(a);
+      else if (a.level <= 35) groups[1].actions.push(a);
+      else if (a.level <= 60) groups[2].actions.push(a);
+      else groups[3].actions.push(a);
     }
     return groups.filter((g) => g.actions.length > 0);
   }
@@ -831,7 +834,16 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
             } else if (skill === 'thieving') {
               if (x.id === 'marks') countText = `${selectedActions.filter(isUnlocked).length}/${selectedActions.length}`;
               else if (x.id === 'heists') countText = `${HEIST_JOBS.filter((j) => !jobBlocker(s, j)).length}/${HEIST_JOBS.length}`;
-              else if (x.id === 'crew') countText = `${s.heist.crew.length}/${crewSlots(s)}`;
+              else if (x.id === 'crew') {
+                countText = `${s.heist.crew.length}/${crewSlots(s)}`;
+                const unlocked = s.heist.unlockedRogues ?? [];
+                const hasUnspentTalents = unlocked.some((id) => {
+                  const rp = s.heist.roster?.[id];
+                  return rp ? talentPoints(rp) > 0 : false;
+                });
+                const hasOpenSlot = unlocked.length > s.heist.crew.length && s.heist.crew.length < crewSlots(s);
+                isActiveProject = hasUnspentTalents || hasOpenSlot;
+              }
             } else if (skill === 'archaeology') {
               if (x.id === 'desk') countText = `${s.archaeology.inscriptions.length}`;
               else if (x.id === 'codex') countText = `${SCRIPT_IDS.reduce((n, id) => n + (s.archaeology.chapters[id] ?? 0), 0)}/${SCRIPTS.reduce((n, x) => n + x.chapters, 0)}`;

@@ -43,9 +43,10 @@ function clearRoom(s: GameState, c: Ctx): void {
 
 describe('Phase 11 — Thieving and Heist Overhaul', () => {
   describe('Level-only Marks & Deterministic Markers', () => {
-    it('has all 10 marks accessible strictly by Thieving level without area requirements', () => {
+    it('has all 15 marks accessible strictly by Thieving level without area requirements', () => {
       const marks = actionsFor('thieving');
-      expect(marks).toHaveLength(10);
+      expect(marks).toHaveLength(15);
+      expect(marks.at(-1)?.level).toBe(90);
       for (const m of marks) {
         expect(m.area).toBeUndefined();
         expect(m.gate).toBeUndefined();
@@ -157,9 +158,9 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       const s = makeThief(60, 500);
       s.unlockedZones = ['cinderroad', 'saltflats', 'blackgrass', 'caravan', 'kurgans', 'plateau', 'pyretemple', 'burningthrone'];
       settleProfessionProgress(s, true);
-      // Legacy access grants all 8 existing jobs
+      // Legacy access grants all 8 pre-expansion Lv<=60 jobs
       for (const j of HEIST_JOBS) {
-        if (j.id === 'occult_treasury') continue;
+        if (j.id === 'occult_treasury' || j.id === 'gilded_mint' || j.id === 'sovereign_vault') continue;
         expect(s.professionProgress.legacyAccess[`heist.${j.id}`]).toBe(true);
         expect(jobBlocker(s, j)).toBeNull();
       }

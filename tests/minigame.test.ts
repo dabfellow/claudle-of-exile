@@ -15,15 +15,22 @@ import {
   brushResult,
   fertiliseResult,
   fertiliseWindowMs,
+  focusHoldSeconds,
+  focusRemainingSeconds,
+  focusStep,
   gemTurnMs,
   LIFT_CLICKS_DOUBLE,
   LIFT_CLICKS_HIT,
   liftResult,
   liftSpamResult,
   liftWindowMs,
+  minigameSwing,
+  overflowOf,
   pourResult,
   sightingResult,
 } from '../src/engine/minigame';
+import { startSkillAction } from '../src/engine/skills';
+import { newGame } from '../src/engine/state';
 import { seeded } from '../src/engine/rng';
 
 describe('Cartography take a sighting', () => {
@@ -206,5 +213,26 @@ describe('Archaeology brushing patch', () => {
     expect(brushChips(p, new Set([1, 2, 5]))).toBe(0);
     expect(brushChips(p, new Set([1, 2, 5, 0]))).toBe(1);
     expect(brushPatch(seeded(3), 9).cracks).toHaveLength(1);
+  });
+});
+
+describe('Thieving extended Focus duration', () => {
+  it('holds Focus overflow past 25 seconds for Thieving while keeping Mining at 5s/10s', () => {
+    const ctx = { rng: seeded(1), now: 0, emit: () => {} };
+    const thief = newGame(1, { name: 'T', classId: 'shadow' });
+    startSkillAction(thief, ctx, 'mark_peddler');
+    for (let i = 0; i < 8; i++) minigameSwing(thief, 'hit');
+    expect(focusHoldSeconds(thief, 'thieving')).toBeCloseTo(1.0 / 0.035, 1);
+    expect(focusRemainingSeconds(thief, 'thieving')).toBeCloseTo(2.0 / 0.035, 1);
+
+    focusStep(thief, ctx, 20_000);
+    expect(overflowOf(thief)).toBeGreaterThan(0);
+    expect(focusRemainingSeconds(thief, 'thieving')).toBeGreaterThan(35);
+
+    const miner = newGame(1, { name: 'M', classId: 'warrior' });
+    startSkillAction(miner, ctx, 'mine_copper');
+    for (let i = 0; i < 8; i++) minigameSwing(miner, 'hit');
+    expect(focusHoldSeconds(miner, 'mining')).toBeCloseTo(5, 1);
+    expect(focusRemainingSeconds(miner, 'mining')).toBeCloseTo(15, 1);
   });
 });

@@ -3,8 +3,9 @@ import { SKILL_XP_SCALE } from './skills';
 import { masteryForHeist, type MasterySpec } from './skillingMastery';
 
 /**
- * Heist (docs/GAME.md): Thieving's Markers buy jobs against the Khanate. A job is a run of rooms, each a little
- * riskier and richer than the last, and you choose in advance how deep to go. The vault is in the last room.
+ * Heist (docs/GAME.md): Street Marks drop Heist prep items that fund and strengthen jobs against the Khanate.
+ * A job is a run of rooms, each a little riskier and richer than the last, and you choose in advance how deep to go.
+ * The vault is in the last room.
  */
 
 /** Stands for one piece of stolen rare gear in a drop list or a take. */
@@ -113,6 +114,20 @@ export const HEIST_JOBS: HeistJob[] = [
     drops: [{ id: 'gold', chance: 0.1, qty: 15 }, { id: 'arcane_dust', chance: 0.25, qty: 5 }],
     vault: [{ id: 'gold', chance: 1, qty: 2000 }, { id: 'arcane_dust', chance: 1, qty: 50 }],
   }),
+  job({
+    id: 'gilded_mint', name: 'The Gilded Mint', level: 75, area: 'burningthrone', requires: 'heist_clean_occult_treasury', rooms: 7, roomMs: 55000, alert: 8, xp: 1280, gold: 380, ilvl: 82,
+    desc: 'Behind double brass doors, the imperial mint presses coin and guards unmarked dies for the capital.',
+    favours: 'Regals, Seals & High-tier Gear',
+    drops: [{ id: 'regal', chance: 0.012, qty: 1 }, { id: SEAL, chance: 0.01, qty: 1 }, { id: WAX, chance: 0.008, qty: 1 }, { id: GEAR, chance: 0.012, qty: 1 }],
+    vault: [{ id: 'gold', chance: 1, qty: 3500 }, { id: 'regal', chance: 0.8, qty: 2 }, { id: SEAL, chance: 0.65, qty: 1 }, { id: WAX, chance: 0.55, qty: 1 }, { id: GEAR, chance: 0.85, qty: 1 }],
+  }),
+  job({
+    id: 'sovereign_vault', name: "The Sovereign's Vault", level: 90, area: 'burningthrone', requires: 'heist_clean_gilded_mint', rooms: 8, roomMs: 60000, alert: 9, xp: 1650, gold: 550, ilvl: 86,
+    desc: 'Eight concentric wards beneath the high seat, where tribute, rare dies, and forbidden coin wait in the dark.',
+    favours: 'Exalteds, Chaos, Seals & Endgame Gear',
+    drops: [{ id: SEAL, chance: 0.012, qty: 1 }, { id: WAX, chance: 0.01, qty: 1 }, { id: 'regal', chance: 0.015, qty: 1 }, { id: 'chaos', chance: 0.02, qty: 1 }, { id: GEAR, chance: 0.015, qty: 1 }, { id: 'exalted', chance: 0.0025, qty: 1 }],
+    vault: [{ id: 'gold', chance: 1, qty: 6000 }, { id: 'chaos', chance: 1, qty: 3 }, { id: 'regal', chance: 0.8, qty: 2 }, { id: SEAL, chance: 0.75, qty: 2 }, { id: WAX, chance: 0.65, qty: 2 }, { id: 'exalted', chance: 0.12, qty: 1 }, { id: GEAR, chance: 1, qty: 1 }],
+  }),
 ];
 
 /** Stealth: each Thieving level above a job takes this much off its alarm chance, down to the floor. */
@@ -189,8 +204,8 @@ export const PREP_KINDS: PrepDef[] = [
 
 export const PREP_CAP = 3;
 export const PREP_DROP_CHANCE = 0.05;
-/** Fence's Runner and Khanate Quartermaster trade their Marker chance for a doubled prep chance. */
-export const PREP_DOUBLE_MARKS = ['mark_runner', 'mark_quartermaster'];
+/** Fence's Runner, Khanate Quartermaster, and Shadow Broker trade half their purse chance for a doubled prep chance. */
+export const PREP_DOUBLE_MARKS = ['mark_runner', 'mark_quartermaster', 'mark_broker'];
 export const PATROL_MULT = 0.6;
 export const UNIFORM_MULT = 0.7;
 export const PLAN_MULT = 1.25;
@@ -215,6 +230,8 @@ export const PREP_BOARDS: Record<string, { min: number; items: PrepEntry[] }> = 
   pyre_vault: { min: 3, items: [P('uniform', 'mark_acolyte'), P('key', 'mark_acolyte'), P('patrol', 'mark_collector'), P('ledger', 'mark_steward'), P('plan', 'mark_warden')] },
   khans_tribute: { min: 3, items: [P('key', 'mark_steward'), P('patrol', 'mark_acolyte'), P('ledger', 'mark_steward'), P('plan', 'mark_collector'), P('uniform', 'mark_acolyte')] },
   occult_treasury: { min: 3, items: [P('key', 'mark_steward'), P('patrol', 'mark_acolyte'), P('ledger', 'mark_steward'), P('uniform', 'mark_acolyte'), P('plan', 'mark_collector')] },
+  gilded_mint: { min: 3, items: [P('key', 'mark_mintmaster'), P('patrol', 'mark_assayer'), P('ledger', 'mark_broker'), P('uniform', 'mark_assayer'), P('plan', 'mark_mintmaster')] },
+  sovereign_vault: { min: 3, items: [P('key', 'mark_archivist'), P('patrol', 'mark_chamberlain'), P('ledger', 'mark_archivist'), P('uniform', 'mark_chamberlain'), P('plan', 'mark_broker')] },
 };
 
 export function prepId(jobId: string, kind: PrepKind): string {

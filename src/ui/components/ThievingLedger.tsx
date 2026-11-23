@@ -1,21 +1,26 @@
-import { useEffect, useState } from 'react';
-import { HEIST_JOBS, prepBoard, prepDef } from '../../data/heist';
+import { useCallback, useEffect, useState } from 'react';
+import { COLLECTIBLES } from '../../data/collectibles';
+import { HEIST_JOBS, PREP_CAP, PREP_DOUBLE_MARKS, prepBoard, prepDef } from '../../data/heist';
 import { materialDef } from '../../data/materials';
 import { actionsFor, type SkillAction } from '../../data/skills';
-import { jobBlocker } from '../../engine/heist';
+import { crewSlots, jobBlocker, prepChance, prepHeld, prepKindsHeld } from '../../engine/heist';
+import { activeCrew } from '../../engine/rogues';
 import { actionBlocker, actionIntervalMs, skillLevel, startSkillAction, stopAction } from '../../engine/skills';
 import { masteryLevel } from '../../engine/skillingMastery';
 import { skillTreeStats } from '../../engine/skillTree';
 import { deriveStats } from '../../engine/stats';
+import type { GameEvent } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
-import { game, useGame } from '../../game';
+import { game, useGame, useGameEvent } from '../../game';
 import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar, Tooltip } from './common';
 import { LockedBadge, SkillIntro } from './SkillHelp';
 import { MasteryProgress, MasteryTip } from './MasteryProgress';
+import { LiftGameIdle } from './minigames';
 import { SkillMinigame } from './SkillMinigame';
 import './thieving-ledger.css';
 
 const MARKS = actionsFor('thieving');
+const THIEVING_KEEPSAKES = COLLECTIBLES.filter((c) => c.skill === 'thieving');
 // Reuse the existing small asset-pack portraits; the ledger needs no generated artwork.
 const PORTRAITS: Record<string, string> = {
   mark_peddler: 'portraits/trader', mark_hauler: 'monsters/brute',
@@ -23,11 +28,15 @@ const PORTRAITS: Record<string, string> = {
   mark_factor: 'portraits/trader', mark_quartermaster: 'monsters/gunner',
   mark_warden: 'monsters/priest', mark_collector: 'monsters/vosk',
   mark_acolyte: 'monsters/zealot', mark_steward: 'monsters/stormcaller',
+  mark_assayer: 'monsters/assayer', mark_broker: 'monsters/hexmerchant',
+  mark_mintmaster: 'monsters/mintmaster', mark_chamberlain: 'monsters/chamberlain',
+  mark_archivist: 'monsters/vaultwarden',
 };
 const GROUPS = [
   { name: 'Street Targets', actions: MARKS.filter((a) => a.level <= 16) },
-  { name: 'Civic & Wealthy', actions: MARKS.filter((a) => a.level > 16 && a.level <= 40) },
-  { name: 'Underworld Figures', actions: MARKS.filter((a) => a.level > 40) },
+  { name: 'Civic & Wealthy', actions: MARKS.filter((a) => a.level > 16 && a.level <= 35) },
+  { name: 'Underworld Figures', actions: MARKS.filter((a) => a.level > 35 && a.level <= 60) },
+  { name: 'High Court & Vaults', actions: MARKS.filter((a) => a.level > 60) },
 ];
 
 function TargetPortrait({ a, large = false }: { a: SkillAction; large?: boolean }) {
@@ -43,6 +52,10 @@ export function ThievingHeader() {
   const xp = s.skills.thieving;
   const rate = game.xpPerHour('thieving');
   const notice = s.heist.notice;
+  const planned = s.heist.planned ? HEIST_JOBS.find((j) => j.id === s.heist.planned) : undefined;
+  const unlockedCount = s.heist.unlockedRogues?.length ?? 0;
+  const crewCount = activeCrew(s).length;
+  const keepsakeFound = THIEVING_KEEPSAKES.filter((c) => s.collectibles.includes(c.id)).length;
   useEffect(() => {
     if (!notice) return;
     // read and clear in one step, so a second run of this effect can't show it again
@@ -51,12 +64,28 @@ export function ThievingHeader() {
     if (text) game.pushToast(text, 'good');
   }, [notice]);
   return <header className="card thief-header">
-    <span className="thief-emblem"><GameIcon name="thieving" size={28} color="var(--gold)" /></span>
-    <div className="thief-heading"><h1>Thieving</h1><span>The Underworld Ledger</span></div>
-    <div className="thief-xp">
-      <div className="row"><span>Level <b className="num">{level}</b> / {maxLevelOf('thieving')}</span><span className="spacer" /><span className="num small">{fmt(xp)} XP</span></div>
-      <ProgressBar value={maxed ? 1 : progressOf('thieving', xp)} color="var(--gold)" smooth />
-      <div className="row small"><span>{maxed ? 'Max level' : `${fmt(xpToReach('thieving', level + 1) - xp)} to level ${level + 1}`}</span><span className="spacer" /><span className="num">{fmt(rate)} XP/h</span></div>
+    <div className="thief-header-main">
+      <span className="thief-emblem"><GameIcon name="thieving" size={28} color="var(--gold)" /></span>
+      <div className="thief-heading"><h1>Thieving</h1><span>The Underworld Ledger</span></div>
+      <div className="thief-xp">
+        <div className="row"><span>Level <b className="num">{level}</b> / {maxLevelOf('thieving')}</span><span className="spacer" /><span className="num small">{fmt(xp)} XP</span></div>
+        <ProgressBar value={maxed ? 1 : progressOf('thieving', xp)} color="var(--gold)" smooth />
+        <div className="row small"><span>{maxed ? 'Max level' : `${fmt(xpToReach('thieving', level + 1) - xp)} to level ${level + 1}`}</span><span className="spacer" /><span className="num">{fmt(rate)} XP/h</span></div>
+      </div>
+    </div>
+    <div className="thief-status-strip">
+      <span className="thief-status-chip">
+        <span className="thief-status-label">Job</span>
+        <b className="num">{planned ? `${planned.name} · ${prepKindsHeld(s, planned.id)}/${prepBoard(planned.id).min} prep` : 'No heist planned'}</b>
+      </span>
+      <span className="thief-status-chip">
+        <span className="thief-status-label">{unlockedCount >= 3 ? 'Crew' : 'Recruits'}</span>
+        <b className="num">{unlockedCount >= 3 ? `${crewCount}/${crewSlots(s)}` : `${unlockedCount}/3`}</b>
+      </span>
+      <span className="thief-status-chip">
+        <span className="thief-status-label">Keepsakes</span>
+        <b className="num">{keepsakeFound}/{THIEVING_KEEPSAKES.length}</b>
+      </span>
     </div>
   </header>;
 }
@@ -69,7 +98,9 @@ export function ThievingLedger() {
   const [selectedId, setSelectedId] = useState(() => activeId ?? MARKS[0].id);
   const [onlyUnlocked, setOnlyUnlocked] = useState(true);
   const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
+  const [pops, setPops] = useState<{ id: number; text: string }[]>([]);
   const a = MARKS.find((mark) => mark.id === selectedId) ?? MARKS[0];
+  const level = skillLevel(s, 'thieving');
   const d = deriveStats(s);
   const tree = skillTreeStats(s);
   const interval = actionIntervalMs(s, a, d);
@@ -81,6 +112,25 @@ export function ThievingLedger() {
   const prepGiven = (markId: string) => planned ? prepBoard(planned.id).items.filter((e) => e.mark === markId).map((e) => prepDef(e.kind).name) : [];
   const nextLockedId = MARKS.find((mark) => !!actionBlocker(s, mark))?.id;
   const unlockedCount = s.heist.unlockedRogues?.length ?? 0;
+  const marksTotal = s.professionProgress.counters['thieving.markers'] ?? 0;
+  const nextRecruitAt = unlockedCount === 0 ? 3 : unlockedCount === 1 ? 7 : 12;
+  const keepsakeFound = THIEVING_KEEPSAKES.filter((c) => s.collectibles.includes(c.id)).length;
+  const prepPct = +(prepChance(s, a.id) * 100).toFixed(1);
+  const isDoublePrep = PREP_DOUBLE_MARKS.includes(a.id);
+  const intelRows = HEIST_JOBS
+    .filter((j) => level >= j.level)
+    .flatMap((j) => prepBoard(j.id).items.filter((e) => e.mark === a.id).map((e) => ({ job: j, entry: e })));
+
+  const onEvent = useCallback((e: GameEvent) => {
+    if (e.t === 'produce' && running) {
+      const parts = Object.entries(e.outputs).slice(0, 2).map(([id, n]) => `+${fmt(n)} ${materialDef(id).name}`);
+      const text = parts.length ? parts.join(' · ') : '+1';
+      const id = Math.random();
+      setPops((prev) => [...prev.slice(-3), { id, text }]);
+      setTimeout(() => setPops((prev) => prev.filter((x) => x.id !== id)), 1100);
+    }
+  }, [running]);
+  useGameEvent(onEvent);
 
   return <>
     <SkillIntro
@@ -118,6 +168,22 @@ export function ThievingLedger() {
           </>}
         </div>;
       })}
+      <details className="thief-keepsakes">
+        <summary>
+          <span>Stolen Keepsakes</span>
+          <span className="spacer" />
+          <span className="num">{keepsakeFound}/{THIEVING_KEEPSAKES.length}</span>
+        </summary>
+        <div className="thief-keepsakes-grid">
+          {THIEVING_KEEPSAKES.map((c) => {
+            const have = s.collectibles.includes(c.id);
+            return <div key={c.id} className={`thief-keepsake-item ${have ? 'found' : ''}`}>
+              <b>{have ? c.name : '???'}</b>
+              <p>{have ? c.flavour : c.zoneName}</p>
+            </div>;
+          })}
+        </div>
+      </details>
       <div className="thief-marker-note">
         <p>Every mark pays gold, and can turn up prep items (keys, ledgers, schedules) for the Heists. Plan a job on the Heists tab to see which marks help.</p>
         {((s.storage.bank.treasury_fragment ?? 0) > 0 || (s.storage.bank.oath_fragment ?? 0) > 0) && <p>Treasury Fragments: {fmt(s.storage.bank.treasury_fragment ?? 0)} · Oath Fragments: {fmt(s.storage.bank.oath_fragment ?? 0)}</p>}
@@ -126,13 +192,46 @@ export function ThievingLedger() {
 
     <section className="thief-dossier" aria-label={`${a.name} dossier`}>
       <div className="thief-paper-clip" aria-hidden />
+      {running && <span className="thief-wax-seal" aria-label="Currently active">Active</span>}
       <div className="thief-dossier-heading"><TargetPortrait a={a} large /><div><span className="thief-dossier-kicker">Street mark · Lv {a.level}</span><h2>{a.name}</h2><span className="num">{(interval / 1000).toFixed(1)}s per attempt · {xpFor(a)} XP</span></div></div>
       <div className="thief-rewards"><h3>Rewards per lift</h3>
         {Object.entries(a.outputs ?? {}).map(([id, n]) => <div className="thief-reward" key={id}><MatIcon id={id} size={20} /><b>{materialDef(id).name}</b><span className="spacer" /><span className="num">{n} base{a.outputChance !== undefined && ` · ${a.outputChance * 100}% chance`}</span></div>)}
         {a.bonus?.map((bonus) => <div className="thief-reward" key={bonus.id}><MatIcon id={bonus.id} size={20} /><b>{materialDef(bonus.id).name}</b><span className="spacer" /><span className="num">×{bonus.qty} · {+(Math.min(1, bonus.chance) * 100).toFixed(2)}%</span></div>)}
         <p className="thief-reward-note">Base gold before mastery and Focus bonuses. Prep for planned Heists and rogue recruits can drop too.</p>
       </div>
+      <div className="thief-casing-intel">
+        <div className="thief-casing-head">
+          <h3>Casing Intel</h3>
+          {isDoublePrep && <span className="thief-double-pill">2× prep</span>}
+          <span className="spacer" />
+          <span className="num small">{prepPct}% chance</span>
+        </div>
+        {intelRows.length > 0 ? (
+          <div className="thief-intel-list">
+            {intelRows.map(({ job, entry }) => {
+              const held = prepHeld(s, job.id)[entry.kind] ?? 0;
+              return <div className="thief-intel-row" key={`${job.id}:${entry.kind}`}>
+                <span><b>{prepDef(entry.kind).name}</b> · {job.name}</span>
+                <span className="num">{held}/{PREP_CAP}</span>
+              </div>;
+            })}
+          </div>
+        ) : (
+          <p className="thief-reward-note" style={{ marginTop: 4 }}>Unlock more Heist operations to turn up job prep from this mark.</p>
+        )}
+      </div>
+      {unlockedCount < 3 && (
+        <div className="thief-recruit-progress">
+          <div className="row small">
+            <span>Next rogue contact ({unlockedCount + 1}/3)</span>
+            <span className="spacer" />
+            <span className="num">{Math.min(marksTotal, nextRecruitAt)} / {nextRecruitAt} lifts</span>
+          </div>
+          <ProgressBar value={Math.min(1, marksTotal / nextRecruitAt)} color="#88682f" />
+        </div>
+      )}
       <div className="thief-dossier-action">
+        {pops.map((p) => <span key={p.id} className="thief-pop num" aria-hidden>{p.text}</span>)}
         {blocker && <p className="thief-blocker"><GameIcon name="lock" size={14} /> {blocker}</p>}
         {running ? <button className="btn thief-pickpocket" onClick={() => game.act((st) => stopAction(st))}>Stop pickpocketing</button> : <button className="btn thief-pickpocket" disabled={!!blocker} title={blocker ?? ''} onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, a.id))}><GameIcon name="thieving" size={17} /> Pickpocket</button>}
         <div className="thief-attempt"><span>{running ? 'Attempt in progress' : 'Ready when you are'}</span><span className="num">{running && s.action?.kind === 'skill' ? `${(s.action.progress / 1000).toFixed(1)} / ` : ''}{(interval / 1000).toFixed(1)}s</span></div>
@@ -147,7 +246,11 @@ export function ThievingLedger() {
           return <Tooltip content={<MasteryTip s={s} mastery={mastery} />}><span className="thief-next-perk">{next ? `Next: ${next.name} · Mastery ${next.level}` : 'All mastery milestones unlocked'}</span></Tooltip>;
         })()}
       </div>
-      {running && <div className="thief-focus"><SkillMinigame skill="thieving" /></div>}
+      <div className="thief-focus thief-alley-stage">
+        {running
+          ? <SkillMinigame skill="thieving" portrait={PORTRAITS[a.id]} targetName={a.name} />
+          : <LiftGameIdle targetName={a.name} portrait={PORTRAITS[a.id]} locked={!!blocker} onStart={() => { if (!blocker) game.act((st, ctx) => startSkillAction(st, ctx, a.id)); }} />}
+      </div>
     </section>
   </div>
   </>;

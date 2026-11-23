@@ -11,6 +11,10 @@ export interface NewsEntry {
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
 export const UPCOMING: string[] = [
+  'Street Marks now go up to level 90. The Gilded Mint and The Sovereign’s Vault add two endgame Heists, and the Thieving ledger adds four Stolen Keepsakes and a more forgiving Lantern Alley Pickpocket minigame.',
+  'Woodcutting’s Lodge has six upgradeable buildings, each woods has its own mastery perks, and a felled giant leaves a glowing heart you can chop out.',
+  'Start digging from the Scholar’s Desk in one click. Archaeology now groups translations and chapters in Codex & Story, and puts Restoration, Sifting and the Relic Forge together in Relics.',
+  'Astrology has clearer star slots and links, illustrated research charts, and a telescope that locks its focus when you let go.',
   'Mining shows your latest ore and rubble gains, with Focus below the shaft, a Mine Upgrades tab, and mine history in the Activity sidebar.',
   'Foraging now has a painted farmstead Focus field that stays visible at all times—click any soil bed to start foraging—all nine wild patches up front, a lush sunlit Glasshouse conservatory with raised planter beds and soothing rain-on-glass soundscapes, a visual Potting Bench, seed finds logged to Activity, Normal/Magic/Rare/Unique/Legendary seed & mutation rarities, and a cleaner Seeds satchel organized into Plantable Seeds, Grown Herbs, and All Discovered.',
   'Filter the Delve by layer trait, brace hazards in a separate Focus panel, and unlock installations by securing the depth where you want to build.',

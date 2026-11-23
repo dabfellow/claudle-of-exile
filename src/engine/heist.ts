@@ -51,8 +51,16 @@ function crewEffect(s: GameState, id: RogueSkill): number {
 
 /** % more chance to find prep items, from the Cutpurse and the skilling tree. */
 export function prepBoost(s: GameState): number {
-  if (s.heist.roster) return crewBonus(s, 'Market Manipulation') * 100 + (skillTreeStats(s).markerChance ?? 0);
-  return crewEffect(s, 'cutpurse') * 100 + (skillTreeStats(s).markerChance ?? 0);
+  const t = skillTreeStats(s);
+  const treePrep = (t.markerChance ?? 0) + (t['thieving.prepChance'] ?? 0);
+  if (s.heist.roster) return crewBonus(s, 'Market Manipulation') * 100 + treePrep;
+  return crewEffect(s, 'cutpurse') * 100 + treePrep;
+}
+
+/** Multiplier on prep item effects from Thorough Casing (+%) and Opportunist (-25%). */
+export function prepStrength(s: GameState): number {
+  const t = skillTreeStats(s);
+  return Math.max(0.25, 1 + (t['thieving.thoroughCasing'] ?? 0) / 100 - (t['thieving.opportunist'] ? 0.25 : 0));
 }
 
 /** Old name, kept so screens that still import it compile. */
@@ -102,6 +110,35 @@ export function rollPrep(s: GameState, ctx: Ctx, mark: SkillAction): void {
       ctx.emit({ t: 'info', text: `${job.name}: found a ${prepDef(e.kind).name}`, tone: 'good' });
     }
   }
+  if (skillTreeStats(s)['thieving.opportunist']) {
+    const targetJob = (s.heist.planned ? HEIST_JOBS.find((j) => j.id === s.heist.planned && level >= j.level) : undefined)
+      ?? HEIST_JOBS.filter((j) => level >= j.level).at(-1);
+    if (targetJob) {
+      for (const e of prepBoard(targetJob.id).items) {
+        if (e.mark === mark.id) continue;
+        const id = prepId(targetJob.id, e.kind);
+        const held = s.heist.prep[id] ?? 0;
+        if (held >= PREP_CAP || !chance(ctx.rng, p)) continue;
+        s.heist.prep[id] = held + 1;
+        ctx.emit({ t: 'info', text: `${targetJob.name}: found a ${prepDef(e.kind).name}`, tone: 'good' });
+      }
+    }
+  }
+}
+
+/** Inside Job bridge node: completing a Vault Atlas map can turn up a Heist prep item. */
+export function rollVaultMapPrep(s: GameState, ctx: Ctx): void {
+  if (!skillTreeStats(s)['bridge.inside_job']) return;
+  const level = skillLevel(s, 'thieving');
+  const targetJob = (s.heist.planned ? HEIST_JOBS.find((j) => j.id === s.heist.planned && level >= j.level) : undefined)
+    ?? HEIST_JOBS.filter((j) => level >= j.level).at(-1);
+  if (!targetJob) return;
+  const candidates = prepBoard(targetJob.id).items.filter((e) => (s.heist.prep[prepId(targetJob.id, e.kind)] ?? 0) < PREP_CAP);
+  if (!candidates.length || !chance(ctx.rng, 0.4)) return;
+  const chosen = pick(ctx.rng, candidates);
+  const id = prepId(targetJob.id, chosen.kind);
+  s.heist.prep[id] = (s.heist.prep[id] ?? 0) + 1;
+  ctx.emit({ t: 'info', text: `Inside Job: ${targetJob.name} — found a ${prepDef(chosen.kind).name}`, tone: 'good' });
 }
 
 /** Why a job can't start yet, or null when it can. */
@@ -113,8 +150,15 @@ export function canStartJob(s: GameState, jobId: string): string | null {
     if ((s.heist.unlockedRogues?.length ?? 0) < 3) return 'Recruit 3 rogues from Street Marks first';
     if (activeCrew(s).length !== 3) return 'Assign 3 rogues on the Rogue Crew tab first';
   }
-  const min = prepBoard(jobId).min;
-  if (prepKindsHeld(s, jobId) < min) return `Needs ${min} of these`;
+  const t = skillTreeStats(s);
+  const board = prepBoard(jobId);
+  const freeSlot = t['thieving.insideKnowledge'] ? 1 : 0;
+  const effectiveHeld = Math.min(board.items.length, prepKindsHeld(s, jobId) + freeSlot);
+  if (t['thieving.perfectPlan']) {
+    if (effectiveHeld < board.items.length) return 'Perfect Plan: needs a full prep board';
+    return null;
+  }
+  if (effectiveHeld < board.min) return `Needs ${board.min} of these`;
   return null;
 }
 
@@ -221,9 +265,11 @@ export function alarmChance(s: GameState, job: HeistJob, room: number): number {
   const current = a?.kind === 'heist' && a.jobId === job.id && a.room === room;
   if (current && a.tactic === 'bypass') return 0;
   const prep = runPrep(s, job);
+  const t = skillTreeStats(s);
+  if (t['thieving.perfectPlan'] && prep.length >= prepBoard(job.id).items.length) return 0;
   if (prep.includes('key') && room === vaultRoom(job, prep)) return 0;
   const mastery = s.heist.roster ? roomSuccessBonus(s, job, room) : 0;
-  const patrol = prep.includes('patrol') ? PATROL_MULT : 1;
+  const patrol = prep.includes('patrol') ? Math.max(0.2, 1 - (1 - PATROL_MULT) * prepStrength(s)) : 1;
   return Math.min(MAX_ALARM, Math.max(0, (job.alert / 100) * roomScale(job, prep, room) * alertMult(s, job) * reduction * patrol - mastery) + (current && a.tactic === 'greed' ? 0.15 : 0));
 }
 
@@ -237,7 +283,7 @@ export function cleanChance(s: GameState, job: HeistJob, rooms: number): number 
 export function roomMs(s: GameState, job: HeistJob, d: Derived): number {
   const t = skillTreeStats(s);
   const speed = s.heist.roster ? Math.min(0.6, crewBonus(s, 'Move Speed') + crewBonus(s, 'Pathfinding') + crewBonus(s, 'Trap Bypass') + crewBonus(s, 'Obstacle Evasion')) : crewEffect(s, 'locksmith');
-  const uniform = runPrep(s, job).includes('uniform') ? UNIFORM_MULT : 1;
+  const uniform = runPrep(s, job).includes('uniform') ? Math.max(0.4, 1 - (1 - UNIFORM_MULT) * prepStrength(s)) : 1;
   return (job.roomMs * (1 - speed) * uniform) / (1 + (d.skillSpeed + (d.gatheringSpeed ?? 0) + (t.skillSpeed ?? 0) + (t.thievingSpeed ?? 0) + masterySpeed(s, job.mastery)) / 100);
 }
 
@@ -272,11 +318,22 @@ export function jobBlocker(s: GameState, job: HeistJob): string | null {
 /** Start the run: every board item held is used up and recorded on the action. */
 function beginJob(s: GameState, job: HeistJob, focus?: number): void {
   const used: string[] = [];
+  const unheld: string[] = [];
   for (const e of prepBoard(job.id).items) {
     const id = prepId(job.id, e.kind);
     if ((s.heist.prep[id] ?? 0) > 0) {
       s.heist.prep[id] -= 1;
       used.push(e.kind);
+    } else {
+      unheld.push(e.kind);
+    }
+  }
+  if (skillTreeStats(s)['thieving.insideKnowledge']) {
+    if (unheld.length > 0) {
+      used.push(unheld[0]);
+    } else if (used.length > 0) {
+      const refundId = prepId(job.id, used[0] as PrepKind);
+      s.heist.prep[refundId] = Math.min(PREP_CAP, (s.heist.prep[refundId] ?? 0) + 1);
     }
   }
   const last = jobExit(s, job);
@@ -320,9 +377,17 @@ function addTake(take: Record<string, number>, id: string, n: number): void {
 }
 
 function rollDrops(s: GameState, ctx: Ctx, take: Record<string, number>, drops: HeistDrop[], mult: number): void {
+  const t = skillTreeStats(s);
+  const gemBonus = t['bridge.fences_eye'] ? 1 : 0;
+  const fenceCut = t['bridge.fences_eye'] ? 0.75 : 1;
   for (const d of drops) {
     if (!chance(ctx.rng, Math.min(1, d.chance * mult))) continue;
-    for (const [id, count] of Object.entries(d.id === 'rough_gem' ? roughDropBundle(s, ctx, d.qty) : { [d.id]: d.qty })) addTake(take, id, count);
+    const bundle = d.id === 'rough_gem'
+      ? roughDropBundle(s, ctx, d.qty, gemBonus)
+      : d.id === 'gold'
+        ? { gold: Math.max(1, Math.round(d.qty * fenceCut)) }
+        : { [d.id]: d.qty };
+    for (const [id, count] of Object.entries(bundle)) addTake(take, id, count);
   }
 }
 
@@ -420,6 +485,8 @@ function finishRoom(s: GameState, ctx: Ctx, job: HeistJob, d: Derived): void {
   // a mini-game double: this room's loot comes twice (gold doubled, every drop rolled twice)
   const times = takeDouble(s, ctx) ? 2 : 1;
   const prep = a.prep ?? [];
+  const strength = prepStrength(s);
+  const fenceCut = t['bridge.fences_eye'] ? 0.75 : 1;
   const scale = roomScale(job, prep, a.room);
   const vault = a.room === vaultRoom(job, prep);
   const hidden = prep.includes('ledger') && a.room === job.rooms;
@@ -430,12 +497,16 @@ function finishRoom(s: GameState, ctx: Ctx, job: HeistJob, d: Derived): void {
       const critical = chance(ctx.rng, crewBonus(s, 'Crit Hit Boost')) ? 2 : 1;
       const pockets = a.tacticRogue ? (s.heist.roster?.[a.tacticRogue]?.talents.filter((n) => n >= 5 && n <= 9).length ?? 0) * 0.1 : 0;
       const greed = a.tactic === 'greed' ? 1.5 + pockets : 1;
-      const plan = prep.includes('plan') ? PLAN_MULT : 1;
-      addTake(a.take, 'gold', Math.round(job.gold * scale * quantity * critical * greed * plan));
+      const plan = prep.includes('plan') ? 1 + (PLAN_MULT - 1) * strength : 1;
+      addTake(a.take, 'gold', Math.round(job.gold * scale * quantity * critical * greed * plan * fenceCut));
       rollDrops(s, ctx, a.take, job.drops, scale * quality * (a.tactic === 'greed' ? 1.5 : 1));
     }
-    if (vault) rollDrops(s, ctx, a.take, job.vault, 1 + crewBonus(s, 'Vault Access') + crewBonus(s, 'Loot Quality'));
-    else if (hidden) rollDrops(s, ctx, a.take, job.vault, LEDGER_VAULT_ROLL * (1 + crewBonus(s, 'Vault Access') + crewBonus(s, 'Loot Quality')));
+    if (vault) {
+      rollDrops(s, ctx, a.take, job.vault, 1 + crewBonus(s, 'Vault Access') + crewBonus(s, 'Loot Quality'));
+      if (t['bridge.fences_eye']) {
+        for (const [id, count] of Object.entries(roughDropBundle(s, ctx, 1, 1))) addTake(a.take, id, count);
+      }
+    } else if (hidden) rollDrops(s, ctx, a.take, job.vault, Math.min(1, LEDGER_VAULT_ROLL * strength) * (1 + crewBonus(s, 'Vault Access') + crewBonus(s, 'Loot Quality')));
   }
   if (a.room >= a.lastRoom) endJob(s, ctx, job, a.take, false);
   else {

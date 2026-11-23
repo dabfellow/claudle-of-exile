@@ -52,14 +52,18 @@ Each entry is the item and the mark it comes from:
 | Pyre Vault (45) | Uniform: Pyre Acolyte · Key: Pyre Acolyte · Patrol: Tax Collector · Ledger: Khan's Steward · Floor plan: Barrow Warden | 3 |
 | Khan's Tribute (55) | Key: Khan's Steward · Patrol: Pyre Acolyte · Ledger: Khan's Steward · Floor plan: Tax Collector · Uniform: Pyre Acolyte | 3 |
 | Occult Treasury (65) | Key: Khan's Steward · Patrol: Pyre Acolyte · Ledger: Khan's Steward · Uniform: Pyre Acolyte · Floor plan: Tax Collector | 3 |
+| The Gilded Mint (75) | Key: Imperial Mintmaster · Patrol: Royal Assayer · Ledger: Shadow Broker · Uniform: Royal Assayer · Floor plan: Imperial Mintmaster | 3 |
+| The Sovereign's Vault (90) | Key: Grand Vaultkeeper · Patrol: High Chamberlain · Ledger: Grand Vaultkeeper · Uniform: High Chamberlain · Floor plan: Shadow Broker | 3 |
 
-- **Drop rule:** each mark completion rolls 5% for every prep item that mark supplies, for jobs whose level the player meets. The item is skipped if already held at 3. Offline included.
+- **Drop rule:** each mark completion rolls 5% (plus `thieving.prepChance` and crew/mark bonuses) for every prep item that mark supplies, for jobs whose level the player meets. The item is skipped if already held at 3. Offline included.
+- **High-level marks (Lv 60–90):** 15 Street Marks span Lv 1 (`Road Peddler`) through Lv 90 (`Grand Vaultkeeper`: `mark_assayer` Lv 60, `mark_broker` Lv 68, `mark_mintmaster` Lv 75, `mark_chamberlain` Lv 82, `mark_archivist` Lv 90).
+- **Hidden keepsakes & Skill Tree:** Four Stolen Keepsakes hide across Street, Civic, Underworld, and High Court mark bands (`thieving.street`..`thieving.highcourt`). All seven `thieving.*` tree stats (`prepChance`, `thoroughCasing`, `insideKnowledge`, `perfectPlan`, `quickLift`, `deepPockets`, `opportunist`) and bridge keystones (`bridge.inside_job` on Vault Atlas maps, `bridge.fences_eye` on heist takes & vaults) are active.
 - The job's existing `cost` (Markers) is removed. Starting a job needs its minimum number of different board items held. Every board item held is used.
 
 ### Marks and Markers
 
-- Marks keep their gold, seals and wax as now. Their Rogue's Marker chance is removed.
-- Fence's Runner and Khanate Quartermaster keep `outputChance` and instead get double prep chance (10%).
+- Marks keep their gold, seals and wax as now (while high-tier Heists pay Regals, Chaos, and Exalteds). Their Rogue's Marker chance is removed.
+- Fence's Runner, Khanate Quartermaster, and Shadow Broker keep `outputChance` and instead get double prep chance (10%).
 - Heist `drops` entries for `rogues_marker` are replaced with gold at 15 gold per expected Marker.
 - Talents and perks that gave Markers now give prep:
   - Ilke the Cutpurse: "+10% prep chance per rank".
@@ -70,14 +74,11 @@ Each entry is the item and the mark it comes from:
 
 ### Focus minigame: the lift (marks only)
 
-- The target is drawn simply with an attention arc. It cycles: watching you → turning away → back turned (the window) → glancing back.
-- The window is `1.4 s − 0.05 s × floor(markLevel / 10)` (minimum 0.8 s). The cycle length varies randomly, from 2.5 to 4 s.
+- The target starts turned away in the Lantern Alley and sweeps: back turned (`away`) → glancing back (`glancing`) → watching you (`watching`).
+- Base windows give ~2.1–2.8 s turned away (`+800 ms` per distraction window, shorter high-level drop-off) and briefer `0.9–1.3 s` watches.
 - Results:
-  - A tap in the middle third of the window is a **double**.
-  - A tap elsewhere in the window is a **hit**.
-  - A tap within 0.25 s after the window ends, as they turn back, is **weak**.
-  - A tap while they're watching or glancing is a **miss**.
-- Scoring function: `liftResult(tapMs, windowStartMs, windowEndMs)`.
+  - 6+ taps in one `away` window earn a **double** (×2 next completion); 4–5 taps earn a **hit** (+25% Focus); 2–3 taps as they glance away award a partial **weak** (+5% Focus) instead of zeroing progress; clicking while `watching` is a **miss** (-10% Focus).
+- Thieving holds up to `+1.0` Focus overflow at `0.035/s` drain (~28.6 s at peak Focus speed, ~57 s total before idle) so players can wait out watches without losing buff uptime.
 - Heist room actions keep today's lockpick game (`ThievingGame`). `SkillGame` shows the lift for mark actions and the lockpick for heists.
 
 ### Screen
