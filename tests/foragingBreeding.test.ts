@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   crossOffspring,
   discoveredHybridHints,
+  foragingDone,
   grantSeed,
   greenhouseGrowSpeedMult,
   greenhousePlotCount,
@@ -12,7 +13,9 @@ import {
   parseStrain,
   plantPlot,
   rollWildVariant,
+  strainRarity,
 } from '../src/engine/foraging';
+import { actionDef } from '../src/data/skills';
 import { makeCtx } from '../src/engine/context';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -147,5 +150,55 @@ describe('Foraging: Wild variants and cross-breeding', () => {
     expect(loaded.foraging.seeds.sunpetal).toBe(5);
     expect(loaded.foraging.plots[0]).toEqual({ parents: ['frostleaf'], plantedAt: 0, readyAt: 0 });
     expect(loaded.action?.kind === 'skill' && loaded.action.actionId).toBe('forage_emberroot');
+  });
+
+  it('logs live seed finds and greenhouse crosses to Activity instead of queueing sealed packets', () => {
+    const sunAction = actionDef('forage_sunpetal');
+
+    // Live guaranteed plain seed drop -> Activity event, 0 packets
+    const liveState = newGame(7);
+    liveState.professionProgress.counters['foraging.seed.sunpetal'] = 99;
+    const liveCtx = makeCtx({ next: () => 0.99 }, 5000);
+    foragingDone(liveState, liveCtx, sunAction, true);
+    expect(liveState.foraging.seeds.sunpetal).toBe(1);
+    expect(liveState.foraging.packets).toHaveLength(0);
+    expect(liveCtx.events.some((e) => e.t === 'info' && e.text.includes('New seed found: Sunpetal') && e.tone === 'good')).toBe(true);
+
+    // Offline seed drop -> packets queued for Away modal, no live feed event
+    const offlineState = newGame(8);
+    offlineState.professionProgress.counters['foraging.seed.sunpetal'] = 99;
+    const offlineCtx = { ...makeCtx({ next: () => 0.99 }, 5000), offline: true };
+    foragingDone(offlineState, offlineCtx, sunAction, false);
+    expect(offlineState.foraging.packets).toEqual(['sunpetal']);
+    expect(offlineCtx.events.some((e) => e.t === 'info')).toBe(false);
+
+    // Live Greenhouse cross harvest -> Activity event, 0 packets
+    const ghState = newGame(9);
+    ghState.skills.harvesting = xpToReach('harvesting', 20);
+    const k1 = makeStrainKey('sunpetal', ['bountiful']);
+    const k2 = makeStrainKey('frostleaf', ['radiant']);
+    grantSeed(ghState, k1, 1, 0, false);
+    grantSeed(ghState, k2, 1, 0, false);
+    expect(plantPlot(ghState, 0, [k1, k2], 0)).toBeNull();
+    const ghCtx = makeCtx(seeded(12), 1e9);
+    const res = harvestPlot(ghState, ghCtx, 0, 1e9);
+    expect(typeof res).toBe('object');
+    expect(ghState.foraging.packets).toHaveLength(0);
+    expect(ghCtx.events.some((e) => e.t === 'info' && e.text.startsWith('Greenhouse cross:'))).toBe(true);
+  });
+
+  it('uses the 5-tier Normal / Magic / Rare / Unique / Legendary rarity ladder across mutations and strains', () => {
+    expect(strainRarity('sunpetal')).toBe('normal');
+    expect(strainRarity(makeStrainKey('sunpetal', ['bountiful']))).toBe('magic');
+    expect(strainRarity(makeStrainKey('sunpetal', ['bountiful', 'radiant']))).toBe('rare');
+    expect(strainRarity(makeStrainKey('eclipse_bloom', ['umbral']))).toBe('unique');
+    expect(strainRarity(makeStrainKey('voidbloom', ['umbral', 'celestial']))).toBe('legendary');
+
+    const ranked = keepRarestMutations(['bountiful', 'radiant', 'umbral', 'celestial']);
+    expect(ranked).toHaveLength(3);
+    expect(ranked).toContain('celestial');
+    expect(ranked).toContain('umbral');
+    expect(ranked).toContain('radiant');
+    expect(ranked).not.toContain('bountiful');
   });
 });

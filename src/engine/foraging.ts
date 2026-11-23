@@ -12,6 +12,7 @@ import {
   speciesDef,
   type MutationTier,
   type PlantMutation,
+  type StrainRarity,
 } from '../data/foraging';
 import type { SkillAction } from '../data/skills';
 import { addBank } from './bank';
@@ -51,7 +52,7 @@ export const freshForaging = (): ForagingState => ({
   packets: [],
 });
 
-const TIER_RANK: Record<MutationTier, number> = { common: 1, rare: 2, giga: 3 };
+export const TIER_RANK: Record<MutationTier, number> = { magic: 1, rare: 2, unique: 3, legendary: 4 };
 
 export function parseStrain(key: string): { species: string; mutations: string[] } {
   const [species, ...mutations] = key.split('|');
@@ -79,6 +80,10 @@ export function strainHighestTier(key: string): MutationTier | null {
     if (tier && (!best || TIER_RANK[tier] > TIER_RANK[best])) best = tier;
   }
   return best;
+}
+
+export function strainRarity(key: string): StrainRarity {
+  return strainHighestTier(key) ?? 'normal';
 }
 
 export function herbariumCount(s: GameState): number {
@@ -144,7 +149,7 @@ export function discoveredHybridHints(s: GameState): { hybridId: string; hybridN
 function drawWeightedMutation(rng: Rng, pool: PlantMutation[], speciesIndex: number): PlantMutation | null {
   if (!pool.length) return null;
   const depthMult = 1 + 0.25 * Math.max(0, speciesIndex);
-  const weights = pool.map((m) => (m.tier === 'common' ? m.weight : m.weight * depthMult));
+  const weights = pool.map((m) => (m.tier === 'magic' ? m.weight : m.weight * depthMult));
   const total = weights.reduce((a, b) => a + b, 0);
   if (total <= 0) return null;
   let roll = rng.next() * total;
@@ -206,6 +211,24 @@ export function openAllSeedPackets(s: GameState): string[] {
   return all;
 }
 
+function seedFeedTone(key: string): 'good' | 'magic' | 'rare' | 'unique' | 'legendary' {
+  const { species, mutations } = parseStrain(key);
+  const tier = strainHighestTier(key);
+  if (tier === 'legendary' || mutations.length >= 3) return 'legendary';
+  if (speciesDef(species)?.hybrid || tier === 'unique') return 'unique';
+  if (tier === 'rare') return 'rare';
+  if (tier === 'magic' || mutations.length > 0) return 'magic';
+  return 'good';
+}
+
+const FEED_TONE_RANK: Record<'good' | 'magic' | 'rare' | 'unique' | 'legendary', number> = {
+  good: 0,
+  magic: 1,
+  rare: 2,
+  unique: 3,
+  legendary: 4,
+};
+
 /** Once per completed wild foraging cycle, independent of ordinary yield/manual doubles. */
 export function foragingDone(s: GameState, ctx: Ctx, a: SkillAction, _foreground: boolean): void {
   const source = foragingSource(a);
@@ -218,14 +241,34 @@ export function foragingDone(s: GameState, ctx: Ctx, a: SkillAction, _foreground
   // Plain seed: 1% chance, first guaranteed at 100 completions
   const firstPending = !s.professionProgress.discoveries[seedId(source.plant)];
   if (chance(ctx.rng, 0.01) || (firstPending && c[key] >= 100)) {
+    const isNew = !s.foraging.strains[source.plant];
     if (firstPending) recordDiscovery(s, ctx, seedId(source.plant));
-    grantSeed(s, source.plant, 1, ctx.now);
+    grantSeed(s, source.plant, 1, ctx.now, !!ctx.offline);
+    if (!ctx.offline) {
+      ctx.emit({
+        t: 'info',
+        text: isNew ? `New seed found: ${strainLabel(source.plant)} (added to Seeds)` : `Found seed: ${strainLabel(source.plant)}`,
+        tone: 'good',
+      });
+    }
   }
 
   // Variant seed: 2% chance
   if (chance(ctx.rng, 0.02)) {
     const variant = rollWildVariant(ctx.rng, source.plant);
-    grantSeed(s, variant, 1, ctx.now);
+    const isNew = !s.foraging.strains[variant];
+    grantSeed(s, variant, 1, ctx.now, !!ctx.offline);
+    if (!ctx.offline) {
+      const mutCount = parseStrain(variant).mutations.length;
+      ctx.emit({
+        t: 'info',
+        text:
+          mutCount >= 3
+            ? `★ 3-Mutation seed found: ${strainLabel(variant)}! (added to Seeds)`
+            : `${isNew ? 'New variant seed' : 'Found variant seed'}: ${strainLabel(variant)} (added to Seeds)`,
+        tone: seedFeedTone(variant),
+      });
+    }
   }
 }
 
@@ -388,6 +431,14 @@ export function harvestPlot(s: GameState, ctx: Ctx, plotIndex: number, now = Dat
       s.foraging.plots[plotIndex] = null;
     }
 
+    if (!ctx.offline) {
+      ctx.emit({
+        t: 'info',
+        text: `Greenhouse harvest: +${herbQty} ${strainLabel(key)} herbs, +${seedQty} seed${seedQty > 1 ? 's' : ''}${essences.length ? ' + essence' : ''}${replanted ? ' (Everbloom replanted)' : ''}`,
+        tone: essences.length ? 'rare' : 'good',
+      });
+    }
+
     return { mode: 'grow', herbs: { strain: key, qty: herbQty }, seeds: Array(seedQty).fill(key), essences, replanted };
   }
 
@@ -396,11 +447,14 @@ export function harvestPlot(s: GameState, ctx: Ctx, plotIndex: number, now = Dat
   const offspringCount = 3 + (stableStrainCount(s) >= 6 ? 1 : 0);
   const seeds: string[] = [];
   let stabilised: string | undefined;
+  let bestTone: 'good' | 'magic' | 'rare' | 'unique' | 'legendary' = 'good';
 
   for (let i = 0; i < offspringCount; i++) {
     const child = crossOffspring(s, ctx.rng, p1, p2);
-    grantSeed(s, child, 1, now, true);
+    grantSeed(s, child, 1, now, false);
     seeds.push(child);
+    const t = seedFeedTone(child);
+    if (FEED_TONE_RANK[t] > FEED_TONE_RANK[bestTone]) bestTone = t;
 
     // Stabilisation check on self-cross
     if (p1 === p2 && child === p1) {
@@ -417,6 +471,20 @@ export function harvestPlot(s: GameState, ctx: Ctx, plotIndex: number, now = Dat
   }
 
   s.foraging.plots[plotIndex] = null;
+  if (!ctx.offline) {
+    ctx.emit({
+      t: 'info',
+      text: `Greenhouse cross: ${seeds.map(strainLabel).join(', ')} (added to Seeds)`,
+      tone: bestTone,
+    });
+    if (stabilised) {
+      ctx.emit({
+        t: 'info',
+        text: `★ Strain stabilised: ${strainLabel(stabilised)} now plants for free!`,
+        tone: 'unique',
+      });
+    }
+  }
   return { mode: 'cross', seeds, essences: [], stabilised };
 }
 

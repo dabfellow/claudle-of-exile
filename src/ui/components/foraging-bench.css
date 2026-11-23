@@ -1,25 +1,1254 @@
-.foraging-bench { display: grid; gap: 14px; }
-.foraging-plots { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-.foraging-plot { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2, rgba(20, 24, 20, 0.7)); min-width: 0; align-content: start; }
-.foraging-plot.ready { border-color: var(--good, #6ec878); }
-.foraging-plot-plant { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.foraging-bench { display: grid; gap: 14px; min-width: 0; }
+.foraging-bench > * { min-width: 0; }
+
+/* ---- Seed packets ---- */
+.foraging-packets { display: grid; gap: 10px; }
+.foraging-packet-seal {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, #4d4029);
+  background: radial-gradient(circle at 35% 30%, #425a34, #22301b);
+  font-size: 16px;
+  flex: 0 0 auto;
+}
+.foraging-packet-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+.foraging-packet-reveal {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: rgba(18, 24, 18, 0.72);
+}
+.foraging-packet-reveal.magic { border-color: color-mix(in srgb, var(--magic) 55%, var(--border)); background: rgba(143, 156, 242, 0.12); }
+.foraging-packet-reveal.rare { border-color: color-mix(in srgb, var(--rare) 65%, var(--border)); background: rgba(227, 207, 107, 0.14); }
+.foraging-packet-reveal.unique { border-color: color-mix(in srgb, var(--unique) 70%, var(--border)); background: rgba(201, 124, 68, 0.15); }
+.foraging-packet-reveal.legendary { border-color: color-mix(in srgb, var(--legendary, #d896ff) 75%, var(--border)); background: rgba(216, 150, 255, 0.18); box-shadow: 0 0 14px rgba(216, 150, 255, 0.22); }
+.foraging-packet-reveal.triple { outline: 2px solid var(--rare); }
+
+/* ---- Shared tags & rarity pills ---- */
+.foraging-hybrid-badge {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--sp-color, #9fd48c) 70%, #ffffff30);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--sp-color, #9fd48c) 32%, #1d261d), #121713);
+}
 .foraging-swatch { width: 22px; height: 22px; border-radius: 50%; flex: 0 0 auto; border: 1px solid rgba(255,255,255,0.25); }
-.foraging-mut-tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 3px; border: 1px solid var(--border); margin: 2px 4px 0 0; }
-.foraging-mut-tag.rare { border-color: #d7b56d; color: #f2d28a; }
-.foraging-mut-tag.giga { border-color: #c58aff; color: #e4c6ff; background: rgba(145, 80, 220, 0.18); }
+.foraging-mut-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.foraging-mut-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: rgba(24, 30, 24, 0.72);
+}
+.foraging-mut-tag.magic { border-color: color-mix(in srgb, var(--magic) 60%, var(--border)); color: var(--magic); background: rgba(66, 76, 148, 0.22); }
+.foraging-mut-tag.rare { border-color: color-mix(in srgb, var(--rare) 70%, var(--border)); color: var(--rare); background: rgba(120, 96, 32, 0.24); }
+.foraging-mut-tag.unique { border-color: color-mix(in srgb, var(--unique) 75%, var(--border)); color: #ebb07e; background: rgba(128, 66, 28, 0.28); }
+.foraging-mut-tag.legendary { border-color: color-mix(in srgb, var(--legendary, #d896ff) 80%, var(--border)); color: #ebd1ff; background: rgba(145, 76, 220, 0.26); }
+.foraging-mut-tier {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+}
+.foraging-rarity-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--border);
+  background: rgba(20, 24, 20, 0.72);
+  color: var(--normal);
+}
+.foraging-rarity-pill.normal { border-color: rgba(201, 197, 189, 0.35); color: var(--normal); }
+.foraging-rarity-pill.magic { border-color: color-mix(in srgb, var(--magic) 55%, transparent); color: var(--magic); background: rgba(66, 76, 148, 0.24); }
+.foraging-rarity-pill.rare { border-color: color-mix(in srgb, var(--rare) 60%, transparent); color: var(--rare); background: rgba(120, 96, 32, 0.24); }
+.foraging-rarity-pill.unique { border-color: color-mix(in srgb, var(--unique) 70%, transparent); color: #f0b282; background: rgba(128, 66, 28, 0.28); }
+.foraging-rarity-pill.legendary { border-color: color-mix(in srgb, var(--legendary, #d896ff) 75%, transparent); color: #ecd1ff; background: rgba(145, 76, 220, 0.28); }
+
+/* ---- Wild tab: all 9 patches strip + farm backdrop stage ---- */
+.foraging-wild { display: grid; gap: 12px; min-width: 0; }
+.foraging-strip-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.foraging-patch-strip {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+.foraging-patch-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 7px 10px;
+  text-align: left;
+  color: var(--text);
+  background: var(--panel-2, #181e1a);
+  border: 1px solid var(--line, #353f37);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease, transform 80ms ease;
+}
+.foraging-patch-pill:hover {
+  border-color: color-mix(in srgb, var(--patch-color, #9fd48c) 65%, var(--line-2, #4d5a4f));
+  background: color-mix(in srgb, var(--patch-color, #9fd48c) 8%, var(--panel-2, #181e1a));
+}
+.foraging-patch-pill.selected {
+  border-color: var(--patch-color, #9fd48c);
+  background: color-mix(in srgb, var(--patch-color, #9fd48c) 16%, var(--panel-2, #181e1a));
+  box-shadow: inset 0 -2px 0 var(--patch-color, #9fd48c);
+}
+.foraging-patch-pill.active {
+  box-shadow: inset 0 -2px 0 var(--patch-color, #9fd48c), 0 0 12px color-mix(in srgb, var(--patch-color, #9fd48c) 24%, transparent);
+}
+.foraging-patch-pill.locked { opacity: 0.68; }
+.foraging-patch-pill.locked .art { filter: grayscale(0.75) brightness(0.75); }
+.foraging-patch-pill-text {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  line-height: 1.25;
+}
+.foraging-patch-pill-text b {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.foraging-patch-pill-text small { font-size: 11px; color: var(--muted); }
+.foraging-pill-live { color: var(--good, #8ee88a); font-weight: 700; }
+.foraging-find-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f2d28a;
+  box-shadow: 0 0 6px rgba(242, 210, 138, 0.8);
+  flex: 0 0 auto;
+}
+
+.foraging-wild-main {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.85fr);
+  align-items: start;
+}
+.foraging-wild-main > * { min-width: 0; }
+@media (max-width: 880px) {
+  .foraging-wild-main { grid-template-columns: minmax(0, 1fr); }
+}
+
+html .card.foraging-field-stage {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  min-height: 410px;
+  overflow: hidden;
+  isolation: isolate;
+  border-color: color-mix(in srgb, var(--patch-color, #9fd48c) 38%, #414c3b);
+  background:
+    linear-gradient(180deg, rgba(12, 16, 11, 0.36) 0%, rgba(12, 16, 11, 0.16) 44%, rgba(12, 16, 11, 0.70) 100%),
+    radial-gradient(65% 55% at 50% 48%, color-mix(in srgb, var(--patch-color, #9fd48c) 14%, transparent), transparent 72%),
+    url('../../assets/zones/foraging-farm.webp') center 42% / cover no-repeat,
+    #181e16;
+}
+
+.foraging-field-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(14, 18, 13, 0.74);
+  backdrop-filter: blur(3px);
+}
+.foraging-field-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.foraging-field-title h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #f4ebd8;
+}
+.foraging-found-note { color: #f2d28a; }
+.foraging-cycle-bar { min-width: 0; }
+.foraging-cycle-bar.idle { opacity: 0.78; }
+
+.foraging-focus-stage {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(190, 174, 132, 0.25);
+  background: linear-gradient(180deg, rgba(12, 16, 11, 0.32), rgba(12, 16, 11, 0.54));
+  backdrop-filter: none;
+}
+.foraging-focus-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: rgba(12, 16, 11, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.foraging-focus-stage .minigame-foot {
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: rgba(12, 16, 11, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.foraging-other-running {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(130, 198, 128, 0.35);
+  background: rgba(34, 52, 34, 0.55);
+}
+.foraging-locked-idle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+/* Keep the 3x3 garden bed grid framed crisply against the farm backdrop */
+.foraging-field-stage .forage-bed-grid {
+  max-width: 312px;
+  gap: 10px;
+}
+.foraging-field-stage .forage-bed {
+  height: 76px;
+  background:
+    repeating-linear-gradient(-12deg, rgba(0, 0, 0, 0.2) 0 4px, rgba(255, 255, 255, 0.025) 4px 8px),
+    radial-gradient(circle at 50% 45%, rgba(52, 40, 28, 0.92), rgba(24, 19, 14, 0.94));
+}
+.foraging-field-stage .forage-bed.idle:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--patch-color, #79d47e) 70%, #8eb87c);
+  background:
+    radial-gradient(circle at 50% 45%, rgba(72, 92, 54, 0.38), rgba(24, 21, 15, 0.94));
+}
+.foraging-field-stage .forage-bed.idle:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+/* ---- Patch field notes column ---- */
+.foraging-patch-notes { display: grid; gap: 12px; min-width: 0; }
+.card.foraging-notes-card { display: grid; gap: 10px; min-width: 0; }
+.foraging-drop-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+.foraging-drop-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.foraging-drop-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  margin-inline: 3px;
+}
+.foraging-drop-dot.plain { background: #8ec98a; border: 1px solid #ccefd0; }
+.foraging-drop-dot.variant { background: #d4a9ff; border: 1px solid #f2d28a; }
+.foraging-pity-box { display: grid; gap: 5px; }
+
+/* ---- Greenhouse conservatory ---- */
+html .card.foraging-conservatory {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  overflow: hidden;
+  isolation: isolate;
+  border-color: rgba(132, 174, 128, 0.45);
+  box-shadow: inset 0 1px 0 rgba(226, 245, 212, 0.14), 0 14px 36px rgba(0, 0, 0, 0.42);
+  background:
+    linear-gradient(180deg, rgba(12, 22, 15, 0.56) 0%, rgba(14, 24, 17, 0.34) 38%, rgba(11, 18, 13, 0.80) 100%),
+    radial-gradient(85% 60% at 50% 6%, rgba(212, 242, 196, 0.16), transparent 68%),
+    url('../../assets/zones/foraging-greenhouse.webp') center 38% / cover no-repeat,
+    #131b14;
+}
+
+/* Wrought-iron glasshouse mullion ribs along upper conservatory frame */
+html .card.foraging-conservatory::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent calc(25% - 1px),
+      rgba(26, 36, 28, 0.36) calc(25% - 1px),
+      rgba(26, 36, 28, 0.36) 25%
+    ),
+    linear-gradient(180deg, rgba(220, 244, 214, 0.08) 0, transparent 140px);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0, rgba(0, 0, 0, 0.15) 180px, transparent 260px);
+}
+
+html .card.foraging-conservatory > * {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+/* Drifting sunlit dust/pollen motes inside the glasshouse skylight */
+.gh-sky-motes {
+  position: absolute !important;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0 !important;
+  overflow: hidden;
+}
+.gh-mote {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(242, 232, 168, 0.85), rgba(212, 242, 178, 0));
+  animation: gh-mote-drift 9s ease-in-out infinite;
+}
+.gh-mote.m1 { top: 14%; left: 16%; animation-delay: 0s; }
+.gh-mote.m2 { top: 22%; left: 42%; animation-delay: -2.2s; width: 6px; height: 6px; }
+.gh-mote.m3 { top: 11%; left: 66%; animation-delay: -4.1s; }
+.gh-mote.m4 { top: 28%; left: 82%; animation-delay: -6.3s; width: 4px; height: 4px; }
+.gh-mote.m5 { top: 19%; left: 28%; animation-delay: -7.5s; }
+
+@keyframes gh-mote-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(0.85); opacity: 0.35; }
+  50% { transform: translate3d(14px, -16px, 0) scale(1.2); opacity: 0.82; }
+}
+
+.gh-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 14px;
+  border-radius: 9px;
+  border: 1px solid rgba(206, 228, 190, 0.18);
+  background: rgba(13, 21, 15, 0.74);
+  backdrop-filter: blur(4px);
+}
+.gh-eyebrow {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: #b7d2ac;
+}
+.gh-header h2 {
+  margin: 2px 0 0;
+  font-size: 21px;
+  color: #f3efdf;
+}
+.gh-header-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.gh-next-pill {
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(176, 206, 162, 0.25);
+  background: rgba(20, 31, 22, 0.65);
+  color: #cedcc6;
+}
+.gh-harvest-all {
+  box-shadow: 0 0 14px rgba(124, 214, 134, 0.32);
+}
+.gh-sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(162, 190, 154, 0.28);
+  background: rgba(18, 28, 21, 0.8);
+  color: #bfd0b8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+}
+.gh-sound-toggle:hover {
+  border-color: rgba(190, 226, 178, 0.55);
+  color: #ebf6e6;
+}
+.gh-sound-toggle.on {
+  border-color: rgba(136, 214, 156, 0.55);
+  background: rgba(34, 62, 42, 0.78);
+  color: #d7f7dc;
+}
+
+/* ---- Raised timber & terracotta planter beds ---- */
+.gh-beds {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.gh-bed {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0;
+  min-width: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid #594433;
+  background:
+    linear-gradient(180deg, rgba(16, 28, 20, 0.68) 0%, rgba(19, 27, 20, 0.84) 68%, rgba(28, 21, 16, 0.96) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(215, 240, 204, 0.14),
+    0 8px 20px rgba(0, 0, 0, 0.36);
+  transition: transform 140ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.gh-bed.is-empty {
+  cursor: pointer;
+  border-color: #654e39;
+}
+.gh-bed.is-empty:hover {
+  transform: translateY(-2px);
+  border-color: #96b87c;
+  box-shadow:
+    inset 0 1px 0 rgba(226, 246, 204, 0.2),
+    0 10px 24px rgba(0, 0, 0, 0.42);
+}
+.gh-bed.is-empty.selected {
+  border-color: #e6c675;
+  box-shadow:
+    0 0 0 1px rgba(230, 198, 117, 0.45),
+    0 10px 26px rgba(0, 0, 0, 0.46);
+}
+.gh-bed.cross {
+  border-color: #6f5b3a;
+}
+.gh-bed.ready {
+  border-color: #79d888;
+  box-shadow:
+    0 0 0 1px rgba(121, 216, 136, 0.45),
+    0 0 22px rgba(110, 214, 128, 0.24),
+    0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
+.gh-bed-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px 4px;
+  min-width: 0;
+}
+.gh-bed-tag {
+  flex: 0 0 auto;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(212, 184, 128, 0.35);
+  background: rgba(48, 36, 24, 0.72);
+  color: #e5d2a4;
+}
+.gh-bed-name {
+  min-width: 0;
+  font-size: 14px;
+  color: #f3efe2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gh-bed-canopy {
+  position: relative;
+  display: grid;
+  place-items: end center;
+  height: 104px;
+  padding-top: 8px;
+  overflow: hidden;
+  background: radial-gradient(75% 80% at 50% 35%, color-mix(in srgb, var(--bed-color, #90d686) 14%, rgba(28, 46, 32, 0.25)), transparent 75%);
+}
+.gh-bed-canopy.is-empty {
+  color: #a9cc9c;
+  background: radial-gradient(68% 72% at 50% 42%, rgba(92, 128, 86, 0.14), transparent 76%);
+}
+.gh-bed-canopy.ready {
+  background: radial-gradient(82% 85% at 50% 42%, color-mix(in srgb, var(--bed-color, #7ce08e) 28%, rgba(112, 206, 126, 0.14)), transparent 78%);
+}
+.gh-empty-sprout {
+  width: 78px;
+  height: 48px;
+  margin-bottom: -4px;
+  opacity: 0.85;
+}
+.gh-soil-mound {
+  position: relative;
+  width: 92%;
+  height: 22px;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  border-top: 2px solid #5d422d;
+  background:
+    repeating-linear-gradient(-14deg, rgba(0, 0, 0, 0.22) 0 4px, rgba(255, 255, 255, 0.03) 4px 8px),
+    radial-gradient(ellipse at 50% 25%, #4b3523, #23180f 85%);
+  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.45);
+}
+.gh-soil-mound.is-empty { opacity: 0.88; }
+
+.gh-single-plant,
+.gh-plant-col {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-items: end;
+  margin-bottom: -8px;
+  z-index: 1;
+}
+.gh-plant-svg {
+  width: 96px;
+  height: 58px;
+  transform-origin: bottom center;
+  animation: gh-sway 5.2s ease-in-out infinite;
+}
+.gh-plant-crown {
+  position: relative;
+  margin-bottom: -24px;
+  z-index: 2;
+  padding: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--bed-color, #8ee88a) 36%, rgba(20, 32, 22, 0.55)), transparent 74%);
+  filter: drop-shadow(0 2px 8px color-mix(in srgb, var(--bed-color, #8ee88a) 45%, transparent));
+  animation: gh-sway 5.2s ease-in-out infinite;
+}
+.gh-bed-canopy.magic .gh-plant-crown {
+  box-shadow: 0 0 12px color-mix(in srgb, var(--magic) 35%, transparent);
+}
+.gh-bed-canopy.rare .gh-plant-crown {
+  box-shadow: 0 0 14px rgba(242, 210, 138, 0.35);
+}
+.gh-bed-canopy.unique .gh-plant-crown {
+  box-shadow: 0 0 16px color-mix(in srgb, var(--unique) 48%, transparent);
+}
+.gh-bed-canopy.legendary .gh-plant-crown {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--legendary, #d896ff) 55%, transparent);
+}
+.gh-bed-canopy.ready .gh-plant-crown {
+  box-shadow: 0 0 18px color-mix(in srgb, var(--bed-color, #7be38b) 65%, rgba(255, 232, 160, 0.45));
+}
+
+.gh-sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f5e193;
+  box-shadow: 0 0 8px rgba(245, 225, 147, 0.9);
+  animation: gh-sparkle 2.4s ease-in-out infinite;
+  z-index: 3;
+}
+.gh-sparkle.a { top: 8px; left: 22px; animation-delay: 0s; }
+.gh-sparkle.b { top: 4px; right: 20px; animation-delay: -0.9s; }
+.gh-sparkle.c { top: 22px; left: 8px; animation-delay: -1.6s; width: 4px; height: 4px; }
+
+.gh-cross-pair {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  width: 100%;
+  max-width: 240px;
+  padding-inline: 12px;
+  margin-bottom: -8px;
+  z-index: 1;
+}
+.gh-cross-pair .gh-plant-svg { width: 76px; height: 50px; }
+.gh-pollination-svg {
+  width: 58px;
+  height: 44px;
+  align-self: center;
+  margin-inline: -16px;
+  z-index: 2;
+}
+.gh-pollination-arc {
+  fill: none;
+  stroke: #f2d28a;
+  stroke-width: 1.8;
+  stroke-dasharray: 4 3;
+  opacity: 0.85;
+}
+.gh-pollen-bead {
+  fill: #ffe7a3;
+  animation: gh-pollen-pulse 2s ease-in-out infinite;
+}
+.gh-pollen-bead.b { animation-delay: -0.6s; }
+.gh-pollen-bead.c { animation-delay: -1.2s; }
+
+@keyframes gh-sway {
+  0%, 100% { transform: rotate(-1.6deg); }
+  50% { transform: rotate(1.6deg); }
+}
+@keyframes gh-sparkle {
+  0%, 100% { transform: translateY(2px) scale(0.7); opacity: 0.3; }
+  50% { transform: translateY(-5px) scale(1.2); opacity: 1; }
+}
+@keyframes gh-pollen-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.gh-bed-ledge {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-top: 3px solid #6b4e36;
+  background: linear-gradient(180deg, rgba(38, 29, 21, 0.94), rgba(24, 19, 15, 0.98));
+}
+.gh-cross-parents {
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+.gh-ready-text {
+  color: #8ee89a;
+  font-weight: 700;
+}
+.gh-harvest-btn {
+  box-shadow: 0 0 12px rgba(124, 214, 134, 0.3);
+}
+
+/* ---- Empty satchel note ---- */
+.gh-empty-satchel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 13px 15px;
+  border-radius: 9px;
+  border: 1px solid rgba(154, 184, 138, 0.28);
+  background: rgba(16, 25, 18, 0.8);
+}
+
+/* ---- Visual Potting Bench & Seed Satchel ---- */
+.gh-potting-bench {
+  display: grid;
+  gap: 14px;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid rgba(196, 166, 114, 0.42);
+  background:
+    linear-gradient(180deg, rgba(30, 26, 20, 0.9), rgba(20, 22, 18, 0.94));
+  box-shadow: inset 0 1px 0 rgba(242, 224, 182, 0.1), 0 10px 26px rgba(0, 0, 0, 0.42);
+}
+.gh-bench-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.gh-bench-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: #f2e8cf;
+}
+.gh-mode-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 7px;
+  border: 1px solid rgba(182, 168, 128, 0.26);
+  background: rgba(14, 16, 13, 0.72);
+}
+.gh-mode-btn {
+  border: 0;
+  border-radius: 5px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.gh-mode-btn:hover { color: #eef3ea; }
+.gh-mode-btn.active {
+  color: #f8f3e3;
+  background: rgba(82, 114, 68, 0.62);
+  box-shadow: inset 0 1px 0 rgba(212, 240, 194, 0.2);
+}
+
+.gh-bench-stage {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  align-items: stretch;
+}
+@media (max-width: 780px) {
+  .gh-bench-stage { grid-template-columns: minmax(0, 1fr); }
+}
+
+.gh-sockets-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  min-width: 0;
+}
+.gh-pot-socket {
+  flex: 1 1 155px;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  align-content: center;
+  padding: 11px 12px;
+  text-align: left;
+  color: var(--text);
+  border-radius: 8px;
+  border: 1.5px dashed rgba(176, 146, 104, 0.55);
+  background: radial-gradient(circle at 50% 45%, rgba(56, 40, 26, 0.68), rgba(24, 19, 14, 0.85));
+  cursor: pointer;
+  transition: border-color 130ms ease, background-color 130ms ease, box-shadow 130ms ease;
+}
+.gh-pot-socket.filled {
+  border-style: solid;
+  border-color: #9e7f54;
+}
+.gh-pot-socket.focused {
+  border-color: #f0ce78;
+  box-shadow: 0 0 0 1px rgba(240, 206, 120, 0.42);
+}
+.gh-socket-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ccb992;
+}
+.gh-socket-seed {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.gh-socket-info {
+  display: grid;
+  min-width: 0;
+}
+.gh-socket-info b {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.gh-socket-placeholder {
+  font-size: 12px;
+  color: var(--muted);
+  padding-block: 6px;
+}
+.gh-cross-join {
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  align-self: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #e7c676;
+  padding-inline: 2px;
+}
+
+.gh-outcome-card {
+  display: grid;
+  gap: 10px;
+  align-content: space-between;
+  padding: 11px 13px;
+  border-radius: 8px;
+  border: 1px solid rgba(142, 174, 134, 0.28);
+  background: rgba(15, 22, 16, 0.78);
+  min-width: 0;
+}
+.gh-outcome-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+.gh-metric {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.gh-warn-note {
+  color: #f0b86e;
+}
+
+/* ---- Visual Seed Satchel ---- */
+.gh-satchel {
+  display: grid;
+  gap: 10px;
+}
+.gh-satchel-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.gh-satchel-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gh-filter-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(162, 184, 152, 0.25);
+  background: rgba(20, 26, 20, 0.7);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gh-filter-pill:hover { color: #eef3ea; border-color: rgba(182, 208, 170, 0.45); }
+.gh-filter-pill.active {
+  color: #f5f2e4;
+  border-color: #93c47d;
+  background: rgba(66, 98, 56, 0.55);
+}
+
+.gh-filter-pill.rar-normal { --pill-c: var(--normal); }
+.gh-filter-pill.rar-magic { --pill-c: var(--magic); }
+.gh-filter-pill.rar-rare { --pill-c: var(--rare); }
+.gh-filter-pill.rar-unique { --pill-c: var(--unique); }
+.gh-filter-pill.rar-legendary { --pill-c: var(--legendary, #d896ff); }
+.gh-filter-pill[class*="rar-"] { border-color: color-mix(in srgb, var(--pill-c) 35%, transparent); color: var(--pill-c); }
+.gh-filter-pill[class*="rar-"].active {
+  border-color: var(--pill-c);
+  background: color-mix(in srgb, var(--pill-c) 22%, rgba(20, 26, 20, 0.85));
+}
+
+.gh-satchel-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+}
+.gh-seed-tile {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 9px 11px;
+  text-align: left;
+  color: var(--text);
+  border-radius: 7px;
+  border: 1px solid rgba(144, 162, 138, 0.28);
+  background: rgba(20, 26, 20, 0.84);
+  cursor: pointer;
+  min-width: 0;
+  transition: border-color 120ms ease, background-color 120ms ease, transform 80ms ease;
+}
+.gh-seed-tile:hover {
+  transform: translateY(-1px);
+  border-color: #93c47d;
+  background: rgba(30, 42, 30, 0.9);
+}
+.gh-seed-tile.magic { border-color: color-mix(in srgb, var(--magic) 52%, transparent); }
+.gh-seed-tile.rare { border-color: color-mix(in srgb, var(--rare) 60%, transparent); }
+.gh-seed-tile.unique { border-color: color-mix(in srgb, var(--unique) 65%, transparent); }
+.gh-seed-tile.legendary { border-color: color-mix(in srgb, var(--legendary, #d896ff) 72%, transparent); }
+.gh-seed-tile.triple { box-shadow: inset 0 0 0 1px rgba(242, 210, 138, 0.45); }
+.gh-seed-tile.chosen {
+  border-color: #f0ce78;
+  background: rgba(68, 72, 38, 0.42);
+  box-shadow: 0 0 0 1px rgba(240, 206, 120, 0.4);
+}
+.gh-seed-tile.self-lock { opacity: 0.62; }
+.gh-seed-tile-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.gh-seed-name {
+  font-size: 13px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.gh-seed-count {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #cfe0c8;
+  flex: 0 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gh-mote,
+  .gh-plant-svg,
+  .gh-plant-crown,
+  .gh-sparkle,
+  .gh-pollen-bead {
+    animation: none;
+  }
+}
+
+/* ---- Seeds tab ---- */
+.seeds-panel {
+  display: grid;
+  gap: 14px;
+}
+.seeds-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 14px;
+}
+.seeds-header h3 { margin: 2px 0 0; }
+.seeds-summary-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.seeds-toolbar {
+  display: grid;
+  gap: 10px;
+}
+.seeds-view-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--line, #353f37);
+  background: rgba(14, 18, 14, 0.72);
+  justify-self: start;
+}
+.seeds-view-btn {
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+.seeds-view-btn:hover { color: var(--text); }
+.seeds-view-btn.active {
+  color: #f4f1df;
+  background: rgba(74, 104, 62, 0.6);
+  box-shadow: inset 0 1px 0 rgba(212, 240, 194, 0.2);
+}
+
+.seeds-rarity-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.seeds-rarity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line, #38423a);
+  background: rgba(18, 22, 18, 0.72);
+  color: var(--pill-c, var(--muted));
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease, opacity 120ms ease;
+}
+.seeds-rarity-pill.all { --pill-c: var(--text); }
+.seeds-rarity-pill.rar-normal { --pill-c: var(--normal); }
+.seeds-rarity-pill.rar-magic { --pill-c: var(--magic); }
+.seeds-rarity-pill.rar-rare { --pill-c: var(--rare); }
+.seeds-rarity-pill.rar-unique { --pill-c: var(--unique); }
+.seeds-rarity-pill.rar-legendary { --pill-c: var(--legendary, #d896ff); }
+.seeds-rarity-pill.stable { --pill-c: #f2d28a; }
+.seeds-rarity-pill.zero { opacity: 0.45; }
+.seeds-rarity-pill:hover { border-color: var(--pill-c); }
+.seeds-rarity-pill.active {
+  border-color: var(--pill-c);
+  background: color-mix(in srgb, var(--pill-c) 20%, rgba(18, 22, 18, 0.9));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--pill-c) 22%, transparent);
+}
+.seeds-rarity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pill-c);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--pill-c) 65%, transparent);
+}
+
+.seeds-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
+}
+.seed-card {
+  display: grid;
+  gap: 9px;
+  padding: 12px 13px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--rar-c, var(--normal));
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--rar-c, transparent) 10%, transparent), transparent 65%),
+    var(--panel-2, rgba(20, 24, 20, 0.72));
+  min-width: 0;
+  align-content: start;
+}
+.seed-card.rar-normal { --rar-c: var(--normal); }
+.seed-card.rar-magic {
+  --rar-c: var(--magic);
+  border-color: color-mix(in srgb, var(--magic) 45%, var(--border));
+  border-left-color: var(--magic);
+}
+.seed-card.rar-rare {
+  --rar-c: var(--rare);
+  border-color: color-mix(in srgb, var(--rare) 52%, var(--border));
+  border-left-color: var(--rare);
+}
+.seed-card.rar-unique {
+  --rar-c: var(--unique);
+  border-color: color-mix(in srgb, var(--unique) 58%, var(--border));
+  border-left-color: var(--unique);
+}
+.seed-card.rar-legendary {
+  --rar-c: var(--legendary, #d896ff);
+  border-color: color-mix(in srgb, var(--legendary, #d896ff) 65%, var(--border));
+  border-left-color: var(--legendary, #d896ff);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--legendary, #d896ff) 18%, transparent);
+}
+.seed-card.triple { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rare) 45%, transparent); }
+
+.seed-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+}
+.seed-card-title-wrap {
+  display: grid;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.seed-card-title {
+  font-size: 14px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.rar-text-normal { color: var(--normal); }
+.rar-text-magic { color: var(--magic); }
+.rar-text-rare { color: var(--rare); }
+.rar-text-unique { color: #f0b282; }
+.rar-text-legendary { color: #ebd1ff; }
+.seed-card-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.seed-stock-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.seed-stock-chip {
+  padding: 2px 8px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(14, 18, 15, 0.72);
+  color: var(--muted);
+}
+.seed-stock-chip.ready { border-color: rgba(124, 214, 134, 0.4); color: #9de8a6; }
+.seed-stock-chip.stable { border-color: rgba(242, 210, 138, 0.5); color: #f2d28a; }
+.seed-stock-chip.herbs { border-color: rgba(143, 198, 242, 0.35); color: #b9deff; }
+.seed-stock-chip.gen { border-color: rgba(215, 181, 109, 0.35); color: #e6d19a; }
+.seed-stock-chip.out { opacity: 0.7; }
+
+.seed-card-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+.seed-plant-btn { width: 100%; }
+
 .foraging-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
-.foraging-card { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2, rgba(20, 24, 20, 0.6)); min-width: 0; overflow: hidden; align-content: start; }
+.foraging-card {
+  display: grid;
+  gap: 8px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-2, rgba(20, 24, 20, 0.64));
+  min-width: 0;
+  overflow: hidden;
+  align-content: start;
+}
 .foraging-card.locked { opacity: 0.68; border-style: dashed; }
 .foraging-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
 .foraging-card-head b { min-width: 0; overflow-wrap: anywhere; }
 .foraging-card.triple { border-color: #d7b56d; }
-.foraging-card.giga { border-color: #c58aff; box-shadow: 0 0 0 1px rgba(197, 138, 255, 0.25); }
-.foraging-packets { display: grid; gap: 8px; }
-.foraging-packet-reveal { padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); }
-.foraging-packet-reveal.rare { border-color: #d7b56d; background: rgba(215, 181, 109, 0.12); }
-.foraging-packet-reveal.giga { border-color: #c58aff; background: rgba(197, 138, 255, 0.18); }
-.foraging-packet-reveal.triple { outline: 2px solid #f2d28a; }
-.foraging-mole-grid { display: grid; grid-template-columns: repeat(3, minmax(64px, 84px)); gap: 8px; justify-content: start; margin-top: 8px; }
-.foraging-mole-cell { height: 64px; border-radius: 6px; border: 1px solid var(--border); background: rgba(24, 34, 24, 0.85); color: var(--text); font-size: 12px; cursor: pointer; display: grid; place-items: center; }
-.foraging-mole-cell.lit { border-color: #8ee88a; background: rgba(96, 200, 96, 0.28); font-weight: 700; }
-.foraging-mole-cell.double { border-color: #f2d28a; background: rgba(242, 210, 138, 0.34); }
+.foraging-card.legendary { border-color: var(--legendary, #d896ff); box-shadow: 0 0 0 1px rgba(216, 150, 255, 0.25); }
+.foraging-strain-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+/* ---- Herbarium tab ---- */
+.foraging-herbarium { display: grid; gap: 14px; }
+.foraging-herbarium-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.foraging-herbarium-head h3 { margin: 2px 0 0; }
+.foraging-eyebrow {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #b7c29f;
+}
+.foraging-explainer {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+.foraging-explainer-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(154, 176, 138, 0.25);
+  background: rgba(20, 27, 19, 0.72);
+}
+.foraging-explainer-step p { margin: 3px 0 0; }
+.foraging-step-num {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #7aa16c;
+  color: #cbe8bc;
+  font-size: 11px;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+.foraging-perks-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.foraging-perk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+}
+.foraging-perk-list li {
+  display: grid;
+  grid-template-columns: 14px 32px minmax(0, 1fr);
+  gap: 6px;
+  font-size: 12px;
+  align-items: baseline;
+}
+.foraging-perk-list li.earned { color: #b7e8b2; }
+.foraging-perk-list li.pending { color: var(--muted); }
+.foraging-hybrid-list { display: grid; gap: 6px; }
+.foraging-species-page {
+  border-top: 3px solid color-mix(in srgb, var(--sp-color, #8ec98a) 65%, var(--border));
+}
+.foraging-pressed-list { display: grid; gap: 8px; }
+.foraging-pressed-entry {
+  display: grid;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.foraging-guide {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: rgba(18, 22, 18, 0.56);
+}
+.foraging-guide summary { cursor: pointer; font-weight: 600; }
+.foraging-guide-groups { display: grid; gap: 12px; margin-top: 10px; }
+.foraging-guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+@media (max-width: 480px) {
+  .foraging-patch-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .foraging-field-stage { padding: 11px; }
+  .foraging-focus-stage { padding: 10px; }
+  .foraging-field-stage .forage-bed { height: 68px; }
+  html .card.foraging-conservatory { padding: 11px; gap: 12px; }
+  .gh-header { padding: 10px; }
+  .gh-beds { grid-template-columns: minmax(0, 1fr); }
+  .gh-potting-bench { padding: 11px; }
+  .gh-satchel-grid { grid-template-columns: minmax(0, 1fr); }
+  .seeds-view-switch { width: 100%; }
+  .seeds-view-btn { flex: 1 1 auto; text-align: center; padding: 6px 8px; }
+  .seeds-grid { grid-template-columns: minmax(0, 1fr); }
+}

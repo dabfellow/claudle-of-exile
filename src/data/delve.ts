@@ -3,6 +3,8 @@ import type { SkillAction } from './skills';
 
 export const WORLDROOT_DEPTH = 300;
 export const DELVE_SECURITY = 200;
+export const DELVE_RUBBLE_PER_WORK = 2;
+export const DELVE_FOCUS_HOLD_MS = 65_000;
 
 export const DELVE_BANDS = MINING_METALS.map((metal, index) => ({
   ...metal,
@@ -20,7 +22,7 @@ export const DELVE_TRAITS = [
   { id: 'crystal', name: 'Crystal-bearing', icon: '✧', chance: 0.12, from: 1, hint: 'Rough gems and crystal shards' },
   { id: 'fossil', name: 'Fossil bed', icon: '◎', chance: 0.12, from: 1, hint: 'Fossils and less frequent ore' },
   { id: 'flooded', name: 'Flooded', icon: '≈', chance: 0.10, from: 1, hint: 'Slower work without a Pump Station' },
-  { id: 'unstable', name: 'Unstable', icon: 'ϟ', chance: 0.10, from: 1, hint: 'More cave-ins, with a chance to open a cavern' },
+  { id: 'unstable', name: 'Unstable', icon: 'ϟ', chance: 0.10, from: 1, hint: 'More cave-ins. A breakthrough can open a cavern with bonus ore and rough gems. Deep caverns may also hold rare Heartstone.' },
   { id: 'motherlode', name: 'Motherlode', icon: '✦', chance: 0.002, from: 20, hint: 'Triple ore, extra fragments and rough gems' },
 ] as const;
 
@@ -29,9 +31,9 @@ export type DelveHazard = 'cave-in' | 'flood' | 'gas';
 export type DelveMode = 'work' | 'push';
 
 export const DELVE_INSTALLATIONS = {
-  flood: { id: 'pump', name: 'Pump Station', level: 30, warning: 'Dripping', fix: 'Pump', icon: '≈' },
-  gas: { id: 'vent', name: 'Ventilation Shaft', level: 45, warning: 'Hiss', fix: 'Vent', icon: '≋' },
-  'cave-in': { id: 'bolts', name: 'Rock Bolts', level: 60, warning: 'Creaking', fix: 'Prop', icon: 'ϟ' },
+  flood: { id: 'pump', name: 'Pump Station', security: 30, warning: 'Dripping', fix: 'Pump' },
+  gas: { id: 'vent', name: 'Ventilation Shaft', security: 45, warning: 'Hiss', fix: 'Vent' },
+  'cave-in': { id: 'bolts', name: 'Rock Bolts', security: 60, warning: 'Creaking', fix: 'Prop' },
 } as const;
 
 export type DelveInstallationType = (typeof DELVE_INSTALLATIONS)[DelveHazard]['id'];
@@ -49,10 +51,10 @@ export const DELVE_ROUGH_SIZES = [
 
 export const DELVE_PICKS = [
   { name: "Prospector's Pick", layer: 1, perk: 'Copper tier' },
-  { name: 'Iron Pick', layer: 45, perk: 'Make one support from four rubble' },
+  { name: 'Iron Pick', layer: 45, perk: 'Braces cost four rubble each' },
   { name: 'Mithril Pick', layer: 90, perk: 'One extra second to brace hazards' },
   { name: 'Adamant Pick', layer: 135, perk: 'See the next layer’s traits' },
-  { name: 'Star Pick', layer: 180, perk: 'Pushing uses one fewer support' },
+  { name: 'Star Pick', layer: 180, perk: 'Breakthroughs need one fewer brace' },
   { name: 'Void Pick', layer: 225, perk: 'Hazards are 20% less likely' },
   { name: 'World Pick', layer: 270, perk: 'Twice the chance to discover a cavern' },
   { name: 'Heartstone Pick', layer: 300, perk: 'Pushing takes 25% less time' },

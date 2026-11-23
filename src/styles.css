@@ -38,6 +38,7 @@
   --magic: #8f9cf2;
   --rare: #e3cf6b;
   --unique: #c97c44;
+  --legendary: #d896ff;
   --crafted: #b3bcef;
   --fractured: #d4af37;
   --enchant: #d99a62;
@@ -1049,6 +1050,7 @@ h3 {
 .feed-item.magic { border-left-color: var(--magic); color: var(--magic); }
 .feed-item.rare { border-left-color: var(--rare); color: var(--rare); }
 .feed-item.unique { border-left-color: var(--unique); color: var(--unique); }
+.feed-item.legendary { border-left-color: var(--legendary); color: var(--legendary); }
 
 /* ============ primitives ============ */
 .card {

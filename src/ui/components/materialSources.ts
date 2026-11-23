@@ -32,7 +32,7 @@ export function materialSources(id: string): Source[] {
       page: a.skill,
     });
   }
-  if (id === 'rubble' || id === 'mine_support') out.push({ label: 'Mining: work a layer', page: 'mining' });
+  if (id === 'rubble') out.push({ label: 'Mining: work a layer', page: 'mining' });
   if (id === 'heartstone') out.push({ label: 'Mining: deep Delve caverns', page: 'mining' });
   if (id.startsWith('rough_gem') || id === 'crystal_shard') out.push({ label: 'Mining: Crystal-bearing layers and caverns', page: 'mining' });
   if (FOSSIL_IDS.has(id)) out.push({ label: 'Mining: Fossil beds', page: 'mining' });

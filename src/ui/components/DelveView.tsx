@@ -1,39 +1,35 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import {
-  DELVE_HAZARDS, DELVE_INSTALLATIONS, DELVE_PICKS, DELVE_SECURITY, DELVE_TRAITS, WORLDROOT_DEPTH,
-  delveBand, type DelveHazard, type DelveMode,
+  DELVE_HAZARDS, DELVE_INSTALLATIONS, DELVE_PICKS, DELVE_RUBBLE_PER_WORK, DELVE_SECURITY, DELVE_TRAITS, WORLDROOT_DEPTH,
+  delveBand, type DelveHazard, type DelveMode, type DelveTrait,
 } from '../../data/delve';
 import { materialDef } from '../../data/materials';
 import { actionDef } from '../../data/skills';
 import { recipeMaterialCount } from '../../engine/bank';
 import {
-  braceDelve, buildDelveInstallation, craftDelveSupports, delveDepthCap, delveGasPaused, delveHazardChance,
+  braceDelve, buildDelveInstallation, delveDepthCap, delveGasPaused, delveHazardChance,
   delveInstallationBlocker, delveInstallationCost, delvePickBlocker, delvePickCost, delvePushBlocker,
-  delvePushCost, delveTraitsAt, installationReach, isDelveAction, rubblePerSupport, setDelveAutoBrace,
+  delvePushPayment, delveTraitsAt, installationCovers, installationReach, isDelveAction,
   startDelve, upgradeDelvePick, type DelveState,
 } from '../../engine/delve';
 import { doubleReady, focusMult, focusOf, type SwingResult } from '../../engine/minigame';
 import { actionIntervalMs, skillLevel, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
-import type { GameState } from '../../engine/types';
-import { game, useGame } from '../../game';
-import { Badge, fmt, fmtTime, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
-import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
+import type { GameEvent, GameState } from '../../engine/types';
+import { game, useGame, useGameEvent } from '../../game';
+import { Badge, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
+import { Icon } from './Icon';
+import { HelpTip, LockedBadge } from './SkillHelp';
 import './delve.css';
 
-type DelveTab = 'shaft' | 'log' | 'masterworks';
+type DelveTab = 'shaft' | 'upgrades' | 'masterworks';
 
-const BASE_TABS: TabDef<DelveTab>[] = [
-  { id: 'shaft', label: 'Shaft' },
-  { id: 'log', label: 'Mine Log' },
-];
-
-const BRACE_LABEL: Record<SwingResult, string> = { double: 'Double!', hit: 'Hit', weak: 'Weak', miss: 'Miss' };
+const BRACE_LABEL: Record<SwingResult, string> = { double: 'Perfect brace', hit: 'Hazard braced', weak: 'Late brace', miss: 'Missed brace' };
 
 const INSTALLATION_COUNTER: Record<DelveHazard, string> = {
   flood: 'Counters Floods (prevents work slowdowns) across 50+ layers below.',
   gas: 'Counters Gas pockets (prevents 10m fallback) across 50+ layers below.',
-  'cave-in': 'Counters Cave-ins (prevents Support loss) across 50+ layers below.',
+  'cave-in': 'Prevents cave-in losses across 50+ layers below.',
 };
 
 function Costs({ s, cost }: { s: GameState; cost: Record<string, number> }) {
@@ -55,183 +51,134 @@ function Costs({ s, cost }: { s: GameState; cost: Record<string, number> }) {
   );
 }
 
-/** Visible depth window: all reached layers up to the viewport, plus at most 2 unreached below the frontier by default. */
-function shaftWindow(layer: number, limit: number, showDeeper: boolean): number[] {
-  const extraUnreached = showDeeper ? 8 : 2;
-  const maxDepth = limit + extraUnreached;
-  let start: number;
-  let end: number;
-  if (limit <= 12) {
-    start = 1;
-    end = maxDepth;
-  } else if (layer >= limit - 3) {
-    end = maxDepth;
-    start = Math.max(1, limit - 8);
-  } else {
-    start = Math.max(1, layer - 4);
-    end = Math.min(maxDepth, start + 8);
-  }
-  return Array.from({ length: Math.max(1, end - start + 1) }, (_, index) => start + index);
-}
-
-function ShaftRows({
-  delve,
-  layer,
-  select,
-  limit = delve.deepest,
-  activeLayer,
-  showDeeper = false,
-}: {
+/** Show nearby depths or all reached depths with the selected trait. */
+function ShaftMap({ delve, layer, select, limit = delve.deepest, activeLayer, trait }: {
   delve: DelveState;
   layer: number;
   select?: (layer: number) => void;
   limit?: number;
   activeLayer?: number;
-  showDeeper?: boolean;
+  trait?: DelveTrait;
 }) {
-  const depths = shaftWindow(layer, limit, showDeeper);
+  const first = Math.max(1, Math.min(layer - 2, limit - 4));
+  const last = Math.min(limit + 1, first + 5);
+  const { layers } = delve;
+  const matches = useMemo(() => trait
+    ? Object.keys(layers).map(Number).filter((depth) => depth <= limit && layers[depth].traits.includes(trait))
+    : null, [layers, limit, trait]);
+  const depths = matches ?? Array.from({ length: last - first + 1 }, (_, index) => first + index);
   return (
-    <div className="delve-shaft" aria-label="Mine shaft">
-      <div className="delve-shaft-head" aria-hidden="true">
-        <span>Depth</span>
-        <span>Stratum</span>
-        <span>Traits &amp; Status</span>
-      </div>
+    <div className={`delve-shaft${trait ? ' filtered' : ''}`} aria-label={trait ? 'Matching depths' : 'Mine shaft'}>
+      {matches?.length === 0 && <p className="delve-filter-empty">No reached depths have this trait yet.</p>}
       {depths.map((depth) => {
-        const reached = depth <= limit;
         const band = delveBand(depth);
+        const reached = depth <= limit;
+        const selected = depth === layer;
+        const active = depth === activeLayer;
         const data = reached ? delve.layers[depth] : undefined;
         const traits = DELVE_TRAITS.filter((trait) => data?.traits.includes(trait.id));
-        const installations = reached ? delve.installations.filter((i) => i.layer === depth) : [];
-        const last = depth === limit;
-        const selected = depth === layer;
-        const lantern = activeLayer === depth;
+        const stations = reached ? DELVE_HAZARDS.filter((hazard) =>
+          delve.installations.some((station) => station.layer === depth && station.type === DELVE_INSTALLATIONS[hazard].id),
+        ) : [];
         const classes = [
-          'delve-layer',
-          reached ? '' : 'unreached',
-          selected ? 'selected' : '',
-          last ? 'dig-face' : '',
-          lantern ? 'lantern' : '',
-          traits.some((t) => t.id === 'motherlode') ? 'motherlode' : '',
-        ]
-          .filter(Boolean)
-          .join(' ');
+          'delve-layer', reached ? '' : 'unreached', selected ? 'selected' : '',
+          active ? 'lantern' : '', traits.some((trait) => trait.id === 'motherlode') ? 'motherlode' : '',
+        ].filter(Boolean).join(' ');
         const contents = (
           <>
-            <span className="delve-depth num">Depth L{fmt(depth)}</span>
+            <span className="delve-depth num">Depth {fmt(depth)}</span>
             <span className="delve-layer-name">
-              {reached
-                ? depth === WORLDROOT_DEPTH
-                  ? 'Worldroot Chamber'
-                  : band.name
-                : showDeeper
-                  ? `Unreached · ${band.name} (Lv ${band.level}+)`
-                  : 'Unreached'}
+              {reached ? (depth === WORLDROOT_DEPTH ? 'Worldroot Chamber' : band.name) : 'Unexplored'}
             </span>
             <span className="delve-marks">
-              {traits.map((trait) => (
-                <span className="delve-mark" key={trait.id} title={`${trait.name}: ${trait.hint}`} role="img" aria-label={trait.name}>
-                  {trait.icon}
+              {active && <span className="delve-lantern-dot" role="img" aria-label="Mining here" />}
+              {traits.map((trait) => <TraitIcon key={trait.id} trait={trait} />)}
+              {stations.map((hazard) => (
+                <span className="delve-mark" key={hazard} data-tone={hazard} title={DELVE_INSTALLATIONS[hazard].name}>
+                  <HazardIcon hazard={hazard} />
                 </span>
               ))}
-              {installations.map((installation) => {
-                const def = Object.values(DELVE_INSTALLATIONS).find((i) => i.id === installation.type)!;
-                return (
-                  <span className="delve-mark station" key={installation.type} title={def.name} role="img" aria-label={def.name}>
-                    {def.icon}
-                  </span>
-                );
-              })}
             </span>
-            <span className="delve-row-tags">
-              {lantern && (
-                <span className="delve-lantern-badge" title="Active dig layer">
-                  <span className="delve-lantern-dot" aria-hidden="true" />
-                  Active
-                </span>
-              )}
-              {last && <span className="delve-face-label">Dig face</span>}
-            </span>
-            {data && <span className="delve-seam-security" style={{ width: (data.secure / DELVE_SECURITY) * 100 + '%' }} />}
           </>
         );
-        const style = { '--stratum': band.color } as CSSProperties;
+        const style = { '--stratum': reached ? band.color : '#71675f' } as CSSProperties;
         return select ? (
-          <button
-            className={classes}
-            key={depth}
-            style={style}
-            disabled={!reached}
-            aria-pressed={selected}
-            onClick={() => select(depth)}
-          >
+          <button type="button" className={classes} key={depth} style={style} disabled={!reached}
+            aria-pressed={selected} onClick={() => select(depth)}>
             {contents}
           </button>
-        ) : (
-          <div className={classes} key={depth} style={style}>
-            {contents}
-          </div>
-        );
+        ) : <div className={classes} key={depth} style={style}>{contents}</div>;
       })}
     </div>
   );
 }
 
-function BraceCard({ s }: { s: GameState }) {
-  const warning = s.delve.warning;
-  const running = s.action?.kind === 'skill' && isDelveAction(s.action.actionId);
-  const valid = !!warning && running && s.action?.kind === 'skill' && s.action.actionId === warning.action;
-  const remaining = valid ? Math.max(0, warning.timerMs - (s.clock - warning.startsAt)) : 0;
-  const result = s.delve.lastBrace;
+const TRAIT_ICONS = {
+  rich: 'mining', crystal: 'gemcutting', fossil: 'archaeology',
+  flooded: 'drop', unstable: 'bolt', motherlode: 'astrology',
+} as const;
+
+function TraitIcon({ trait }: { trait: (typeof DELVE_TRAITS)[number] }) {
   return (
-    <div className="delve-brace">
+    <span className="delve-mark" data-tone={trait.id} title={trait.name} role="img" aria-label={trait.name}>
+      <GameIcon name={TRAIT_ICONS[trait.id]} size={16} />
+    </span>
+  );
+}
+
+function HazardIcon({ hazard }: { hazard: DelveHazard }) {
+  return <Icon name={{ 'cave-in': 'support', flood: 'drop', gas: 'wind' }[hazard]} />;
+}
+
+const HAZARD_NAME: Record<DelveHazard, string> = { 'cave-in': 'Cave-in', flood: 'Flood', gas: 'Gas leak' };
+
+function BraceCard({ s }: { s: GameState }) {
+  const action = s.action;
+  const running = action?.kind === 'skill' && isDelveAction(action.actionId);
+  const warning = running && action.actionId === s.delve.warning?.action ? s.delve.warning : undefined;
+  const result = running && (s.delve.lastBrace?.at ?? -Infinity) + 5000 >= s.clock ? s.delve.lastBrace : undefined;
+  const remaining = warning ? Math.max(0, warning.timerMs - (s.clock - warning.startsAt)) : 0;
+  const hold = running ? Math.max(0, (s.delve.focusHoldUntil ?? 0) - s.clock) : 0;
+  const focus = running ? focusOf(s) : 0;
+  return (
+    <section className="delve-brace" data-tone={warning?.hazard} aria-label="Mining Focus">
       <div className="delve-brace-heading">
-        <strong>
-          {valid ? (
-            DELVE_INSTALLATIONS[warning.hazard].icon + ' ' + DELVE_INSTALLATIONS[warning.hazard].warning
-          ) : (
-            <HelpTip
-              label="Brace against Hazards"
-              tip="Cave-ins, floods, or gas pockets that interrupt digging unless braced in Focus or lowered by Security & Installations."
-            />
-          )}
-        </strong>
-        {result && result.at + 5000 >= s.clock && (
-          <span className={'delve-brace-result ' + result.result} role="status">
-            {BRACE_LABEL[result.result]}
-          </span>
-        )}
-        {valid && <span className="num">{(remaining / 1000).toFixed(1)}s</span>}
+        <strong><Icon name="bolt" /> Focus</strong>
+        {result && <span className={`delve-brace-result ${result.result}`} role="status">{BRACE_LABEL[result.result]}</span>}
+        <span className="delve-speed num">+{running ? Math.round((focusMult(s, 'mining') - 1) * 100) : 0}% mining speed</span>
       </div>
-      {valid ? (
-        <>
-          <ProgressBar value={remaining / warning.timerMs} color="var(--accent)" />
-          <div className="delve-buttons">
+      <ProgressBar value={focus} color="#eac583" />
+      <div className="delve-focus-hint">
+        <span>{hold > 0 && focus > 0 ? `Held for ${fmtTime(hold)}` : 'Match warnings to build Focus'}</span>
+        {running && doubleReady(s) && <span className="delve-speed">Double ready</span>}
+      </div>
+      {running && (
+        <div className="delve-warning">
+          <div className="delve-brace-heading">
+            <strong role="status">
+              {warning
+                ? <><HazardIcon hazard={warning.hazard} /> {HAZARD_NAME[warning.hazard]} <span>· {DELVE_INSTALLATIONS[warning.hazard].warning}</span></>
+                : s.delve.bracedPush !== undefined
+                  ? <><Icon name="equipment" /> Descent protected</>
+                  : <><GameIcon name="clock" /> Watching for hazards</>}
+            </strong>
+            {warning && <span className="num">{(remaining / 1000).toFixed(1)}s</span>}
+          </div>
+          <div className="delve-warning-timer" aria-hidden="true">
+            {warning && <ProgressBar value={remaining / warning.timerMs} color="var(--delve-tone)" />}
+          </div>
+          <div className="delve-brace-buttons">
             {DELVE_HAZARDS.map((hazard) => (
-              <button className="btn" key={hazard} onClick={() => game.act((st, ctx) => { braceDelve(st, ctx, hazard); })}>
-                {DELVE_INSTALLATIONS[hazard].fix}
+              <button type="button" className="btn" key={hazard} data-tone={hazard} disabled={!warning}
+                data-match={warning?.hazard === hazard}
+                onClick={() => game.act((st, ctx) => { braceDelve(st, ctx, hazard); })}>
+                <HazardIcon hazard={hazard} /> {DELVE_INSTALLATIONS[hazard].fix}
               </button>
             ))}
           </div>
-        </>
-      ) : (
-        <p className="muted small">
-          Cave-ins, floods, or gas pockets that interrupt digging unless braced in Focus or lowered by Security &amp; Installations.{' '}
-          {running
-            ? 'Match the cue: Creaking → Prop · Dripping → Pump · Hiss → Vent.'
-            : 'Start working or pushing to watch for warnings.'}
-        </p>
-      )}
-      {running && (
-        <div className="delve-focus">
-          <span>Focus</span>
-          <ProgressBar value={focusOf(s)} />
-          <span className="num">
-            +{Math.round((focusMult(s, 'mining') - 1) * 100)}% speed{doubleReady(s) ? ' · Double ready' : ''}
-          </span>
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -239,22 +186,22 @@ function Installation({ s, hazard, layer }: { s: GameState; hazard: DelveHazard;
   const def = DELVE_INSTALLATIONS[hazard];
   const here = s.delve.installations.find((i) => i.type === def.id && i.layer === layer);
   const blocker = delveInstallationBlocker(s, hazard, layer);
-  const levelLocked = skillLevel(s, 'mining') < def.level;
-  const layerUnreached = !s.delve.layers[layer];
+  const target = s.delve.layers[layer];
+  const securityLocked = !here && !!target && target.secure < def.security;
   return (
-    <div className={`delve-upgrade ${levelLocked || layerUnreached ? 'locked' : ''}`}>
+    <div className={`delve-upgrade ${securityLocked || !target ? 'locked' : ''}`}>
       <div className="delve-upgrade-heading">
         <strong>
-          {def.icon} {def.name}
+          <HazardIcon hazard={hazard} /> {def.name}
         </strong>
         {here ? (
           <Badge tone="success">Tier {here.tier}/4</Badge>
-        ) : levelLocked ? (
-          <LockedBadge level={def.level} reason={`Requires Mining level ${def.level}`} />
-        ) : layerUnreached ? (
+        ) : securityLocked ? (
+          <LockedBadge reason={`Requires ${def.security} security at this depth`} />
+        ) : !target ? (
           <LockedBadge reason={`Layer ${fmt(layer)}`} />
         ) : (
-          <Badge>Ready (Lv {def.level})</Badge>
+          <Badge tone="success">Unlocked</Badge>
         )}
       </div>
       <p className="muted small">
@@ -279,62 +226,32 @@ function Installation({ s, hazard, layer }: { s: GameState; hazard: DelveHazard;
   );
 }
 
-function DelveSupplies({ s, layer }: { s: GameState; layer: number }) {
+function SupplyStrip({ s }: { s: GameState }) {
+  const rubble = s.storage.bank.rubble ?? 0;
+  const supports = s.storage.bank.mine_support ?? 0;
+  return (
+    <div className="delve-supply-strip" aria-label="Mine supplies">
+      <span className="delve-resource" title="Collect it while mining and spend it to dig deeper">
+        <GameIcon name="rock" /> Rubble <strong className="num">{fmt(rubble)}</strong>
+      </span>
+      {supports > 0 && (
+        <span className="delve-resource" title="Existing supports are spent before rubble">
+          <Icon name="support" /> Supports <strong className="num">{fmt(supports)}</strong>
+        </span>
+      )}
+    </div>
+  );
+}
+
+function DelveUpgrades({ s, layer, chooseDepth }: { s: GameState; layer: number; chooseDepth: () => void }) {
   const delve = s.delve;
   const [showAllPicks, setShowAllPicks] = useState(false);
   const pick = DELVE_PICKS[delve.pickTier];
   const next = DELVE_PICKS[delve.pickTier + 1];
   const blocker = delvePickBlocker(s);
-  const rate = rubblePerSupport(delve);
 
   return (
-    <aside className="card delve-supplies">
-      <div className="card-title">Mine supplies</div>
-      <div className="delve-supply-grid">
-        <span>
-          <MatIcon id="mine_support" />{' '}
-          <HelpTip
-            label="Supports"
-            tip="Timber & stone braces crafted from Rubble (5 Rubble each, or 4 with Iron Pick). Required to Push to deeper layers."
-          />{' '}
-          <strong className="num">{fmt(s.storage.bank.mine_support ?? 0)}</strong>
-        </span>
-        <span>
-          <MatIcon id="rubble" />{' '}
-          <HelpTip
-            label="Rubble"
-            tip="Loose stone earned from working any layer — spend it to craft Supports and build Installations."
-          />{' '}
-          <strong className="num">{fmt(s.storage.bank.rubble ?? 0)}</strong>
-        </span>
-      </div>
-      <p className="muted small delve-term-note">
-        <b>Rubble:</b> Loose stone earned from working any layer — spend it to craft Supports and build Installations.
-      </p>
-      <p className="muted small delve-term-note">
-        <b>Supports:</b> Timber &amp; stone braces crafted from Rubble (5 Rubble each, or 4 with Iron Pick). Required to Push to deeper layers.
-      </p>
-
-      <label className="delve-autobrace">
-        <input
-          type="checkbox"
-          checked={delve.autoBrace}
-          onChange={(e) => game.act((st) => setDelveAutoBrace(st, e.target.checked))}
-        />
-        <span>Auto-craft Supports while digging</span>
-      </label>
-
-      <div className="delve-upgrade-row">
-        <span className="muted small">{rate} Rubble per Support</span>
-        <button
-          className="btn sm"
-          disabled={(s.storage.bank.rubble ?? 0) < rate}
-          onClick={() => game.act((st) => { craftDelveSupports(st); })}
-        >
-          Make supports
-        </button>
-      </div>
-
+    <section className="delve-upgrades" aria-label="Mine upgrades">
       <div className="delve-upgrade">
         <div className="delve-upgrade-heading">
           <strong>
@@ -406,20 +323,51 @@ function DelveSupplies({ s, layer }: { s: GameState; layer: number }) {
         )}
       </div>
 
-      <div className="card-title">
+      <div className="card-title delve-upgrade-heading">
         <HelpTip
-          label={`Installations at layer ${fmt(layer)}`}
+          label={`Installations at depth ${fmt(layer)}`}
           tip="Permanent stations built at a layer that eliminate one hazard type across a 50+ layer span below it."
         />
+        <button type="button" className="btn sm" onClick={chooseDepth}>Choose depth</button>
       </div>
       {DELVE_HAZARDS.map((hazard) => (
         <Installation key={hazard} s={s} hazard={hazard} layer={layer} />
       ))}
-    </aside>
+    </section>
   );
 }
 
-/** Inline in the Time Away summary and available later from the Mine Log. */
+function MinePayout() {
+  const [payout, setPayout] = useState<{ id: number; entries: [string, number][] } | null>(null);
+  const onEvent = useCallback((event: GameEvent) => {
+    if (event.t !== 'produce' || event.skill !== 'mining') return;
+    const entries = Object.entries(event.outputs).filter(([, count]) => count > 0);
+    if (entries.length) setPayout((previous) => ({ id: (previous?.id ?? 0) + 1, entries }));
+  }, []);
+  useGameEvent(onEvent);
+  useEffect(() => {
+    if (!payout) return;
+    const timer = window.setTimeout(() => setPayout(null), 1800);
+    return () => window.clearTimeout(timer);
+  }, [payout]);
+
+  return (
+    <div className="delve-yield" aria-live="polite">
+      {payout && (
+        <div className="delve-yield-popup" key={payout.id}>
+          {payout.entries.map(([id, count]) => (
+            <span className="delve-yield-item" key={id}>
+              <span aria-hidden="true"><MatIcon id={id} size={12} /></span>
+              <strong>+{fmt(count)}</strong> {materialDef(id).name}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Inline in the Time Away summary and available later in the Activity bar. */
 export function DelveReplay() {
   const s = useGame();
   const events = s.delve.replay;
@@ -456,12 +404,44 @@ export function DelveReplay() {
         </button>
       </div>
       <div className="delve-replay-frame" key={displayDepth}>
-        <ShaftRows delve={s.delve} layer={displayDepth} limit={reached} />
+        <ShaftMap delve={s.delve} layer={displayDepth} limit={reached} />
       </div>
       <p className="small" aria-live={count >= events.length ? 'polite' : 'off'}>
         {count > 0 ? event.text : `Returning to layer ${displayDepth}…`}
       </p>
     </section>
+  );
+}
+
+export function MineActivity({ delve }: { delve: DelveState }) {
+  const [showReplay, setShowReplay] = useState(false);
+  if (!delve.log.length && !delve.replay.length) return null;
+  const latest = delve.log.at(-1);
+  const heading = (
+    <>
+      <strong>Mine activity</strong>
+      {latest && <span>{latest}</span>}
+    </>
+  );
+  if (delve.log.length === 1 && !delve.replay.length) {
+    return <li className="feed-item delve-feed">{heading}</li>;
+  }
+  return (
+    <li className="feed-item delve-feed">
+      <details>
+        <summary>{heading}</summary>
+        {delve.replay.length > 0 && (
+          showReplay ? <DelveReplay /> : (
+            <button className="btn sm" type="button" onClick={() => setShowReplay(true)}>Replay time away</button>
+          )
+        )}
+        {delve.log.length > 1 && (
+          <ol className="delve-feed-history">
+            {delve.log.slice(0, -1).reverse().map((event, index) => <li key={index}>{event}</li>)}
+          </ol>
+        )}
+      </details>
+    </li>
   );
 }
 
@@ -473,24 +453,26 @@ export function DelveView({ masterworks }: { masterworks?: ReactNode } = {}) {
   );
   const [selected, select] = useState<number | null>(null);
   const [destination, setDestination] = useState('');
-  const [showReplay, setShowReplay] = useState(false);
-  const [showDeeper, setShowDeeper] = useState(false);
-
-  const tabs: TabDef<DelveTab>[] = masterworks
-    ? [...BASE_TABS, { id: 'masterworks', label: 'Masterworks' }]
-    : BASE_TABS;
+  const [traitFilter, setTraitFilter] = useState<DelveTrait | ''>('');
+  const tabs: TabDef<DelveTab>[] = [{ id: 'shaft', label: 'Shaft' }, { id: 'upgrades', label: 'Mine Upgrades' }];
+  if (masterworks) tabs.push({ id: 'masterworks', label: 'Masterworks' });
 
   const layer = Math.max(1, Math.min(selected ?? delve.deepest, delve.deepest));
+  const band = delveBand(layer);
   const atFace = layer === delve.deepest;
-  const move = (next: number) => select(Math.max(1, Math.min(next, delve.deepest)));
+  const move = (next: number) => {
+    setTraitFilter('');
+    select(Math.max(1, Math.min(next, delve.deepest)));
+  };
   const traits = DELVE_TRAITS.filter((trait) => delve.layers[layer]?.traits.includes(trait.id));
   const nextLayer = delve.deepest + 1;
-  const nextTraits = delve.pickTier >= 3 ? delveTraitsAt(delve, nextLayer) : null;
-  const nextName = nextTraits
-    ? DELVE_TRAITS.filter((trait) => nextTraits.includes(trait.id))
-        .map((trait) => trait.name)
-        .join(', ')
-    : null;
+  const nextTraits = delve.pickTier >= 3 ? DELVE_TRAITS.filter((trait) => delveTraitsAt(delve, nextLayer).includes(trait.id)).map((trait) => trait.name) : null;
+  const { mine_support: pushSupports, rubble: pushRubble } = delvePushPayment(s, nextLayer);
+  const pushPrice = [
+    pushSupports && `${fmt(pushSupports)} ${pushSupports === 1 ? 'support' : 'supports'}`,
+    pushRubble && `${fmt(pushRubble)} rubble`,
+  ].filter(Boolean).join(' + ');
+  const pushRisk = (100 * delveHazardChance(delve, nextLayer, 'push')).toFixed(1);
   const cap = delveDepthCap(skillLevel(s, 'mining'));
   const pushBlocker = delvePushBlocker(s);
   const current = s.action?.kind === 'skill' && isDelveAction(s.action.actionId) ? s.action : null;
@@ -509,203 +491,124 @@ export function DelveView({ masterworks }: { masterworks?: ReactNode } = {}) {
     if (mode === 'push' && blocker === null) select(null);
   };
   const secure = delve.layers[layer]?.secure ?? 0;
-  const workHazardPct = (100 * delveHazardChance(delve, layer, 'work')).toFixed(1);
+  const workingHere = !pushing && current?.delveLayer === layer;
+  const floodedUntil = delve.layers[layer]?.floodedUntil ?? 0;
+  const flooded = floodedUntil > s.clock && !installationCovers(delve, 'flood', layer);
 
   return (
     <section className="delve-view">
       <Tabs tabs={tabs} value={tab} onChange={setTab} />
       {tab === 'shaft' && (
         <>
-          <SkillIntro step="Start here: Work Layer 1">
-            Dig ore and <b>Rubble</b>, raise <b>Security</b> to calm <b>Hazards</b>, and craft <b>Supports</b> from Rubble to <b>Push</b> deeper.
-          </SkillIntro>
+          <SupplyStrip s={s} />
           <div className="delve-layout">
-            <div className="card delve-main">
-              <div className="delve-title">
+            <section className="delve-worksite" style={{ '--stratum': band.color } as CSSProperties}>
+              <div className="delve-vein">
                 <div>
-                  <h2>The Delve</h2>
-                  <p className="muted small">
-                    Deepest layer {fmt(delve.deepest)}
-                    {Number.isFinite(cap) ? ` · Level limit ${fmt(cap)}` : ''}
-                  </p>
+                  <div className="delve-vein-depth num">Depth {fmt(layer)}</div>
+                  <h2>{layer === WORLDROOT_DEPTH ? 'Worldroot Chamber' : band.name}</h2>
                 </div>
-                <div className="delve-records small">
-                  <span>{fmt(delve.stats.caverns)} caverns</span>
-                  <span>{fmt(delve.stats.motherlodes)} Motherlodes</span>
+                <MatIcon id={band.ore} size={52} />
+              </div>
+              <div className="delve-operations">
+                <div className="delve-choices">
+                  <div className="delve-choice">
+                    <button className="btn delve-work-button" type="button" onClick={() => work('work')}
+                      disabled={workingHere}>
+                      <Icon name="mining" size={22} /> {workingHere ? 'Mining here' : `Mine ${band.name}`}
+                    </button>
+                    <small><GameIcon name="rock" size={13} /> +{DELVE_RUBBLE_PER_WORK} rubble per swing</small>
+                  </div>
+                  <div className="delve-choice">
+                    <button className="btn delve-push-button" type="button" onClick={() => work('push')}
+                      disabled={!!pushBlocker || pushing}>
+                      <span aria-hidden="true">↓</span> {pushing ? `Descending to Depth ${fmt(nextLayer)}` : `Dig to Depth ${fmt(nextLayer)}`}
+                    </button>
+                    <small className={pushBlocker ? 'delve-short' : undefined}>
+                      <Icon name={pushBlocker ? 'lock' : pushRubble ? 'rock' : 'support'} size={13} />
+                      {pushBlocker ?? `${pushPrice} · ${pushRisk}% hazard risk`}
+                    </small>
+                    {pushRubble > 0 && <small>Rubble builds supports as you dig.</small>}
+                    {nextTraits && <small>{nextTraits.length ? nextTraits.join(' · ') : 'Plain rock ahead'}</small>}
+                  </div>
                 </div>
-              </div>
-              <div className="delve-elevator" aria-label="Elevator">
-                <button className="btn sm" onClick={() => move(1)} disabled={layer === 1}>
-                  Top
-                </button>
-                <button className="btn sm" onClick={() => move(layer - 10)} disabled={layer === 1} aria-label="Up ten layers">
-                  ⏫
-                </button>
-                <button className="btn sm" onClick={() => move(layer - 1)} disabled={layer === 1} aria-label="Up one layer">
-                  ▲
-                </button>
-                <button className="btn sm" onClick={() => move(layer + 1)} disabled={atFace} aria-label="Down one layer">
-                  ▼
-                </button>
-                <button className="btn sm" onClick={() => move(layer + 10)} disabled={atFace} aria-label="Down ten layers">
-                  ⏬
-                </button>
-                <button className="btn sm" onClick={() => select(null)} disabled={atFace}>
-                  Dig face
-                </button>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    move(Number(destination));
-                    setDestination('');
-                  }}
-                >
-                  <input
-                    type="number"
-                    min={1}
-                    max={delve.deepest}
-                    aria-label="Go to layer"
-                    placeholder="Layer"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    required
-                  />
-                  <button className="btn sm" type="submit">
-                    Go
-                  </button>
-                </form>
-              </div>
-              <ShaftRows
-                delve={delve}
-                layer={layer}
-                select={select}
-                activeLayer={activeLayer}
-                showDeeper={showDeeper}
-              />
-              <div className="delve-shaft-footer">
-                <span className="muted small">
-                  Showing reached layers{showDeeper ? ' + deeper strata preview' : ' + next 2 unreached'}
-                </span>
-                <button
-                  type="button"
-                  className="btn sm ghost delve-strata-toggle"
-                  onClick={() => setShowDeeper((v) => !v)}
-                >
-                  {showDeeper ? 'Hide deeper strata' : 'Show deeper strata'}
-                </button>
-              </div>
-
-              <div className="delve-layer-detail">
-                <div className="delve-upgrade-heading">
-                  <strong>
-                    Layer {fmt(layer)} · {layer === WORLDROOT_DEPTH ? 'Worldroot Chamber' : delveBand(layer).name}
-                  </strong>
-                  <span className="muted small">
-                    <HelpTip
-                      label={secure >= DELVE_SECURITY ? 'Secured · +10% ore' : `Security ${secure}/${DELVE_SECURITY}`}
-                      tip="Builds up as you work a layer. Raising Security sharply lowers hazard chance."
-                    />
-                  </span>
+                {current && (
+                  <div className="delve-activity">
+                    <div className="delve-upgrade-heading">
+                      <strong>
+                        {gas
+                          ? `Mining Depth ${fmt(activeLayer!)} while gas clears`
+                          : pushing
+                            ? `Opening Depth ${fmt(nextLayer)}`
+                            : `Mining ${delveBand(activeLayer!).name} at Depth ${fmt(activeLayer!)}`}
+                      </strong>
+                      <button className="btn sm ghost" type="button" onClick={() => game.act(stopAction)}>Stop mining</button>
+                    </div>
+                    {gas && (
+                      <small className="delve-gas-status">
+                        <HazardIcon hazard="gas" />
+                        {pushing ? 'Descent resumes' : `Returning to Depth ${fmt(current.delveLayer ?? delve.deepest)}`}
+                        {' in '}{fmtTime(delve.gasUntil! - s.clock)}
+                      </small>
+                    )}
+                    <ProgressBar value={current.progress / interval} color={delveBand(activeLayer!).color} />
+                    <MinePayout />
+                  </div>
+                )}
+                <div className="delve-security">
+                  <div className="delve-upgrade-heading">
+                    <strong><Icon name="equipment" /> {secure >= DELVE_SECURITY ? 'Secured' : 'Layer security'}</strong>
+                    <small className="num">{secure >= DELVE_SECURITY ? '+10% ore · No hazards' : `${secure} / ${DELVE_SECURITY}`}</small>
+                  </div>
+                  <ProgressBar value={secure / DELVE_SECURITY} color="#a5c992" />
+                  {secure < DELVE_SECURITY && <small>Brace hazards here to build security and unlock installations at this depth.</small>}
                 </div>
-                <p className="muted small">
-                  <b>Security:</b> Builds up as you work a layer. Raising Security sharply lowers hazard chance ({workHazardPct}% while working).
-                </p>
                 {traits.length > 0 && (
                   <ul className="delve-traits">
                     {traits.map((trait) => (
-                      <li className="small" key={trait.id}>
-                        <strong>
-                          {trait.icon} {trait.name}
-                        </strong>{' '}
-                        · {trait.hint}
-                      </li>
+                      <li key={trait.id}><TraitIcon trait={trait} /><span><strong>{trait.name}</strong> · {trait.hint}</span></li>
                     ))}
                   </ul>
                 )}
-                {(delve.layers[layer]?.floodedUntil ?? 0) > s.clock && (
-                  <p className="delve-short small">Flooded for {fmtTime(delve.layers[layer].floodedUntil! - s.clock)} (work slowed ×2)</p>
-                )}
-                <div className="delve-buttons">
-                  <button
-                    className="btn primary"
-                    onClick={() => work('work')}
-                    disabled={!pushing && current?.delveLayer === layer}
-                  >
-                    Work this layer
-                  </button>
-                  {atFace && (
-                    <button className="btn" onClick={() => work('push')} disabled={!!pushBlocker || pushing}>
-                      Push deeper
-                    </button>
-                  )}
-                  {current && (
-                    <button className="btn" onClick={() => game.act(stopAction)}>
-                      Stop mining
-                    </button>
+                {flooded && <p className="delve-short small"><HazardIcon hazard="flood" /> Flooded for {fmtTime(floodedUntil - s.clock)} · Mining slowed</p>}
+              </div>
+            </section>
+
+            <section className="delve-map">
+              <div className="delve-map-heading">
+                <h2>The Delve</h2>
+                <small>Deepest {fmt(delve.deepest)}{Number.isFinite(cap) ? ` · Max depth ${fmt(cap)}` : ''}</small>
+              </div>
+              <label className="delve-filter">
+                Filter by trait
+                <select value={traitFilter} onChange={(event) => setTraitFilter(event.target.value as DelveTrait | '')}>
+                  <option value="">Nearby depths</option>
+                  {DELVE_TRAITS.map((trait) => <option key={trait.id} value={trait.id}>{trait.name}</option>)}
+                </select>
+              </label>
+              <ShaftMap key={traitFilter} delve={delve} layer={layer} select={select} activeLayer={activeLayer} trait={traitFilter || undefined} />
+              {delve.deepest > 1 && (
+                <div className="delve-elevator" aria-label="Elevator">
+                  <button className="btn sm" type="button" onClick={() => move(1)} disabled={layer === 1}>Top</button>
+                  <button className="btn sm" type="button" onClick={() => move(layer - 1)} disabled={layer === 1} aria-label="Up one depth">↑</button>
+                  <button className="btn sm" type="button" onClick={() => move(layer + 1)} disabled={atFace} aria-label="Down one depth">↓</button>
+                  <button className="btn sm" type="button" onClick={() => { setTraitFilter(''); select(null); }} disabled={atFace && !traitFilter}>Deepest</button>
+                  {delve.deepest > 5 && (
+                    <form onSubmit={(event) => { event.preventDefault(); move(Number(destination)); setDestination(''); }}>
+                      <input type="number" min={1} max={delve.deepest} aria-label="Go to depth" placeholder="Depth"
+                        value={destination} onChange={(event) => setDestination(event.target.value)} required />
+                      <button className="btn sm" type="submit">Go</button>
+                    </form>
                   )}
                 </div>
-                <p className="muted small">
-                  <HelpTip
-                    label="Work Layer"
-                    tip="Mines this layer's ore, collects Rubble, and increases Security."
-                  />{' '}
-                  Mines this layer&apos;s ore, collects Rubble, and increases Security.
-                </p>
-                {atFace && (
-                  <p className="muted small">
-                    <b>Push to Layer {fmt(nextLayer)}:</b> costs {delvePushCost(nextLayer, delve.pickTier)}{' '}
-                    {delvePushCost(nextLayer, delve.pickTier) === 1 ? 'Support' : 'Supports'} ·{' '}
-                    {(100 * delveHazardChance(delve, nextLayer, 'push')).toFixed(1)}% hazard chance
-                    {nextName !== null ? ` · ${nextName || 'Plain rock'}` : ''}
-                    {pushBlocker ? ` · ${pushBlocker}` : ''}
-                  </p>
-                )}
-                {current && (
-                  <>
-                    <p className="small">
-                      {gas
-                        ? `Gas pause · Working layer ${delve.gasLayer} for ${fmtTime(delve.gasUntil! - s.clock)}`
-                        : pushing
-                          ? `Pushing to layer ${fmt(nextLayer)}`
-                          : `Working layer ${fmt(current.delveLayer ?? delve.deepest)}`}
-                    </p>
-                    <ProgressBar value={current.progress / interval} color={delveBand(layer).color} />
-                  </>
-                )}
-              </div>
-              <BraceCard s={s} />
-            </div>
-            <DelveSupplies s={s} layer={layer} />
+              )}
+            </section>
           </div>
+          <BraceCard s={s} />
         </>
       )}
 
-      {tab === 'log' && (
-        <div className="card delve-log">
-          <div>
-            <div className="card-title">Mine Log</div>
-            <p className="muted small">
-              Records recent finds, braced hazards, caverns opened, and depth milestones.
-            </p>
-          </div>
-          {delve.replay.length > 0 && !showReplay && (
-            <button className="btn sm" onClick={() => setShowReplay(true)}>
-              Replay time away
-            </button>
-          )}
-          {showReplay && <DelveReplay />}
-          {delve.log.length === 0 ? (
-            <p className="muted">Breakthroughs, hazards and cavern finds will appear here.</p>
-          ) : (
-            <ol>
-              {[...delve.log].reverse().map((event, index) => (
-                <li key={index}>{event}</li>
-              ))}
-            </ol>
-          )}
-        </div>
-      )}
-
+      {tab === 'upgrades' && <DelveUpgrades s={s} layer={layer} chooseDepth={() => setTab('shaft')} />}
       {tab === 'masterworks' && masterworks && <div className="delve-masterworks">{masterworks}</div>}
 
       {delve.landmarkPending && (

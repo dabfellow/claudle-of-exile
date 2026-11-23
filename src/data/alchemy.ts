@@ -9,7 +9,7 @@ export interface InfusionDef {
   /** 'life_mana' restricts to life/mana flasks */
   flaskKinds?: readonly ('life' | 'mana' | 'utility')[];
   grandOnly?: boolean;
-  /** Giga-rare mutation that unlocks this unique infusion */
+  /** Legendary mutation that unlocks this unique infusion */
   rareMutation?: 'celestial' | 'everbloom' | 'prismatic';
 }
 
@@ -28,7 +28,7 @@ export const INFUSIONS: readonly InfusionDef[] = [
   { id: 'last_breath', name: 'Last Breath', herb: 'wraithlily', level: 85, effect: 'Uses itself when life falls below 35%', grandOnly: true },
   { id: 'overflow', name: 'Overflow', herb: 'wraithlily', level: 85, effect: 'Recovery past full becomes a shield worth 20% of it', grandOnly: true },
   { id: 'echo', name: 'Echo', herb: 'star_bloom', level: 85, effect: "Using it also triggers your next flask's effect at 30%", grandOnly: true },
-  // Giga-rare (unlocked by brewing with a giga-rare mutated strain)
+  // Legendary (unlocked by brewing with a Legendary mutated strain)
   { id: 'starfall', name: 'Starfall', herb: 'sunpetal', level: 1, effect: '+10% damage and +10% all resistances during the effect', rareMutation: 'celestial' },
   { id: 'evergreen', name: 'Evergreen', herb: 'sunpetal', level: 1, effect: 'The flask regains 1 charge every 5s in combat', rareMutation: 'everbloom' },
   { id: 'prism', name: 'Prism', herb: 'sunpetal', level: 1, effect: 'Also gives the infusions of your other equipped flasks at 25%', rareMutation: 'prismatic' },

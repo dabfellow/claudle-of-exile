@@ -192,7 +192,7 @@ function InfusionsTab({ s, notify }: { s: GameState; notify: (msg: string) => vo
           </div>
           <p className="small muted">{inf.effect}</p>
           <p className="small muted">
-            {inf.rareMutation ? `Giga-rare (${inf.rareMutation})` : `Lv ${inf.level}`}
+            {inf.rareMutation ? `Legendary (${inf.rareMutation})` : `Lv ${inf.level}`}
             {inf.grandOnly ? ' · Grand flask only' : ''}
             {need > 0 ? ` · ${rec.brews}/${need} brews to Rank ${rec.rank + 1}` : ' · Max rank'}
           </p>

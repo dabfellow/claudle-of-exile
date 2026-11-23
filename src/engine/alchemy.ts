@@ -123,7 +123,7 @@ export function infusionQueueBlocker(s: GameState): string | null {
   if (!next) return 'Add an infusion to the brew queue first';
   const def = infusionDef(next.infusion);
   if (!def) return 'Unknown infusion';
-  if (!infusionUnlocked(s, next.infusion)) return def.rareMutation ? 'Unlock this infusion by brewing with its giga-rare mutation' : `Requires Alchemy level ${def.level}`;
+  if (!infusionUnlocked(s, next.infusion)) return def.rareMutation ? 'Unlock this infusion by brewing with its Legendary mutation' : `Requires Alchemy level ${def.level}`;
   if (!sourceFitsInfusion(next.infusion, next.source)) return 'Selected herb source does not match this infusion';
   if (herbStockForSource(s, next.source) < INFUSION_BREW_HERBS) return `Needs ${INFUSION_BREW_HERBS} herbs`;
   return null;
@@ -168,7 +168,7 @@ export function finishQueuedInfusion(s: GameState, ctx: Ctx): ReadyVial | null {
   }
   s.alchemy.queue.shift();
 
-  // Check giga-rare mutation unlock
+  // Check Legendary mutation unlock
   const { mutations } = parseStrain(next.source);
   for (const inf of INFUSIONS) {
     if (inf.rareMutation && mutations.includes(inf.rareMutation) && !s.alchemy.unlockedRare.includes(inf.id)) {

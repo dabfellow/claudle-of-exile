@@ -1,12 +1,13 @@
 import { SHARD_CHANCE, SHARD_FOR } from '../data/craftMats';
 import {
-  DELVE_BANDS, DELVE_HAZARDS, DELVE_INSTALLATIONS, DELVE_PICKS, DELVE_ROUGH_SIZES, DELVE_SECURITY, DELVE_TRAITS, WORLDROOT_DEPTH,
+  DELVE_BANDS, DELVE_FOCUS_HOLD_MS, DELVE_HAZARDS, DELVE_INSTALLATIONS, DELVE_PICKS,
+  DELVE_ROUGH_SIZES, DELVE_RUBBLE_PER_WORK, DELVE_SECURITY, DELVE_TRAITS, WORLDROOT_DEPTH,
   delveBand, type DelveHazard, type DelveInstallationType, type DelveMode, type DelveTrait,
 } from '../data/delve';
 import { MINING_FOSSILS } from '../data/mining';
 import { actionDef, SKILL_XP_SCALE, type SkillAction } from '../data/skills';
 import { astrologyOffline, astrologyXp, astrologyYield } from './astrology';
-import { addBank, canAfford, hasItem, materialRoom, payCost, payResolvedCost, resolveRecipeCost } from './bank';
+import { addBank, canAfford, hasItem, payCost, payResolvedCost, resolveRecipeCost } from './bank';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
 import { rollCollectible } from './collectibles';
 import type { Ctx } from './context';
@@ -56,7 +57,6 @@ export interface DelveState {
   installations: DelveInstallation[];
   gasUntil?: number;
   gasLayer?: number;
-  autoBrace: boolean;
   log: string[];
   replay: DelveEvent[];
   stats: { caverns: number; motherlodes: number };
@@ -64,6 +64,7 @@ export interface DelveState {
   warning?: DelveWarning;
   nextWarning?: number;
   bracedPush?: number;
+  focusHoldUntil?: number;
   lastBrace?: { result: SwingResult; at: number };
 }
 
@@ -75,7 +76,7 @@ const BRACE_GRACE_MS = 1000;
 export function newDelveState(seed = 0): DelveState {
   return {
     seed: seed >>> 0, deepest: 1, pickTier: 0, layers: { 1: { traits: [], secure: 0 } }, installations: [],
-    autoBrace: true, log: [], replay: [], stats: { caverns: 0, motherlodes: 0 },
+    log: [], replay: [], stats: { caverns: 0, motherlodes: 0 },
   };
 }
 
@@ -132,10 +133,12 @@ export function delveInstallationCost(delve: DelveState, hazard: DelveHazard, la
 
 export function delveInstallationBlocker(s: GameState, hazard: DelveHazard, layer: number): string | null {
   if (isClassic(s)) return CLASSIC_BLOCK;
-  if (!s.delve.layers[layer]) return 'Reach this layer first';
+  const target = s.delve.layers[layer];
+  if (!target) return 'Reach this layer first';
   const def = DELVE_INSTALLATIONS[hazard];
-  if (levelOf('mining', s.skills.mining) < def.level) return `Requires Mining level ${def.level}`;
-  if (s.delve.installations.some((i) => i.type === def.id && i.layer === layer && i.tier >= 4)) return 'Fully upgraded';
+  const existing = s.delve.installations.find((i) => i.type === def.id && i.layer === layer);
+  if (!existing && target.secure < def.security) return `Requires ${def.security} security at this depth`;
+  if (existing && existing.tier >= 4) return 'Fully upgraded';
   return canAfford(s, delveInstallationCost(s.delve, hazard, layer)) ? null : 'Missing materials';
 }
 
@@ -174,21 +177,24 @@ export function upgradeDelvePick(s: GameState): string | null {
   return null;
 }
 
-export function rubblePerSupport(delve: DelveState): number {
+function rubblePerSupport(delve: DelveState): number {
   return delve.pickTier >= 1 ? 4 : 5;
 }
 
-export function craftDelveSupports(s: GameState): number {
-  if (isClassic(s)) return 0;
-  const rate = rubblePerSupport(s.delve);
-  const amount = Math.min(Math.floor((s.storage.bank.rubble ?? 0) / rate), materialRoom(s, 'mine_support'));
-  if (amount <= 0) return 0;
-  payCost(s, { rubble: amount * rate });
-  return addBank(s, 'mine_support', amount);
+function supportPayment(s: GameState, count: number) {
+  const mine_support = Math.min(count, s.storage.bank.mine_support ?? 0);
+  return { mine_support, rubble: (count - mine_support) * rubblePerSupport(s.delve) };
 }
 
-export function setDelveAutoBrace(s: GameState, enabled: boolean): void {
-  s.delve.autoBrace = enabled;
+export function delvePushPayment(s: GameState, layer: number) {
+  return supportPayment(s, delvePushCost(layer, s.delve.pickTier));
+}
+
+function spendAvailableSupports(s: GameState, count: number) {
+  const available = (s.storage.bank.mine_support ?? 0) + Math.floor((s.storage.bank.rubble ?? 0) / rubblePerSupport(s.delve));
+  const cost = supportPayment(s, Math.min(count, available));
+  payCost(s, cost);
+  return cost;
 }
 
 export function delveHazardChance(delve: DelveState, layer: number, mode: DelveMode): number {
@@ -208,8 +214,8 @@ export function delvePushBlocker(s: GameState): string | null {
   const layer = s.delve.deepest + 1;
   const level = levelOf('mining', s.skills.mining);
   if (layer > delveDepthCap(level)) return `Requires Mining level ${Math.min(99, Math.ceil(layer / 3))}`;
-  const support = delvePushCost(layer, s.delve.pickTier);
-  return hasItem(s, 'mine_support', support) ? null : `Needs ${support} ${support === 1 ? 'support' : 'supports'}`;
+  const { rubble } = delvePushPayment(s, layer);
+  return hasItem(s, 'rubble', rubble) ? null : `Needs ${rubble} rubble`;
 }
 
 function clearWarning(delve: DelveState): void {
@@ -228,6 +234,7 @@ export function startDelve(s: GameState, ctx: Ctx, mode: DelveMode, layer = s.de
   s.combat = null;
   s.heist.auto = null;
   clearWarning(s.delve);
+  delete s.delve.focusHoldUntil;
   s.action = { kind: 'skill', actionId: mode === 'push' ? 'delve_push' : 'delve_work', delveLayer: mode === 'push' ? undefined : layer, progress: 0 };
   return null;
 }
@@ -280,9 +287,12 @@ function give(s: GameState, out: Record<string, number>, id: string, n = 1): voi
 function applyHazard(s: GameState, ctx: Ctx, layer: number, hazard: DelveHazard): void {
   if (installationCovers(s.delve, hazard, layer)) return;
   if (hazard === 'cave-in') {
-    const cost = Math.min(s.storage.bank.mine_support ?? 0, 2 + Math.floor(layer / 50));
-    if (cost) payCost(s, { mine_support: cost });
-    logDelve(s, ctx, layer, `Cave-in at layer ${layer}. Lost ${cost} ${cost === 1 ? 'support' : 'supports'}.`);
+    const { mine_support, rubble } = spendAvailableSupports(s, 2 + Math.floor(layer / 50));
+    const losses = [
+      mine_support && `${mine_support} ${mine_support === 1 ? 'support' : 'supports'}`,
+      rubble && `${rubble} rubble`,
+    ].filter(Boolean).join(' and ');
+    logDelve(s, ctx, layer, `Cave-in at layer ${layer}.${losses ? ` Lost ${losses}.` : ''}`);
   } else if (hazard === 'flood') {
     s.delve.layers[layer].floodedUntil = s.clock + FLOOD_MS;
     logDelve(s, ctx, layer, `Flood at layer ${layer}. Water will slow work for 30 minutes.`);
@@ -307,11 +317,7 @@ function workLayer(s: GameState, ctx: Ctx, a: SkillAction, layer: number, out: R
     give(s, out, band.ore, ore);
     s.lifetime.gathered += ore;
   }
-  give(s, out, 'rubble', copies);
-  if (s.delve.autoBrace) {
-    const supports = craftDelveSupports(s);
-    if (supports) out.mine_support = supports;
-  }
+  give(s, out, 'rubble', DELVE_RUBBLE_PER_WORK * copies);
   const fragment = motherlode ? 0.10 : 0.025;
   if (layer >= 90 && chance(ctx.rng, fragment)) give(s, out, 'mineral_fragment', copies);
   if (layer >= 135 && chance(ctx.rng, fragment)) give(s, out, 'stone_fragment', copies);
@@ -350,7 +356,7 @@ function openCavern(s: GameState, ctx: Ctx, layer: number, out: Record<string, n
 
 function breakthrough(s: GameState, ctx: Ctx, layer: number, traits: DelveTrait[], out: Record<string, number>, copies: number): void {
   const delve = s.delve;
-  payCost(s, { mine_support: delvePushCost(layer, delve.pickTier) });
+  payCost(s, delvePushPayment(s, layer));
   delve.deepest = layer;
   delve.layers[layer] = { traits, secure: 0 };
   if (traits.includes('motherlode')) delve.stats.motherlodes++;
@@ -374,7 +380,7 @@ function scheduleWarning(s: GameState, ctx: Ctx, actionId: string, layer: number
   if (current && current.action === actionId && current.layer === layer) {
     if (s.clock - current.startsAt <= current.timerMs + BRACE_GRACE_MS) return;
     delete delve.warning;
-    minigameSwing(s, 'miss');
+    // Ignoring a warning leaves the hazard roll intact without cutting earned Focus short.
     delve.lastBrace = { result: 'miss', at: s.clock };
   } else if (current) delete delve.warning;
   // Warning timing must not change the sequence of rewards or hazards for a player who leaves the mine idle.
@@ -399,8 +405,9 @@ export function braceDelve(s: GameState, ctx: Ctx, hazard: DelveHazard): SwingRe
   delete s.delve.warning;
   minigameSwing(s, result);
   s.delve.lastBrace = { result, at: s.clock };
-  if (!correct && hasItem(s, 'mine_support', 1)) payCost(s, { mine_support: 1 });
+  if (!correct) spendAvailableSupports(s, 1);
   if (result === 'hit' || result === 'double') {
+    s.delve.focusHoldUntil = s.clock + DELVE_FOCUS_HOLD_MS;
     if (mode === 'push') s.delve.bracedPush = layer;
     else {
       const worked = s.delve.layers[layer];
@@ -419,10 +426,14 @@ export function delveStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
     s.action = null;
     return;
   }
-  if (ctx.offline) clearWarning(s.delve);
+  if (ctx.offline) {
+    clearWarning(s.delve);
+    delete s.delve.focusHoldUntil;
+  }
   const tree = skillTreeStats(s);
   const overtime = ctx.offline ? 1 + ((tree.offlineSpeed ?? 0) + astrologyOffline(s)) / 100 : 1;
-  focusStep(s, ctx, dt);
+  const decayMs = Math.min(dt, Math.max(0, s.clock - (s.delve.focusHoldUntil ?? 0)));
+  focusStep(s, ctx, decayMs);
   action.progress += dt * overtime * focusMult(s) * (ctx.event?.gatheringSpeed ?? 1);
   while (action?.kind === 'skill' && isDelveAction(action.actionId)) {
     const { layer, mode } = delveTarget(s, action.actionId, action.delveLayer);

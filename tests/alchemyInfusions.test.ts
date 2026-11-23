@@ -101,7 +101,7 @@ describe('Alchemy: Your own flasks', () => {
     expect(s.life).toBeGreaterThan(d.maxLife - 200);
   });
 
-  it('runs the infusion brew queue offline, advances ranks, and unlocks giga-rare infusions', () => {
+  it('runs the infusion brew queue offline, advances ranks, and unlocks Legendary infusions', () => {
     const s = newGame(3);
     s.skills.alchemy = xpToReach('alchemy', 30);
     s.foraging.strainHerbs['sunpetal|celestial'] = 40;

@@ -55,9 +55,9 @@ Read [the build guide](SKILLING_BUILD_GUIDE.md) first for shared rules (Focus, c
 
 ### Two activities (one runs at a time)
 
-- **Work layer N** (any layer from 1 to deepest). Each completion gives 1 ore of the layer's band, 1 `rubble`, and the layer's trait effects. Fragments as today: `mineral_fragment` 2.5% from the Mithril band down, `stone_fragment` 2.5% from the Adamant band down.
-- **Push** (at the dig face). Each completion breaks through one new layer. Push time per layer is `40 s × (1 + layer / 100)`. A push completion uses `1 + floor(layer / 50)` supports and gives 3× that band's work XP. If you don't have enough supports, the push can't start (or stops), and the character switches to working the deepest layer.
-- **Supports** are the item `mine_support`. With **Auto-brace** on (default on), every 5 rubble collected becomes 1 support immediately. There's no separate crafting action.
+- **Mine at Depth N** (any reached layer). Each completion gives 1 ore of the layer's band, 2 `rubble`, and the layer's trait effects. Fragments as today: `mineral_fragment` 2.5% from the Mithril band down, `stone_fragment` 2.5% from the Adamant band down.
+- **Push** (at the dig face). Each completion breaks through one new layer. Push time per layer is `40 s × (1 + layer / 100)`. A push completion uses `1 + floor(layer / 50)` braces and gives 3× that band's work XP. If supplies run short, the push stops and the character works the deepest layer.
+- **Paying for braces.** Descent and hazards spend any existing `mine_support` first, then 5 rubble per remaining brace (4 with the Iron Pick or better). Mining banks rubble directly.
 
 ### Layer traits
 
@@ -83,15 +83,16 @@ Rough gems from Crystal-bearing layers get a size for Gemcutting (see the Gemcut
   - **Cavern** (Unstable only): one-time bonus of 3–8 band ore, 1–3 `rough_gem`, and a `heartstone` at 10% (Adamant band and deeper). It also rolls the mine's collectible.
 - **When working a layer:** the hazard chance is 2% per completion, using the same types and effects. Secured layers roll none.
 - Hazards never destroy items or close a layer.
-- **Installations** (built from the Delve screen at a chosen layer, needing that layer reached):
+- **Installations** (built at a reached depth once that layer has enough security):
 
-  | Installation | Unlock | Handles | Tier 1 cost |
+  | Installation | Layer security | Handles | Tier 1 cost |
   |---|---|---|---|
-  | Pump Station | level 30 | flood | 200 rubble + 100 band ore |
-  | Ventilation Shaft | level 45 | gas | 200 rubble + 100 band ore |
-  | Rock Bolts | level 60 | cave-in | 200 rubble + 100 band ore |
+  | Pump Station | 30 | flood | 200 rubble + 100 band ore |
+  | Ventilation Shaft | 45 | gas | 200 rubble + 100 band ore |
+  | Rock Bolts | 60 | cave-in | 200 rubble + 100 band ore |
 
   Each covers from its layer down 50 layers at tier 1, and +25 more per tier, up to 4 tiers. Each tier costs double the last. You can build any number of each. In a covered layer, its hazard type still shows as a warning but costs nothing when idle.
+  Existing installations retain their coverage and can still be upgraded.
 
 ### Focus minigame: brace the shaft
 
@@ -102,6 +103,7 @@ Rough gems from Crystal-bearing layers get a size for Gemcutting (see the Gemcut
   - The correct button within 1 s after time runs out is **weak**.
   - The wrong button or no answer is a **miss**.
 - A correct answer during a push cancels the hazard roll on the next push completion. A wrong answer uses 1 support.
+- A hit or double holds the current Focus level for 65 seconds before normal decay. Successive braces still add Focus, so players working a layer can reach full Focus across four hits even at the longest warning intervals. Ignoring a warning leaves the hazard roll in place and lets earned Focus run down on its usual timer. Focus resets when starting another action or going offline.
 - A correct answer while working a layer adds 1 point of **security** to that layer. At 200 points the layer is **Secured**: it has no hazards and gives +10% ore yield, permanently.
 - Scoring function: `braceResult(correct: boolean, answeredMs: number, timerMs: number)` in `minigame.ts`.
 
@@ -132,7 +134,6 @@ Tiers are forged from the Delve screen. Each needs its depth reached plus 50 ore
 - `layers: Record<number, { traits: string[]; secure: number; floodedUntil?: number }>`
 - `installations: { type: 'pump' | 'vent' | 'bolts'; layer: number; tier: number }[]`
 - `gasUntil?: number`
-- `autoBrace: boolean`
 - `log: string[]` (last 200 events)
 - `stats: { caverns: number; motherlodes: number }`
 
@@ -143,8 +144,9 @@ The running action is a skill action with ids `delve_work` (plus a target layer 
 - A `DelveView` component replaces the Mining action list.
 - It shows a vertical stack of 9 layer rows centred on the selected layer. Each row shows the layer number, band colour, trait icons, a security bar and any installation icon. The dig face is drawn glowing at the bottom.
 - **Elevator buttons** (no dragging or scrolling the picture): ▲/▼ move one layer, ⏫/⏬ move ten, plus **Top**, **Dig face** and **Go to layer…** (a number input).
-- Each selected row has **Work this layer**. The dig face row has **Push**, showing the supports needed and the next hazard odds.
-- A side panel shows supports, rubble, the Auto-brace toggle, the pick tier and installations. The minigame card overlays the shaft while active.
+- The worksite shows **Mine** and **Dig to Depth**. The latter shows the exact rubble and any existing supports the next breakthrough uses, alongside the hazard odds.
+- A compact strip shows rubble and any remaining supports. The shaft can filter reached depths by trait. Focus spans the width below the shaft and worksite. Each payout briefly shows the actual materials gained near the mining progress bar.
+- The **Mine Upgrades** tab holds pick forging and installations for the depth selected on the Shaft tab. Mine history and descent replays are available from the right-hand **Activity** bar, and the time-away summary also shows new replays.
 
 ### Coming back: descent replay
 

@@ -25,6 +25,13 @@ export function startMusic() {
   music.setHidden(document.hidden);
 }
 
+const prefListeners = new Set<(prefs: MusicPrefs) => void>();
+
+export function subscribeMusicPrefs(fn: (prefs: MusicPrefs) => void): () => void {
+  prefListeners.add(fn);
+  return () => { prefListeners.delete(fn); };
+}
+
 /** the music settings, saved on this device rather than in the character's save */
 export function useMusicPrefs(): [MusicPrefs, (next: MusicPrefs) => void] {
   const [prefs, setPrefs] = useState(music.prefs);
@@ -34,6 +41,7 @@ export function useMusicPrefs(): [MusicPrefs, (next: MusicPrefs) => void] {
       setPrefs(next);
       music.setPrefs(next);
       saveMusicPrefs(localStorage, next);
+      for (const fn of prefListeners) fn(next);
     },
   ];
 }

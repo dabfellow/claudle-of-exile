@@ -1,6 +1,16 @@
 import type { SkillAction } from './skills';
 
-export type MutationTier = 'common' | 'rare' | 'giga';
+export type MutationTier = 'magic' | 'rare' | 'unique' | 'legendary';
+export type StrainRarity = 'normal' | MutationTier;
+
+export const STRAIN_RARITY_ORDER: readonly StrainRarity[] = ['normal', 'magic', 'rare', 'unique', 'legendary'];
+export const RARITY_LABEL: Record<StrainRarity, string> = {
+  normal: 'Normal',
+  magic: 'Magic',
+  rare: 'Rare',
+  unique: 'Unique',
+  legendary: 'Legendary',
+};
 
 export interface PlantSpecies {
   id: string;
@@ -53,28 +63,28 @@ export const HYBRID_SPECIES: readonly PlantSpecies[] = [
 export const ALL_SPECIES: readonly PlantSpecies[] = [...BASE_SPECIES, ...HYBRID_SPECIES];
 
 export const SHARED_MUTATIONS: readonly PlantMutation[] = [
-  { id: 'bountiful', name: 'Bountiful', tier: 'common', weight: 100, effect: '+1 herb per Greenhouse harvest' },
-  { id: 'vivid', name: 'Vivid', tier: 'common', weight: 100, effect: '+10% infusion strength in Alchemy' },
-  { id: 'quickroot', name: 'Quickroot', tier: 'common', weight: 100, effect: 'Grows 20% faster' },
-  { id: 'hardy', name: 'Hardy', tier: 'common', weight: 100, effect: '+10 points to inheritance chance' },
-  { id: 'fragrant', name: 'Fragrant', tier: 'common', weight: 100, effect: 'Essence chance +25% when harvested' },
+  { id: 'bountiful', name: 'Bountiful', tier: 'magic', weight: 100, effect: '+1 herb per Greenhouse harvest' },
+  { id: 'vivid', name: 'Vivid', tier: 'magic', weight: 100, effect: '+10% infusion strength in Alchemy' },
+  { id: 'quickroot', name: 'Quickroot', tier: 'magic', weight: 100, effect: 'Grows 20% faster' },
+  { id: 'hardy', name: 'Hardy', tier: 'magic', weight: 100, effect: '+10 points to inheritance chance' },
+  { id: 'fragrant', name: 'Fragrant', tier: 'magic', weight: 100, effect: 'Essence chance +25% when harvested' },
   { id: 'overflowing', name: 'Overflowing', tier: 'rare', weight: 10, effect: '+3 herbs per harvest' },
   { id: 'radiant', name: 'Radiant', tier: 'rare', weight: 10, effect: '+30% infusion strength' },
   { id: 'twin_headed', name: 'Twin-headed', tier: 'rare', weight: 10, effect: '+1 seed per harvest' },
   { id: 'deep_rooted', name: 'Deep-rooted', tier: 'rare', weight: 10, effect: 'Stabilises in 2 fewer generations' },
   { id: 'lucent', name: 'Lucent', tier: 'rare', weight: 10, effect: 'Essence chance +50%, essences one grade higher' },
-  { id: 'celestial', name: 'Celestial', tier: 'giga', weight: 1, effect: '+75% infusion strength' },
-  { id: 'everbloom', name: 'Everbloom', tier: 'giga', weight: 1, effect: 'Plot replants itself after harvest at no seed cost' },
-  { id: 'prismatic', name: 'Prismatic', tier: 'giga', weight: 1, effect: 'Counts as any species for Alchemy infusion recipes' },
+  { id: 'celestial', name: 'Celestial', tier: 'legendary', weight: 1, effect: '+75% infusion strength' },
+  { id: 'everbloom', name: 'Everbloom', tier: 'legendary', weight: 1, effect: 'Plot replants itself after harvest at no seed cost' },
+  { id: 'prismatic', name: 'Prismatic', tier: 'legendary', weight: 1, effect: 'Counts as any species for Alchemy infusion recipes' },
 ];
 
 export const HYBRID_MUTATIONS: readonly PlantMutation[] = [
-  { id: 'umbral', name: 'Umbral', tier: 'rare', weight: 10, effect: '+50% infusion duration', hybridOnly: 'eclipse_bloom' },
-  { id: 'blazing', name: 'Blazing', tier: 'rare', weight: 10, effect: 'Infusions also deal fire on use', hybridOnly: 'sunfire_lily' },
-  { id: 'stillwater', name: 'Stillwater', tier: 'rare', weight: 10, effect: '+1 flask charge from infusions', hybridOnly: 'rimeshade' },
-  { id: 'barbed', name: 'Barbed', tier: 'rare', weight: 10, effect: 'Infusions add a thorns effect', hybridOnly: 'cinderthorn' },
-  { id: 'starlit', name: 'Starlit', tier: 'rare', weight: 10, effect: 'Infusions scale with Astrology level', hybridOnly: 'starmoss' },
-  { id: 'undying', name: 'Undying', tier: 'rare', weight: 10, effect: 'One infusion effect persists after the flask ends', hybridOnly: 'soulflower' },
+  { id: 'umbral', name: 'Umbral', tier: 'unique', weight: 10, effect: '+50% infusion duration', hybridOnly: 'eclipse_bloom' },
+  { id: 'blazing', name: 'Blazing', tier: 'unique', weight: 10, effect: 'Infusions also deal fire on use', hybridOnly: 'sunfire_lily' },
+  { id: 'stillwater', name: 'Stillwater', tier: 'unique', weight: 10, effect: '+1 flask charge from infusions', hybridOnly: 'rimeshade' },
+  { id: 'barbed', name: 'Barbed', tier: 'unique', weight: 10, effect: 'Infusions add a thorns effect', hybridOnly: 'cinderthorn' },
+  { id: 'starlit', name: 'Starlit', tier: 'unique', weight: 10, effect: 'Infusions scale with Astrology level', hybridOnly: 'starmoss' },
+  { id: 'undying', name: 'Undying', tier: 'unique', weight: 10, effect: 'One infusion effect persists after the flask ends', hybridOnly: 'soulflower' },
 ];
 
 export const ALL_MUTATIONS: readonly PlantMutation[] = [...SHARED_MUTATIONS, ...HYBRID_MUTATIONS];

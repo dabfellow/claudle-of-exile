@@ -14,6 +14,7 @@ import { FINAL_ACT } from '../engine/hideout';
 import { addDoomedMaps, addUniqueMaps, grantBossKeys, grantMaps } from '../engine/maps';
 import { ACTIVE_GEMS, SUPPORT_GEMS } from '../data/gems';
 import { CURRENCIES, MATERIALS } from '../data/materials';
+import { grantSeed, makeStrainKey, plantPlot } from '../engine/foraging';
 import { createSkillGem, createSupportGem } from '../engine/gems';
 import { enableFishingPlaytest } from '../engine/fishing';
 import { addFixedMod, createItem } from '../engine/items';
@@ -79,6 +80,52 @@ const PRESETS: Record<string, Setup> = {
       s.professionProgress.work.harvesting = 100;
       s.professionProgress.counters['foraging.seed.moon_bloom'] = 99;
       s.professionProgress.counters['foraging.bloom.moon_bloom'] = 59;
+
+      const now = Date.now();
+      const readyStrain = makeStrainKey('sunpetal', ['bountiful', 'lucent']);
+      const quickStrain = makeStrainKey('frostleaf', ['quickroot']);
+      const emberStrain = makeStrainKey('emberroot', ['bountiful', 'lucent']);
+      const legendaryStrain = makeStrainKey('voidbloom', ['celestial']);
+      const uniqueStrain = makeStrainKey('eclipse_bloom', ['umbral']);
+      const chaseStrain = makeStrainKey('moon_bloom', ['radiant', 'vivid', 'deep_rooted']);
+      const crossLeft = makeStrainKey('moon_bloom', ['radiant']);
+      const crossRight = makeStrainKey('star_bloom', ['celestial']);
+      const stableStrain = makeStrainKey('sunpetal', ['everbloom']);
+
+      grantSeed(s, 'sunpetal', 4, now, false);
+      grantSeed(s, readyStrain, 1, now, false);
+      grantSeed(s, quickStrain, 3, now, false);
+      grantSeed(s, emberStrain, 3, now, false);
+      grantSeed(s, legendaryStrain, 1, now, false);
+      grantSeed(s, uniqueStrain, 1, now, false);
+      grantSeed(s, chaseStrain, 2, now, false);
+      grantSeed(s, crossLeft, 2, now, false);
+      grantSeed(s, crossRight, 2, now, false);
+      grantSeed(s, stableStrain, 1, now, false);
+      s.foraging.strains[stableStrain] = { generation: 5, stable: true, firstSeen: now };
+      s.foraging.strainHerbs[emberStrain] = 14;
+      s.foraging.strainHerbs[legendaryStrain] = 20;
+
+      plantPlot(s, 0, [readyStrain], now);
+      if (s.foraging.plots[0]) {
+        const dur0 = s.foraging.plots[0].readyAt - s.foraging.plots[0].plantedAt;
+        s.foraging.plots[0].plantedAt = now - dur0 - 1000;
+        s.foraging.plots[0].readyAt = now - 1000;
+      }
+
+      plantPlot(s, 1, [quickStrain], now);
+      if (s.foraging.plots[1]) {
+        const elapsed = Math.round((s.foraging.plots[1].readyAt - s.foraging.plots[1].plantedAt) * 0.55);
+        s.foraging.plots[1].plantedAt -= elapsed;
+        s.foraging.plots[1].readyAt -= elapsed;
+      }
+
+      plantPlot(s, 2, [crossLeft, crossRight], now);
+      if (s.foraging.plots[2]) {
+        const elapsed = Math.round((s.foraging.plots[2].readyAt - s.foraging.plots[2].plantedAt) * 0.65);
+        s.foraging.plots[2].plantedAt -= elapsed;
+        s.foraging.plots[2].readyAt -= elapsed;
+      }
     },
   },
   smithingMelee: {

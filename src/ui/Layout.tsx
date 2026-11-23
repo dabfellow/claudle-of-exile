@@ -26,7 +26,7 @@ import { SKILL_KEYS } from './pages/SkillGemsPage';
 import { fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tooltip } from './components/common';
 import { PinnedCurrencies } from './components/CurrencyPins';
 import { RubbingsCard } from './components/ScholarsDesk';
-import { DelveReplay } from './components/DelveView';
+import { DelveReplay, MineActivity } from './components/DelveView';
 import { IngotRack } from './components/FurnaceView';
 import { ForgeRack } from './components/AnvilView';
 import { WoodRack } from './components/WoodBench';
@@ -459,7 +459,7 @@ function LootRow({ l }: { l: LootLine }) {
 }
 
 export function Feed() {
-  useGame();
+  const s = useGame();
   const [tab, setTab] = useState<FeedTab>(() => {
     try {
       return (localStorage.getItem('coe-feed-tab') as FeedTab) || 'activity';
@@ -489,7 +489,10 @@ export function Feed() {
       <ul className="feed-list">
         {tab === 'activity' && (
           <>
-            {game.feed.length === 0 && <li className="dim feed-empty">Level-ups, notable drops and events appear here.</li>}
+            <MineActivity delve={s.delve} />
+            {game.feed.length === 0 && s.delve.log.length === 0 && s.delve.replay.length === 0 && (
+              <li className="dim feed-empty">Level-ups, notable drops and events appear here.</li>
+            )}
             {game.feed.map((f, i) => (
               <li key={f.id} className={`feed-item ${f.tone}`} style={{ opacity: Math.max(0.35, 1 - i * 0.04) }}>
                 {f.text}

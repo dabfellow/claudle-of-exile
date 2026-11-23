@@ -52,7 +52,7 @@ export interface FeedEntry {
   id: number;
   at: number;
   text: string;
-  tone: 'info' | 'good' | 'warn' | 'bad' | 'magic' | 'rare' | 'unique' | 'level';
+  tone: 'info' | 'good' | 'warn' | 'bad' | 'magic' | 'rare' | 'unique' | 'legendary' | 'level';
 }
 
 export interface LogLine {

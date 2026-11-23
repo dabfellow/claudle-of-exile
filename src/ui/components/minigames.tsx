@@ -403,7 +403,7 @@ interface ForageBed {
 }
 
 /** 3×3 garden soil beds: tap lit sprouts quickly to fertilise them; golden blooms earn a double. */
-function ForagingGame({ onSwing }: { matId?: string; onSwing: OnSwing }) {
+export function ForagingGame({ onSwing }: { matId?: string; onSwing: OnSwing }) {
   const s = useGame();
   const speciesId = s.action?.kind === 'skill' && s.action.actionId.startsWith('forage_') ? s.action.actionId.slice(7) : 'sunpetal';
   const spIndex = BASE_SPECIES_INDEX.get(speciesId) ?? 0;
@@ -575,6 +575,40 @@ function ForagingGame({ onSwing }: { matId?: string; onSwing: OnSwing }) {
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/** Idle 3×3 soil beds matching `ForagingGame` geometry so clicking any bed starts foraging with zero layout jump. */
+export function ForagingBedsIdle({
+  onStart,
+  disabled,
+  speciesName,
+}: {
+  onStart: () => void;
+  disabled?: boolean;
+  speciesName: string;
+}) {
+  return (
+    <div className="forage-bed-grid idle" role="group" aria-label={`Garden beds for ${speciesName}`}>
+      {Array.from({ length: 9 }, (_, cell) => (
+        <button
+          key={cell}
+          type="button"
+          className="forage-bed idle"
+          disabled={disabled}
+          title={disabled ? `${speciesName} is locked` : `Start foraging ${speciesName}`}
+          aria-label={disabled ? `${speciesName} bed ${cell + 1} (locked)` : `Start foraging ${speciesName} from bed ${cell + 1}`}
+          onClick={onStart}
+        >
+          <svg className="forage-bed-icon" viewBox="0 0 32 32" aria-hidden>
+            <path d="M5 24 Q16 16 27 24 Z" fill="#3b2d20" stroke="#5a4633" strokeWidth="1" />
+            <path d="M16 21 V15" stroke="#6ea568" strokeWidth="1.8" strokeLinecap="round" opacity="0.72" />
+            <path d="M16 17 C13.5 16 12 14 12.5 12 C14.5 12 16 14 16 17 Z" fill="#70b46c" opacity="0.78" />
+          </svg>
+          <span className="forage-bed-sub">{disabled ? 'Locked' : 'Tap to forage'}</span>
+        </button>
+      ))}
     </div>
   );
 }

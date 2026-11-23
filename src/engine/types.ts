@@ -1502,4 +1502,4 @@ export type GameEvent =
   | { t: 'bossWaiting'; name: string }
   | { t: 'zoneUnlocked'; zoneId: string }
   | { t: 'collectible'; id: string; name: string }
-  | { t: 'info'; text: string; tone?: 'warn' | 'good' };
+  | { t: 'info'; text: string; tone?: 'warn' | 'good' | 'magic' | 'rare' | 'unique' | 'legendary' };

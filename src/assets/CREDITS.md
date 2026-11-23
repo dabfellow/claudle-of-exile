@@ -27,6 +27,9 @@ The `zones/terrain-*.webp` images are existing illustrations, paintings and prin
 | Coast | Maxime Maufra, [The Cliffs at Beg-ar-Fry, Saint-Jean-du-Doigt](https://www.clevelandart.org/art/1966.382) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | Stormy coast | Winslow Homer, [Early Morning After a Storm at Sea](https://www.clevelandart.org/art/1924.195) | CC0 |
 | Cave | Écrivain, [Fossil Cave](https://opengameart.org/content/fossil-cave) | CC0 |
+| Delve mine tunnel | Ted Moravec, [Old mine rails curve through a rocky tunnel](https://commons.wikimedia.org/wiki/File:Old_mine_rails_curve_through_a_rocky_tunnel_-_Flickr_-_Ted_Moravec.jpg), resized and converted to WebP | CC0 |
+| Foraging farmstead (`zones/foraging-farm.webp`) | Rosa Bonheur, [The Farm at the Entrance of the Wood](https://clevelandart.org/art/1978.73) | CC0 |
+| Foraging greenhouse (`zones/foraging-greenhouse.webp`) | Daderot, [Interior view - Conservatory of Flowers - San Francisco, CA](https://commons.wikimedia.org/wiki/File:Interior_view_-_Conservatory_of_Flowers_-_San_Francisco,_CA_-_DSC03089.JPG), color-adjusted and converted to WebP | CC0 |
 | Bandit cave, spider cave | Blarumyrran, `cave_brownsmall.png` and `cave_bluelarge.png` from [Cave pictures/icons](https://opengameart.org/content/cave-picturesicons) | CC0 |
 | Forest | Asher B. Durand, [Trees on a Rocky Hillside](https://www.clevelandart.org/art/1968.21) | CC0 |
 | Night forest | Caspar David Friedrich, [Forest Interior by Moonlight](https://commons.wikimedia.org/wiki/File:Caspar_David_Friedrich_-_Waldinneres_bei_Mondschein.jpg) | Public domain |
