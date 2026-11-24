@@ -4,6 +4,8 @@ Last updated 2026-11-24. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
+**0.6.6, Foraging Audio, News and Astrology**, went live on 2026-11-24. It removes the Foraging wind sound, keeps rain opt-in, groups News by beta version, corrects the Skilling Revamp numbering to 0.6.x, and makes Astrology slots and labels smaller. All 2,030 tests passed. Browser checks covered News on the title and character screens, Astrology at desktop and phone widths, and Foraging audio. The deploy confirmed the live version and login configuration.
+
 Weapon-family mastery and master-alloy signatures are live in **0.6.4**. Early recipes build practice for late-game Master Forms in the same family. Existing weapon recipe practice carries over.
 
 Furnace and Forge scenes (Smelting and Forging screen overhaul) are live in **0.6.5**.
@@ -40,7 +42,7 @@ The seven-act zone naming and gear-check pack passes are live in **0.5.10**. The
 
 Veyrath campaign is live in **0.5.5** (2026-11-19): 70 zones across seven fuller chapters, revised level bands, matching rewards/gem access, saved journal, world/regional paintings, territory navigation, readable banners, character-specific unlock fog and the harsh surrounding ocean. All 113 test files / 1,795 tests, typecheck and production build pass. Earlier desktop/390px campaign navigation checks passed 2026-11-18; the latest artwork/fog was inspected through native previews because the local browser stayed blank, so live hover/desktop acceptance remains open. Full journey pacing remains a separate audit. Narrative and working geography are in [STORY.md](STORY.md), [VEYRATH-MAP.md](VEYRATH-MAP.md) and [Veyrath-zone-conversion.md](Veyrath-zone-conversion.md).
 
-Latest confirmed live release is **0.6.2, Master Volume, Flask Charges and Rubble Sifting**, deployed 2026-11-23. All 2,027 tests passed, including the flask charge endpoints for every rarity. A browser check verified the volume default, chime gain and mute, mined Rubble and sifted it into an artifact, and confirmed inventory overflow onto the ground. The deploy confirmed the live version and login configuration.
+Previous release: **0.6.2, Master Volume, Flask Charges and Rubble Sifting**, deployed 2026-11-23. All 2,027 tests passed, including the flask charge endpoints for every rarity. A browser check verified the volume default, chime gain and mute, mined Rubble and sifted it into an artifact, and confirmed inventory overflow onto the ground. The deploy confirmed the live version and login configuration.
 
 Previous release: **0.6.1, Report from Anywhere**, deployed 2026-11-23. All 2,023 tests passed, and desktop and phone browser checks verified draft persistence, the original screen details and submission against a test endpoint. The deploy confirmed the live version and login configuration.
 
@@ -1036,6 +1038,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Group title and character screen News by beta version and shrink Astrology constellation slots and labels — done 2026-11-24, live in 0.6.6.
 
 - [x] Remove the wind sound when opening Foraging — done 2026-11-23. The browser playtest confirmed that Rain & Glass starts only when enabled, background music continues, and harvesting still plays its sound.
 
