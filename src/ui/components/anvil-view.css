@@ -34,14 +34,129 @@
   margin: 0;
 }
 
-.anvil-work-grid {
+/* The forge scene: stone wall, forge fire behind the anvil, and the Forge panel on the right. */
+.forge-scene {
   display: grid;
-  grid-template-columns: minmax(0, 4fr) minmax(10rem, 1fr);
-  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
+  gap: 16px;
+  margin-bottom: 1rem;
+  padding: 16px;
+  border: 1px solid #6b4c33;
+  border-radius: 6px;
+  background:
+    radial-gradient(ellipse 50% 60% at 30% 40%, #ff8a3a1f, #0d070580 75%),
+    linear-gradient(#1a0e09b8, #120a07d9),
+    url('../../assets/smelting/stone-wall.webp') center / 230px repeat;
+  background-blend-mode: normal, multiply, normal;
 }
 
-.anvil-plan,
-.anvil-side {
+.forge-scene-art {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  gap: 10px;
+  min-width: 0;
+  min-height: 280px;
+}
+
+/* A low forge opening in the back wall; it always smoulders and roars while forging. */
+.forge-fire {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: min(80%, 260px);
+  height: 110px;
+  overflow: hidden;
+  transform: translateX(-50%);
+  border: 12px solid transparent;
+  border-bottom: 0;
+  border-radius: 130px 130px 0 0;
+  background:
+    radial-gradient(ellipse 70% 70% at 50% 100%, #ffa95066, #8a2d1433 55%, transparent 80%) padding-box,
+    radial-gradient(ellipse at 50% 100%, #2a140b, #0b0605 70%) padding-box,
+    linear-gradient(#0e0806a8, #0e0806a8) border-box,
+    url('../../assets/smelting/stone-wall.webp') center / 110px border-box;
+  box-shadow: 0 6px 18px #000a;
+}
+.forge-fire .furnace-flame { opacity: .55; bottom: 0; width: 72px; height: 72px; }
+.forge-fire .furnace-flame.f1 { width: 92px; height: 92px; }
+.forge-lit .forge-fire .furnace-flame { opacity: 1; }
+.forge-lit .forge-fire { box-shadow: 0 6px 18px #000a, 0 0 36px #ff7a2a44; }
+
+.anvil-piece {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  margin-top: 120px;
+}
+
+.anvil-piece > :first-child {
+  z-index: 1;
+  margin-bottom: -42px;
+  filter: drop-shadow(0 0 10px #ee98585a);
+}
+
+.anvil-sprite {
+  width: 192px;
+  height: 192px;
+  margin-top: -24px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 8px 10px #000c);
+}
+
+.forge-lit .anvil-piece > :first-child {
+  filter: drop-shadow(0 0 6px #ffb067) drop-shadow(0 0 14px #ff7a2a);
+}
+
+.forge-scene-status {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  width: min(100%, 320px);
+  padding: 7px 12px;
+  border-radius: 4px;
+  background: #0c0705c4;
+  border: 1px solid #6b4c3366;
+  text-align: center;
+}
+.forge-scene-status .bar { width: 100%; }
+
+.forge-scene-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #7353378a;
+  border-radius: 6px;
+  background: #140c08e0;
+  box-shadow: 0 6px 20px #0008;
+}
+.forge-scene-panel p { margin: 0; }
+
+.anvil-step {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: .4rem 0 0;
+  font-size: 1rem;
+}
+.anvil-step > span {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #3a2718;
+  border: 1px solid #cb9564;
+  color: #f0cf89;
+  font-size: .8rem;
+}
+.anvil-step-hint { margin: -.3rem 0 0; }
+
+.anvil-plan {
   display: grid;
   align-content: start;
   gap: .7rem;
@@ -75,37 +190,6 @@
 .anvil-choice.active {
   border-color: #cb9564;
   box-shadow: inset 0 -2px #a3724d;
-}
-
-.anvil-piece {
-  min-height: 9rem;
-  display: grid;
-  isolation: isolate;
-  justify-items: center;
-  align-content: end;
-  background:
-    radial-gradient(ellipse at 50% 70%, #57311d66 0%, transparent 62%),
-    repeating-linear-gradient(0deg, #1e1a19 0 22px, #151313 23px 25px);
-  border: 1px solid #36302b;
-  border-radius: .35rem;
-  padding: .25rem .25rem .5rem;
-}
-
-.anvil-piece > :first-child {
-  z-index: 1;
-  margin-bottom: -.7rem;
-  filter: drop-shadow(0 0 8px #ee98585a);
-}
-
-.anvil-block {
-  width: 8.25rem;
-  height: 1.9rem;
-  background: linear-gradient(#8c8581 0 14%, #4b4747 16% 39%, #303034 40% 100%);
-  clip-path: polygon(0 1%, 100% 1%, 89% 24%, 70% 40%, 67% 76%, 80% 83%, 82% 100%, 20% 100%, 22% 84%, 34% 76%, 31% 38%, 9% 26%);
-}
-
-.anvil-piece > b {
-  margin-top: .3rem;
 }
 
 .anvil-select {
@@ -150,7 +234,14 @@
   font-size: .78rem;
 }
 
-.anvil-cost span {
+.anvil-cost {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: .85rem;
+}
+
+.anvil-cost li {
   display: inline-flex;
   align-items: center;
   gap: .25rem;
@@ -449,23 +540,30 @@
   background: #1d1b18;
 }
 
-.master-crucible .anvil-piece {
+.master-crucible .forge-scene {
+  border-color: #8a6c3a;
   background:
-    radial-gradient(ellipse at 50% 62%, rgba(79, 120, 196, 0.28) 0%, rgba(212, 162, 76, 0.16) 38%, transparent 72%),
-    linear-gradient(180deg, #101420 0%, #0b0c12 100%);
-  border-color: #6f5a38;
+    radial-gradient(ellipse 50% 60% at 30% 45%, rgba(79, 120, 196, 0.28), #06081080 75%),
+    linear-gradient(#0d1220c0, #090a0fe0),
+    url('../../assets/smelting/stone-wall.webp') center / 230px repeat;
+  background-blend-mode: normal, multiply, normal;
 }
 
 .master-crucible .anvil-piece > :first-child {
   filter: drop-shadow(0 0 12px rgba(226, 180, 94, 0.52));
 }
 
-.master-crucible .anvil-block {
-  background: linear-gradient(#8fa8d6 0 14%, #3c4863 16% 42%, #1b202d 43% 100%);
+.master-crucible .anvil-sprite {
+  filter: drop-shadow(0 8px 10px #000c) hue-rotate(190deg) saturate(1.6) brightness(1.1);
+}
+
+.master-crucible .forge-scene-panel {
+  background: #0d1018e6;
+  border-color: #6f5a38;
 }
 
 @media (max-width: 720px) {
-  .anvil-work-grid {
+  .forge-scene {
     grid-template-columns: minmax(0, 1fr);
   }
 }

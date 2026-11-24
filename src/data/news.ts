@@ -16,6 +16,15 @@ export const UPCOMING: string[] = [
 
 export const NEWS: NewsEntry[] = [
   {
+    version: '6.0.5',
+    date: '24 Nov 2026',
+    title: 'Furnace and Forge Scenes',
+    items: [
+      'Smelting — The Furnace tab is now a full stone-walled furnace with real fire when it’s lit, with Heat & Purity and your Fuel and Flux beside it. The Fuel & flux tab now says what each craft makes and splits Fuel from Flux.',
+      'Forging — The Anvil tab opens on a forge scene: your piece on a real anvil with the forge fire behind it, and the costs, Forge button and rhythm hammer beside it. Below, numbered steps walk you through choosing a piece and working each stage.',
+    ],
+  },
+  {
     version: '6.0.4',
     date: '23 Nov 2026',
     title: 'Weapon Family Mastery',
