@@ -1,9 +1,10 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { baseDef } from '../../data/bases';
-import { FORGE_CHAPTERS, FORGE_CHAPTER_SIZE, forgeBeatMs, forgeStages, masterFormLevel, type ForgeElement, type ForgeStageId } from '../../data/forging';
+import { FORGE_CHAPTERS, FORGE_CHAPTER_SIZE, forgeBeatMs, forgeStages, masterFormLevel, WEAPON_ALLOY_SIGNATURES, weaponAlloySignatureText, type ForgeElement, type ForgeStageId } from '../../data/forging';
 import { materialDef } from '../../data/materials';
 import { actionDef, type SkillAction } from '../../data/skills';
 import { MASTER_ALLOYS, masterAlloyFor, resolveBarCost } from '../../data/smelting';
+import { WEAPON_SIGNATURE_MASTERY, weaponMasteryId } from '../../data/skillingMastery';
 import {
   chooseForgeSong, deleteForgePattern, dismissForgeRack, FORGE_SONGS, forgeAction, forgeActionForPlan, forgeChaptersCompleted, forgePatternSlots,
   forgePreset, forgePresetsFor, forgePurpose, forgeRackItems, forgeRecipes, forgeSingingChance, forgeStartBlocker, forgingSpeed,
@@ -12,6 +13,7 @@ import {
 import { itemName, openKinds } from '../../engine/items';
 import { doubleReady, focusOf, minigameSwing, strikeResult, type SwingResult } from '../../engine/minigame';
 import { actionIntervalMs, skillLevel, stopAction } from '../../engine/skills';
+import { masteryLevel } from '../../engine/skillingMastery';
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
@@ -19,6 +21,7 @@ import { Art, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
 import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
 import { UseBarGrade } from './FurnaceView';
 import { ItemCell } from './ItemView';
+import { MasteryProgress } from './MasteryProgress';
 import { Icon } from './Icon';
 import { music } from '../music';
 import './anvil-view.css';
@@ -240,7 +243,7 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
   const [saving, setSaving] = useState(false);
   const presetSelectId = useId();
   const level = skillLevel(s, 'smithing');
-  const recipes = forgeRecipes();
+  const recipes = forgeRecipes(master);
   const base = baseDef(plan.baseId);
   const action = forgeActionForPlan(plan);
   const requirements = action?.inputs ?? {};
@@ -248,6 +251,8 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
   const stages = forgeStages(base, master);
   const selected = stages.find((entry) => entry.id === stage);
   const alloy = plan.alloy ? masterAlloyFor(plan.alloy) : undefined;
+  const weaponMastery = action && weaponMasteryId(action) ? action.mastery : undefined;
+  const signatureUnlocked = !!weaponMastery && masteryLevel(s, weaponMastery.id) >= WEAPON_SIGNATURE_MASTERY;
   const purpose = forgePurpose(plan);
   const blocker = master && !plan.alloy ? 'Choose a master alloy' : forgeStartBlocker(s, plan);
   const running = s.action?.kind === 'skill' ? forgeAction(s, s.action.actionId) : undefined;
@@ -447,6 +452,17 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
             <p className="anvil-guarantee small">
               {MASTER_ALLOYS.find(({ id }) => id === alloy.id)?.signature}{alloy.living ? ' · plus a second random alloy signature' : ''}
             </p>
+          )}
+          {weaponMastery && (
+            <div>
+              <MasteryProgress s={s} mastery={weaponMastery} />
+              {master && (signatureUnlocked && alloy ? (
+                <div className="small anvil-guarantee">
+                  <b>Rolls one weapon signature</b>
+                  {WEAPON_ALLOY_SIGNATURES[alloy.id].map((effect) => <div key={effect.name}>{weaponAlloySignatureText(effect)}</div>)}
+                </div>
+              ) : !signatureUnlocked && <p className="dim small">An extra alloy signature unlocks at {weaponMastery.name} {WEAPON_SIGNATURE_MASTERY}.</p>)}
+            </div>
           )}
           <div className="anvil-piece">
             <Art src={`items/${base.id}`} alt="" size={74} fallback={<Icon name={base.slot} size={46} />} />

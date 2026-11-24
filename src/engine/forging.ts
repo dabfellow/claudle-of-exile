@@ -5,14 +5,15 @@ import {
   type ForgeChoice, type ForgeElement, type ForgeSignature, type ForgeStageId,
 } from '../data/forging';
 import { MASTER_ALLOYS, masterAlloyFor } from '../data/smelting';
-import { actionsFor, hasAction, actionDef, type SkillAction } from '../data/skills';
+import { actionsFor, hasAction, actionDef, equipmentSkill, type SkillAction } from '../data/skills';
+import { weaponMasteryId, WEAPON_SIGNATURE_MASTERY } from '../data/skillingMastery';
 import type { SmithPurpose } from '../data/smithing';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
 import type { Ctx } from './context';
 import { isCraftLocked } from './crafting';
 import { addRandomMod, allMods, createItem, eligibleAffixes, modCount, rareName, spawnWeight, type ModBias } from './items';
 import { chance, pick, pickWeighted, rInt, type Rng } from './rng';
-import { hasMilestone } from './skillingMastery';
+import { hasMilestone, MASTERY_CAP } from './skillingMastery';
 import { actionBlocker, startSkillAction } from './skills';
 import { bagFull } from './storage';
 import type { GameState, Item, RolledMod } from './types';
@@ -82,8 +83,10 @@ export function isStagedForge(actionId: string): boolean {
 }
 
 let stagedRecipes: SkillAction[] | undefined;
-export function forgeRecipes(): SkillAction[] {
-  return stagedRecipes ??= actionsFor('smithing').filter((a) => isStagedForge(a.id));
+let ordinaryRecipes: SkillAction[] | undefined;
+export function forgeRecipes(master = false): SkillAction[] {
+  stagedRecipes ??= actionsFor('smithing').filter((a) => isStagedForge(a.id));
+  return master ? stagedRecipes : ordinaryRecipes ??= stagedRecipes.filter((a) => equipmentSkill(baseDef(a.baseId!)) === 'smithing');
 }
 
 let purposeRecipes: Map<string, SkillAction> | undefined;
@@ -128,6 +131,7 @@ export function forgePlanBlocker(s: GameState, plan: ForgePlan): string | null {
     return null;
   }
   const base = baseDef(plan.baseId);
+  if (!plan.alloy && equipmentSkill(base) === 'woodcrafting') return 'Choose a master alloy for this weapon';
   const stages = forgeStages(base, !!plan.alloy);
   if (!plan.choices?.shape) return 'Choose a shape';
   for (const stageId of Object.keys(plan.choices)) {
@@ -353,6 +357,10 @@ export function createStagedForgeItem(s: GameState, ctx: Ctx, a: SkillAction, pl
   }
   applyBarPurity(item, options.purity, rng, guarantees);
   item.name = rareName(item, rng);
+  const alloy = plan.alloy && masterAlloyFor(plan.alloy);
+  if (alloy && weaponMasteryId(a) && hasMilestone(s, a.mastery, WEAPON_SIGNATURE_MASTERY)) {
+    item.weaponMasterySignature = { alloy: alloy.id, effect: rng.next() < 0.5 ? 0 : 1 };
+  }
   return item;
 }
 
@@ -415,22 +423,50 @@ export function migrateForging(s: GameState): void {
   s.skillingMastery ??= {};
   const used: SkillAction[] = [];
   for (const legacy of oldRecipes().values()) {
-    const practice = legacy.mastery ? s.skillingMastery[legacy.mastery.id] ?? 0 : 0;
-    const staged = forgeTemplate(legacy.baseId!)?.mastery;
+    const practice = s.skillingMastery[`task.${legacy.id}`] ?? 0;
+    const staged = `task.${stagedForgeId(legacy.baseId!)}`;
     if (practice > 0 || (s.action?.kind === 'skill' && s.action.actionId === legacy.id)) {
       used.push(legacy);
-      if (staged && practice > 0) s.skillingMastery[staged.id] = Math.max(s.skillingMastery[staged.id] ?? 0, practice);
+      if (practice > 0) s.skillingMastery[staged] = Math.max(s.skillingMastery[staged] ?? 0, practice);
     }
     if (s.action?.kind === 'skill' && s.action.actionId === legacy.id) {
       s.forging.running = forgePreset(legacy);
       s.action.actionId = stagedForgeId(legacy.baseId!);
     }
   }
-  const rank = (a: SkillAction) => s.skillingMastery[a.mastery?.id ?? ''] ?? 0;
+  const rank = (a: SkillAction) => s.skillingMastery[`task.${a.id}`] ?? 0;
   const limit = used.length > forgePatternSlots(s) ? 10 : used.length;
   for (const legacy of used.sort((a, b) => rank(b) - rank(a)).slice(0, limit)) {
     if (s.forging.patterns.some(({ id }) => id === legacy.id)) continue;
     s.forging.patterns.push({ ...forgePreset(legacy), id: legacy.id, name: legacy.name });
+  }
+}
+
+/** Convert completed weapon recipe practice into family practice without recreating saved plans. */
+export function migrateWeaponMastery(s: GameState): void {
+  const mastery = s.skillingMastery;
+  if (!mastery || typeof mastery !== 'object' || Array.isArray(mastery)) return;
+  const byBase = new Map<string, { family: string; total: number; staged: number; purpose: number }>();
+  for (const skill of ['smithing', 'woodcrafting'] as const) {
+    for (const recipe of actionsFor(skill)) {
+      const family = weaponMasteryId(recipe);
+      if (!family || !recipe.baseId) continue;
+      const oldId = `task.${recipe.id}`;
+      const practice = mastery[oldId];
+      delete mastery[oldId];
+      if (!Number.isFinite(practice) || practice <= 0) continue;
+      const entry = byBase.get(recipe.baseId) ?? { family, total: 0, staged: 0, purpose: 0 };
+      entry.total += practice;
+      if (isStagedForge(recipe.id)) entry.staged = practice;
+      if (recipe.purpose && skill === 'smithing') entry.purpose = Math.max(entry.purpose, practice);
+      byBase.set(recipe.baseId, entry);
+    }
+  }
+  for (const entry of byBase.values()) {
+    // The old staged-forge migration copied the best purpose track onto the staged recipe.
+    const practice = entry.total - Math.min(entry.staged, entry.purpose);
+    const existing = mastery[entry.family];
+    mastery[entry.family] = Math.min(MASTERY_CAP, (Number.isFinite(existing) ? Math.max(0, existing) : 0) + practice);
   }
 }
 

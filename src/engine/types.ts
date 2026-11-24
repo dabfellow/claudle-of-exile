@@ -11,7 +11,7 @@ import type { FishingPort } from './fishing';
 import type { DelveState } from './delve';
 import type { SmeltingState } from './smelting';
 import type { ForgingState } from './forging';
-import type { ForgeSignature } from '../data/forging';
+import type { ForgeSignature, WeaponMasterySignature } from '../data/forging';
 import type { WoodcraftingState, WoodPlan } from './woodcrafting';
 import type { CutSetup, GemcuttingState } from './gemFacets';
 import type { ForagingState } from './foraging';
@@ -212,6 +212,7 @@ export interface Item {
   /** Local physical and defence quality earned at the forge. */
   quality?: number;
   forgeSignatures?: ForgeSignature[];
+  weaponMasterySignature?: WeaponMasterySignature;
   forgeSinging?: true;
   dials?: number[];
   living?: { growth: number; ms?: number };

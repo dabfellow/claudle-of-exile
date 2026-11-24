@@ -10,7 +10,7 @@ import { ACTIONS, hasAction } from '../data/skills';
 import { HEIST_JOBS, PREP_CAP, prepBoard, prepId } from '../data/heist';
 import { ROGUES } from '../data/rogues';
 import { skillLevel } from './skills';
-import { legacyMasteryForAction, legacyMasteryForHeist } from '../data/skillingMastery';
+import { legacyMasteryForAction, legacyMasteryForHeist, weaponMasteryId } from '../data/skillingMastery';
 import { FLASK_SLOTS } from '../data/flasks';
 import { UNIQUE_MAPS } from '../data/maps';
 import { ZONES } from '../data/zones';
@@ -38,7 +38,7 @@ import { newCampaignQuestState, settleCampaignQuests } from './campaignQuests';
 import { newAstrologyState } from './astrology';
 import { migrateDelve } from './delve';
 import { initialSmelting } from './smelting';
-import { migrateForging, settleForging } from './forging';
+import { migrateForging, migrateWeaponMastery, settleForging } from './forging';
 import { freshWoodcrafting } from './woodcrafting';
 import { freshGemcutting } from './gemFacets';
 
@@ -551,7 +551,12 @@ const MIGRATIONS: Record<number, Migration> = {
       if (typeof practice !== 'number' || !Number.isFinite(practice) || practice <= 0) return;
       converted[newId] = Math.max(typeof converted[newId] === 'number' ? converted[newId] as number : 0, Math.min(MASTERY_CAP, practice * (MASTERY_CAP / 36_000)));
     };
-    for (const action of ACTIONS) carry(legacyMasteryForAction(action)?.id, action.mastery?.id);
+    for (const action of ACTIONS) {
+      const family = weaponMasteryId(action);
+      if (family && action.mastery?.skill !== action.skill) continue;
+      // A legacy band represents shared practice already. Count it once per family.
+      carry(legacyMasteryForAction(action)?.id, family ?? action.mastery?.id);
+    }
     for (const job of HEIST_JOBS) carry(legacyMasteryForHeist(job).id, job.mastery?.id);
     raw.skillingMastery = converted;
   },
@@ -616,6 +621,8 @@ const MIGRATIONS: Record<number, Migration> = {
   63: migrateRemovedSkills,
   64: migrateSkillingTreeRevamp,
   65: migrateRogueRecruitment,
+  66: () => {},
+  67: (raw) => migrateWeaponMastery(raw as unknown as GameState),
 };
 
 /**

@@ -409,7 +409,7 @@ const ALL_AUTHORED_ACTIONS = [
   ...AUTHORED_ACTIONS,
   ...DELVE_ACTIONS,
   ...FURNACE_ACTIONS,
-  ...stagedForgeActions(EQUIPMENT_ACTIONS.filter((a) => a.skill === 'smithing')),
+  ...stagedForgeActions(EQUIPMENT_ACTIONS),
   ...WEAPON_COMPONENT_ACTIONS.filter((extra) => !AUTHORED_ACTIONS.some((a) => a.id === extra.id)),
 ];
 export const LEGACY_ACTION_PLACES = Object.fromEntries(ALL_AUTHORED_ACTIONS.map((a) => [a.id, { area: a.area, gate: a.gate }]));

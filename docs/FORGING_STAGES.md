@@ -160,6 +160,18 @@ Quality increases a weapon's local physical damage or an armour piece's local de
 - Beat interval by metal.
 - Migration.
 
+## Weapon-family mastery and signatures (decided 2026-11-23)
+
+The owner chose to replace individual weapon recipe mastery with mastery shared across a weapon family. Early crafts build practice that carries into higher-tier bases in the same family. A starter sword and a late-game sword are examples of the relationship, with no decision on specific recipes or bases.
+
+High family mastery unlocks exclusive crafted signatures. The material used determines which signature outcomes can roll, as Foraging strains influence Alchemy. Combat drops still supply useful bases and rolled gear. Forge batches offer effects that require both practice in the family and acquiring the right input. Players can save the recipe and come back to the completed batch.
+
+The game uses eight existing families: axes, bows, daggers, maces, sceptres, staves, swords, and wands. One- and two-handed versions share their family. Quick recipes, purpose recipes, and staged crafts contribute to the same track. Bows, wands, and staves build practice through their existing Woodcrafting recipes and can use alloys in Forging's endgame Master Forms.
+
+At family mastery 75, every Master Form rolls one additional signature, chosen evenly from the selected alloy's pair. This keeps a batch worth checking without making a scarce alloy come up empty. The existing alloy effect and the Living alloy bonus still apply. Kingsbronze rolls critical chance or critical multiplier, Moonsilver rolls cast speed or mana regeneration, Dragonsteel rolls fire or bleed damage, and Voidglass rolls chaos or poison damage. These signatures are inherent to crafted weapons.
+
+Existing weapon practice carries across into its family, capped at mastery 100. Migration removes the overlap when an old purpose track was copied into a staged recipe. Saved patterns and active plans are kept. Basic speed and conservation progress and global bonuses count once per family.
+
 ## Build work
 
 Tracked in [MILESTONES.md](MILESTONES.md) under "Build the remaining production twists".

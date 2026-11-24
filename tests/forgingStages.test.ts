@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FORGE_CHAPTERS, forgeBeatMs, forgeImplicits, hasKingsbronze } from '../src/data/forging';
+import { FORGE_CHAPTERS, forgeBeatMs, forgeImplicits, hasKingsbronze, WEAPON_ALLOY_SIGNATURES } from '../src/data/forging';
 import { actionDef } from '../src/data/skills';
 import { makeCtx } from '../src/engine/context';
 import {
@@ -10,7 +10,8 @@ import { addFixedMod, allMods, createItem } from '../src/engine/items';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
-import { actionIntervalMs, skillStep } from '../src/engine/skills';
+import { actionIntervalMs, skillStep, startSkillAction } from '../src/engine/skills';
+import { masteryThreshold } from '../src/engine/skillingMastery';
 import { newGame } from '../src/engine/state';
 import { deriveStats, itemStats } from '../src/engine/stats';
 import { xpToReach } from '../src/engine/xp';
@@ -30,6 +31,67 @@ function supply(s: ReturnType<typeof setup>, plan: ForgePlan, batches = 1) {
 }
 
 describe('staged forging', () => {
+  it('trains swords, axes and wands independently across bases and recipe styles', () => {
+    const s = setup();
+    const ctx = makeCtx(seeded(14));
+    for (const [id, family, advanced] of [
+      ['smith_rusted_sword', 'sword', 'staged_forge_wyrmlord_sword'],
+      ['smith_rusty_hatchet', 'axe', 'staged_forge_wyrmlord_greataxe'],
+      ['smith_driftwood_wand', 'wand', 'staged_forge_seraph_wand'],
+    ]) {
+      const recipe = actionDef(id);
+      expect(recipe.mastery!.id).toBe(`weapon.${family}`);
+      expect(actionDef(advanced).mastery!.id).toBe(recipe.mastery!.id);
+      s.storage.bank = { ...recipe.inputs };
+      expect(startSkillAction(s, ctx, id)).toBeNull();
+      const d = deriveStats(s);
+      skillStep(s, ctx, actionIntervalMs(s, recipe, d) + 1, d);
+      expect(s.skillingMastery[recipe.mastery!.id]).toBeCloseTo(recipe.intervalMs / 1000);
+    }
+    expect(Object.keys(s.skillingMastery).sort()).toEqual(['weapon.axe', 'weapon.sword', 'weapon.wand']);
+  });
+
+  it('rolls one extra effect from the chosen alloy only at family mastery 75', () => {
+    const s = setup();
+    const ctx = makeCtx(seeded(42));
+    const wand: ForgePlan = { baseId: 'seraph_wand', alloy: 'moonsilver', choices: { shape: 'light', signature: 'amplified' } };
+    const options = { ilvl: 85, itemTier: 1, purity: 0, focusMultiple: 1 } as const;
+    expect(forgePlanBlocker(s, { ...wand, choices: { shape: 'light' }, alloy: undefined })).toMatch(/master alloy/);
+    expect(forgePlanBlocker(s, wand)).toBeNull();
+    s.skillingMastery['weapon.wand'] = masteryThreshold(74);
+    const before = createStagedForgeItem(s, ctx, forgeActionForPlan(wand)!, wand, options);
+    expect(before.weaponMasterySignature).toBeUndefined();
+    expect(before.forgeSignatures).toEqual([{ id: 'moonsilver', multiplier: 1.5 }]);
+    s.skillingMastery['weapon.wand'] = masteryThreshold(75);
+    for (const alloy of ['moonsilver', 'dragonsteel'] as const) {
+      const plan = { ...wand, alloy };
+      const item = createStagedForgeItem(s, ctx, forgeActionForPlan(plan)!, plan, options);
+      expect(item.weaponMasterySignature?.alloy).toBe(alloy);
+      const effect = WEAPON_ALLOY_SIGNATURES[alloy][item.weaponMasterySignature!.effect];
+      expect(forgeImplicits(item)).toContainEqual(expect.objectContaining({ stat: effect.stat, value: effect.value }));
+    }
+  });
+
+  it('combines existing recipe practice without double-counting purpose practice carried to staged forging', () => {
+    const s = setup();
+    expect(saveForgePattern(s, 'Existing axe', weapon)).toBeNull();
+    const raw = JSON.parse(serialize(s));
+    raw.version = 67;
+    raw.skillingMastery = {
+      'task.smith_rusted_sword': 600,
+      'task.smith_wyrmlord_sword': 900,
+      'task.smith_driftwood_wand': 450,
+      'task.smith_seraph_wand': 550,
+      'task.purpose_physical_felling_axe': 125,
+      'task.staged_forge_felling_axe': 200,
+      'task.smith_iron_ring': 75,
+    };
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.skillingMastery).toEqual({ 'weapon.sword': 1500, 'weapon.wand': 1000, 'weapon.axe': 200, 'task.smith_iron_ring': 75 });
+    expect(loaded.forging.patterns).toEqual(s.forging.patterns);
+    expect(deserialize(serialize(loaded)).skillingMastery).toEqual(loaded.skillingMastery);
+  });
+
   it('multiplies the right groups across stages, preserves guarantees and rolls a Rare', () => {
     const s = setup();
     const ctx = makeCtx(seeded(192));

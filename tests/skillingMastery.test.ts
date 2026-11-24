@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SITES, siteOfAction } from '../src/data/expedition';
 import { HEIST_JOBS } from '../src/data/heist';
+import { weaponMasteryId } from '../src/data/skillingMastery';
 import { ACTIONS, actionDef } from '../src/data/skills';
 import { isDelveAction } from '../src/engine/delve';
 import { ZONES } from '../src/data/zones';
@@ -40,12 +41,12 @@ function start(id: string, amount = 1_000_000) {
 }
 
 describe('non-combat action mastery', () => {
-  it('has one track per eligible task, with only bulk recipes sharing', () => {
+  it('shares tracks within weapon families and bulk recipes', () => {
     const eligible = ACTIONS.filter((a) => a.skill !== 'fishing' && !a.soon && !siteOfAction(a.id) && !isDelveAction(a.id));
     expect(eligible.every((a) => !!a.mastery)).toBe(true);
     expect(HEIST_JOBS.every((j) => !!j.mastery)).toBe(true);
     const ids = new Set([...eligible.map((a) => a.mastery!.id), ...HEIST_JOBS.map((j) => j.mastery!.id)]);
-    const tasks = new Set([...eligible.map((a) => a.batchOf ?? a.id), ...HEIST_JOBS.map((j) => `heist.${j.id}`)]);
+    const tasks = new Set([...eligible.map((a) => weaponMasteryId(a) ?? a.batchOf ?? a.id), ...HEIST_JOBS.map((j) => `heist.${j.id}`)]);
     expect(ids.size).toBe(tasks.size);
     expect(ACTIONS.filter((a) => a.skill === 'combat' || a.skill === 'fishing' || !!siteOfAction(a.id) || isDelveAction(a.id)).every((a) => !a.mastery)).toBe(true);
     expect(SITES.every((site) => !actionDef(site.id).mastery)).toBe(true);
@@ -129,11 +130,12 @@ describe('non-combat action mastery', () => {
     expect(key.s.storage.bank.serrated_fossil).toBe(0);
   });
 
-  it('shares bulk recipe tracks but keeps every other action and recipe separate', () => {
+  it('keeps unrelated bases and different weapon families separate', () => {
     expect(actionDef('orb_transmute').mastery!.id).toBe(actionDef('orb_transmute_x10').mastery!.id);
     expect(actionDef('smelt_copper').mastery!.id).not.toBe(actionDef('smelt_iron').mastery!.id);
-    const weapons = ACTIONS.filter((a) => a.baseId && a.level < 10);
-    expect(new Set(weapons.map((a) => a.mastery!.id)).size).toBe(weapons.length);
+    const otherEquipment = ACTIONS.filter((a) => a.baseId && !weaponMasteryId(a));
+    expect(new Set(otherEquipment.map((a) => a.mastery!.id)).size).toBe(otherEquipment.length);
+    expect(actionDef('smith_rusted_sword').mastery!.id).not.toBe(actionDef('smith_rusty_hatchet').mastery!.id);
     expect(new Set(HEIST_JOBS.map((j) => j.mastery!.id)).size).toBe(HEIST_JOBS.length);
   });
 

@@ -125,10 +125,14 @@ export const STAGED_FORGE_PREFIX = 'staged_forge_';
 
 /** Authored before the common XP scaling and task mastery are applied. */
 export function stagedForgeActions(cheap: SkillAction[]): SkillAction[] {
-  return cheap.filter((a) => a.skill === 'smithing' && a.baseId && obtainable(baseDef(a.baseId))).map((a) => {
+  return cheap.filter((a) => {
+    if (!a.baseId) return false;
+    const base = baseDef(a.baseId);
+    return obtainable(base) && (a.skill === 'smithing' || base.slot === 'weapon');
+  }).map((a) => {
     const base = baseDef(a.baseId!);
     return {
-      ...a, id: STAGED_FORGE_PREFIX + base.id, name: `Shape ${base.name}`, intervalMs: 60_000 + 2000 * base.reqLevel,
+      ...a, skill: 'smithing', id: STAGED_FORGE_PREFIX + base.id, name: `Shape ${base.name}`, intervalMs: 60_000 + 2000 * base.reqLevel,
       xp: (18 + 1.8 * base.reqLevel) / 0.3,
       inputs: Object.fromEntries(Object.entries(a.inputs ?? {}).map(([id, qty]) => [id, qty * 2])),
     };
@@ -147,6 +151,40 @@ export interface ForgeSignature {
   multiplier: number;
 }
 
+interface WeaponSignatureEffect {
+  name: string;
+  stat: StatKey;
+  value: number;
+}
+
+export const WEAPON_ALLOY_SIGNATURES: Record<MasterAlloyId, readonly [WeaponSignatureEffect, WeaponSignatureEffect]> = {
+  kingsbronze: [
+    { name: 'Keen Crown', stat: 'critChancePct', value: 18 },
+    { name: 'Crownstrike', stat: 'critMulti', value: 12 },
+  ],
+  moonsilver: [
+    { name: 'Moonflow', stat: 'castSpeedPct', value: 8 },
+    { name: 'Silver Current', stat: 'manaRegenPct', value: 18 },
+  ],
+  dragonsteel: [
+    { name: 'Dragonfire', stat: 'firePct', value: 18 },
+    { name: 'Blood Temper', stat: 'bleedPct', value: 18 },
+  ],
+  voidglass: [
+    { name: 'Void Echo', stat: 'chaosPct', value: 18 },
+    { name: 'Glass Venom', stat: 'poisonPct', value: 18 },
+  ],
+};
+
+export interface WeaponMasterySignature {
+  alloy: MasterAlloyId;
+  effect: 0 | 1;
+}
+
+export function weaponAlloySignatureText(effect: WeaponSignatureEffect): string {
+  return `${effect.name} · ${describeStat(effect.stat, effect.value)}`;
+}
+
 type SignatureStats = readonly (readonly [StatKey, number])[];
 const signatureStats: Record<MasterAlloyId, SignatureStats> = {
   kingsbronze: [['itemRarity', 20]],
@@ -155,8 +193,8 @@ const signatureStats: Record<MasterAlloyId, SignatureStats> = {
   voidglass: [['chaosRes', 15], ['damageAsChaos', 10]],
 };
 
-export function forgeImplicits(item: { forgeSignatures?: ForgeSignature[] }): Implicit[] {
-  return (item.forgeSignatures ?? []).flatMap(({ id, multiplier }) =>
+export function forgeImplicits(item: { forgeSignatures?: ForgeSignature[]; weaponMasterySignature?: WeaponMasterySignature }): Implicit[] {
+  const implicits = (item.forgeSignatures ?? []).flatMap(({ id, multiplier }) =>
     (signatureStats[id] ?? []).map(([stat, value]) => {
       const scaled = value * multiplier;
       const text = stat === 'damageAsChaos' ? `Gain ${scaled}% of Damage as extra Chaos Damage`
@@ -165,6 +203,10 @@ export function forgeImplicits(item: { forgeSignatures?: ForgeSignature[] }): Im
       return { stat, value: scaled, text };
     }),
   );
+  const signature = item.weaponMasterySignature;
+  const effect = signature && WEAPON_ALLOY_SIGNATURES[signature.alloy]?.[signature.effect];
+  if (effect) implicits.push({ stat: effect.stat, value: effect.value, text: weaponAlloySignatureText(effect) });
+  return implicits;
 }
 
 export function hasKingsbronze(item: { forgeSignatures?: ForgeSignature[] }): boolean {

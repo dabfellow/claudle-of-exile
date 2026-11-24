@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Craft swords, axes, wands, and other weapons to build mastery for their own family. At family mastery 75, Master Forms gain an extra signature from the alloy you choose.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

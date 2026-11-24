@@ -4,6 +4,8 @@ Last updated 2026-11-23. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
+Weapon-family mastery and master-alloy signatures are ready to release. Early recipes build practice for late-game Master Forms in the same family. Existing weapon recipe practice carries over.
+
 Master volume, rarity-based flask charges and Archaeology sifting with Delve Rubble are live in **6.0.2**.
 
 The sidebar Report update is live in **6.0.1**. It keeps drafts and captures the screen where you opened the report.
@@ -103,6 +105,8 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Forging value decision (2026-11-23). Weapon crafting trains a shared track for the weapon's family across recipes and bases. At family mastery 75, Master Forms roll one of two extra signatures from the chosen alloy. See [Forging](FORGING_STAGES.md#weapon-family-mastery-and-signatures-decided-2026-11-23).
 
 - Delve installation unlocks (2026-11-22): Layer security unlocks the Pump Station at 30, Ventilation Shaft at 45 and Rock Bolts at 60. Costs and coverage still apply. Existing installations can be upgraded.
 
@@ -1030,6 +1034,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Implement weapon-family mastery and master-alloy signatures. Verified recipe-practice migration, saved patterns, and crafting a basic wand before unlocking a Moonsilver Master Form. (Done 2026-11-23.)
 
 - [x] Ship the 15% master volume default and loot-filter volume control, kill-based flask charge ranges by rarity, and a one-Rubble material cost for Archaeology sifting. — done 2026-11-23
 

@@ -1,4 +1,4 @@
-import { baseDef } from './bases';
+import { baseDef, WEAPON_FAMILIES } from './bases';
 import { siteOfAction } from './expedition';
 import type { HeistJob } from './heist';
 import type { SkillAction } from './skills';
@@ -44,7 +44,7 @@ export interface MasteryMilestone {
 }
 
 export interface MasterySpec {
-  /** Stable task id. Bulk recipes use the id of their single-recipe counterpart. */
+  /** Stable practice track. Weapon families and bulk recipes share a track. */
   id: string;
   name: string;
   skill: string;
@@ -54,6 +54,15 @@ export interface MasterySpec {
   /** Production only: ordinary ingredients eligible for conservation. */
   ordinaryInputs?: string[];
   milestones: MasteryMilestone[];
+}
+
+export const WEAPON_SIGNATURE_MASTERY = 75;
+
+/** One practice track for every base in a weapon family, across both crafting workshops. */
+export function weaponMasteryId(a: SkillAction): string | undefined {
+  if (!a.baseId || (a.skill !== 'smithing' && a.skill !== 'woodcrafting')) return undefined;
+  const base = baseDef(a.baseId);
+  return base.slot === 'weapon' && base.family ? `weapon.${base.family}` : undefined;
 }
 
 /** Inputs mastery may conserve. Valuable/chase materials are deliberately absent. */
@@ -419,11 +428,21 @@ export function legacyMasteryForHeist(job: HeistJob): MasterySpec {
   return spec(`heist.${band}`, name, 'thieving', 'heist');
 }
 
-/** One stable track per action or recipe. A bulk recipe shares its single recipe's track. */
+/** Equipment recipes train their weapon family. Most other actions have their own track. */
 export function masteryForAction(a: SkillAction): MasterySpec | undefined {
   if (a.skill === 'combat' || a.skill === 'fishing' || a.soon) return undefined;
   if (a.id === 'delve_work' || a.id === 'delve_push') return undefined; // Progress uses the active depth band's track.
   if (siteOfAction(a.id)) return undefined;
+  const weapon = weaponMasteryId(a);
+  if (weapon) {
+    const family = baseDef(a.baseId!).family!;
+    const skill = family === 'bow' || family === 'wand' || family === 'staff' ? 'woodcrafting' : 'smithing';
+    const name = `${WEAPON_FAMILIES[family].name} Mastery`;
+    const milestones = generateMilestones(skill, weapon, name, '', a).map((perk) => perk.level === WEAPON_SIGNATURE_MASTERY
+      ? { ...perk, desc: `${perk.desc}. Master Forms roll an additional signature from the selected alloy.` }
+      : perk);
+    return spec(weapon, name, skill, 'production', { ordinaryInputs: ordinaryInputs(a), milestones }, a);
+  }
   const id = a.batchOf ?? a.id;
   const name = a.batchOf ? a.name.replace(/\s+×\d+$/u, '') : a.name;
   if (a.protectedOutputs) return spec(`task.${id}`, name, a.skill, 'project', {}, a);

@@ -134,7 +134,7 @@ export function MasteryProgress({ s, mastery, compact = false }: { s: GameState;
     <Tooltip content={<MasteryTip s={s} mastery={mastery} />} style={{ display: 'block', width: '100%' }}>
       <div className={`skilling-mastery ${compact ? 'compact' : ''}`}>
         <div className="row" style={{ gap: 6, alignItems: 'center' }}>
-          <span className="skilling-mastery-label">Mastery {level}</span>
+          <span className="skilling-mastery-label">{mastery.id.startsWith('weapon.') ? mastery.name : 'Mastery'} {level}</span>
           {mastery.milestones?.length > 0 && (
             <div className="mastery-milestone-pips">
               {mastery.milestones.map((m) => {
