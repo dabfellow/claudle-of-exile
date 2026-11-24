@@ -1035,6 +1035,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
+- [x] Smelting Furnace screen overhaul: full-width hearth on a hand-painted stone wall (CC0), animated flames when lit, Heat & Purity with Fuel/Flux slots beside the furnace, and a Fuel & flux tab that names each craft's product and splits Fuel from Flux. Checked on desktop and phone in the local game. (Done 2026-11-23, unreleased.)
+- [x] Forging Anvil screen pass to match: forge scene on the same stone wall with a pixel anvil (CC0) and forge fire, Forge panel (have/need costs, Forge once, Save pattern, rhythm hammer) beside it, numbered steps below, blue-steel High Crucible variant. Checked on desktop and phone in the local game. (Done 2026-11-23, unreleased.)
 - [x] Implement weapon-family mastery and master-alloy signatures. Verified recipe-practice migration, saved patterns, and crafting a basic wand before unlocking a Moonsilver Master Form. (Done 2026-11-23.)
 
 - [x] Ship the 15% master volume default and loot-filter volume control, kill-based flask charge ranges by rarity, and a one-Rubble material cost for Archaeology sifting. — done 2026-11-23

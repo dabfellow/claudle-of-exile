@@ -56,6 +56,9 @@ The `trees/*.png` pixel tree sprites are sourced from OpenGameArt packs under CC
 | `spirit.png` | Snabisch, [Some Pixel Trees](https://opengameart.org/content/some-pixel-trees) | CC0 | Background removed, tinted moonlight blue |
 
 - **woodcutting/split-log.png**: "Wood log" by EyAxeMan ([OpenGameArt](https://opengameart.org/content/wood-log)), CC0. The high-res version, turned to lie flat, cropped and resized to 640px for Woodcutting's chopping block.
+- **smelting/stone-wall.webp**: `ruin_wall_01.png` from [handpainted brick texture pack](https://opengameart.org/content/handpainted-brick-texture-pack) by rubberduck, CC0. Resized to 512px webp; darkened and warmed in CSS for the Smelting furnace wall.
+- **smelting/flame-sheet.png**: `fire5_64_0.png` from [Animated Fire](https://opengameart.org/content/animated-fire) by BenHickling, CC0. 60-frame 64px flame loop for the Smelting furnace mouth and the Forging hearth.
+- **smelting/anvil.png**: `anvil-64x64-gray.png` from [Anvil](https://opengameart.org/node/83720) by AntumDeluge, based on an anvil image by nightowl and Momentmal, CC0. Shown at 3× with pixelated scaling on the Forging anvil.
 - **music/\*.ogg**: 10 Medieval Tracks by AlkaKrab (itch.io), free pack, the looping versions of Silverbrook, Emberlight, Elven Dawn and Throne of Storms, re-encoded to 96 kbps Opus. Assumed free for public use while the game isn't sold. The pack's licence PDF goes further: royalty-free, commercial use allowed, credit appreciated, edits for timing, volume or EQ allowed. The files may not be redistributed as-is, and open-source games need the author's permission (alkakrab04@gmail.com), so ask before making this repo public.
 
 Current game-id mappings are in `src/ui/assets.ts`; custom overrides are in `src/assets/art`. Historical recolour recipes are retained below; they are provenance, not a current art coverage report.

@@ -160,50 +160,162 @@
   border-style: dashed;
 }
 
-.furnace-cutaway {
+/* The hearth: a full-width stone wall with the furnace mouth on the left and Heat & Purity on the right. */
+.furnace-hearth {
   position: relative;
-  min-height: 126px;
-  display: flex;
-  align-items: end;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
+  gap: 16px;
+  padding: 16px;
+  min-height: 300px;
   overflow: hidden;
-  background:
-    linear-gradient(#08070672, #0b0808a0),
-    repeating-linear-gradient(0deg, transparent 0 19px, #0f0c0b 19px 21px),
-    repeating-linear-gradient(90deg, #332b23 0 46px, #1b1512 46px 48px, #3f3228 48px 96px);
   border: 1px solid #6b4c33;
   border-radius: 6px;
+  background:
+    radial-gradient(ellipse 45% 70% at 32% 78%, #00000000, #0d070580 70%),
+    linear-gradient(#1a0e09b8, #120a07d9),
+    url('../../assets/smelting/stone-wall.webp') center / 230px repeat;
+  background-blend-mode: normal, multiply, normal;
 }
 
-.furnace-door {
+.furnace-lit {
+  background:
+    radial-gradient(ellipse 45% 70% at 32% 78%, #ff8a3a40, #0d070580 70%),
+    linear-gradient(#2a120ab0, #160b07d6),
+    url('../../assets/smelting/stone-wall.webp') center / 230px repeat;
+  background-blend-mode: normal, multiply, normal;
+}
+
+.furnace-hearth-art {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+
+.furnace-arch {
+  width: min(100%, 340px);
+  padding: 16px 16px 0;
+  border-radius: 170px 170px 4px 4px;
+  background:
+    linear-gradient(#0e0806a8, #0e0806a8),
+    url('../../assets/smelting/stone-wall.webp') center / 120px repeat;
+  box-shadow: 0 0 0 2px #0a0605, 0 8px 24px #000a, inset 0 2px 0 #ffffff14;
+}
+
+.furnace-mouth {
   position: relative;
-  width: min(62%, 215px);
-  height: 105px;
+  height: 200px;
   overflow: hidden;
-  background: linear-gradient(180deg, #120b0a 35%, #3d210f);
-  border: 9px solid #69513e;
-  border-bottom: 0;
-  border-radius: 80px 80px 0 0;
-  box-shadow: 0 0 0 3px #26221c, inset 0 0 16px #110907;
+  border-radius: 154px 154px 0 0;
+  background: radial-gradient(ellipse at 50% 100%, #2a140b, #0b0605 70%);
+  box-shadow: inset 0 10px 24px #000, inset 0 0 0 2px #00000080;
+}
+
+.furnace-glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 100%, #ffb35a88, #e5562a33 55%, transparent 80%);
+  transition: opacity 0.6s ease;
 }
 
 .furnace-coals {
   position: absolute;
   inset: auto 0 0;
-  height: 64px;
+  height: 40px;
   background:
-    radial-gradient(ellipse at 18% 97%, #5b3a2b 6%, transparent 28%),
-    radial-gradient(ellipse at 84% 100%, #6b3e2a 7%, transparent 30%),
-    radial-gradient(ellipse at 50% 100%, #513121 11%, transparent 58%);
+    radial-gradient(ellipse at 18% 100%, #5b3a2b 10%, transparent 34%),
+    radial-gradient(ellipse at 82% 100%, #6b3e2a 10%, transparent 34%),
+    radial-gradient(ellipse at 50% 100%, #513121 18%, transparent 62%),
+    linear-gradient(transparent 60%, #1a0d08);
 }
 
-.furnace-lit .furnace-door { box-shadow: 0 0 24px #e9894070, inset 0 0 16px #2d1609; }
+/* Flame sprite: a 10 × 6 sheet of 60 frames. X walks a row, Y steps down a row each full pass of X. */
+.furnace-flame {
+  position: absolute;
+  bottom: 14px;
+  width: 96px;
+  height: 96px;
+  opacity: 0;
+  transform: translateX(-50%);
+  background: url('../../assets/smelting/flame-sheet.png') 0 0 / 1000% 600% no-repeat;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 10px #ff8a3a);
+  transition: opacity 0.5s ease;
+  animation:
+    furnace-flame-x 0.33s steps(10) infinite,
+    furnace-flame-y 2s steps(6) infinite;
+}
+.furnace-flame.f1 { left: 50%; width: 128px; height: 128px; bottom: 10px; }
+.furnace-flame.f2 { left: 33%; animation-delay: -0.12s, -0.7s; }
+.furnace-flame.f3 { left: 67%; animation-delay: -0.21s, -1.3s; transform: translateX(-50%) scaleX(-1); }
+.furnace-flame.f4 { left: 58%; width: 80px; height: 80px; bottom: 8px; animation-delay: -0.05s, -1.7s; }
+
+@keyframes furnace-flame-x { to { background-position-x: 111.111%; } }
+@keyframes furnace-flame-y { to { background-position-y: 120%; } }
+
+.furnace-lit .furnace-flame,
+.furnace-lit .furnace-glow { opacity: 1; }
+.furnace-lit .furnace-mouth { box-shadow: inset 0 10px 24px #000, 0 0 40px #ff7a2a55; }
 .furnace-lit .furnace-coals {
   background:
-    radial-gradient(ellipse at 20% 99%, #f99c43 7%, #943722 23%, transparent 39%),
-    radial-gradient(ellipse at 80% 100%, #dc692c 8%, #813424 31%, transparent 43%),
-    radial-gradient(ellipse at 50% 105%, #ffca74 10%, #df7139 30%, transparent 65%);
+    radial-gradient(ellipse at 18% 100%, #f99c43 10%, #943722 26%, transparent 40%),
+    radial-gradient(ellipse at 82% 100%, #dc692c 10%, #813424 30%, transparent 44%),
+    radial-gradient(ellipse at 50% 105%, #ffca74 16%, #df7139 34%, transparent 66%);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .furnace-flame { animation: none; }
+}
+
+.furnace-hearth-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 4px;
+  background: #0c0705c4;
+  border: 1px solid #6b4c3366;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.furnace-hearth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #7353378a;
+  border-radius: 6px;
+  background: #140c08e0;
+  box-shadow: 0 6px 20px #0008;
+}
+.furnace-hearth-panel p { margin: 0; }
+.furnace-hearth-panel .furnace-odds { margin: 0; }
+.furnace-hearth-panel .furnace-slot-grid { gap: 8px; }
+
+.furnace-makes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  border-radius: 4px;
+  background: #47321e40;
+}
+.furnace-makes-detail { flex-basis: 100%; }
+
+.furnace-group-title {
+  margin: 6px 0 0;
+  font-size: 1rem;
+}
+.furnace-group-title .small { font-weight: normal; }
+
+.furnace-quick-card-wrap { padding: 12px; }
 
 .furnace-hint,
 .furnace-focus,
@@ -310,7 +422,9 @@
 }
 
 @media (max-width: 660px) {
-  .furnace-station { grid-template-columns: 1fr; }
+  .furnace-station,
+  .furnace-hearth { grid-template-columns: 1fr; }
+  .furnace-mouth { height: 160px; }
 }
 
 @media (max-width: 360px) {

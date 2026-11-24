@@ -3,7 +3,7 @@ import { baseDef } from '../../data/bases';
 import { FORGE_CHAPTERS, FORGE_CHAPTER_SIZE, forgeBeatMs, forgeStages, masterFormLevel, WEAPON_ALLOY_SIGNATURES, weaponAlloySignatureText, type ForgeElement, type ForgeStageId } from '../../data/forging';
 import { materialDef } from '../../data/materials';
 import { actionDef, type SkillAction } from '../../data/skills';
-import { MASTER_ALLOYS, masterAlloyFor, resolveBarCost } from '../../data/smelting';
+import { MASTER_ALLOYS, masterAlloyFor, recipeStock, resolveBarCost } from '../../data/smelting';
 import { WEAPON_SIGNATURE_MASTERY, weaponMasteryId } from '../../data/skillingMastery';
 import {
   chooseForgeSong, deleteForgePattern, dismissForgeRack, FORGE_SONGS, forgeAction, forgeActionForPlan, forgeChaptersCompleted, forgePatternSlots,
@@ -17,13 +17,15 @@ import { masteryLevel } from '../../engine/skillingMastery';
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { Art, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
+import { Art, fmt, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
 import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
 import { UseBarGrade } from './FurnaceView';
 import { ItemCell } from './ItemView';
 import { MasteryProgress } from './MasteryProgress';
 import { Icon } from './Icon';
 import { music } from '../music';
+import anvilSprite from '../../assets/smelting/anvil.png';
+import './furnace.css';
 import './anvil-view.css';
 
 const resultText: Record<SwingResult, string> = { double: 'Double!', hit: 'Hit', weak: 'Weak', miss: 'Miss' };
@@ -376,7 +378,7 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
         </SkillIntro>
       ) : (
         <SkillIntro step="Start here: Choose a blank & forge stages">
-          Choose a category and blank below, customise its stages, and click Forge once — or save patterns for idle repeating.
+          Pick what to forge and how to work each stage below, then press Forge once. Save it as a pattern to repeat it while idle.
         </SkillIntro>
       )}
       <div className="anvil-heading">
@@ -396,8 +398,70 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
           </label>
         )}
       </div>
-      <div className="anvil-work-grid">
-        <div className="anvil-plan">
+      <div className={`forge-scene${running ? ' forge-lit' : ''}`}>
+        <div className="forge-scene-art">
+          <div className="forge-fire" aria-hidden="true">
+            <span className="furnace-flame f1" />
+            <span className="furnace-flame f2" />
+            <span className="furnace-flame f3" />
+          </div>
+          <div className="anvil-piece">
+            <Art src={`items/${base.id}`} alt="" size={84} fallback={<Icon name={base.slot} size={52} />} />
+            <img className="anvil-sprite" src={anvilSprite} alt="" aria-hidden="true" />
+          </div>
+          <div className="forge-scene-status">
+            {running
+              ? <>
+                <b>{running.name}</b>
+                <span className="dim small">{s.forging.active ? 'Repeating saved pattern' : 'Forging one piece'}</span>
+                <ProgressBar value={(s.action?.kind === 'skill' ? s.action.progress : 0) / runningTime} />
+                <button className="btn sm" onClick={() => game.act(stopAction)}>Stop forging</button>
+              </>
+              : <><b>{base.name}</b><span className="dim small">On the anvil · ready when you are</span></>}
+          </div>
+        </div>
+        <aside className="forge-scene-panel" aria-label="Forge">
+          {running && <AnvilHammer recipe={running} s={s} key={running.id} />}
+          <b>{running ? 'Next piece' : 'Forge this piece'}</b>
+          {action && (
+            <ul className="anvil-cost">
+              {Object.entries(cost).map(([id, qty]) => {
+                const have = recipeStock(s.storage.bank, id);
+                return <li key={id} className={have < qty ? 'bad' : undefined}><MatIcon id={id} size={18} /> {fmt(have)}/{qty} {materialDef(id).name}</li>;
+              })}
+              <li className="dim">{Math.round(actionIntervalMs(s, action, deriveStats(s)) / 1000)}s per piece</li>
+            </ul>
+          )}
+          {purpose && <p className="anvil-guarantee small">Guaranteed mods: {purpose.guarantees.map((id) => id.replaceAll('_', ' ')).join(' and ')}</p>}
+          <div className="anvil-fields">
+            <UseBarGrade />
+            <span className="spacer" />
+            <HelpTip label="Singing gear" tip={SINGING_TIP} />
+          </div>
+          <div className="anvil-actions">
+            <button className="btn primary" disabled={!!blocker} onClick={start}>Forge once</button>
+            <button className="btn" disabled={(master && !plan.alloy) || s.forging.patterns.length >= forgePatternSlots(s)} onClick={() => setSaving(!saving)}>Save pattern</button>
+          </div>
+          {blocker && <span className="dim small">{blocker}</span>}
+          {saving && (
+            <form className="anvil-actions" onSubmit={(e) => {
+              e.preventDefault();
+              const error = game.act((st) => saveForgePattern(st, name, plan));
+              setNotice(error ?? 'Pattern saved. Start it from Patterns to forge repeatedly.');
+              if (!error) setSaving(false);
+            }}>
+              <label className="anvil-select">Pattern name<input maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder={base.name} /></label>
+              <button className="btn sm primary" type="submit">Save</button>
+            </form>
+          )}
+          {notice && <p className="dim small" role="status">{notice}</p>}
+          {!running && <p className="dim small">Once a piece is forging, hammer on the beat here to speed it up.</p>}
+        </aside>
+      </div>
+      <div className="anvil-plan">
+          {master && (
+            <h4 className="anvil-step"><span>1</span> Choose a master alloy</h4>
+          )}
           {master && (
             <div className="crucible-showcase">
               <div className="crucible-showcase-head">
@@ -430,29 +494,14 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
             </div>
           )}
 
-          {!master && blankPicker}
-
-          <div className="anvil-stage-head">
-            <HelpTip
-              label="Stage Track"
-              tip="Walk through Shape, Temper, Edge/Rim/Setting, and Finish (plus Signature in the High Crucible). Each stage shapes which modifier groups roll more often, or adds quality, speed, or extra mods."
-            />
-          </div>
-          <div className="anvil-stage-track" aria-label="Forge stages">
-            <button className={stage === 'blank' ? 'active' : ''} onClick={() => setStage('blank')} aria-pressed={stage === 'blank'}>Blank<small>{base.name}</small></button>
-            {stages.map((entry) => (
-              <button key={entry.id} className={stage === entry.id ? 'active' : ''} onClick={() => setStage(entry.id)} aria-pressed={stage === entry.id}>
-                {entry.label}
-                <small>{entry.choices.find(({ id }) => id === plan.choices[entry.id])?.name ??
-                  (level < entry.choices[0].level ? `Lv ${entry.choices[0].level}` : 'Choose')}</small>
-              </button>
-            ))}
-          </div>
           {alloy && (
             <p className="anvil-guarantee small">
               {MASTER_ALLOYS.find(({ id }) => id === alloy.id)?.signature}{alloy.living ? ' · plus a second random alloy signature' : ''}
             </p>
           )}
+
+          <h4 className="anvil-step"><span>{master ? 2 : 1}</span> Choose what to forge</h4>
+          {blankPicker}
           {weaponMastery && (
             <div>
               <MasteryProgress s={s} mastery={weaponMastery} />
@@ -464,14 +513,15 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
               ) : !signatureUnlocked && <p className="dim small">An extra alloy signature unlocks at {weaponMastery.name} {WEAPON_SIGNATURE_MASTERY}.</p>)}
             </div>
           )}
-          <div className="anvil-piece">
-            <Art src={`items/${base.id}`} alt="" size={74} fallback={<Icon name={base.slot} size={46} />} />
-            <span className="anvil-block" aria-hidden="true" />
-            <b>{base.name}</b>
+
+          <div className="anvil-stage-head">
+            <h4 className="anvil-step"><span>{master ? 3 : 2}</span> Work each stage</h4>
+            <HelpTip
+              label="What do stages do?"
+              tip="Walk through Shape, Temper, Edge/Rim/Setting, and Finish (plus Signature in the High Crucible). Each stage shapes which modifier groups roll more often, or adds quality, speed, or extra mods."
+            />
           </div>
-
-          {master && blankPicker}
-
+          <p className="dim small anvil-step-hint">Click a stage, then pick one option for it. Each option changes which modifiers your piece rolls.</p>
           {!master && presetChoices.length > 0 && (
             <div className="anvil-fields">
               <div className="anvil-select">
@@ -490,6 +540,16 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
               </div>
             </div>
           )}
+          <div className="anvil-stage-track" aria-label="Forge stages">
+            <button className={stage === 'blank' ? 'active' : ''} onClick={() => setStage('blank')} aria-pressed={stage === 'blank'}>Blank<small>{base.name}</small></button>
+            {stages.map((entry) => (
+              <button key={entry.id} className={stage === entry.id ? 'active' : ''} onClick={() => setStage(entry.id)} aria-pressed={stage === entry.id}>
+                {entry.label}
+                <small>{entry.choices.find(({ id }) => id === plan.choices[entry.id])?.name ??
+                  (level < entry.choices[0].level ? `Lv ${entry.choices[0].level}` : 'Choose')}</small>
+              </button>
+            ))}
+          </div>
           {selected && (
             <div className="anvil-choices" aria-label={selected.label}>
               {selected.choices.map((choice) => (
@@ -507,49 +567,6 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice }: 
               </select>
             </label>
           )}
-          {purpose && <p className="anvil-guarantee small">Guaranteed mods: {purpose.guarantees.map((id) => id.replaceAll('_', ' ')).join(' and ')}</p>}
-          {action && (
-            <div className="anvil-cost">
-              {Object.entries(cost).map(([id, qty]) => <span key={id}><MatIcon id={id} size={18} /> {qty} {materialDef(id).name}</span>)}
-              <span>{Math.round(actionIntervalMs(s, action, deriveStats(s)) / 1000)} s per piece</span>
-            </div>
-          )}
-          <div className="anvil-fields">
-            <UseBarGrade />
-            <span className="spacer" />
-            <HelpTip label="Singing gear" tip={SINGING_TIP} />
-          </div>
-          <div className="anvil-actions">
-            <button className="btn primary" disabled={!!blocker} onClick={start}>Forge once</button>
-            <button className="btn" disabled={(master && !plan.alloy) || s.forging.patterns.length >= forgePatternSlots(s)} onClick={() => setSaving(!saving)}>Save pattern</button>
-            {blocker && <span className="dim small">{blocker}</span>}
-          </div>
-          {saving && (
-            <form className="anvil-actions" onSubmit={(e) => {
-              e.preventDefault();
-              const error = game.act((st) => saveForgePattern(st, name, plan));
-              setNotice(error ?? 'Pattern saved. Start it from Patterns to forge repeatedly.');
-              if (!error) setSaving(false);
-            }}>
-              <label className="anvil-select">Pattern name<input maxLength={60} value={name} onChange={(e) => setName(e.target.value)} placeholder={base.name} /></label>
-              <button className="btn sm primary" type="submit">Save</button>
-            </form>
-          )}
-          {notice && <p className="dim small" role="status">{notice}</p>}
-        </div>
-        <div className="anvil-side">
-          {running
-            ? <>
-              <div className="anvil-active">
-                <b>{running.name}</b>
-                <span className="dim small">{s.forging.active ? 'Repeating saved pattern' : 'Forging one piece'}</span>
-                <ProgressBar value={(s.action?.kind === 'skill' ? s.action.progress : 0) / runningTime} />
-                <button className="btn sm" onClick={() => game.act(stopAction)}>Stop forging</button>
-              </div>
-              <AnvilHammer recipe={running} s={s} key={running.id} />
-            </>
-            : <p className="dim small">The rhythm hammer opens when a piece is on the anvil.</p>}
-        </div>
       </div>
     </section>
   );

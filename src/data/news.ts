@@ -10,7 +10,10 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Smelting — The Furnace tab is now a full stone-walled furnace with real fire when it’s lit, with Heat & Purity and your Fuel and Flux beside it. The Fuel & flux tab now says what each craft makes and splits Fuel from Flux.',
+  'Forging — The Anvil tab opens on a forge scene: your piece on a real anvil with the forge fire behind it, and the costs, Forge button and rhythm hammer beside it. Below, numbered steps walk you through choosing a piece and working each stage.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

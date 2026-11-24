@@ -304,17 +304,50 @@ function FurnaceStation({ s, d, recipe, level, go }: { s: GameState; d: Derived;
     !!s.smelting.fuel || !!s.smelting.flux;
   const hasEngaged = !!recipe || s.skills.smelting > 0 || hasFuelOrFlux || Object.values(s.smelting.parts).some((tier) => tier > 0);
 
+  const output = recipe && Object.keys(recipe.outputs ?? recipe.protectedOutputs ?? {})[0];
+
   return (
     <div className="furnace-view-stack">
       <SkillIntro step="Start here: Pick an ore below to smelt bars">
         Smelt ores into bars for Forging &amp; Mining picks; later add Fuel &amp; Flux to roll purer bars.
       </SkillIntro>
-      <div className="furnace-station">
-        <section className="card furnace-chamber" aria-label="Furnace">
-          <div className={`furnace-cutaway${recipe ? ' furnace-lit' : ''}`} aria-hidden="true">
-            <div className="furnace-door"><div className="furnace-coals" /></div>
+      <section className={`furnace-hearth${recipe ? ' furnace-lit' : ''}`} aria-label="Furnace">
+        <div className="furnace-hearth-art">
+          <div className="furnace-arch" aria-hidden="true">
+            <div className="furnace-mouth">
+              <div className="furnace-glow" />
+              <span className="furnace-flame f1" />
+              <span className="furnace-flame f2" />
+              <span className="furnace-flame f3" />
+              <span className="furnace-flame f4" />
+              <div className="furnace-coals" />
+            </div>
           </div>
-          {recipe ? <RecipeRow s={s} d={d} a={recipe} /> : <QuickSmeltGrid s={s} d={d} level={level} go={go} />}
+          <div className="furnace-hearth-status">
+            {recipe
+              ? <>{output && <MatIcon id={output} size={18} />} <b>{recipe.name}</b></>
+              : <span className="muted">The furnace is cold. Pick an ore below to light it.</span>}
+          </div>
+        </div>
+        <aside className="furnace-hearth-panel" aria-label="Heat and Purity">
+          <div className="row">
+            <b>Heat &amp; Purity</b>
+            <span className="spacer" />
+            <HelpTip
+              label={`Purity ${score} / 14`}
+              tip="Your Furnace Purity (0–14) comes from Fuel tier, Flux tier, Flue upgrades, and +1 per 20 Smelting levels. Higher Purity boosts Pure and Flawless chances and lowers Crude rolls."
+            />
+          </div>
+          <ProgressBar value={score / 14} color="var(--accent)" />
+          <p className="muted small">Chance of each bar grade per bar smelted:</p>
+          <dl className="furnace-odds">
+            {BAR_GRADES.map((grade) => (
+              <div key={grade} data-grade={grade}>
+                <dt><HelpTip label={BAR_GRADE_NAMES[grade]} tip={GRADE_TIPS[grade]} /></dt>
+                <dd>{Number(odds[grade].toFixed(2))}%</dd>
+              </div>
+            ))}
+          </dl>
           {hasFuelOrFlux && (
             <div className="furnace-slot-grid">
               <SupplySlot s={s} slot="fuel" />
@@ -327,17 +360,20 @@ function FurnaceStation({ s, d, recipe, level, go }: { s: GameState; d: Derived;
               <button className="btn sm" onClick={() => game.act((state) => { state.smelting.showSupplyHint = false; })}>Got it</button>
             </div>
           )}
-          {!hasFuelOrFlux && hasEngaged && (
+          {!hasFuelOrFlux && (
             <p className="muted small">
-              No Fuel or Flux in stock yet — craft them in{' '}
-              <button type="button" className="furnace-inline-link" onClick={() => go('supplies')}>Fuel &amp; flux</button>
-              {' '}when you want purer bars.
+              {hasEngaged ? 'No Fuel or Flux in stock yet.' : 'Fuel and Flux raise Purity for better bars.'} Make them in{' '}
+              <button type="button" className="furnace-inline-link" onClick={() => go('supplies')}>Fuel &amp; flux</button>.
             </p>
           )}
-        </section>
-        <div className="furnace-controls">
-          {recipe && metal && (
-            <section className="card">
+          {score >= 8 && <p className="small muted">Living Metal has a 1 in 2,000 chance each batch.</p>}
+        </aside>
+      </section>
+      {recipe ? (
+        <div className={metal ? 'furnace-station' : undefined}>
+          <RecipeRow s={s} d={d} a={recipe} />
+          {metal && (
+            <section className="card furnace-bellows-card">
               <BellowsGame key={`${recipe.id}-${s.smelting.parts.bellows}`} metal={metal.id} tier={s.smelting.parts.bellows} onSwing={(result) => {
                 game.act((state) => {
                   if (state.action?.kind === 'skill' && state.action.actionId === recipe.id) minigameSwing(state, result);
@@ -351,63 +387,44 @@ function FurnaceStation({ s, d, recipe, level, go }: { s: GameState; d: Derived;
               </div>
             </section>
           )}
-          <details className="card furnace-purity-panel">
-            <summary className="furnace-purity-summary">
-              <span><b>Heat &amp; Purity</b> <span className="muted small">· Purity {score}</span></span>
-              <span className="dim small">Bar quality &amp; Fuel/Flux guide</span>
-            </summary>
-            <div className="furnace-purity-body">
-              <div className="row">
-                <HelpTip
-                  label="Purity"
-                  tip="Your Furnace Purity (0–14) comes from Fuel tier, Flux tier, Flue upgrades, and +1 per 20 Smelting levels. Higher Purity boosts Pure and Flawless chances and lowers Crude rolls."
-                />
-                <span className="spacer" />
-                <span className="muted small num">Score {score} / 14</span>
-              </div>
-              <dl className="furnace-odds">
-                {BAR_GRADES.map((grade) => (
-                  <div key={grade} data-grade={grade}>
-                    <dt><HelpTip label={BAR_GRADE_NAMES[grade]} tip={GRADE_TIPS[grade]} /></dt>
-                    <dd>{Number(odds[grade].toFixed(2))}%</dd>
-                  </div>
-                ))}
-              </dl>
-              <div className="row furnace-supply-tips">
-                <HelpTip
-                  label="Fuel"
-                  tip="Charcoal, Coke, or Starcoal (from the Fuel & flux tab). Burned automatically at 1 unit per 5 bars smelted to add +1 to +3 Purity."
-                />
-                <HelpTip
-                  label="Flux"
-                  tip="Crushed Stone, Bone Ash, or Crystal Flux (from the Fuel & flux tab). Burned alongside Fuel at 1 unit per 5 bars to add +1 to +3 Purity."
-                />
-              </div>
-              {score >= 8 && <p className="small muted">Living Metal has a 1 in 2,000 chance each batch.</p>}
-            </div>
-          </details>
         </div>
-      </div>
+      ) : <section className="card furnace-quick-card-wrap"><QuickSmeltGrid s={s} d={d} level={level} go={go} /></section>}
     </div>
   );
 }
 
+function SupplyRecipe({ s, d, a }: { s: GameState; d: Derived; a: SkillAction }) {
+  return (
+    <RecipeRow s={s} d={d} a={a}>
+      {Object.entries(a.outputs ?? {}).map(([id, count]) => {
+        const fuelTier = FURNACE_FUELS.indexOf(id as typeof FURNACE_FUELS[number]) + 1;
+        const tier = fuelTier || FURNACE_FLUXES.indexOf(id as typeof FURNACE_FLUXES[number]) + 1;
+        return (
+          <div key={id} className="furnace-makes small">
+            <span>Makes</span> <MatIcon id={id} size={16} /> <b>{count} {materialDef(id).name}</b>
+            {tier > 0 && <span className="muted furnace-makes-detail">{fuelTier ? 'Fuel' : 'Flux'} tier {tier} · +{tier} Purity · {s.storage.bank[id as FurnaceSupply] ?? 0} in stock</span>}
+          </div>
+        );
+      })}
+      {a.id === 'furnace_charcoal_logs' && <div className="small muted">Any combination of 5 logs.</div>}
+      {a.id === 'furnace_bone_ash' && <div className="small muted">Uses one Mining fossil of any kind.</div>}
+    </RecipeRow>
+  );
+}
+
 function Supplies({ s, d, recipes }: { s: GameState; d: Derived; recipes: SkillAction[] }) {
+  const makes = (a: SkillAction) => Object.keys(a.outputs ?? {})[0] ?? '';
+  const fuels = recipes.filter((a) => (FURNACE_FUELS as readonly string[]).includes(makes(a)));
+  const fluxes = recipes.filter((a) => (FURNACE_FLUXES as readonly string[]).includes(makes(a)));
   return <>
     <SkillIntro step="Fuel & Flux supplies">
-      Craft Fuel and Flux from logs, splinters, rubble, and fossils. Load them on the Furnace tab — each unit lasts 5 bars and boosts Purity.
+      Fuel and Flux make purer bars. Craft them here, then load them on the Furnace tab. Each unit lasts 5 bars and adds Purity.
     </SkillIntro>
     <div className="furnace-slot-grid"><SupplySlot s={s} slot="fuel" /><SupplySlot s={s} slot="flux" /></div>
-    <div className="furnace-grid">
-      {recipes.map((a) => <RecipeRow key={a.id} s={s} d={d} a={a}>
-        {a.id === 'furnace_charcoal_logs' && <div className="small muted">Any combination of 5 logs.</div>}
-        {a.id === 'furnace_bone_ash' && <div className="small muted">Uses one Mining fossil of any kind.</div>}
-        {Object.keys(a.outputs ?? {}).map((id) => {
-          const tier = Math.max(FURNACE_FUELS.indexOf(id as typeof FURNACE_FUELS[number]), FURNACE_FLUXES.indexOf(id as typeof FURNACE_FLUXES[number])) + 1;
-          return tier > 0 && <div key={id} className="small">Tier {tier} · +{tier} purity · {s.storage.bank[id as FurnaceSupply] ?? 0} in stock</div>;
-        })}
-      </RecipeRow>)}
-    </div>
+    <h3 className="furnace-group-title">Fuel <span className="muted small">· Charcoal, then Coke, then Starcoal. Burns hotter for more Purity.</span></h3>
+    <div className="furnace-grid">{fuels.map((a) => <SupplyRecipe key={a.id} s={s} d={d} a={a} />)}</div>
+    <h3 className="furnace-group-title">Flux <span className="muted small">· Crushed Stone, then Bone Ash, then Crystal Flux. Draws impurities out of the melt.</span></h3>
+    <div className="furnace-grid">{fluxes.map((a) => <SupplyRecipe key={a.id} s={s} d={d} a={a} />)}</div>
   </>;
 }
 
