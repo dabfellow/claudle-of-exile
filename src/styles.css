@@ -4022,6 +4022,37 @@ h3 {
   top: 16px;
 }
 
+.news-group {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.news-group-head {
+  font-weight: 700;
+  font-size: var(--fs, 16px);
+  letter-spacing: .02em;
+}
+
+.news-older {
+  gap: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.news-group > summary {
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.news-group[open] > summary {
+  margin-bottom: 18px;
+}
+
+.news-group > article + article {
+  margin-top: 18px;
+}
+
 .news-card article + article {
   padding-top: 18px;
   border-top: 1px solid var(--line);

@@ -12,11 +12,14 @@ export interface NewsEntry {
  */
 export const UPCOMING: string[] = [
   'Removed the wind sound on entering Foraging. Turn on Rain & Glass in the Greenhouse if you want to hear the rain.',
+  'News on the title and character screens is grouped by version, with the current group open and older groups collapsed.',
+  'Astrology constellation slots and their labels are smaller.',
+  'The Skilling Revamp releases now use 0.6.x numbering, following on from 0.5.',
 ];
 
 export const NEWS: NewsEntry[] = [
   {
-    version: '6.0.5',
+    version: '0.6.5',
     date: '24 Nov 2026',
     title: 'Furnace and Forge Scenes',
     items: [
@@ -25,7 +28,7 @@ export const NEWS: NewsEntry[] = [
     ],
   },
   {
-    version: '6.0.4',
+    version: '0.6.4',
     date: '23 Nov 2026',
     title: 'Weapon Family Mastery',
     items: [
@@ -33,7 +36,7 @@ export const NEWS: NewsEntry[] = [
     ],
   },
   {
-    version: '6.0.3',
+    version: '0.6.3',
     date: '23 Nov 2026',
     title: 'Track Your Reports',
     items: [
@@ -41,7 +44,7 @@ export const NEWS: NewsEntry[] = [
     ],
   },
   {
-    version: '6.0.2',
+    version: '0.6.2',
     date: '23 Nov 2026',
     title: 'Master Volume, Flask Charges and Rubble Sifting',
     items: [
@@ -51,7 +54,7 @@ export const NEWS: NewsEntry[] = [
     ],
   },
   {
-    version: '6.0.1',
+    version: '0.6.1',
     date: '23 Nov 2026',
     title: 'Report from Anywhere',
     items: [
@@ -59,7 +62,7 @@ export const NEWS: NewsEntry[] = [
     ],
   },
   {
-    version: '6.0.0',
+    version: '0.6.0',
     date: '23 Nov 2026',
     title: 'Skilling Revamp',
     items: [

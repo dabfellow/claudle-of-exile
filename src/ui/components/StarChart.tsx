@@ -181,11 +181,13 @@ function ChartTab({ s, onTab }: { s: GameState; onTab?: (next: string) => void }
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSlot(i); } }}
               >
                 <circle r="5.5" className="star-hit" />
-                <circle r="4.45" className="astro-socket" />
-                {id
-                  ? <StarGlyph className="astro-star" />
-                  : <path className="astro-empty" d="M0 -2.8 2.8 0 0 2.8 -2.8 0Z M-1 0H1 M0 -1V1" />}
-                <text y="8" className="star-label" textAnchor={x < 16 ? 'start' : x > 84 ? 'end' : 'middle'}>{id ? nameOf(id) : 'Empty slot'}</text>
+                <g transform="scale(0.6)">
+                  <circle r="4.45" className="astro-socket" />
+                  {id
+                    ? <StarGlyph className="astro-star" />
+                    : <path className="astro-empty" d="M0 -2.8 2.8 0 0 2.8 -2.8 0Z M-1 0H1 M0 -1V1" />}
+                </g>
+                <text y="5.4" className="star-label" textAnchor={x < 16 ? 'start' : x > 84 ? 'end' : 'middle'}>{id ? nameOf(id) : 'Empty slot'}</text>
               </g>
             );
           })}

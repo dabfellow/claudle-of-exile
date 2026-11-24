@@ -217,7 +217,7 @@
 }
 
 .star-label {
-  font-size: 2.8px;
+  font-size: 1.9px;
   font-weight: 600;
   fill: #dde4f6;
   stroke: #101527;
@@ -346,7 +346,7 @@
 
 @media (max-width: 640px) {
   .star-night-sky:not(.dense) .star-label {
-    font-size: 3.35px;
+    font-size: 2.8px;
   }
 
   .star-watch {

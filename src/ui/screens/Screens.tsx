@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { CLASSES, classDef, startClass, type ClassId } from '../../data/classes';
 import { baseDef } from '../../data/bases';
 import { activeGemDef } from '../../data/gems';
-import { NEWS } from '../../data/news';
+import { NEWS, type NewsEntry } from '../../data/news';
 import { EXILE_START } from '../../data/passiveTree';
 import { GUIDE_NAME } from '../../data/tutorial';
 import { zoneDef } from '../../data/zones';
@@ -182,22 +182,46 @@ export function TitleScreen() {
   );
 }
 
+function NewsEntryView({ n }: { n: NewsEntry }) {
+  return (
+    <article>
+      <h3>{n.title}</h3>
+      <p className="dim">
+        v{n.version} · {n.date}
+      </p>
+      <ul>
+        {n.items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </article>
+  );
+}
+
+/** News grouped by the first two version numbers (0.6, 0.5…), with the newest group open by default. */
 function NewsCard() {
+  const groups: { key: string; entries: NewsEntry[] }[] = [];
+  for (const n of NEWS) {
+    const key = n.version.split('.').slice(0, 2).join('.');
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) last.entries.push(n);
+    else groups.push({ key, entries: [n] });
+  }
   return (
     <section className="card news-card" aria-label="News">
       <h2>News</h2>
-      {NEWS.map((n) => (
-        <article key={n.title}>
-          <h3>{n.title}</h3>
-          <p className="dim">
-            v{n.version} · {n.date}
-          </p>
-          <ul>
-            {n.items.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </article>
+      {groups.map((g, index) => (
+        <details key={g.key} className={index === 0 ? 'news-group' : 'news-group news-older'} open={index === 0}>
+          <summary className="news-group-head">
+            Beta {g.key}{' '}
+            <span className="dim">
+              {index === 0
+                ? '· current'
+                : `· ${g.entries.length} update${g.entries.length === 1 ? '' : 's'} · ${g.entries[g.entries.length - 1].date} – ${g.entries[0].date}`}
+            </span>
+          </summary>
+          {g.entries.map((n) => <NewsEntryView key={n.version} n={n} />)}
+        </details>
       ))}
     </section>
   );
