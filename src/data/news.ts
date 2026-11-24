@@ -10,14 +10,20 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Removed the wind sound on entering Foraging. Turn on Rain & Glass in the Greenhouse if you want to hear the rain.',
-  'News on the title and character screens is grouped by version, with the current group open and older groups collapsed.',
-  'Astrology constellation slots and their labels are smaller.',
-  'The Skilling Revamp releases now use 0.6.x numbering, following on from 0.5.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.6.6',
+    date: '24 Nov 2026',
+    title: 'Foraging Audio, News and Astrology',
+    items: [
+      'Removed the wind sound on entering Foraging. Turn on Rain & Glass in the Greenhouse if you want to hear the rain.',
+      'News on the title and character screens is grouped by version, with the current group open and older groups collapsed.',
+      'Astrology constellation slots and their labels are smaller.',
+      'The Skilling Revamp releases now use 0.6.x numbering, following on from 0.5.',
+    ],
+  },
   {
     version: '0.6.5',
     date: '24 Nov 2026',
