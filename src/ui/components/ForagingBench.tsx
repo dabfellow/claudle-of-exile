@@ -21,13 +21,11 @@ import type { GameState } from '../../engine/types';
 import { xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
 import {
-  enterGreenhouseAmbience,
-  isGreenhouseAmbienceEnabled,
-  leaveGreenhouseAmbience,
   playHarvestSound,
   playPlantSound,
   playSeedSelectSound,
-  setGreenhouseAmbienceEnabled,
+  startGreenhouseAmbience,
+  stopGreenhouseAmbience,
 } from '../greenhouseAudio';
 import { Badge, EmptyState, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
 import { MasteryProgress } from './MasteryProgress';
@@ -300,13 +298,12 @@ function GreenhouseTab({
   const lvl = skillLevel(s, 'harvesting');
   const hCount = herbariumCount(s);
 
+  const [ambienceOn, setAmbienceOn] = useState(false);
   useEffect(() => {
-    if (!unlocked) return;
-    enterGreenhouseAmbience();
-    return () => leaveGreenhouseAmbience();
+    if (!unlocked) setAmbienceOn(false);
+    return stopGreenhouseAmbience;
   }, [unlocked]);
 
-  const [ambienceOn, setAmbienceOn] = useState<boolean>(() => isGreenhouseAmbienceEnabled());
   const plantable = Object.keys(s.foraging.strains)
     .filter((k) => (s.foraging.seeds[k] ?? 0) > 0 || s.foraging.strains[k]?.stable)
     .sort((a, b) => {
@@ -382,9 +379,9 @@ function GreenhouseTab({
   };
 
   const toggleAmbience = () => {
-    const next = !ambienceOn;
-    setAmbienceOn(next);
-    setGreenhouseAmbienceEnabled(next);
+    if (ambienceOn) stopGreenhouseAmbience();
+    else startGreenhouseAmbience();
+    setAmbienceOn(!ambienceOn);
   };
 
   const canSelfCross = (key: string) => !!s.foraging.strains[key]?.stable || (s.foraging.seeds[key] ?? 0) >= 2;

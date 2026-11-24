@@ -1,12 +1,9 @@
 /**
  * Procedural Web Audio soundscape and tactile SFX for the Greenhouse conservatory:
- * gentle rain/mist pattering on overhead glass panes, humid conservatory breeze,
- * occasional leaf condensation droplets, and tactile potting/harvesting cues.
- * Respects global music mute/volume settings and a per-device greenhouse toggle.
+ * Rain pattering on overhead glass panes, occasional droplets, and tactile
+ * potting/harvesting cues. Respects the game's volume and mute settings.
  */
 import { music, subscribeMusicPrefs } from './music';
-
-const AMBIENCE_PREFS_KEY = 'coe-greenhouse-audio';
 
 interface SoundEngine {
   ctx: AudioContext;
@@ -18,7 +15,6 @@ interface SoundEngine {
   onUnlock: () => void;
 }
 
-let mountCount = 0;
 let engine: SoundEngine | null = null;
 let sfxCtx: AudioContext | null = null;
 
@@ -27,25 +23,7 @@ function getAudioContextCtor(): typeof AudioContext | null {
   return window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext ?? null;
 }
 
-export function isGreenhouseAmbienceEnabled(): boolean {
-  try {
-    return localStorage.getItem(AMBIENCE_PREFS_KEY) !== 'off';
-  } catch {
-    return true;
-  }
-}
-
-export function setGreenhouseAmbienceEnabled(on: boolean): void {
-  try {
-    localStorage.setItem(AMBIENCE_PREFS_KEY, on ? 'on' : 'off');
-  } catch {
-    // Private browsing may disallow localStorage writes; toggle still applies in-session.
-  }
-  refreshGreenhouseAmbience();
-}
-
 function targetAmbienceGain(): number {
-  if (mountCount <= 0 || !isGreenhouseAmbienceEnabled()) return 0;
   if (typeof document !== 'undefined' && document.hidden) return 0;
   if (music.prefs.muted || music.prefs.volume <= 0) return 0;
   return Math.min(0.24, music.prefs.volume * 0.24);
@@ -133,11 +111,8 @@ function syncGain(eng: SoundEngine, fadeSeconds = 1.2): void {
   }
 }
 
-function startEngine(): void {
-  if (engine) {
-    syncGain(engine, 1.0);
-    return;
-  }
+export function startGreenhouseAmbience(): void {
+  if (engine) return;
   const Ctor = getAudioContextCtor();
   if (!Ctor) return;
   try {
@@ -147,9 +122,7 @@ function startEngine(): void {
     master.connect(ctx.destination);
 
     const pinkBuffer = createPinkNoiseBuffer(ctx, 6);
-    const sources: AudioScheduledSourceNode[] = [];
-
-    // Layer 1: Gentle rain & mist pattering on glass panes
+    // Gentle rain and mist pattering on glass panes
     const rainSrc = ctx.createBufferSource();
     rainSrc.buffer = pinkBuffer;
     rainSrc.loop = true;
@@ -172,35 +145,11 @@ function startEngine(): void {
     rainSrc.connect(rainBand).connect(rainLow).connect(rainGain).connect(master);
     rainSrc.start();
     rainLfo.start();
-    sources.push(rainSrc, rainLfo);
-
-    // Layer 2: Warm humid conservatory airflow
-    const breezeSrc = ctx.createBufferSource();
-    breezeSrc.buffer = pinkBuffer;
-    breezeSrc.loop = true;
-    const breezeBand = ctx.createBiquadFilter();
-    breezeBand.type = 'bandpass';
-    breezeBand.frequency.setValueAtTime(260, ctx.currentTime);
-    breezeBand.Q.setValueAtTime(1.1, ctx.currentTime);
-    const breezeGain = ctx.createGain();
-    breezeGain.gain.setValueAtTime(0.28, ctx.currentTime);
-
-    const breezeLfo = ctx.createOscillator();
-    breezeLfo.frequency.setValueAtTime(0.09, ctx.currentTime);
-    const breezeLfoDepth = ctx.createGain();
-    breezeLfoDepth.gain.setValueAtTime(45, ctx.currentTime);
-    breezeLfo.connect(breezeLfoDepth).connect(breezeBand.frequency);
-
-    breezeSrc.connect(breezeBand).connect(breezeGain).connect(master);
-    // Offset loop point slightly so layers stay decorrelated
-    breezeSrc.start(0, 2.3);
-    breezeLfo.start();
-    sources.push(breezeSrc, breezeLfo);
 
     const eng: SoundEngine = {
       ctx,
       master,
-      sources,
+      sources: [rainSrc, rainLfo],
       dropletTimer: null,
       unsubPrefs: () => {},
       onVis: () => {
@@ -238,7 +187,7 @@ function startEngine(): void {
   }
 }
 
-function stopEngine(): void {
+export function stopGreenhouseAmbience(): void {
   const eng = engine;
   if (!eng) return;
   engine = null;
@@ -263,28 +212,6 @@ function stopEngine(): void {
   } catch {
     void eng.ctx.close().catch(() => {});
   }
-}
-
-export function refreshGreenhouseAmbience(): void {
-  if (mountCount <= 0) {
-    stopEngine();
-    return;
-  }
-  if (!engine) startEngine();
-  else syncGain(engine, 0.45);
-}
-
-/** Start (ref-counted) greenhouse ambience on Greenhouse tab mount. */
-export function enterGreenhouseAmbience(): void {
-  mountCount++;
-  if (!engine) startEngine();
-  else syncGain(engine, 0.9);
-}
-
-/** Leave greenhouse ambience on Greenhouse tab unmount. */
-export function leaveGreenhouseAmbience(): void {
-  mountCount = Math.max(0, mountCount - 1);
-  if (mountCount === 0) stopEngine();
 }
 
 function getSfxContext(): { ctx: AudioContext; scale: number } | null {

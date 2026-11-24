@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Removed the wind sound on entering Foraging. Turn on Rain & Glass in the Greenhouse if you want to hear the rain.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

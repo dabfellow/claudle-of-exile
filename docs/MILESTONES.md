@@ -1035,6 +1035,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
+- [x] Remove the wind sound when opening Foraging — done 2026-11-23. The browser playtest confirmed that Rain & Glass starts only when enabled, background music continues, and harvesting still plays its sound.
+
 - [x] Implement weapon-family mastery and master-alloy signatures. Verified recipe-practice migration, saved patterns, and crafting a basic wand before unlocking a Moonsilver Master Form. (Done 2026-11-23.)
 
 - [x] Ship the 15% master volume default and loot-filter volume control, kill-based flask charge ranges by rarity, and a one-Rubble material cost for Archaeology sifting. — done 2026-11-23
