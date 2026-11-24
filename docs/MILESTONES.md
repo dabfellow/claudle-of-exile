@@ -4,7 +4,7 @@ Last updated 2026-11-23. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-Weapon-family mastery and master-alloy signatures are ready to release. Early recipes build practice for late-game Master Forms in the same family. Existing weapon recipe practice carries over.
+Weapon-family mastery and master-alloy signatures are live in **6.0.4**. Early recipes build practice for late-game Master Forms in the same family. Existing weapon recipe practice carries over.
 
 Master volume, rarity-based flask charges and Archaeology sifting with Delve Rubble are live in **6.0.2**.
 
