@@ -147,7 +147,7 @@
 .delve-vein .mat-art { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 0 12px var(--stratum)); }
 .delve-vein h2 { margin: 2px 0 0; color: #fff0dd; font: 600 clamp(1.9rem, 4vw, 3rem)/1 Georgia, serif; }
 .delve-vein-depth { color: #f4d3b0; font-weight: 650; }
-.delve-operations, .delve-activity, .delve-security, .delve-upgrades, .delve-upgrade,
+.delve-operations, .delve-activity, .delve-mastery, .delve-upgrades, .delve-upgrade,
 .delve-next-pick, .delve-replay { display: grid; min-width: 0; gap: 8px; }
 .delve-operations { padding: 13px; gap: 12px; }
 .delve-operations p, .delve-upgrade p, .delve-replay :is(h3, p) { margin: 0; }
@@ -155,7 +155,7 @@
 .delve-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .delve-choice { display: grid; gap: 5px; align-content: start; }
 .delve-choice .btn { justify-content: start; padding: 9px; min-height: 44px; white-space: normal; text-align: start; }
-.delve-choice :is(.btn, small), .delve-brace-heading strong, .delve-security strong,
+.delve-choice :is(.btn, small), .delve-brace-heading strong, .delve-mastery strong,
 .delve-brace-buttons .btn { display: flex; align-items: center; gap: 6px; }
 .delve-choice :is(.btn, small) > :first-child, .delve-brace-buttons .btn > :first-child { flex-shrink: 0; }
 .delve-choice small { color: #cbb8a5; }
@@ -164,11 +164,34 @@
 .delve-choice .delve-push-button span { font-size: 1.3em; }
 .delve-choice .btn:hover:not(:disabled) { filter: brightness(1.18); }
 .delve-choice .btn:disabled { opacity: .65; }
-.delve-activity, .delve-security { padding: 8px 0; border-top: 1px solid #4b3d31; }
+.delve-activity, .delve-mastery { padding: 8px 0; border-top: 1px solid #4b3d31; }
 .delve-gas-status { display: flex; align-items: center; gap: 6px; color: #c9e0a3; }
 .delve-upgrade-heading > strong { display: inline-flex; align-items: center; gap: 6px; }
-.delve-security { color: #b6d5a6; }
-.delve-security > small, .delve-focus-hint { color: #d0beaa; font-size: .83em; }
+.delve-mastery { color: #b6d5a6; }
+.delve-mastery > small, .delve-focus-hint { color: #d0beaa; font-size: .83em; }
+.delve-mastery-rewards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.delve-mastery-rewards li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid #4b3d31;
+  border-radius: 5px;
+  color: #dfccba;
+  font-size: .83em;
+  line-height: 1.25;
+}
+.delve-mastery-rewards li[data-reached="true"] { border-color: #62734e; }
+.delve-mastery-level { flex-shrink: 0; color: #c1a98e; }
+.delve-mastery-rewards li[data-reached="true"] .delve-mastery-level { color: #b6d5a6; font-weight: 700; }
+.delve-mastery-rewards small { display: block; color: #c1a98e; }
 .delve-yield { min-height: 27px; }
 .delve-yield-popup { display: flex; flex-wrap: wrap; gap: 4px 6px; animation: delve-yield-in .18s ease-out both; }
 .delve-yield-item {

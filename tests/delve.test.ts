@@ -68,7 +68,7 @@ describe('Mining Delve', () => {
     expect(s.storage.bank.rough_gem_large).toBe(1);
 
     s.storage.bank.mine_support = 3;
-    s.delve.layers[2] = { traits: ['unstable'], secure: 0 };
+    s.delve.layers[2] = { traits: ['unstable'], mastery: 1 };
     expect(startDelve(s, noRoll(), 'push')).toBeNull();
     const cavernRoll = [0, 0, 0, 0.99];
     completeDelve(s, makeCtx({ next: () => cavernRoll.shift() ?? 0.99 }));
@@ -82,19 +82,21 @@ describe('Mining Delve', () => {
     expect(startDelve(s, ctx, 'work', 1)).toBeNull();
     for (let cycle = 0; cycle < 5; cycle++) completeDelve(s);
     expect(s.storage.bank.mine_support).toBeUndefined();
-    expect(s.storage.bank.rubble).toBe(10);
-    s.delve.layers[2] = { traits: [], secure: 0 };
-    s.delve.layers[3] = { traits: [], secure: 0 };
+    expect(s.storage.bank.rubble).toBe(15);
+    expect(s.delve.layers[1].mastery).toBe(6);
+    s.delve.layers[2] = { traits: [], mastery: 1 };
+    s.delve.layers[3] = { traits: [], mastery: 1 };
     expect(startDelve(s, ctx, 'push')).toBeNull();
-    expect(s.storage.bank.rubble).toBe(10);
+    expect(s.storage.bank.rubble).toBe(15);
     s.delve.warning = { hazard: 'gas', action: 'delve_push', startsAt: s.clock, layer: 2, timerMs: 3000 };
     expect(braceDelve(s, ctx, 'gas')).toBe('double');
     completeDelve(s, makeCtx({ next: () => 0.99 }));
     expect(s.delve.deepest).toBe(2);
-    expect(s.storage.bank.rubble).toBe(5);
+    expect(s.storage.bank.rubble).toBe(10);
     completeDelve(s, ctx);
     expect(s.delve.deepest).toBe(3);
-    expect(s.storage.bank.rubble).toBe(0);
+    expect(Object.values(s.delve.layers).map((layer) => layer.mastery)).toEqual([6, 1, 1]);
+    expect(s.storage.bank.rubble).toBe(5);
     expect(s.action).toMatchObject({ actionId: 'delve_work', delveLayer: 3 });
     expect(startDelve(s, ctx, 'work', 1)).toBeNull();
   });
@@ -104,7 +106,7 @@ describe('Mining Delve', () => {
     s.skills.mining = xpForLevel(20);
     s.delve.deepest = 49;
     s.delve.pickTier = 1;
-    s.delve.layers[49] = { traits: [], secure: 0 };
+    s.delve.layers[49] = { traits: [], mastery: 1 };
     s.storage.bank = { mine_support: 1, rubble: 3 };
     expect(startDelve(s, noRoll(), 'push')).toBe('Needs 4 rubble');
     expect(s.storage.bank).toEqual({ mine_support: 1, rubble: 3 });
@@ -140,18 +142,20 @@ describe('Mining Delve', () => {
   });
 
   it.each([
-    ['cave-in', 0, 60], ['flood', 0.6, 30], ['gas', 0.9, 45],
-  ] as const)('applies %s when uncovered and unlocks protection at the required layer security', (hazard, choose, security) => {
+    ['cave-in', 0, 100], ['flood', 0.6, 50], ['gas', 0.9, 75],
+  ] as const)('applies %s when uncovered and unlocks protection at the required Layer Mastery', (hazard, choose, mastery) => {
     for (const covered of [true, false]) {
       const s = newGame(11);
       s.storage.bank = { mine_support: 1, rubble: 215, copper_ore: 100 };
-      s.delve.layers[2] = { traits: [], secure: 0 };
+      s.delve.layers[2] = { traits: [], mastery: 1 };
       if (covered) {
-        s.delve.layers[1].secure = security - 1;
-        expect(buildDelveInstallation(s, hazard, 1)).toBe(`Requires ${security} security at this depth`);
+        s.delve.layers[1].mastery = mastery - 1;
+        expect(buildDelveInstallation(s, hazard, 1)).toBe(`Requires Layer Mastery ${mastery} at this depth`);
         expect(s.storage.bank.rubble).toBe(215);
-        s.delve.layers[1].secure = security;
-        expect(buildDelveInstallation(s, hazard, 2)).toBe(`Requires ${security} security at this depth`);
+        expect(startDelve(s, noRoll(), 'work', 1)).toBeNull();
+        completeDelve(s);
+        expect(s.delve.layers[1].mastery).toBe(mastery);
+        expect(buildDelveInstallation(s, hazard, 2)).toBe(`Requires Layer Mastery ${mastery} at this depth`);
         expect(buildDelveInstallation(s, hazard, 1)).toBeNull();
         expect(installationCovers(s.delve, hazard, 51)).toBe(true);
         expect(installationCovers(s.delve, hazard, 52)).toBe(false);
@@ -162,7 +166,7 @@ describe('Mining Delve', () => {
       completeDelve(s, ctx);
       expect(s.delve.deepest).toBe(2);
       expect(s.storage.bank.mine_support).toBe(0);
-      expect(s.storage.bank.rubble).toBe(covered ? 15 : hazard === 'cave-in' ? 205 : 215);
+      expect(s.storage.bank.rubble).toBe(covered ? 19 : hazard === 'cave-in' ? 205 : 215);
       expect((s.delve.layers[2].floodedUntil ?? 0) > s.clock).toBe(!covered && hazard === 'flood');
       expect(delveGasPaused(s)).toBe(!covered && hazard === 'gas');
       if (!covered && hazard === 'gas') {
@@ -177,7 +181,7 @@ describe('Mining Delve', () => {
     }
   });
 
-  it('lets a previously built station keep its coverage and upgrade before reaching the security threshold', () => {
+  it('lets a previously built station keep its coverage and upgrade before reaching the mastery threshold', () => {
     const s = newGame(11);
     s.storage.bank = { rubble: 400, copper_ore: 200 };
     s.delve.installations.push({ type: 'pump', layer: 1, tier: 1 });
@@ -186,13 +190,12 @@ describe('Mining Delve', () => {
     expect(installationCovers(s.delve, 'flood', 76)).toBe(true);
   });
 
-  it('spends one support on a wrong response and secures a worked layer after 200 timely fixes', () => {
+  it('spends one support on a wrong response and leaves mastery unchanged when bracing', () => {
     const s = newGame(11);
     const ctx = noRoll();
     s.storage.bank.mine_support = 1;
     s.storage.bank.rubble = 6;
     expect(startDelve(s, ctx, 'work')).toBeNull();
-    s.delve.layers[1].secure = 199;
     const warning = { hazard: 'cave-in' as const, action: 'delve_work', startsAt: 0, layer: 1, timerMs: 3000 };
     s.delve.warning = { ...warning };
     expect(braceDelve(s, ctx, 'flood')).toBe('miss');
@@ -204,8 +207,58 @@ describe('Mining Delve', () => {
     s.delve.warning = { ...warning };
     s.clock = 2000;
     expect(braceDelve(s, ctx, 'cave-in')).toBe('hit');
-    expect(s.delve.layers[1].secure).toBe(200);
-    expect(delveHazardChance(s.delve, 1, 'work')).toBe(0);
+    expect(s.delve.layers[1].mastery).toBe(1);
+    expect(delveHazardChance(s.delve, 1, 'work')).toBeGreaterThan(0);
+  });
+
+  it('raises only the worked layer while offline and caps mastery with bonus ore and no new hazards', () => {
+    const s = newGame(11);
+    s.delve.deepest = 2;
+    s.delve.layers[2] = { traits: [], mastery: 98 };
+    expect(startDelve(s, noRoll(), 'work', 2)).toBeNull();
+    simulateOffline(s, noRoll(), 6000);
+    expect(s.delve.layers[1].mastery).toBe(1);
+    expect(s.delve.layers[2].mastery).toBe(100);
+    expect(delveHazardChance(s.delve, 2, 'work')).toBe(0);
+    const oreBefore = s.storage.bank.copper_ore;
+    completeDelve(s, makeCtx({ next: () => 0.05 }));
+    expect(s.storage.bank.copper_ore).toBe(oreBefore + 2);
+    expect(s.delve.layers[2].mastery).toBe(100);
+    expect(s.delve.log.filter((line) => line === 'Layer 2 reached Mastery 100.')).toHaveLength(1);
+  });
+
+  it('carries security over from current live saves and applies the new mastery requirements', () => {
+    const raw = JSON.parse(serialize(newGame(11)));
+    raw.version = 68;
+    raw.delve.deepest = 5;
+    raw.delve.layers = Object.fromEntries([0, 29, 60, 199, 200].map((secure, index) => [index + 1, { traits: [], secure }]));
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(Object.values(loaded.delve.layers).map((layer) => layer.mastery)).toEqual([1, 29, 60, 99, 100]);
+    expect(buildDelveInstallation(loaded, 'flood', 2)).toBe('Requires Layer Mastery 50 at this depth');
+    expect(buildDelveInstallation(loaded, 'flood', 3)).toBe('Missing materials');
+    expect(buildDelveInstallation(loaded, 'cave-in', 4)).toBe('Requires Layer Mastery 100 at this depth');
+    expect(buildDelveInstallation(loaded, 'cave-in', 5)).toBe('Missing materials');
+    expect(deserialize(serialize(loaded)).delve.layers).toEqual(loaded.delve.layers);
+  });
+
+  it.each([
+    [1, 0.20, 1],
+    [1, 0.50, 2],
+    [1, 0.90, 3],
+    [24, 0.20, 1],
+    [25, 0.20, 2],
+    [25, 0.50, 3],
+    [25, 0.90, 4],
+    [50, 0.90, 4],
+    [75, 0.90, 4],
+    [100, 0.90, 4],
+  ])('at mastery %i with rolls of %f, pays %i rubble', (mastery, roll, rubble) => {
+    const s = newGame(11);
+    s.delve.layers[1].mastery = mastery;
+    const ctx = makeCtx({ next: () => roll });
+    expect(startDelve(s, ctx, 'work', 1)).toBeNull();
+    completeDelve(s, ctx);
+    expect(s.storage.bank.rubble).toBe(rubble);
   });
 
   it('requires depth and its band metal bars (any grade) to forge the next pick tier', () => {
@@ -243,17 +296,17 @@ describe('Mining Delve', () => {
     s.skills.mining = xpForLevel(99);
     s.storage.bank.mine_support = 20;
     s.delve.deepest = 134;
-    s.delve.layers[134] = { traits: [], secure: 0 };
-    s.delve.layers[135] = { traits: ['unstable'], secure: 0 };
+    s.delve.layers[134] = { traits: [], mastery: 1 };
+    s.delve.layers[135] = { traits: ['unstable'], mastery: 1 };
     expect(startDelve(s, noRoll(), 'push')).toBeNull();
     const cavern = [0, 0, 0, 0.99, 0];
     completeDelve(s, makeCtx({ next: () => cavern.shift() ?? 0.99 }));
     expect(s.storage.bank.heartstone).toBe(1);
 
     s.delve.deepest = 299;
-    s.delve.layers[299] = { traits: [], secure: 0 };
-    s.delve.layers[300] = { traits: ['motherlode'], secure: 0 };
-    s.delve.layers[301] = { traits: [], secure: 0 };
+    s.delve.layers[299] = { traits: [], mastery: 1 };
+    s.delve.layers[300] = { traits: ['motherlode'], mastery: 1 };
+    s.delve.layers[301] = { traits: [], mastery: 1 };
     completeDelve(s);
     expect(s.delve.landmarkPending).toBe(true);
     expect(s.delve.log).toContain('Discovered the Worldroot Chamber.');
@@ -265,8 +318,8 @@ describe('Mining Delve', () => {
   it('replays offline breakthrough events without gaining Focus or losing reached layers', () => {
     const s = newGame(11);
     s.storage.bank.rubble = 15;
-    s.delve.layers[2] = { traits: [], secure: 0 };
-    s.delve.layers[3] = { traits: [], secure: 0 };
+    s.delve.layers[2] = { traits: [], mastery: 1 };
+    s.delve.layers[3] = { traits: [], mastery: 1 };
     expect(startDelve(s, noRoll(), 'push')).toBeNull();
     if (s.action?.kind === 'skill') { s.action.focus = 1; s.action.double = true; }
     simulateOffline(s, noRoll(), 100000);

@@ -1,8 +1,8 @@
 import { SHARD_CHANCE, SHARD_FOR } from '../data/craftMats';
 import {
   DELVE_BANDS, DELVE_FOCUS_HOLD_MS, DELVE_HAZARDS, DELVE_INSTALLATIONS, DELVE_PICKS,
-  DELVE_ROUGH_SIZES, DELVE_RUBBLE_PER_WORK, DELVE_SECURITY, DELVE_TRAITS, WORLDROOT_DEPTH,
-  delveBand, type DelveHazard, type DelveInstallationType, type DelveMode, type DelveTrait,
+  DELVE_MASTERY_MAX, DELVE_MASTERY_ORE_BONUS, DELVE_ROUGH_SIZES, DELVE_RUBBLE_PER_WORK, DELVE_TRAITS, WORLDROOT_DEPTH,
+  delveBand, delveBonusRubble, type DelveHazard, type DelveInstallationType, type DelveMode, type DelveTrait,
 } from '../data/delve';
 import { MINING_FOSSILS } from '../data/mining';
 import { actionDef, SKILL_XP_SCALE, type SkillAction } from '../data/skills';
@@ -24,7 +24,7 @@ import { levelOf } from './xp';
 
 interface DelveLayer {
   traits: DelveTrait[];
-  secure: number;
+  mastery: number;
   floodedUntil?: number;
 }
 
@@ -75,7 +75,7 @@ const BRACE_GRACE_MS = 1000;
 
 export function newDelveState(seed = 0): DelveState {
   return {
-    seed: seed >>> 0, deepest: 1, pickTier: 0, layers: { 1: { traits: [], secure: 0 } }, installations: [],
+    seed: seed >>> 0, deepest: 1, pickTier: 0, layers: { 1: { traits: [], mastery: 1 } }, installations: [],
     log: [], replay: [], stats: { caverns: 0, motherlodes: 0 },
   };
 }
@@ -137,7 +137,7 @@ export function delveInstallationBlocker(s: GameState, hazard: DelveHazard, laye
   if (!target) return 'Reach this layer first';
   const def = DELVE_INSTALLATIONS[hazard];
   const existing = s.delve.installations.find((i) => i.type === def.id && i.layer === layer);
-  if (!existing && target.secure < def.security) return `Requires ${def.security} security at this depth`;
+  if (!existing && target.mastery < def.mastery) return `Requires Layer Mastery ${def.mastery} at this depth`;
   if (existing && existing.tier >= 4) return 'Fully upgraded';
   return canAfford(s, delveInstallationCost(s.delve, hazard, layer)) ? null : 'Missing materials';
 }
@@ -198,7 +198,7 @@ function spendAvailableSupports(s: GameState, count: number) {
 }
 
 export function delveHazardChance(delve: DelveState, layer: number, mode: DelveMode): number {
-  if ((delve.layers[layer]?.secure ?? 0) >= DELVE_SECURITY) return 0;
+  if ((delve.layers[layer]?.mastery ?? 1) >= DELVE_MASTERY_MAX) return 0;
   const deeper = Math.max(0, Math.floor((layer - WORLDROOT_DEPTH) / 50)) * 0.05;
   const base = mode === 'push' ? Math.min(0.6, 0.25 + layer * 0.001) : 0.02;
   return Math.min(1, base + deeper) * (delve.pickTier >= 5 ? 0.8 : 1);
@@ -307,17 +307,17 @@ function workLayer(s: GameState, ctx: Ctx, a: SkillAction, layer: number, out: R
   const band = delveBand(layer);
   const traits = delveTraitsAt(s.delve, layer);
   const tree = skillTreeStats(s);
-  const secured = s.delve.layers[layer].secure >= DELVE_SECURITY;
+  const mastery = s.delve.layers[layer].mastery;
+  const mastered = mastery >= DELVE_MASTERY_MAX;
   const motherlode = traits.includes('motherlode');
   const fossil = traits.includes('fossil');
   if (!fossil || chance(ctx.rng, 0.5)) {
     let ore = copies * (motherlode ? 3 : traits.includes('rich') ? 2 : 1) * (tree.motherlode ? 2 : 1);
-    ore += stochasticRound(ctx.rng, ore * (astrologyYield(s, 'mining') / 100 + (secured ? 0.1 : 0)));
+    ore += stochasticRound(ctx.rng, ore * (astrologyYield(s, 'mining') / 100 + (mastered ? DELVE_MASTERY_ORE_BONUS : 0)));
     ore += stochasticRound(ctx.rng, masteryYield(s, a.mastery));
     give(s, out, band.ore, ore);
     s.lifetime.gathered += ore;
   }
-  give(s, out, 'rubble', DELVE_RUBBLE_PER_WORK * copies);
   const fragment = motherlode ? 0.10 : 0.025;
   if (layer >= 90 && chance(ctx.rng, fragment)) give(s, out, 'mineral_fragment', copies);
   if (layer >= 135 && chance(ctx.rng, fragment)) give(s, out, 'stone_fragment', copies);
@@ -336,6 +336,8 @@ function workLayer(s: GameState, ctx: Ctx, a: SkillAction, layer: number, out: R
       ctx.emit({ t: 'masteryProc', proc: perk.name, text: `✦ ${perk.name}! Extra mineral find`, taskName: a.mastery!.name });
     }
   }
+  const rubble = rInt(ctx.rng, DELVE_RUBBLE_PER_WORK.min, DELVE_RUBBLE_PER_WORK.max);
+  give(s, out, 'rubble', (rubble + delveBonusRubble(mastery)) * copies);
 }
 
 function openCavern(s: GameState, ctx: Ctx, layer: number, out: Record<string, number>, copies: number): void {
@@ -358,7 +360,7 @@ function breakthrough(s: GameState, ctx: Ctx, layer: number, traits: DelveTrait[
   const delve = s.delve;
   payCost(s, delvePushPayment(s, layer));
   delve.deepest = layer;
-  delve.layers[layer] = { traits, secure: 0 };
+  delve.layers[layer] = { traits, mastery: 1 };
   if (traits.includes('motherlode')) delve.stats.motherlodes++;
   const names = DELVE_TRAITS.filter((t) => traits.includes(t.id)).map((t) => t.name);
   logDelve(s, ctx, layer, `Broke through to layer ${layer}${names.length ? ` (${names.join(', ')})` : ''}.`, layer - 1);
@@ -409,11 +411,6 @@ export function braceDelve(s: GameState, ctx: Ctx, hazard: DelveHazard): SwingRe
   if (result === 'hit' || result === 'double') {
     s.delve.focusHoldUntil = s.clock + DELVE_FOCUS_HOLD_MS;
     if (mode === 'push') s.delve.bracedPush = layer;
-    else {
-      const worked = s.delve.layers[layer];
-      worked.secure = Math.min(DELVE_SECURITY, worked.secure + 1);
-      if (worked.secure === DELVE_SECURITY) logDelve(s, ctx, layer, `Layer ${layer} is now Secured.`);
-    }
   }
   return result;
 }
@@ -464,6 +461,14 @@ export function delveStep(s: GameState, ctx: Ctx, dt: number, d: Derived): void 
     if (!blockedHazard && chance(ctx.rng, delveHazardChance(s.delve, layer, mode))) {
       applyHazard(s, ctx, layer, chooseHazard(ctx.rng, traits));
     }
+    if (mode === 'work' && s.delve.layers[layer].mastery < DELVE_MASTERY_MAX) {
+      const worked = s.delve.layers[layer];
+      worked.mastery++;
+      if (worked.mastery === DELVE_MASTERY_MAX) {
+        clearWarning(s.delve);
+        logDelve(s, ctx, layer, `Layer ${layer} reached Mastery ${DELVE_MASTERY_MAX}.`);
+      }
+    }
     ctx.emit({ t: 'produce', skill: 'mining', outputs: out });
     grantXp(s, ctx, 'mining', a.xp * (1 + (d.skillXp + (tree.skillXp ?? 0) + astrologyXp(s)) / 100));
     grantMasteryPractice(s, a.mastery, a.intervalMs / 1000);
@@ -487,10 +492,20 @@ function legacyDelveState(raw: Record<string, unknown>): DelveState {
   delve.deepest = [...DELVE_BANDS].reverse().find((band) => band.level <= level)!.firstLayer;
   for (let layer = 2; layer <= delve.deepest; layer++) {
     const traits = delveTraitsAt(delve, layer);
-    delve.layers[layer] = { traits, secure: 0 };
+    delve.layers[layer] = { traits, mastery: 1 };
     if (traits.includes('motherlode')) delve.stats.motherlodes++;
   }
   return delve;
+}
+
+export function migrateDelveLayerMastery(raw: Record<string, unknown>): void {
+  const delve = raw.delve as { layers?: Record<number, DelveLayer & { secure?: number }> } | undefined;
+  for (const layer of Object.values(delve?.layers ?? {})) {
+    // Carry security forward, with the top level reserved for fully secured layers.
+    const security = layer.secure ?? 0;
+    layer.mastery ??= security >= 200 ? DELVE_MASTERY_MAX : Math.max(1, Math.min(DELVE_MASTERY_MAX - 1, security));
+    delete layer.secure;
+  }
 }
 
 export function migrateDelve(raw: Record<string, unknown>): void {

@@ -2,8 +2,14 @@ import { MINING_METALS } from './mining';
 import type { SkillAction } from './skills';
 
 export const WORLDROOT_DEPTH = 300;
-export const DELVE_SECURITY = 200;
-export const DELVE_RUBBLE_PER_WORK = 2;
+export const DELVE_MASTERY_MAX = 100;
+export const DELVE_MASTERY_ORE_BONUS = 0.10;
+export const DELVE_RUBBLE_PER_WORK = { min: 1, max: 3 };
+export const DELVE_RUBBLE_MASTERY_LEVEL = 25;
+
+export function delveBonusRubble(mastery: number): number {
+  return mastery >= DELVE_RUBBLE_MASTERY_LEVEL ? 1 : 0;
+}
 export const DELVE_FOCUS_HOLD_MS = 65_000;
 
 export const DELVE_BANDS = MINING_METALS.map((metal, index) => ({
@@ -31,9 +37,9 @@ export type DelveHazard = 'cave-in' | 'flood' | 'gas';
 export type DelveMode = 'work' | 'push';
 
 export const DELVE_INSTALLATIONS = {
-  flood: { id: 'pump', name: 'Pump Station', security: 30, warning: 'Dripping', fix: 'Pump' },
-  gas: { id: 'vent', name: 'Ventilation Shaft', security: 45, warning: 'Hiss', fix: 'Vent' },
-  'cave-in': { id: 'bolts', name: 'Rock Bolts', security: 60, warning: 'Creaking', fix: 'Prop' },
+  flood: { id: 'pump', name: 'Pump Station', mastery: 50, warning: 'Dripping', fix: 'Pump' },
+  gas: { id: 'vent', name: 'Ventilation Shaft', mastery: 75, warning: 'Hiss', fix: 'Vent' },
+  'cave-in': { id: 'bolts', name: 'Rock Bolts', mastery: DELVE_MASTERY_MAX, warning: 'Creaking', fix: 'Prop' },
 } as const;
 
 export type DelveInstallationType = (typeof DELVE_INSTALLATIONS)[DelveHazard]['id'];

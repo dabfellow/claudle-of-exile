@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import {
-  DELVE_HAZARDS, DELVE_INSTALLATIONS, DELVE_PICKS, DELVE_RUBBLE_PER_WORK, DELVE_SECURITY, DELVE_TRAITS, WORLDROOT_DEPTH,
-  delveBand, type DelveHazard, type DelveMode, type DelveTrait,
+  DELVE_HAZARDS, DELVE_INSTALLATIONS, DELVE_MASTERY_MAX, DELVE_MASTERY_ORE_BONUS, DELVE_PICKS,
+  DELVE_RUBBLE_MASTERY_LEVEL, DELVE_RUBBLE_PER_WORK, DELVE_TRAITS, WORLDROOT_DEPTH,
+  delveBand, delveBonusRubble, type DelveHazard, type DelveMode, type DelveTrait,
 } from '../../data/delve';
 import { materialDef } from '../../data/materials';
 import { actionDef } from '../../data/skills';
@@ -31,6 +32,13 @@ const INSTALLATION_COUNTER: Record<DelveHazard, string> = {
   gas: 'Counters Gas pockets (prevents 10m fallback) across 50+ layers below.',
   'cave-in': 'Prevents cave-in losses across 50+ layers below.',
 };
+
+const LAYER_MASTERY_REWARDS = [
+  { level: DELVE_RUBBLE_MASTERY_LEVEL, name: '+1 rubble per swing' },
+  { level: DELVE_INSTALLATIONS.flood.mastery, name: DELVE_INSTALLATIONS.flood.name, detail: 'Counters floods' },
+  { level: DELVE_INSTALLATIONS.gas.mastery, name: DELVE_INSTALLATIONS.gas.name, detail: 'Counters gas' },
+  { level: DELVE_INSTALLATIONS['cave-in'].mastery, name: DELVE_INSTALLATIONS['cave-in'].name, detail: 'Counters cave-ins' },
+];
 
 function Costs({ s, cost }: { s: GameState; cost: Record<string, number> }) {
   return (
@@ -187,17 +195,17 @@ function Installation({ s, hazard, layer }: { s: GameState; hazard: DelveHazard;
   const here = s.delve.installations.find((i) => i.type === def.id && i.layer === layer);
   const blocker = delveInstallationBlocker(s, hazard, layer);
   const target = s.delve.layers[layer];
-  const securityLocked = !here && !!target && target.secure < def.security;
+  const masteryLocked = !here && !!target && target.mastery < def.mastery;
   return (
-    <div className={`delve-upgrade ${securityLocked || !target ? 'locked' : ''}`}>
+    <div className={`delve-upgrade ${masteryLocked || !target ? 'locked' : ''}`}>
       <div className="delve-upgrade-heading">
         <strong>
           <HazardIcon hazard={hazard} /> {def.name}
         </strong>
         {here ? (
           <Badge tone="success">Tier {here.tier}/4</Badge>
-        ) : securityLocked ? (
-          <LockedBadge reason={`Requires ${def.security} security at this depth`} />
+        ) : masteryLocked ? (
+          <LockedBadge reason={`Requires Layer Mastery ${def.mastery} at this depth`} />
         ) : !target ? (
           <LockedBadge reason={`Layer ${fmt(layer)}`} />
         ) : (
@@ -490,7 +498,8 @@ export function DelveView({ masterworks }: { masterworks?: ReactNode } = {}) {
     const blocker = game.act((st, ctx) => startDelve(st, ctx, mode, layer));
     if (mode === 'push' && blocker === null) select(null);
   };
-  const secure = delve.layers[layer]?.secure ?? 0;
+  const mastery = delve.layers[layer]?.mastery ?? 1;
+  const bonusRubble = delveBonusRubble(mastery);
   const workingHere = !pushing && current?.delveLayer === layer;
   const floodedUntil = delve.layers[layer]?.floodedUntil ?? 0;
   const flooded = floodedUntil > s.clock && !installationCovers(delve, 'flood', layer);
@@ -517,7 +526,9 @@ export function DelveView({ masterworks }: { masterworks?: ReactNode } = {}) {
                       disabled={workingHere}>
                       <Icon name="mining" size={22} /> {workingHere ? 'Mining here' : `Mine ${band.name}`}
                     </button>
-                    <small><GameIcon name="rock" size={13} /> +{DELVE_RUBBLE_PER_WORK} rubble per swing</small>
+                    <small>
+                      <GameIcon name="rock" size={13} /> {DELVE_RUBBLE_PER_WORK.min + bonusRubble}–{DELVE_RUBBLE_PER_WORK.max + bonusRubble} rubble per swing
+                    </small>
                   </div>
                   <div className="delve-choice">
                     <button className="btn delve-push-button" type="button" onClick={() => work('push')}
@@ -555,13 +566,22 @@ export function DelveView({ masterworks }: { masterworks?: ReactNode } = {}) {
                     <MinePayout />
                   </div>
                 )}
-                <div className="delve-security">
+                <div className="delve-mastery">
                   <div className="delve-upgrade-heading">
-                    <strong><Icon name="equipment" /> {secure >= DELVE_SECURITY ? 'Secured' : 'Layer security'}</strong>
-                    <small className="num">{secure >= DELVE_SECURITY ? '+10% ore · No hazards' : `${secure} / ${DELVE_SECURITY}`}</small>
+                    <strong><Icon name="equipment" /> Layer Mastery</strong>
+                    <small className="num">Lv {mastery} / {DELVE_MASTERY_MAX}</small>
                   </div>
-                  <ProgressBar value={secure / DELVE_SECURITY} color="#a5c992" />
-                  {secure < DELVE_SECURITY && <small>Brace hazards here to build security and unlock installations at this depth.</small>}
+                  <ProgressBar value={(mastery - 1) / (DELVE_MASTERY_MAX - 1)} color="#a5c992" />
+                  <small>+1 level per swing at this depth</small>
+                  <ul className="delve-mastery-rewards" aria-label="Layer Mastery rewards">
+                    {LAYER_MASTERY_REWARDS.map(({ level, name, detail }) => (
+                      <li key={level} data-reached={mastery >= level}>
+                        <span className="delve-mastery-level num">Lv {level}</span>
+                        <span>{name}{detail && <small>{detail}</small>}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <small>Lv {DELVE_MASTERY_MAX} · +{DELVE_MASTERY_ORE_BONUS * 100}% ore on average · No new hazards</small>
                 </div>
                 {traits.length > 0 && (
                   <ul className="delve-traits">

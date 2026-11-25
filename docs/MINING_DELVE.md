@@ -55,7 +55,7 @@ Read [the build guide](SKILLING_BUILD_GUIDE.md) first for shared rules (Focus, c
 
 ### Two activities (one runs at a time)
 
-- **Mine at Depth N** (any reached layer). Each completion gives 1 ore of the layer's band, 2 `rubble`, and the layer's trait effects. Fragments as today: `mineral_fragment` 2.5% from the Mithril band down, `stone_fragment` 2.5% from the Adamant band down.
+- **Mine at Depth N** (any reached layer). Each completion gives 1 ore of the layer's band, 1–3 base `rubble` with equal chances, and the layer's trait effects. Fragments as today: `mineral_fragment` 2.5% from the Mithril band down, `stone_fragment` 2.5% from the Adamant band down.
 - **Push** (at the dig face). Each completion breaks through one new layer. Push time per layer is `40 s × (1 + layer / 100)`. A push completion uses `1 + floor(layer / 50)` braces and gives 3× that band's work XP. If supplies run short, the push stops and the character works the deepest layer.
 - **Paying for braces.** Descent and hazards spend any existing `mine_support` first, then 5 rubble per remaining brace (4 with the Iron Pick or better). Mining banks rubble directly.
 
@@ -81,15 +81,15 @@ Rough gems from Crystal-bearing layers get a size for Gemcutting (see the Gemcut
   - **Flood:** that layer is flooded for 30 minutes. Working it is 50% slower and the push is 50% slower while the dig face is flooded.
   - **Gas:** the push pauses for 10 minutes and the character works layer `deepest − 2` meanwhile, then resumes pushing automatically.
   - **Cavern** (Unstable only): one-time bonus of 3–8 band ore, 1–3 `rough_gem`, and a `heartstone` at 10% (Adamant band and deeper). It also rolls the mine's collectible.
-- **When working a layer:** the hazard chance is 2% per completion, using the same types and effects. Secured layers roll none.
+- **When working a layer:** the base hazard chance is 2% per completion, using the same types and effects. Layers at Mastery 100 roll none.
 - Hazards never destroy items or close a layer.
-- **Installations** (built at a reached depth once that layer has enough security):
+- **Installations** (built at a reached depth once that layer has enough mastery):
 
-  | Installation | Layer security | Handles | Tier 1 cost |
+  | Installation | Layer Mastery | Handles | Tier 1 cost |
   |---|---|---|---|
-  | Pump Station | 30 | flood | 200 rubble + 100 band ore |
-  | Ventilation Shaft | 45 | gas | 200 rubble + 100 band ore |
-  | Rock Bolts | 60 | cave-in | 200 rubble + 100 band ore |
+  | Pump Station | 50 | flood | 200 rubble + 100 band ore |
+  | Ventilation Shaft | 75 | gas | 200 rubble + 100 band ore |
+  | Rock Bolts | 100 | cave-in | 200 rubble + 100 band ore |
 
   Each covers from its layer down 50 layers at tier 1, and +25 more per tier, up to 4 tiers. Each tier costs double the last. You can build any number of each. In a covered layer, its hazard type still shows as a warning but costs nothing when idle.
   Existing installations retain their coverage and can still be upgraded.
@@ -104,7 +104,7 @@ Rough gems from Crystal-bearing layers get a size for Gemcutting (see the Gemcut
   - The wrong button or no answer is a **miss**.
 - A correct answer during a push cancels the hazard roll on the next push completion. A wrong answer uses 1 support.
 - A hit or double holds the current Focus level for 65 seconds before normal decay. Successive braces still add Focus, so players working a layer can reach full Focus across four hits even at the longest warning intervals. Ignoring a warning leaves the hazard roll in place and lets earned Focus run down on its usual timer. Focus resets when starting another action or going offline.
-- A correct answer while working a layer adds 1 point of **security** to that layer. At 200 points the layer is **Secured**: it has no hazards and gives +10% ore yield, permanently.
+- **Layer Mastery** starts at level 1. Each completed mining swing adds one level to the worked layer, including while away. Level 25 adds one rubble to every swing there. At level 100 that layer stops rolling hazards and gives +10% ore yield on average. Bracing still builds Focus.
 - Scoring function: `braceResult(correct: boolean, answeredMs: number, timerMs: number)` in `minigame.ts`.
 
 ### The pick (steady chase)
@@ -131,7 +131,7 @@ Tiers are forged from the Delve screen. Each needs its depth reached plus 50 ore
 `GameState.delve`:
 
 - `deepest`, `pickTier`
-- `layers: Record<number, { traits: string[]; secure: number; floodedUntil?: number }>`
+- `layers: Record<number, { traits: string[]; mastery: number; floodedUntil?: number }>`
 - `installations: { type: 'pump' | 'vent' | 'bolts'; layer: number; tier: number }[]`
 - `gasUntil?: number`
 - `log: string[]` (last 200 events)
@@ -142,7 +142,7 @@ The running action is a skill action with ids `delve_work` (plus a target layer 
 ### Screen
 
 - A `DelveView` component replaces the Mining action list.
-- It shows a vertical stack of 9 layer rows centred on the selected layer. Each row shows the layer number, band colour, trait icons, a security bar and any installation icon. The dig face is drawn glowing at the bottom.
+- It shows a vertical stack of layer rows centred on the selected layer. The worksite shows that layer's mastery level, progression and rewards.
 - **Elevator buttons** (no dragging or scrolling the picture): ▲/▼ move one layer, ⏫/⏬ move ten, plus **Top**, **Dig face** and **Go to layer…** (a number input).
 - The worksite shows **Mine** and **Dig to Depth**. The latter shows the exact rubble and any existing supports the next breakthrough uses, alongside the hazard odds.
 - A compact strip shows rubble and any remaining supports. The shaft can filter reached depths by trait. Focus spans the width below the shaft and worksite. Each payout briefly shows the actual materials gained near the mining progress bar.
@@ -166,7 +166,7 @@ The running action is a skill action with ids `delve_work` (plus a target layer 
 - Push cost and time formulas.
 - Trait roll limits.
 - Each hazard's idle effect, with and without installation cover.
-- Security reaching Secured.
+- Layer Mastery progressing by mining cycle, with installation unlocks and level-100 benefits.
 - `braceResult` boundaries.
 - Pick tier gates.
 - Offline push producing log events.
