@@ -173,6 +173,32 @@ function generateMilestones(skill: string, taskId: string, _taskName: string, _o
     ];
   }
 
+  if (skill === 'tailoring') {
+    return [
+      { level: 25, id: mid(25, 'grain'), name: 'Tight Weave', desc: '15% chance to conserve materials used', scope: 'task', kind: 'catalyst_save', value: 0.15 },
+      { level: 50, id: mid(50, 'carve'), name: "Tailor's Eye", desc: 'Guarantees higher minimum affix tier floor', scope: 'task', kind: 'affix_floor', value: 1 },
+      { level: 75, id: mid(75, 'speed'), name: 'Quick Needle', desc: '+2% global Tailoring speed', scope: 'global', kind: 'global_speed', value: 2 },
+      { level: 100, id: mid(100, 'woodmaster'), name: 'Master Tailor', desc: '+10% base defence rolls', scope: 'global', kind: 'affix_floor', value: 10 },
+    ];
+  }
+
+  if (skill === 'sawmilling') {
+    if (a?.protectedOutputs) {
+      return [
+        { level: 25, id: mid(25, 'focus'), name: 'Refined Focus', desc: '+2% refinement speed', scope: 'task', kind: 'action_speed', value: 2 },
+        { level: 50, id: mid(50, 'purity'), name: 'Heartwood Purity', desc: '+3% refinement speed', scope: 'task', kind: 'action_speed', value: 3 },
+        { level: 75, id: mid(75, 'speed'), name: 'Master Joinery', desc: '+2% global Sawmilling speed', scope: 'global', kind: 'global_speed', value: 2 },
+        { level: 100, id: mid(100, 'resonance'), name: 'Ancient Resonance', desc: '+3% global Sawmilling speed', scope: 'global', kind: 'global_speed', value: 3 },
+      ];
+    }
+    return [
+      { level: 25, id: mid(25, 'planing'), name: 'Smooth Planing', desc: '+10% wood conservation', scope: 'task', kind: 'catalyst_save', value: 0.10 },
+      { level: 50, id: mid(50, 'grain'), name: 'Seasoned Grain', desc: '10% chance to saw a second piece from the same wood', scope: 'task', kind: 'feast_bounty', value: 0.10 },
+      { level: 75, id: mid(75, 'speed'), name: 'Steady Blade', desc: '+2% global Sawmilling speed', scope: 'global', kind: 'global_speed', value: 2 },
+      { level: 100, id: mid(100, 'steward'), name: 'Forest Stewardship', desc: '+2% global wood conservation', scope: 'global', kind: 'global_conserve', value: 0.02 },
+    ];
+  }
+
   if (skill === 'smithing') {
     if (taskId.includes('smelt')) {
       return [
@@ -363,7 +389,9 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
     }
     return production(`smelting.${a.id}`, a.name, a.skill, a);
   }
-  if (a.skill === 'woodcrafting') {
+  // Track ids keep their old `woodcrafting.` names so practice from before the split carries over.
+  if (a.skill === 'sawmilling') return production(`woodcrafting.${a.id}`, a.name, a.skill, a);
+  if (a.skill === 'woodcrafting' || a.skill === 'tailoring') {
     if (a.baseId) {
       const b = baseDef(a.baseId);
       const material = b.reqLevel < 10 ? 'ash' : b.reqLevel < 22 ? 'oak' : 'yew';

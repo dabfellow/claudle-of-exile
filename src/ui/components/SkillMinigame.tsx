@@ -15,6 +15,8 @@ const HOW_TO: Partial<Record<SkillId, string>> = {
   agility: 'Jump while the marker is in the bright band, or its gold middle for a double.',
   archaeology: 'Brush soil squares to uncover the find. Avoid hairline cracks: 0 chips is a double, 1 a hit, 2 weak, 3+ a miss.',
   woodcrafting: 'Follow the grain in one continuous stroke. An intact shaving earns double Focus.',
+  tailoring: 'Trace the seam in one continuous stroke. A clean, unbroken seam earns double Focus.',
+  sawmilling: 'Guide the blade along the cut in one continuous stroke. A clean, unbroken cut earns double Focus.',
   alchemy: 'Hold to pour into the vial and release right on the target line. Dead on is a double.',
   gemcutting: 'Tap when the turning facet line meets the fixed guide. An exact cut earns a double.',
   runecarving: 'Drag from the circle along the whole stroke without leaving the line. Hug the gold middle for a double.',

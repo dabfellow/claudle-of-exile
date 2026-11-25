@@ -377,6 +377,8 @@ describe('pre-overhaul serialized compatibility', () => {
       ...raw.skills,
       smelting: raw.skills.smithing,
       woodcrafting: raw.skills.smithing,
+      tailoring: raw.skills.smithing,
+      sawmilling: raw.skills.smithing,
       agility: 0,
       cooking: 0,
       runecarving: 0,

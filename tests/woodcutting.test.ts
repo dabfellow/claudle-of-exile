@@ -405,16 +405,16 @@ describe('Felling giants: the lodge and the World Tree', () => {
     expect(s.storage.bank.ash_log).toBe(2);
   });
 
-  it('saws planks and refines heartwood at Woodcrafting, gated only by Woodcrafting level', () => {
+  it('saws planks and refines heartwood at Sawmilling, gated only by Sawmilling level', () => {
     const s = newGame(1);
     s.storage.bank.ironwood_log = 5;
     s.storage.bank.heartwood_fragment = 20;
     for (const id of ['mill_ash', 'mill_ironwood', 'mill_heartwood']) {
-      expect(actionDef(id).skill).toBe('woodcrafting');
+      expect(actionDef(id).skill).toBe('sawmilling');
       expect(woodcuttingAccessHint(s, actionDef(id))).toBeNull();
     }
-    expect(actionBlocker(s, actionDef('mill_ironwood'))).toMatch(/Woodcrafting level 45/);
-    s.skills.woodcrafting = xpForLevel(45);
+    expect(actionBlocker(s, actionDef('mill_ironwood'))).toMatch(/Sawmilling level 45/);
+    s.skills.sawmilling = xpForLevel(45);
     expect(actionBlocker(s, actionDef('mill_ironwood'))).toBeNull();
     expect(actionBlocker(s, actionDef('mill_heartwood'))).toBeNull();
   });
@@ -599,7 +599,7 @@ describe('Hidden collectibles', () => {
 describe('Sawmill and the old crafting links', () => {
   it('keeps refining heartwood bounded with protected full costs', () => {
     const s = newGame(1);
-    s.skills.woodcrafting = xpForLevel(30);
+    s.skills.sawmilling = xpForLevel(30);
     s.storage.bank.heartwood_fragment = 20;
     s.skillingMastery['task.mill_heartwood'] = 432000;
     s.skillPassives.push('core_steady');
@@ -618,7 +618,7 @@ describe('Sawmill and the old crafting links', () => {
   it('refines identical protected live/offline output and spending, then stops on exhausted nominal inputs', () => {
     const setup = () => {
       const s = newGame(1);
-      s.skills.woodcrafting = xpForLevel(30);
+      s.skills.sawmilling = xpForLevel(30);
       s.storage.bank.heartwood_fragment = 40;
       s.skillPassives.push('core_steady');
       s.skillingMastery['task.mill_heartwood'] = 432000;
@@ -641,7 +641,7 @@ describe('Sawmill and the old crafting links', () => {
 
   it('saws every plank from five logs', () => {
     const s = newGame(1);
-    s.skills.woodcrafting = xpForLevel(90);
+    s.skills.sawmilling = xpForLevel(90);
     for (const w of WOODS) {
       s.storage.bank[`${w.id}_log`] = 5;
       expect(actionDef(`mill_${w.id}`)).toMatchObject({ inputs: { [`${w.id}_log`]: 5 }, outputs: { [`${w.id}_plank`]: 1 } });
@@ -660,6 +660,7 @@ describe('Sawmill and the old crafting links', () => {
       s.storage.bank.copper_bar = 100;
       s.storage.bank.ash_log = 100;
       s.storage.bank.ash_plank = 100;
+      s.storage.bank.ash_wand_blank = 100;
       setSmithCatalyst(s, { resin: r.id });
       expect(resinBonus(s)).toBe(r.ilvl);
       const ilvl = smithIlvl(s, resinBonus(s));

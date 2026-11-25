@@ -25,6 +25,10 @@ function getSkillIcon(skill: SkillId): string {
       return 'forge';
     case 'woodcrafting':
       return 'woodcutting';
+    case 'tailoring':
+      return 'tailoring';
+    case 'sawmilling':
+      return 'sawmilling';
     case 'mining':
       return 'mining';
     case 'woodcutting':

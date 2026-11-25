@@ -84,6 +84,11 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'ash_plank', name: 'Ash Plank', kind: 'component', color: '#b89a72', value: 10, desc: 'Cut from Ash Logs for hideout construction.' },
   { id: 'oak_plank', name: 'Oak Plank', kind: 'component', color: '#8a6338', value: 25, desc: 'Cut from Oak Logs for hideout construction.' },
   { id: 'yew_plank', name: 'Yew Plank', kind: 'component', color: '#6b3d2c', value: 60, desc: 'Cut from Yew Logs for advanced hideout construction.' },
+  ...([['ash', 'Ash', '#b89a72', 1], ['oak', 'Oak', '#8a6338', 2], ['yew', 'Yew', '#6b3d2c', 3]] as const).flatMap(([wood, name, color, tier]): MaterialDef[] => [
+    { id: `${wood}_bow_stave`, name: `${name} Bow Stave`, kind: 'component', color, value: 15 * tier, desc: `Split from the heart of ${name} Logs at the Sawmill. Every ${name.toLowerCase()} bow starts as one.` },
+    { id: `${wood}_wand_blank`, name: `${name} Wand Blank`, kind: 'component', color, value: 12 * tier, desc: `Turned from ${name} Planks at the Sawmill. Every ${name.toLowerCase()} wand starts as one.` },
+    { id: `${wood}_staff_shaft`, name: `${name} Staff Shaft`, kind: 'component', color, value: 20 * tier, desc: `A long, straight ${name.toLowerCase()} shaft from the Sawmill. Every ${name.toLowerCase()} staff starts as one.` },
+  ]),
   { id: 'boss_trophy', name: 'Boss Trophy', kind: 'trophy', color: '#d7b56d', value: 100, desc: 'Proof of a boss victory. Advanced hideout upgrades demand a few.' },
 
   { id: 'sunpetal', name: 'Sunpetal', kind: 'herb', color: '#f2c94c', value: 2 },

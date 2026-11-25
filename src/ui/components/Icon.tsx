@@ -14,6 +14,8 @@ const PATHS: Record<string, string> = {
   smelting: 'M4 20h16M6 20v-6h12v6M8 14c0-3 2-4 2-7 2 1 3 3 3 5 1-1 1-2 1-3 2 2 2 3.5 2 5',
   smithing: 'M4 10h11l-1 3H8l-1 3M7 16h7M9 16v4M14 16v4M6 20h11M15 10c2 0 4-1 5-3M4 10V7h6v3',
   woodcrafting: 'M14 4l6 6-9 9H5v-6l9-9ZM13 7l4 4M4 20h16',
+  tailoring: 'M18 3 6 15M18 3l2 2M16 5l2 2M6 15l-2 5 5-2M9 18c3 2 7 1 9-2s1-6-2-6-4 3-1 5',
+  sawmilling: 'M3 14h13l5-5H8l-5 5ZM6 14v2M9 14v2M12 14v2M15 14v2M8 9V5h4v4',
   alchemy: 'M9 3h6M10 3v6L5 18a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3M7.5 14h9',
   gemcutting: 'M7 4h10l4 5-9 11L3 9l4-5ZM3 9h18M9.5 4 8 9l4 11 4-11-1.5-5',
   equipment: 'M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z',

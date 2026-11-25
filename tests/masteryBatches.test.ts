@@ -24,7 +24,7 @@ function prepared(id: string, level: number) {
 
 describe('production mastery batches', () => {
   it('covers ordinary production in every crafting profession without batching protected progress, keys, maps or gear', () => {
-    for (const skill of ['smelting', 'woodcrafting', 'alchemy', 'gemcutting', 'cartography']) {
+    for (const skill of ['smelting', 'sawmilling', 'alchemy', 'gemcutting', 'cartography']) {
       expect(ACTIONS.some((a) => a.skill === skill && a.batchMastery)).toBe(true);
     }
     for (const a of ACTIONS.filter((a) => a.batchMastery)) {

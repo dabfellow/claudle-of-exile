@@ -1381,6 +1381,8 @@ export function SkillGame({ skill, matId, markLevel, portrait, targetName, onSwi
     case 'archaeology':
       return <ArchaeologyGame onSwing={onSwing} />;
     case 'woodcrafting':
+    case 'tailoring':
+    case 'sawmilling':
       return <CurveGame onSwing={onSwing} />;
     case 'alchemy':
       return <AlchemyGame onSwing={onSwing} />;

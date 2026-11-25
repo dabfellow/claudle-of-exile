@@ -343,7 +343,7 @@ export function advanceProject(s: GameState, ctx: Ctx, dt: number): void {
     if (s.meal) {
       const stats = dishStats(s, s.meal.id);
       const isGathering = (['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology'] as SkillId[]).includes(run.project.skill);
-      const isProduction = (['smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as SkillId[]).includes(run.project.skill);
+      const isProduction = (['smelting', 'smithing', 'woodcrafting', 'tailoring', 'sawmilling', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'] as SkillId[]).includes(run.project.skill);
       if (isGathering && stats.gatheringSpeed) mealBonus = stats.gatheringSpeed / 100;
       if (isProduction && stats.productionSpeed) mealBonus = stats.productionSpeed / 100;
     }

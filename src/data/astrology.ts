@@ -78,7 +78,7 @@ export interface StarDef {
 const GATHER_YIELD: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'astrology'];
 const SKILL_LABEL: Partial<Record<SkillId, string>> = {
   mining: 'Mining', woodcutting: 'Woodcutting', harvesting: 'Foraging', thieving: 'Thieving', archaeology: 'Archaeology', astrology: 'Astrology',
-  smelting: 'Smelting', smithing: 'Forging', woodcrafting: 'Woodcrafting', alchemy: 'Alchemy', gemcutting: 'Gemcutting', cartography: 'Cartography',
+  smelting: 'Smelting', smithing: 'Forging', woodcrafting: 'Woodcrafting', tailoring: 'Tailoring', sawmilling: 'Sawmilling', alchemy: 'Alchemy', gemcutting: 'Gemcutting', cartography: 'Cartography',
 };
 export const skillLabel = (k: SkillId): string => SKILL_LABEL[k] ?? k;
 

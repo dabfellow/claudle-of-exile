@@ -4,7 +4,7 @@ import { ACTIVE_GEMS, gemReqLevel, SUPPORT_GEMS } from '../data/gems';
 import { ALCH_DOUBLE, FORGE_ILVL } from '../data/hideout';
 import { baseDef } from '../data/bases';
 import { HERB_TIERS, ORB_TIERS } from '../data/skillTree';
-import { actionDef, SKILLS, type SkillAction } from '../data/skills';
+import { actionDef, isTunedSkill, SKILLS, type SkillAction } from '../data/skills';
 import { barGradeOf, barPurityBonus, smeltMetal } from '../data/smelting';
 import { addBank, canAfford, hasItem, payResolvedCost, resolveRecipeCost } from './bank';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
@@ -77,7 +77,7 @@ function keystoneSlow(skill: SkillId, t: TreeStats): number {
 }
 
 const GATHERING_SET = new Set<SkillId>(['mining', 'woodcutting', 'harvesting', 'thieving', 'agility', 'archaeology', 'astrology']);
-const PRODUCTION_SET = new Set<SkillId>(['smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography']);
+const PRODUCTION_SET = new Set<SkillId>(['smelting', 'smithing', 'woodcrafting', 'tailoring', 'sawmilling', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography']);
 
 export function actionIntervalMs(s: GameState, a: SkillAction, d: Derived): number {
   a = delveActionSpec(s, a);
@@ -126,11 +126,11 @@ const STATION_LABELS: Record<string, string> = {
 
 /** The station level a production recipe needs; gathering only needs the skill level. */
 export function stationLevelFor(a: SkillAction): { station: 'forge' | 'smelter' | 'woodcrafting_bench' | 'alchemy_table'; level: number } | null {
-  if (a.forge) return { station: a.skill === 'smelting' ? 'smelter' : a.skill === 'woodcrafting' ? 'woodcrafting_bench' : 'forge', level: a.forge };
+  if (a.forge) return { station: a.skill === 'smelting' ? 'smelter' : isTunedSkill(a.skill) ? 'woodcrafting_bench' : 'forge', level: a.forge };
   if (a.alchemyTable) return { station: 'alchemy_table', level: a.alchemyTable };
   if (a.baseId) {
     const req = baseDef(a.baseId).reqLevel;
-    const station = a.skill === 'woodcrafting' ? 'woodcrafting_bench' : 'forge';
+    const station = isTunedSkill(a.skill) ? 'woodcrafting_bench' : 'forge';
     return { station, level: req < 10 ? 1 : req < 22 ? 2 : 3 };
   }
   if (a.skill === 'alchemy') return { station: 'alchemy_table', level: a.level < 10 ? 1 : a.level < 20 ? 2 : 3 };
@@ -372,7 +372,7 @@ function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats, purity:
   }
   if (fossil && !savedFossil && !(t.steadyTemper && chance(ctx.rng, t.steadyTemper / 100))) s.storage.bank[fossil] -= 1;
   applyBarPurity(item, purity, ctx.rng);
-  if (a.skill === 'woodcrafting') finishWoodcraft(s, ctx, item, dials, living);
+  if (isTunedSkill(a.skill)) finishWoodcraft(s, ctx, item, dials, living);
   s.lifetime.itemsSmithed += 1;
 
   const repeating = cat.until && !!cat.fossil;
@@ -397,7 +397,7 @@ function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats, purity:
 function recordWorkshopItem(s: GameState, ctx: Ctx, a: SkillAction, item: Item): void {
   if (!ctx.offline) return;
   if (a.skill === 'smithing') s.forging.rack.push(item.uid);
-  if (a.skill === 'woodcrafting') s.woodcrafting.rack.push(item.uid);
+  if (isTunedSkill(a.skill)) s.woodcrafting.rack.push(item.uid);
 }
 
 /** Did a Fossil-steered roll land one of the Fossil's favoured modifiers? */
@@ -622,8 +622,8 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
     });
   } else if (a.purpose) {
     const item = createPurposeItem(s, a, a.skill === 'archaeology' ? Math.min(45, skillLevel(s, 'archaeology')) : smithIlvl(s), ctx.rng, woodBias(a.baseId!, dials));
-    if (a.skill === 'smithing' || a.skill === 'woodcrafting') applyBarPurity(item, barPurityBonus(cost), ctx.rng);
-    if (a.skill === 'woodcrafting') finishWoodcraft(s, ctx, item, dials, !!livingWood);
+    if (a.skill === 'smithing' || isTunedSkill(a.skill)) applyBarPurity(item, barPurityBonus(cost), ctx.rng);
+    if (isTunedSkill(a.skill)) finishWoodcraft(s, ctx, item, dials, !!livingWood);
     s.lifetime.itemsSmithed += 1;
     if (autoSalvagesCraftOutput(s)) salvageCraftOutput(s, ctx, item);
     else {

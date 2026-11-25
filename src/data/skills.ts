@@ -41,7 +41,9 @@ export const SKILLS: Record<SkillId, SkillDef> = {
   archaeology: { id: 'archaeology', name: 'Archaeology', group: 'gathering', color: '#b0784a', verb: 'Digging', desc: "Dig sites in the Hollow Peaks for Artifacts and inscriptions. Decipher the lost peoples' scripts at the Scholar's desk, and trade Artifacts with the merchants of the Expedition for currency." },
   smelting: { id: 'smelting', name: 'Smelting', group: 'production', color: '#d07a3a', verb: 'Smelting', desc: 'Load fuel and flux, improve your furnace, and smelt metal from Crude bars to master alloys.' },
   smithing: { id: 'smithing', name: 'Forging', group: 'production', color: '#b8b8c8', verb: 'Forging', desc: 'Shape and finish rare gear at the anvil, then save your favourite paths as patterns.' },
-  woodcrafting: { id: 'woodcrafting', name: 'Woodcrafting', group: 'production', color: '#9c7a4c', verb: 'Woodcrafting', desc: 'Tune bows, staves, wands and light armour for the way you fight, or carve legendary timber that grows with use.' },
+  woodcrafting: { id: 'woodcrafting', name: 'Woodcrafting', group: 'production', color: '#9c7a4c', verb: 'Woodcrafting', desc: 'Tune bows, staves, wands, quivers and shields for the way you fight, or carve legendary timber that grows with use.' },
+  tailoring: { id: 'tailoring', name: 'Tailoring', group: 'production', color: '#b56a8a', verb: 'Tailoring', desc: 'Cut and sew cloth robes and leather armour, tuned to the way you fight.' },
+  sawmilling: { id: 'sawmilling', name: 'Sawmilling', group: 'production', color: '#c08a4e', verb: 'Sawing', desc: 'Saw logs into planks, bow staves, wand blanks and staff shafts for the bench.' },
   alchemy: { id: 'alchemy', name: 'Alchemy', group: 'production', color: '#9b6dde', verb: 'Brewing', desc: 'Brew flasks and transmute dust into orbs.' },
   gemcutting: { id: 'gemcutting', name: 'Gemcutting', group: 'production', color: '#4fc1a6', verb: 'Cutting', desc: 'Cut rough gems into skill and support gems.' },
   runecarving: { id: 'runecarving', name: 'Rune-carving', group: 'production', color: '#6fa8ff', verb: 'Carving', desc: 'Carve old materials into runes, then inscribe them in the rune slot on your gear.' },
@@ -211,22 +213,40 @@ const FISHING: SkillAction[] = [
   { ...gather('fishing', 'fish_storm', 'Stormcliff Surf', 40, 5000, 50, 'thunder_marlin', '#f2d14c', [{ id: 'tasalio_scale', chance: 0.001, qty: 1 }]), soon: true },
 ];
 
+/** Bows, staves, wands and the bucklers and spirit shields stay at the Woodcrafting bench. */
 export function isWoodcraftBase(b: BaseDef): boolean {
   if (b.slot === 'weapon' && (b.family === 'bow' || b.family === 'wand' || b.family === 'staff')) return true;
-  if (b.slot === 'offhand' && !b.tags.includes('str_armour')) return true;
-  if (b.tags.includes('armour') && !b.tags.includes('str_armour') && (b.tags.includes('dex_armour') || b.tags.includes('int_armour'))) return true;
-  return false;
+  return b.slot === 'offhand' && !b.tags.includes('str_armour');
 }
 
-export function equipmentSkill(b: BaseDef): 'smithing' | 'woodcrafting' {
-  return isWoodcraftBase(b) ? 'woodcrafting' : 'smithing';
+/** Cloth robes and leather armour moved to Tailoring (owner's call, 2026-11-24). */
+export function isTailorBase(b: BaseDef): boolean {
+  return b.slot !== 'offhand' && b.tags.includes('armour') && !b.tags.includes('str_armour') && (b.tags.includes('dex_armour') || b.tags.includes('int_armour'));
+}
+
+/** Gear made with tuning dials (Woodcrafting and Tailoring share the dial system). */
+export type TunedSkill = 'woodcrafting' | 'tailoring';
+export const isTunedSkill = (skill: SkillId): skill is TunedSkill => skill === 'woodcrafting' || skill === 'tailoring';
+
+export function equipmentSkill(b: BaseDef): 'smithing' | TunedSkill {
+  return isWoodcraftBase(b) ? 'woodcrafting' : isTailorBase(b) ? 'tailoring' : 'smithing';
+}
+
+/** Sawn parts: a bow needs a bow stave, a wand a wand blank, a staff a staff shaft (Sawmilling, 2026-11-24). */
+export const PART_WOODS = ['ash', 'oak', 'yew'] as const;
+export const SAWN_PARTS = { bow: 'bow_stave', wand: 'wand_blank', staff: 'staff_shaft' } as const;
+export function sawnPartFor(b: BaseDef): string | undefined {
+  if (b.slot !== 'weapon' || !b.family || !(b.family in SAWN_PARTS)) return undefined;
+  const tier = b.reqLevel < 10 ? 0 : b.reqLevel < 22 ? 1 : 2;
+  return `${PART_WOODS[tier]}_${SAWN_PARTS[b.family as keyof typeof SAWN_PARTS]}`;
 }
 
 function smithInputs(b: BaseDef): Record<string, number> {
   const tier = b.reqLevel < 10 ? 0 : b.reqLevel < 22 ? 1 : 2;
   const bar = ['copper_bar', 'iron_bar', 'mithril_bar'][tier];
   const plank = ['ash_plank', 'oak_plank', 'yew_plank'][tier];
-  const wood = isWoodcraftBase(b);
+  const wood = isWoodcraftBase(b) || isTailorBase(b);
+  const part = sawnPartFor(b);
   const size: Record<string, [number, number]> = {
     weapon: [3, 1],
     offhand: [3, 2],
@@ -240,7 +260,10 @@ function smithInputs(b: BaseDef): Record<string, number> {
   };
   const [pri, sec] = size[b.slot];
   const inputs: Record<string, number> = {};
-  if (wood) {
+  if (part) {
+    inputs[part] = 1;
+    inputs[bar] = sec;
+  } else if (wood) {
     const woodPri = b.slot === 'weapon' ? 1 : pri;
     inputs[plank] = woodPri + tier;
     if (sec > 0) inputs[bar] = sec;
@@ -261,7 +284,7 @@ const EQUIPMENT_ACTIONS: SkillAction[] = BASES.filter((b) => !b.projectOnly).map
   xp: 24 + b.reqLevel * 6,
   inputs: smithInputs(b),
   baseId: b.id,
-  color: isWoodcraftBase(b) ? '#9c7a4c' : '#b8b8c8',
+  color: isWoodcraftBase(b) ? '#9c7a4c' : isTailorBase(b) ? '#b56a8a' : '#b8b8c8',
 }));
 
 /** Construction bars give gathered ore a deliberate refining step before it becomes a station upgrade. */

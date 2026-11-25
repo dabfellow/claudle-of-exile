@@ -206,7 +206,7 @@ export function forgePlanBlocker(s: GameState, plan: ForgePlan): string | null {
     return stageBlocker(s, plan);
   }
   const base = baseDef(plan.baseId);
-  if (!plan.alloy && equipmentSkill(base) === 'woodcrafting') return 'Choose a master alloy for this weapon';
+  if (!plan.alloy && equipmentSkill(base) !== 'smithing') return 'Choose a master alloy for this weapon';
   if (!plan.choices?.shape) return 'Choose a shape';
   const stages = stageBlocker(s, plan);
   if (stages) return stages;

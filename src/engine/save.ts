@@ -627,7 +627,20 @@ const MIGRATIONS: Record<number, Migration> = {
     migrateDelveLayerMastery(raw);
     grandfatherForgeUnlocks(raw as unknown as GameState);
   },
+  69: splitWoodcrafting,
 };
+
+/**
+ * Woodcrafting split (2026-11-24): cloth and leather armour moved to Tailoring and the sawmill became Sawmilling.
+ * Both start at the character's Woodcrafting XP so nobody loses recipes they could already make.
+ */
+export function splitWoodcrafting(raw: Record<string, unknown>): void {
+  const skills = raw.skills as Record<string, number> | undefined;
+  if (!skills) return;
+  const wood = Number(skills.woodcrafting) || Number(skills.smithing) || 0;
+  skills.tailoring = Math.max(Number(skills.tailoring) || 0, wood);
+  skills.sawmilling = Math.max(Number(skills.sawmilling) || 0, wood);
+}
 
 /**
  * Rogue's Markers are retired. Every 10 become one prep item for the highest job the character has unlocked

@@ -418,6 +418,16 @@ export const PROFESSION_THEMES: Record<SkillId, ProfessionTheme> = {
     singular: 'carving',
     startLabel: 'Begin carving',
   },
+  tailoring: {
+    title: 'Tailored Commissions',
+    singular: 'commission',
+    startLabel: 'Begin commission',
+  },
+  sawmilling: {
+    title: 'Mill Orders',
+    singular: 'order',
+    startLabel: 'Begin order',
+  },
   mining: {
     title: 'Mining Prospects',
     singular: 'prospect',

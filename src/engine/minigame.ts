@@ -123,7 +123,7 @@ export function brushDone(patch: BrushPatch, brushed: ReadonlySet<number>): bool
   return patch.find.every((t) => brushed.has(t));
 }
 
-const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'agility', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology'];
+const MANUAL_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'agility', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'tailoring', 'sawmilling', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology'];
 
 export type SwingResult = 'double' | 'hit' | 'weak' | 'miss';
 

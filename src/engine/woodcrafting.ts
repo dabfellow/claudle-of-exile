@@ -1,5 +1,5 @@
 import { JIG_TIERS, WOOD_FAMILIES, woodFamily, type Jig, type WoodFamily } from '../data/woodcrafting';
-import { actionDef, type SkillAction } from '../data/skills';
+import { actionDef, isTunedSkill, type SkillAction } from '../data/skills';
 import type { Implicit } from '../data/bases';
 import { canAfford, payCost } from './bank';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
@@ -26,17 +26,24 @@ export const freshWoodcrafting = (): WoodcraftingState => ({
 });
 
 const woodLevel = (s: GameState) => levelOf('woodcrafting', s.skills.woodcrafting);
+const tailorLevel = (s: GameState) => levelOf('tailoring', s.skills.tailoring ?? 0);
+/** The Robe form is Tailoring's jig; the bow jig and staff lathe stay Woodcrafting's. */
+export const jigSkill = (jig: Jig): 'woodcrafting' | 'tailoring' => jig === 'form' ? 'tailoring' : 'woodcrafting';
+const jigLevel = (s: GameState, jig: Jig) => jigSkill(jig) === 'tailoring' ? tailorLevel(s) : woodLevel(s);
 const HOUR = 3_600_000;
 
 export function woodDialRange(s: GameState, family: WoodFamily, index: number): number {
   const tier = s.woodcrafting.jigs[WOOD_FAMILIES[family].jig];
   const fromJig = Number(tier >= 1) + Number(tier >= 3) + Number(tier >= 2 && index === 1);
-  return Math.min(6, (woodLevel(s) >= 40 ? 3 : 2) + fromJig);
+  // cloth and leather dials are shared by Tailoring's armour and Woodcrafting's bucklers and spirit shields
+  const level = family === 'cloth' || family === 'leather' ? Math.max(woodLevel(s), tailorLevel(s)) : woodLevel(s);
+  return Math.min(6, (level >= 40 ? 3 : 2) + fromJig);
 }
 
 export function woodDialIndices(a: SkillAction, living: boolean): number[] {
   const indices = [0];
-  if (a.inputs && Object.keys(a.inputs).some((id) => id.endsWith('_plank') && id !== 'ash_plank')) indices.push(1);
+  // oak and deeper wood (planks or sawn parts) opens the second dial
+  if (a.inputs && Object.keys(a.inputs).some((id) => /_(plank|bow_stave|wand_blank|staff_shaft)$/.test(id) && !id.startsWith('ash_'))) indices.push(1);
   if (living) indices.push(2);
   return indices;
 }
@@ -88,7 +95,7 @@ export function jigUpgrade(s: GameState, jig: Jig) {
   const next = JIG_TIERS[s.woodcrafting.jigs[jig]];
   if (!next) return null;
   const cost = { [next.material]: next.count };
-  const blocker = isClassic(s) ? CLASSIC_BLOCK : woodLevel(s) < next.level ? `Requires Woodcrafting level ${next.level}`
+  const blocker = isClassic(s) ? CLASSIC_BLOCK : jigLevel(s, jig) < next.level ? `Requires ${jigSkill(jig) === 'tailoring' ? 'Tailoring' : 'Woodcrafting'} level ${next.level}`
     : canAfford(s, cost) ? null : 'Missing planks';
   return { ...next, cost, blocker };
 }
@@ -103,7 +110,8 @@ export function buildWoodJig(s: GameState, jig: Jig): string | null {
 }
 
 export function startWoodcraft(s: GameState, ctx: Ctx, a: SkillAction, plan: WoodPlan): string | null {
-  if (a.skill !== 'woodcrafting') return 'Choose a Woodcrafting recipe';
+  if (!isTunedSkill(a.skill)) return 'Choose a Woodcrafting or Tailoring recipe';
+  if (plan.living && a.skill !== 'woodcrafting') return 'Living wood is carved at the Woodcrafting bench';
   if (plan.living && (!a.baseId || woodLevel(s) < 80)) return 'Living wood requires Woodcrafting level 80';
   if (plan.living && !canAfford(s, { ...a.inputs, [plan.living]: 1 })) return 'Missing materials';
   const blocked = startSkillAction(s, ctx, a.id);
@@ -112,11 +120,11 @@ export function startWoodcraft(s: GameState, ctx: Ctx, a: SkillAction, plan: Woo
 }
 
 export function runningWoodPlan(s: GameState, a: SkillAction): WoodPlan | undefined {
-  return a.skill === 'woodcrafting' && a.baseId && s.action?.kind === 'skill' && s.action.actionId === a.id ? s.action.woodPlan : undefined;
+  return isTunedSkill(a.skill) && a.baseId && s.action?.kind === 'skill' && s.action.actionId === a.id ? s.action.woodPlan : undefined;
 }
 
 export function woodCraftDials(s: GameState, ctx: Ctx, a: SkillAction): number[] {
-  if (a.skill !== 'woodcrafting' || !a.baseId) return [];
+  if (!isTunedSkill(a.skill) || !a.baseId) return [];
   const plan = runningWoodPlan(s, a);
   const manual = ctx.offline ? undefined : plan?.dials;
   const chosen = manual ?? activeWoodTuning(s, woodFamily(a.baseId))?.dials ?? [];
