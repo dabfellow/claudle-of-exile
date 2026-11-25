@@ -31,8 +31,8 @@ export const CHARGE_MIN = 0.5;
 export const CHARGE_ZONE_WIDTH = 0.12;
 
 /**
- * The double zone: a small gold zone inside each game's bright one. Landing in it counts as a
- * clean hit and also doubles what the running action makes the next time it finishes.
+ * The double zone: a small gold zone inside each game's bright one. Landing in it gives twice a
+ * clean hit's Focus. (It used to double the next finish; an old waiting flag is still paid out once.)
  */
 export const DOUBLE_SHARE = 1 / 3;
 
@@ -402,10 +402,9 @@ export function minigameSwing(s: GameState, result: SwingResult): void {
   const a = manualAction(s);
   if (!a) return;
   const cap = focusOverflowCap(currentMinigameSkill(s));
-  const change = result === 'hit' || result === 'double' ? FOCUS_HIT : result === 'weak' ? FOCUS_WEAK : -FOCUS_MISS;
+  // a double (the gold crit) is worth twice a clean hit's Focus
+  const change = result === 'double' ? 2 * FOCUS_HIT : result === 'hit' ? FOCUS_HIT : result === 'weak' ? FOCUS_WEAK : -FOCUS_MISS;
   a.focus = Math.min(1 + cap, Math.max(0, (a.focus ?? 0) + change));
-  // one double waits for the next finish: more doubles before it lands don't stack
-  if (result === 'double') a.double = true;
 }
 
 /** Is a double waiting on the running action? */

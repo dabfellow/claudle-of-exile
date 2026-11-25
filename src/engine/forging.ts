@@ -1,7 +1,7 @@
 import { affixDef, type AffixDef } from '../data/affixes';
 import { baseDef } from '../data/bases';
 import {
-  FORGE_CHAPTERS, FORGE_CHAPTER_SIZE, STAGED_FORGE_PREFIX, forgeChapter, forgeStages, masterFormLevel,
+  FORGE_CHAPTERS, FORGE_CHAPTER_SIZE, FORGE_OLD_LEVELS, STAGED_FORGE_PREFIX, forgeChapter, forgeStages, masterFormLevel,
   type ForgeChoice, type ForgeElement, type ForgeSignature, type ForgeStageId,
 } from '../data/forging';
 import { MASTER_ALLOYS, masterAlloyFor } from '../data/smelting';
@@ -13,7 +13,7 @@ import type { Ctx } from './context';
 import { isCraftLocked } from './crafting';
 import { addRandomMod, allMods, createItem, eligibleAffixes, modCount, rareName, spawnWeight, type ModBias } from './items';
 import { chance, pick, pickWeighted, rInt, type Rng } from './rng';
-import { hasMilestone, MASTERY_CAP } from './skillingMastery';
+import { hasMilestone, MASTERY_CAP, masteryLevel } from './skillingMastery';
 import { actionBlocker, startSkillAction } from './skills';
 import { bagFull } from './storage';
 import type { GameState, Item, RolledMod } from './types';
@@ -41,6 +41,10 @@ export interface ForgingState {
   book: Partial<Record<(typeof FORGE_CHAPTERS)[number][0], string[]>>;
   pendingSinging: number[];
   rack: number[];
+  /** Pieces forged with each stage option, keyed `stage:option`. */
+  practice: Record<string, number>;
+  /** Options kept from before practice unlocks, keyed `stage:option`. */
+  unlocked: string[];
 }
 
 export type ForgeSong = 'tier' | 'mod' | 'quality';
@@ -49,11 +53,81 @@ export const FORGE_SONGS: Readonly<Record<ForgeSong, string>> = {
 };
 
 export function freshForging(): ForgingState {
-  return { patterns: [], active: null, running: null, book: {}, pendingSinging: [], rack: [] };
+  return { patterns: [], active: null, running: null, book: {}, pendingSinging: [], rack: [], practice: {}, unlocked: [] };
 }
 
 function forgingLevel(s: Pick<GameState, 'skills'>): number {
   return levelOf('smithing', s.skills?.smithing ?? 0);
+}
+
+const choiceKey = (stage: ForgeStageId, id: string) => `${stage}:${id}`;
+
+/** Pieces forged so far toward an option's unlock. */
+export function forgeUnlockProgress(s: GameState, option: ForgeChoice): number {
+  const unlock = option.unlock;
+  if (!unlock) return 0;
+  const practice = s.forging?.practice ?? {};
+  if (unlock.ids) return unlock.ids.reduce((sum, id) => sum + (practice[choiceKey(unlock.stage, id)] ?? 0), 0);
+  return practice[unlock.stage] ?? 0;
+}
+
+/** Why a stage option can't be used yet, or null when it can. */
+export function forgeChoiceBlocker(s: GameState, stage: ForgeStageId, option: ForgeChoice): string | null {
+  if (s.forging?.unlocked?.includes(choiceKey(stage, option.id))) return null;
+  if (forgingLevel(s) < option.level) return `Requires Forging level ${option.level} for ${option.name}`;
+  const unlock = option.unlock;
+  if (unlock && forgeUnlockProgress(s, option) < unlock.count) return `${option.name} unlocks after ${unlock.count} pieces ${forgeUnlockText(option)}`;
+  return null;
+}
+
+/** "with Deep or Quick", "with any Temper" — what counts toward an unlock. */
+export function forgeUnlockText(option: ForgeChoice): string {
+  const unlock = option.unlock;
+  if (!unlock) return '';
+  if (!unlock.ids) return `with any ${unlock.stage === 'form' ? 'Edge, Rim or Setting' : unlock.stage[0].toUpperCase() + unlock.stage.slice(1)}`;
+  return `with ${unlock.ids.map((id) => id[0].toUpperCase() + id.slice(1)).join(' or ')}`;
+}
+
+/** Stage options open on this base, out of all of them (Signature aside). */
+export function forgeUnlockShare(s: GameState, baseId: string): number {
+  const options = forgeStages(baseDef(baseId)).flatMap((stage) => stage.choices.map((option) => forgeChoiceBlocker(s, stage.id, option)));
+  return options.length ? options.filter((blocker) => !blocker).length / options.length : 0;
+}
+
+export interface ForgeRarityOdds { normal: number; magic: number; rare: number }
+
+/**
+ * Most pieces come out normal or magic. Rares grow with Forging level, the piece's mastery, and stage options unlocked.
+ * Master forms are always rare.
+ */
+export function forgeRarityOdds(s: GameState, plan: ForgePlan): ForgeRarityOdds {
+  if (plan.alloy) return { normal: 0, magic: 0, rare: 1 };
+  const level = (forgingLevel(s) - 1) / 98;
+  const track = forgeTemplate(plan.baseId)?.mastery;
+  const mastery = track ? (masteryLevel(s, track.id) - 1) / 98 : 0;
+  const unlocks = forgeUnlockShare(s, plan.baseId);
+  const rare = Math.min(0.6, 0.02 + 0.22 * level + 0.15 * mastery + 0.15 * unlocks);
+  const magic = Math.min(1 - rare, 0.35 + 0.2 * level + 0.1 * mastery + 0.1 * unlocks);
+  return { normal: Math.max(0, 1 - rare - magic), magic, rare };
+}
+
+/** Count one finished piece toward the unlocks for every option it used. */
+function practiseForgePath(s: GameState, plan: ForgePlan): void {
+  const practice = s.forging.practice ??= {};
+  for (const [stage, id] of Object.entries(plan.choices) as [ForgeStageId, string | undefined][]) {
+    if (!id) continue;
+    practice[stage] = (practice[stage] ?? 0) + 1;
+    practice[choiceKey(stage, id)] = (practice[choiceKey(stage, id)] ?? 0) + 1;
+  }
+}
+
+/** Keep every stage option a character's level had already opened when options moved to practice unlocks. */
+export function grandfatherForgeUnlocks(s: GameState): void {
+  s.forging ??= freshForging();
+  const level = forgingLevel(s);
+  const kept = new Set(s.forging.unlocked ?? []);
+  for (const [key, old] of Object.entries(FORGE_OLD_LEVELS)) if (level >= old) kept.add(key);
+  s.forging.unlocked = [...kept];
 }
 
 export function forgeChaptersCompleted(s: GameState): number {
@@ -128,18 +202,13 @@ export function forgePlanBlocker(s: GameState, plan: ForgePlan): string | null {
   if (plan.legacyPurpose) {
     const legacy = oldRecipes().get(plan.legacyPurpose);
     if (!legacy || legacy.baseId !== plan.baseId || plan.alloy || pathKey(forgePreset(legacy)) !== pathKey(plan)) return 'Select a valid purpose pattern';
-    return null;
+    return stageBlocker(s, plan);
   }
   const base = baseDef(plan.baseId);
   if (!plan.alloy && equipmentSkill(base) === 'woodcrafting') return 'Choose a master alloy for this weapon';
-  const stages = forgeStages(base, !!plan.alloy);
   if (!plan.choices?.shape) return 'Choose a shape';
-  for (const stageId of Object.keys(plan.choices)) {
-    const stage = stages.find((candidate) => candidate.id === stageId);
-    const choice = stage?.choices.find((candidate) => candidate.id === plan.choices[stage.id]);
-    if (!choice) return 'Choose a valid stage option';
-    if (level < choice.level) return `Requires Forging level ${choice.level} for ${choice.name}`;
-  }
+  const stages = stageBlocker(s, plan);
+  if (stages) return stages;
   if (plan.element && (plan.choices.temper !== 'oil' || !['fire', 'cold', 'light'].includes(plan.element))) return 'Select a valid quenching element';
   if (plan.choices.temper === 'oil' && base.slot !== 'weapon' && !plan.element) return 'Choose a resistance for the oil quench';
   if (plan.alloy) {
@@ -147,6 +216,19 @@ export function forgePlanBlocker(s: GameState, plan: ForgePlan): string | null {
     const gate = masterFormLevel(base);
     if (level < gate) return `Requires Forging level ${gate} for this master form`;
     if (!plan.choices.signature) return 'Choose a signature';
+  }
+  return null;
+}
+
+/** Every chosen stage option must exist and be unlocked; presets need the options they use too. */
+function stageBlocker(s: GameState, plan: ForgePlan): string | null {
+  const stages = forgeStages(baseDef(plan.baseId), !!plan.alloy);
+  for (const stageId of Object.keys(plan.choices ?? {})) {
+    const stage = stages.find((candidate) => candidate.id === stageId);
+    const choice = stage?.choices.find((candidate) => candidate.id === plan.choices[stage.id]);
+    if (!stage || !choice) return 'Choose a valid stage option';
+    const blocker = forgeChoiceBlocker(s, stage.id, choice);
+    if (blocker) return blocker;
   }
   return null;
 }
@@ -292,7 +374,7 @@ function forgeSignatures(plan: ForgePlan, rng: Rng): ForgeSignature[] {
 
 function addForgeMod(item: Item, kind: 'prefix' | 'suffix', plan: ForgePlan, bias: ModBias | undefined, floor: number, rng: Rng): boolean {
   const target = kind === 'prefix' ? item.prefixes : item.suffixes;
-  if (target.length >= 3) return false;
+  if (target.length >= (item.rarity === 'magic' ? 1 : 3)) return false;
   const base = baseDef(item.baseId);
   const pool = eligibleAffixes(item, kind, bias);
   if (kind === 'suffix') {
@@ -329,10 +411,15 @@ export function createStagedForgeItem(s: GameState, ctx: Ctx, a: SkillAction, pl
   const mastered = hasMilestone(s, a.mastery, 100);
   const itemTier = mastered && options.itemTier === 1 ? 2 : options.itemTier;
   const item = createItem(s, plan.baseId, ilvl, 'normal', rng, undefined, itemTier);
-  item.rarity = 'rare';
+  const guarantees = forgePurpose(plan)?.guarantees ?? [];
+  const odds = forgeRarityOdds(s, plan);
+  const roll = rng.next();
+  item.rarity = roll < odds.rare ? 'rare' : roll < odds.rare + odds.magic ? 'magic' : 'normal';
+  // A purpose preset always carries its two promised mods: at least magic, and rare when both are the same kind.
+  if (guarantees.length && item.rarity === 'normal') item.rarity = 'magic';
+  if (item.rarity === 'magic' && new Set(guarantees.map((id) => affixDef(id).kind)).size < guarantees.length) item.rarity = 'rare';
   if (plan.choices.finish === 'etched') item.quality = 10;
   if (plan.alloy) item.forgeSignatures = forgeSignatures(plan, rng);
-  const guarantees = forgePurpose(plan)?.guarantees ?? [];
   const masterEdge = hasMilestone(s, a.mastery, 50);
   for (const id of guarantees) {
     const affix = affixDef(id);
@@ -347,8 +434,10 @@ export function createStagedForgeItem(s: GameState, ctx: Ctx, a: SkillAction, pl
     (affix.kind === 'prefix' ? item.prefixes : item.suffixes).push(mod);
   }
   const floor = Number(plan.choices.temper === 'deep') + Number(masterEdge);
-  const total = 4 + Number(plan.choices.finish === 'gilded') + Number(plan.choices.signature === 'twin');
-  for (const kind of ['prefix', 'suffix'] as const) addForgeMod(item, kind, plan, options.fossilBias, floor, rng);
+  const extra = Number(plan.choices.finish === 'gilded') + Number(plan.choices.signature === 'twin');
+  // Magic pieces roll one or two mods (Gilded makes it two); normal pieces none.
+  const total = item.rarity === 'rare' ? 4 + extra : item.rarity === 'magic' ? Math.min(2, 1 + Number(rng.next() < 0.5) + extra) : 0;
+  if (item.rarity === 'rare') for (const kind of ['prefix', 'suffix'] as const) addForgeMod(item, kind, plan, options.fossilBias, floor, rng);
   while (modCount(item) < total) {
     const first = item.prefixes.length <= item.suffixes.length ? 'prefix' : 'suffix';
     const added = addForgeMod(item, first, plan, options.fossilBias, floor, rng) ||
@@ -356,7 +445,7 @@ export function createStagedForgeItem(s: GameState, ctx: Ctx, a: SkillAction, pl
     if (!added) break;
   }
   applyBarPurity(item, options.purity, rng, guarantees);
-  item.name = rareName(item, rng);
+  item.name = item.rarity === 'rare' ? rareName(item, rng) : null;
   const alloy = plan.alloy && masterAlloyFor(plan.alloy);
   if (alloy && weaponMasteryId(a) && hasMilestone(s, a.mastery, WEAPON_SIGNATURE_MASTERY)) {
     item.weaponMasterySignature = { alloy: alloy.id, effect: rng.next() < 0.5 ? 0 : 1 };
@@ -368,6 +457,7 @@ export function completeStagedForge(s: GameState, ctx: Ctx, a: SkillAction, opti
   const plan = s.forging.running;
   if (!plan) return;
   recordForgePath(s, ctx, plan);
+  practiseForgePath(s, plan);
   for (let copy = 0; copy < options.focusMultiple && !bagFull(s); copy++) {
     const item = createStagedForgeItem(s, ctx, a, plan, options);
     if (chance(ctx.rng, forgeSingingChance(s))) {

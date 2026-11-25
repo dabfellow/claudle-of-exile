@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { baseDef } from '../../data/bases';
 import { FORGE_CHAPTERS, FORGE_CHAPTER_SIZE, forgeBeatMs, forgeStages, masterFormLevel, WEAPON_ALLOY_SIGNATURES, weaponAlloySignatureText, type ForgeElement, type ForgeStageId } from '../../data/forging';
 import { materialDef } from '../../data/materials';
@@ -8,10 +8,11 @@ import { WEAPON_SIGNATURE_MASTERY, weaponMasteryId } from '../../data/skillingMa
 import {
   chooseForgeSong, deleteForgePattern, dismissForgeRack, FORGE_SONGS, forgeAction, forgeActionForPlan, forgeChaptersCompleted, forgePatternSlots,
   forgePlanBlocker, forgePreset, forgePresetsFor, forgePurpose, forgeRackItems, forgeRecipes, forgeSingingChance, forgeStartBlocker, forgingSpeed,
-  saveForgePattern, startStagedForge, type ForgePlan, type ForgeSong,
+  saveForgePattern, startStagedForge, forgeChoiceBlocker, forgeRarityOdds, forgeUnlockProgress, forgeUnlockText,
+  type ForgePlan, type ForgeRarityOdds, type ForgeSong,
 } from '../../engine/forging';
 import { itemName, openKinds } from '../../engine/items';
-import { doubleReady, focusOf, minigameSwing, strikeResult, type SwingResult } from '../../engine/minigame';
+import { focusMult, focusOf, maxFocusSpeed, minigameSwing, overflowOf, strikeResult, type SwingResult } from '../../engine/minigame';
 import { actionIntervalMs, skillLevel, stopAction } from '../../engine/skills';
 import { masteryLevel } from '../../engine/skillingMastery';
 import { deriveStats } from '../../engine/stats';
@@ -28,7 +29,7 @@ import anvilSprite from '../../assets/smelting/anvil.png';
 import './furnace.css';
 import './anvil-view.css';
 
-const resultText: Record<SwingResult, string> = { double: 'Double!', hit: 'Hit', weak: 'Weak', miss: 'Miss' };
+const resultText: Record<SwingResult, string> = { double: 'Dead on! Double Focus', hit: 'Hit', weak: 'Weak', miss: 'Miss' };
 const elements: { id: ForgeElement; name: string }[] = [
   { id: 'fire', name: 'Fire' }, { id: 'cold', name: 'Cold' }, { id: 'light', name: 'Lightning' },
 ];
@@ -49,6 +50,11 @@ function forgeCategoryOf(baseId: string): ForgeCategory {
   return 'armour';
 }
 
+/** "62% normal · 35% magic · 3% rare", leaving out any that can't happen. */
+function forgeOddsText(odds: ForgeRarityOdds): string {
+  return (['normal', 'magic', 'rare'] as const).filter((r) => odds[r] > 0).map((r) => `${Math.round(odds[r] * 100)}% ${r}`).join(' · ');
+}
+
 const SINGING_TIP = 'About 1 in 500 forged pieces (higher as you complete Pattern book chapters) emerges Singing. Singing gear lets you choose +1 tier on all mods, +1 extra modifier, or +30% quality.';
 
 function playBeat(audio: AudioContext) {
@@ -66,15 +72,67 @@ function playBeat(audio: AudioContext) {
   note.stop(time + 0.055);
 }
 
+type Point = readonly [number, number];
+
+/** A ring of points around (cx, cy), for round parts of an outline. */
+function arc(cx: number, cy: number, rx: number, ry: number, from = 0, to = 360, steps = 10): Point[] {
+  return Array.from({ length: steps + 1 }, (_, i) => {
+    const angle = ((from + ((to - from) * i) / steps) * Math.PI) / 180;
+    return [cx + rx * Math.cos(angle), cy + ry * Math.sin(angle)] as const;
+  });
+}
+
+/** A rough outline of the piece on the anvil, in a 100×100 box. Closed outlines loop; open ones walk back and forth. */
+function strikeOutline(baseId: string | undefined): { points: Point[]; closed: boolean } {
+  const base = baseId ? baseDef(baseId) : undefined;
+  const open = (points: Point[]) => ({ points, closed: false });
+  const closed = (points: Point[]) => ({ points, closed: true });
+  switch (base?.slot === 'weapon' ? base.family : base?.slot) {
+    case 'axe': return open([[50, 90], [50, 18], [68, 10], [74, 28], [68, 46], [50, 38]]);
+    case 'mace':
+    case 'sceptre': return open([[50, 90], [50, 42], ...arc(50, 27, 15, 15, 90, 450, 12)]);
+    case 'offhand': return closed([[25, 14], [75, 14], [76, 52], [50, 88], [24, 52]]);
+    case 'helmet': return open([[24, 76], ...arc(50, 54, 26, 40, 180, 360, 10), [76, 76]]);
+    case 'body': return closed([[32, 14], [68, 14], [82, 32], [70, 40], [70, 86], [30, 86], [30, 40], [18, 32]]);
+    case 'gloves': return closed([[34, 88], [34, 44], [30, 22], [42, 18], [46, 36], [54, 14], [62, 36], [70, 26], [72, 50], [66, 88]]);
+    case 'boots': return closed([[34, 12], [56, 12], [56, 62], [80, 70], [80, 86], [30, 86]]);
+    case 'ring': return closed(arc(50, 50, 30, 30, 0, 360, 16).slice(0, -1));
+    case 'amulet': return open([[22, 12], [50, 50], ...arc(50, 66, 13, 13, -90, 270, 12), [50, 50], [78, 12]]);
+    case 'belt': return open([[10, 50], [40, 50], [40, 40], [60, 40], [60, 60], [40, 60], [40, 50], [90, 50]]);
+    default: return open([[50, 8], [50, 64], [32, 64], [68, 64], [50, 64], [50, 92]]);
+  }
+}
+
+/** Evenly spaced stops along an outline, a short step apart. */
+function strikeStops(baseId: string | undefined): { stops: Point[]; outline: Point[]; closed: boolean } {
+  const { points, closed } = strikeOutline(baseId);
+  const path = closed ? [...points, points[0]] : points;
+  const lengths = path.slice(1).map(([x, y], i) => Math.hypot(x - path[i][0], y - path[i][1]));
+  const total = lengths.reduce((a, b) => a + b, 0);
+  const count = Math.max(8, Math.round(total / 9));
+  const stops: Point[] = [];
+  for (let n = 0; n < count + (closed ? 0 : 1); n++) {
+    let along = (total * n) / count;
+    let i = 0;
+    while (i < lengths.length - 1 && along > lengths[i]) along -= lengths[i++];
+    const t = lengths[i] ? Math.min(1, along / lengths[i]) : 0;
+    stops.push([path[i][0] + (path[i + 1][0] - path[i][0]) * t, path[i][1] + (path[i + 1][1] - path[i][1]) * t]);
+  }
+  // open outlines walk back along themselves rather than jumping to the start
+  return { stops: closed ? stops : [...stops, ...stops.slice(1, -1).reverse()], outline: points, closed };
+}
+
 /** The shared Smithing timing windows, with the ring paced by the active recipe's metal. */
 function AnvilHammer({ recipe, s }: { recipe: SkillAction; s: GameState }) {
   const ring = useRef<HTMLSpanElement>(null);
+  const spot = useRef<HTMLButtonElement>(null);
   const audio = useRef<AudioContext | null>(null);
-  const beat = useRef({ at: 0, struck: false, chimed: false, playing: false });
+  const beat = useRef({ at: 0, struck: false, chimed: false, playing: false, stop: 0 });
   const [sound, setSound] = useState(false);
   const [last, setLast] = useState<SwingResult | null>(null);
   const interval = forgeBeatMs(recipe);
   const soundEnabled = useRef(false);
+  const { stops, outline, closed } = useMemo(() => strikeStops(recipe.baseId), [recipe.baseId]);
 
   useEffect(() => {
     const b = beat.current;
@@ -82,6 +140,15 @@ function AnvilHammer({ recipe, s }: { recipe: SkillAction; s: GameState }) {
     b.struck = false;
     b.chimed = false;
     b.playing = false;
+    b.stop = 0;
+    const place = () => {
+      const [x, y] = stops[b.stop % stops.length];
+      if (spot.current) {
+        spot.current.style.left = `${x}%`;
+        spot.current.style.top = `${y}%`;
+      }
+    };
+    place();
     let frame = 0;
     const draw = (now: number) => {
       if (now - b.at > 260) {
@@ -93,6 +160,9 @@ function AnvilHammer({ recipe, s }: { recipe: SkillAction; s: GameState }) {
         b.at += (Math.floor((now - b.at - 260) / interval) + 1) * interval;
         b.struck = false;
         b.chimed = false;
+        // each beat lands a little further along the piece
+        b.stop++;
+        place();
       }
       if (now >= b.at && !b.chimed) {
         if (audio.current?.state === 'running' && soundEnabled.current) playBeat(audio.current);
@@ -107,7 +177,7 @@ function AnvilHammer({ recipe, s }: { recipe: SkillAction; s: GameState }) {
     };
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
-  }, [interval]);
+  }, [interval, stops]);
 
   useEffect(() => () => { if (audio.current) void audio.current.close().catch(() => {}); }, []);
 
@@ -141,13 +211,27 @@ function AnvilHammer({ recipe, s }: { recipe: SkillAction; s: GameState }) {
   return (
     <aside className="anvil-hammer">
       <b>Hammer on the beat</b>
-      <span className="dim small">Strike when the moving ring meets the centre.</span>
-      <button className="anvil-strike" onClick={strike} aria-label="Strike the anvil">
-        <span className="anvil-target" /><span aria-hidden="true" className="anvil-beat" ref={ring} />
-        <span>Strike</span>
-      </button>
+      <span className="dim small">Tap the mark when the shrinking ring meets it. Each beat it moves along the piece; dead on is double Focus.</span>
+      <div className="anvil-strike"><div className="anvil-strike-field">
+        <svg className="anvil-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          {closed
+            ? <polygon points={outline.map((p) => p.join(',')).join(' ')} />
+            : <polyline points={outline.map((p) => p.join(',')).join(' ')} />}
+        </svg>
+        <button className="anvil-spot" ref={spot} onClick={strike} aria-label="Strike the anvil">
+          <span className="anvil-target" /><span aria-hidden="true" className="anvil-beat" ref={ring} />
+        </button>
+      </div></div>
       <span className={last === 'miss' ? 'bad' : 'good'} aria-live="polite">{last ? resultText[last] : '\u00a0'}</span>
-      <ProgressBar value={focusOf(s)} label={doubleReady(s) ? 'Focus · double ready' : 'Focus'} />
+      <div className="anvil-focus">
+        <div className="minigame-bars grow">
+          <ProgressBar value={focusOf(s)} label="Focus" />
+          <ProgressBar value={overflowOf(s)} color="var(--accent)" className="minigame-overflow" />
+        </div>
+        <span className="num small" title={`Focus speeds up forging, up to +${Math.round(maxFocusSpeed(s, 'smithing') * 100)}%. Focus past full holds the bonus longer.`}>
+          +{Math.round((focusMult(s, 'smithing') - 1) * 100)}% speed
+        </span>
+      </div>
       <button className="btn sm ghost" onClick={() => void toggleAudio()} aria-pressed={sound}>Beat sound {sound ? 'on' : 'off'}</button>
     </aside>
   );
@@ -206,11 +290,11 @@ const forgeItemGroups: Record<string, string> = {
   offhand: 'Shields', amulet: 'Amulets', belt: 'Belts', ring: 'Rings',
 };
 
-function firstPlan(baseId: string, level: number, alloy?: string): ForgePlan {
+function firstPlan(baseId: string, s: GameState, alloy?: string): ForgePlan {
   const choices: ForgePlan['choices'] = {};
   const base = baseDef(baseId);
   for (const stage of forgeStages(base, !!alloy)) {
-    const pick = stage.choices.find(({ level: gate }) => gate <= level);
+    const pick = stage.choices.find((option) => !forgeChoiceBlocker(s, stage.id, option));
     if (pick) choices[stage.id] = pick.id;
   }
   return { baseId, choices, alloy };
@@ -293,7 +377,7 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
   const shownRecipes = (showLocked ? categoryRecipes : availableRecipes).filter((recipe) => !group || groupOf(recipe) === group);
 
   const chooseBase = (id: string) => {
-    setPlan(firstPlan(id, level, plan.alloy));
+    setPlan(firstPlan(id, s, plan.alloy));
     setStage('shape');
     setNotice('');
   };
@@ -313,9 +397,10 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
     if (!hadAlloy) setStage('signature');
   };
   const selectChoice = (id: ForgeStageId, value: string) => {
-    const choices = { ...plan.choices, [id]: value };
-    const element = choices.temper === 'oil' && base.slot !== 'weapon' ? plan.element ?? 'fire' : undefined;
-    setPlan({ ...plan, choices, element });
+    const original = plan.legacyPurpose ? firstPlan(plan.baseId, s, plan.alloy) : plan;
+    const choices = { ...original.choices, [id]: value };
+    const element = choices.temper === 'oil' && base.slot !== 'weapon' ? original.element ?? 'fire' : undefined;
+    setPlan({ ...original, choices, element });
   };
 
   const alloyCards = master ? MASTER_ALLOYS.flatMap((def) => {
@@ -395,6 +480,7 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
           <div className="forge-selection">
             <h2>{base.name}</h2>
             <span className="dim small">Requires Forging Lv {action ? gateOf(action) : 1}</span>
+            {action && <span className="dim small">Comes out {forgeOddsText(forgeRarityOdds(s, plan))}</span>}
           </div>
           <details className="forge-picker">
             <summary>Choose a different item</summary>
@@ -488,7 +574,7 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
               <label className="anvil-select">How to roll bonuses
                 <select value={plan.legacyPurpose ?? ''} onChange={(event) => {
                   const preset = presetChoices.find(({ id }) => id === event.target.value);
-                  setPlan(preset ? forgePreset(preset) : firstPlan(plan.baseId, level));
+                  setPlan(preset ? forgePreset(preset) : firstPlan(plan.baseId, s));
                   setStage('shape');
                 }}>
                   <option value="">Roll bonuses using forging stages</option>
@@ -500,25 +586,30 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
               <>
                 <div className="anvil-stage-head">
                   <h4>Forging stages</h4>
-                  <HelpTip tip="Each stage changes which bonuses are more likely to roll, or adds effects such as quality, speed or extra modifiers. As you level Forging, more stages and choices unlock." />
+                  <HelpTip tip="Each stage changes which bonuses are more likely to roll, or adds effects such as quality, speed or extra modifiers. More choices unlock with Forging levels and practice on earlier choices." />
                 </div>
                 <div className="anvil-stage-track" aria-label="Forge stages">
                   {stages.map((entry) => (
                     <button key={entry.id} className={stage === entry.id ? 'active' : ''} onClick={() => setStage(entry.id)} aria-pressed={stage === entry.id}>
                       {entry.label}
                       <small>{entry.choices.find(({ id }) => id === plan.choices[entry.id])?.name ??
-                        (level < entry.choices[0].level ? `Lv ${entry.choices[0].level}` : 'Choose')}</small>
+                        (entry.choices.every((option) => forgeChoiceBlocker(s, entry.id, option)) ? 'Locked' : 'Choose')}</small>
                     </button>
                   ))}
                 </div>
                 {selected && (
                   <div className="anvil-choices" aria-label={selected.label}>
-                    {selected.choices.map((choice) => (
-                      <button key={choice.id} className={`anvil-choice ${choice.id === plan.choices[selected.id] ? 'active' : ''}`}
-                        disabled={level < choice.level} aria-pressed={choice.id === plan.choices[selected.id]} onClick={() => selectChoice(selected.id, choice.id)}>
-                        <b>{choice.name}</b><span>{choice.effect}</span>{level < choice.level && <small>Forging {choice.level}</small>}
-                      </button>
-                    ))}
+                    {selected.choices.map((choice) => {
+                      const locked = !!forgeChoiceBlocker(s, selected.id, choice);
+                      return (
+                        <button key={choice.id} className={`anvil-choice ${choice.id === plan.choices[selected.id] ? 'active' : ''}`}
+                          disabled={locked} aria-pressed={choice.id === plan.choices[selected.id]} onClick={() => selectChoice(selected.id, choice.id)}>
+                          <b>{choice.name}</b><span>{choice.effect}</span>
+                          {locked && level < choice.level && <small>Forging {choice.level}</small>}
+                          {locked && choice.unlock && <small>{Math.min(choice.unlock.count, forgeUnlockProgress(s, choice))}/{choice.unlock.count} pieces {forgeUnlockText(choice)}</small>}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
                 {plan.choices.temper === 'oil' && base.slot !== 'weapon' && (
@@ -598,8 +689,8 @@ export function AnvilView({ quickRecipes, catalysts, masterworks }: { quickRecip
   });
   const [extrasOpen, setExtrasOpen] = useState(tab === 'master' || tab === 'masterworks');
   const [notice, setNotice] = useState('');
-  const [plan, setPlan] = useState(() => s.forging.running && !s.forging.running.alloy ? s.forging.running : firstPlan(forgeRecipes()[0].baseId!, level));
-  const [masterPlan, setMasterPlan] = useState(() => s.forging.running?.alloy ? s.forging.running : firstPlan(forgeRecipes()[0].baseId!, level));
+  const [plan, setPlan] = useState(() => s.forging.running && !s.forging.running.alloy ? s.forging.running : firstPlan(forgeRecipes()[0].baseId!, s));
+  const [masterPlan, setMasterPlan] = useState(() => s.forging.running?.alloy ? s.forging.running : firstPlan(forgeRecipes()[0].baseId!, s));
   const changeTab = (next: ForgeTab) => { setNotice(''); setTab(next); };
   const start = (chosen: ForgePlan, id?: string) => {
     const error = game.act((st, ctx) => startStagedForge(st, ctx, chosen, id));

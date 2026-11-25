@@ -4,7 +4,8 @@ import { actionDef } from '../src/data/skills';
 import { makeCtx } from '../src/engine/context';
 import {
   applyBarPurity, chooseForgeSong, createStagedForgeItem, forgeActionForPlan, forgeChaptersCompleted, forgeModWeight, forgePatternSlots,
-  forgePlanBlocker, forgePreset, forgePurpose, forgeSingingChance, forgingSpeed, saveForgePattern, startStagedForge, type ForgePlan,
+  forgePlanBlocker, forgePreset, forgePurpose, forgeRarityOdds, forgeSingingChance, forgingSpeed, grandfatherForgeUnlocks, saveForgePattern,
+  startStagedForge, type ForgePlan,
 } from '../src/engine/forging';
 import { addFixedMod, allMods, createItem } from '../src/engine/items';
 import { simulateOffline } from '../src/engine/offline';
@@ -17,10 +18,12 @@ import { deriveStats, itemStats } from '../src/engine/stats';
 import { xpToReach } from '../src/engine/xp';
 
 const weapon: ForgePlan = { baseId: 'war_axe', choices: { shape: 'heavy', temper: 'deep', form: 'serrated' } };
-const setup = (level = 90) => {
+/** A forger of this level who also has every option that level used to open. */
+const setup = (level = 90, veteran = true) => {
   const s = newGame(1);
   s.skills.smithing = xpToReach('smithing', level);
   s.account.hideout.forge = 3;
+  if (veteran) grandfatherForgeUnlocks(s);
   return s;
 };
 
@@ -113,17 +116,64 @@ describe('staged forging', () => {
     expect(allMods(item).map(({ affixId }) => affixId)).toEqual(expect.arrayContaining(['added_phys', 'inc_phys']));
   });
 
-  it('checks level gates and keeps an early purpose preset available', () => {
-    const s = setup(18);
-    expect(forgePlanBlocker(s, { ...weapon, choices: { shape: 'balanced' } })).toMatch(/level 20/);
-    expect(forgePlanBlocker(s, { ...weapon, choices: { shape: 'heavy', finish: 'etched' } })).toMatch(/level 50/);
+  it('opens stage options by practice with a level floor, and presets once their options are open', () => {
+    const s = setup(18, false);
+    const balanced = { ...weapon, choices: { shape: 'balanced' } };
+    expect(forgePlanBlocker(s, { ...weapon, choices: { shape: 'heavy' } })).toBeNull();
+    expect(forgePlanBlocker(s, balanced)).toMatch(/after 20 pieces with any Shape/);
+    s.forging.practice.shape = 20;
+    expect(forgePlanBlocker(s, balanced)).toBeNull();
+    expect(forgePlanBlocker(s, { ...weapon, choices: { shape: 'heavy', temper: 'oil' } })).toMatch(/level 20/);
+    const novice = setup(5, false);
+    novice.forging.practice.shape = 20;
+    expect(forgePlanBlocker(novice, { baseId: 'rusted_sword', choices: { shape: 'balanced' } })).toMatch(/level 10/);
     const old = actionDef('purpose_physical_felling_axe');
     const preset = forgePreset(old);
-    const apprentice = setup(old.level);
+    const apprentice = setup(Math.max(8, old.level), false);
+    expect(forgePlanBlocker(apprentice, preset)).toMatch(/Serrated unlocks after 15 pieces with any Temper/);
+    apprentice.forging.practice.temper = 15;
     expect(forgePlanBlocker(apprentice, preset)).toBeNull();
     expect(forgePlanBlocker(apprentice, { ...preset, choices: { ...preset.choices, finish: 'gilded' } })).toMatch(/valid purpose/);
     expect(forgeActionForPlan({ ...weapon, choices: { ...weapon.choices, temper: 'quick' } })!.intervalMs)
       .toBeCloseTo(forgeActionForPlan(weapon)!.intervalMs * 0.7);
+  });
+
+  it('mostly makes normal and magic pieces early, with rares growing as the forger does', () => {
+    const plain: ForgePlan = { baseId: 'rusted_sword', choices: { shape: 'heavy' } };
+    const novice = setup(1, false);
+    const early = forgeRarityOdds(novice, plain);
+    expect(early.rare).toBeLessThan(0.05);
+    expect(early.normal).toBeGreaterThan(early.magic);
+    const ctx = makeCtx(seeded(5));
+    const a = forgeActionForPlan(plain)!;
+    const made = Array.from({ length: 200 }, () => createStagedForgeItem(novice, ctx, a, plain, { ilvl: 5, itemTier: 1, purity: 0, focusMultiple: 1 }));
+    expect(made.filter((item) => item.rarity === 'rare').length).toBeLessThan(20);
+    expect(made.filter((item) => item.rarity === 'normal').every((item) => allMods(item).length === 0)).toBe(true);
+    expect(made.filter((item) => item.rarity === 'magic').every((item) => item.prefixes.length <= 1 && item.suffixes.length <= 1 && allMods(item).length >= 1)).toBe(true);
+    const master = setup(99);
+    master.skillingMastery['weapon.sword'] = masteryThreshold(99);
+    const late = forgeRarityOdds(master, plain);
+    expect(late.rare).toBeGreaterThan(0.4);
+    expect(late.rare).toBeLessThanOrEqual(0.6);
+    expect(forgeRarityOdds(master, { ...plain, alloy: 'moonsilver' }).rare).toBe(1);
+  });
+
+  it('counts each finished piece toward its options, and old saves keep what their level opened', () => {
+    const s = setup(1, false);
+    const ctx = makeCtx(seeded(3));
+    const plan: ForgePlan = { baseId: 'rusted_sword', choices: { shape: 'light' } };
+    const a = supply(s, plan);
+    expect(startStagedForge(s, ctx, plan)).toBeNull();
+    const d = deriveStats(s);
+    skillStep(s, ctx, actionIntervalMs(s, a, d) + 1, d);
+    expect(s.forging.practice).toEqual({ shape: 1, 'shape:light': 1 });
+    const veteran = setup(60, false);
+    const raw = JSON.parse(serialize(veteran));
+    raw.version = 68;
+    delete raw.forging.unlocked;
+    const loaded = deserialize(JSON.stringify(raw));
+    expect(loaded.forging.unlocked).toEqual(expect.arrayContaining(['form:sturdy', 'finish:etched', 'finish:gilded']));
+    expect(loaded.forging.unlocked).not.toContain('finish:blued');
   });
 
   it('repeats the saved pattern offline and keeps a rack of every new piece', () => {

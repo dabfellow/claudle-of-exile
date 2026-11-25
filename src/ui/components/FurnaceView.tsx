@@ -7,7 +7,7 @@ import {
   type BarGrade, type BarGradePreference, type FurnaceSupply,
 } from '../../data/smelting';
 import { actionDef, actionsFor, type SkillAction } from '../../data/skills';
-import { bellowsResult, doubleReady, focusMult, focusOf, inDoubleZone, minigameSwing, type SwingResult } from '../../engine/minigame';
+import { bellowsResult, focusMult, focusOf, inDoubleZone, minigameSwing, type SwingResult } from '../../engine/minigame';
 import {
   bellowsBandWidth, furnaceBatchSize, furnacePartUpgrade, improveFurnacePart, purityOdds, purityScore, smeltingCost,
 } from '../../engine/smelting';
@@ -382,9 +382,7 @@ function FurnaceStation({ s, d, recipe, level, go }: { s: GameState; d: Derived;
               <div className="row furnace-focus">
                 <span>Focus</span>
                 <ProgressBar value={focusOf(s)} className="grow" />
-                <span className="num">+{Math.round((focusMult(s, 'smelting') - 1) * 100)}% speed</span>
-                {doubleReady(s) && <span className="good">Next batch ×2</span>}
-              </div>
+                <span className="num">+{Math.round((focusMult(s, 'smelting') - 1) * 100)}% speed</span>              </div>
             </section>
           )}
         </div>

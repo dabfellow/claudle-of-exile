@@ -384,7 +384,7 @@ export function ForagingBedsIdle({
 }
 
 const TELESCOPE_LOCK_TEXT: Record<SwingResult, string> = {
-  double: 'Double! ×2 — Razor sharp',
+  double: 'Razor sharp — double Focus',
   hit: 'Locked — Sharp focus',
   weak: 'Locked — Slightly hazy',
   miss: 'Locked — Out of focus',
@@ -647,7 +647,7 @@ function CookingGame({ onSwing }: { onSwing: OnSwing }) {
 }
 
 const SIGHTING_TEXT: Record<SwingResult, string> = {
-  double: 'Double Sighting! ×2',
+  double: 'Perfect sighting! Double Focus',
   hit: 'Hit! +50% Focus',
   weak: 'Weak Sighting',
   miss: 'Missed landmark',
@@ -928,7 +928,7 @@ function LiftGame({ markLevel, portrait, targetName, onSwing }: { markLevel: num
         setAlert({
           id: ++uidRef.current,
           kind: res,
-          text: res === 'double' ? 'Double Lift! ×2' : 'Hit! Focus +25%',
+          text: res === 'double' ? 'Clean lift! Focus +50%' : 'Hit! Focus +25%',
         });
       }
       return;

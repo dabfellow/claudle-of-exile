@@ -3,7 +3,7 @@ import { HEIST_JOBS, prepBoard, prepId } from '../src/data/heist';
 import { actionDef, actionsFor } from '../src/data/skills';
 import { makeCtx, type Ctx } from '../src/engine/context';
 import { heistStep, startHeist } from '../src/engine/heist';
-import { CHARGE_ZONE_WIDTH, chargeResult, doubleReady, doubleZoneStart, DOUBLE_SHARE, inDoubleZone, minigameSwing, strikeResult, surveyResult, SURVEY_DOUBLE } from '../src/engine/minigame';
+import { CHARGE_ZONE_WIDTH, chargeResult, doubleReady, doubleZoneStart, DOUBLE_SHARE, focusOf, inDoubleZone, minigameSwing, strikeResult, surveyResult, SURVEY_DOUBLE } from '../src/engine/minigame';
 import { seeded, type Rng } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { actionIntervalMs, skillStep, startSkillAction } from '../src/engine/skills';
@@ -53,31 +53,25 @@ describe('double zones', () => {
     expect(surveyResult(true, SURVEY_DOUBLE + 1)).toBe('hit');
   });
 
-  it('double what the next finish makes, then are used up', () => {
+  it('give twice a clean hit\'s Focus', () => {
+    const hit = miner();
+    const crit = miner();
+    expect(startSkillAction(hit, ctx(), ORE.id)).toBeNull();
+    expect(startSkillAction(crit, ctx(), ORE.id)).toBeNull();
+    minigameSwing(hit, 'hit');
+    minigameSwing(crit, 'double');
+    expect(focusOf(crit)).toBeCloseTo(focusOf(hit) * 2);
+  });
+
+  it('no longer double what the next finish makes', () => {
     const plain = mineOnce(false);
-    const doubled = mineOnce(true);
+    const crit = mineOnce(true);
     expect(plain.ore).toBeGreaterThan(0);
-    expect(doubled.ore).toBe(plain.ore * 2);
-    expect(doubleReady(doubled.s)).toBe(false);
+    expect(crit.ore).toBe(plain.ore);
+    expect(doubleReady(crit.s)).toBe(false);
   });
 
-  it('do not stack: several doubles before a finish still pay twice', () => {
-    const c = ctx();
-    const s = miner();
-    expect(startSkillAction(s, c, ORE.id)).toBeNull();
-    for (let i = 0; i < 4; i++) minigameSwing(s, 'double');
-    const d = deriveStats(s);
-    skillStep(s, c, actionIntervalMs(s, actionDef(ORE.id), d) * 2 + 1, d);
-    expect(s.storage.bank[oreId]).toBe(mineOnce(false).ore * 3);
-  });
-
-  it('never pay out offline', () => {
-    const plain = mineOnce(false);
-    const away = mineOnce(true, { ...ctx(), offline: true });
-    expect(away.ore).toBe(plain.ore);
-  });
-
-  it('double a Heist room take', () => {
+  it('never double a Heist room take', () => {
     const job = HEIST_JOBS[0];
     const room = (double: boolean) => {
       const s = newGame(1, { name: 'T', classId: 'warrior' });
@@ -95,13 +89,13 @@ describe('double zones', () => {
       heistStep(s, c, 1, deriveStats(s));
       return s.action?.kind === 'heist' ? s.action.take.gold : s.storage.bank.gold;
     };
-    expect(room(true)).toBe(room(false) * 2);
+    expect(room(true)).toBe(room(false));
   });
 
-  it('a waiting double survives a save and load, and old saves load without one', () => {
+  it('an old save\'s waiting double still loads, and saves without one load fine', () => {
     const s = miner();
     expect(startSkillAction(s, ctx(), ORE.id)).toBeNull();
-    minigameSwing(s, 'double');
+    if (s.action?.kind === 'skill') s.action.double = true;
     expect(doubleReady(deserialize(serialize(s)))).toBe(true);
     const old = miner();
     expect(startSkillAction(old, ctx(), ORE.id)).toBeNull();

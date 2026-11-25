@@ -309,21 +309,63 @@
 
 .anvil-strike {
   position: relative;
-  display: grid;
-  place-items: center;
-  min-height: 8rem;
+  min-height: 10rem;
   overflow: hidden;
   border: 1px solid #665044;
   border-radius: .35rem;
   color: #f5e5d2;
   background: radial-gradient(ellipse at center, #372620, #151515);
+}
+
+.anvil-strike-field {
+  position: absolute;
+  inset: 12% 22%;
+}
+
+/* the faint shape of the piece the mark walks along */
+.anvil-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: #a5785566;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.anvil-spot {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 3.4rem;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffcf8a33, transparent 70%);
+  transform: translate(-50%, -50%);
+  transition: left .18s ease-out, top .18s ease-out;
+  cursor: pointer;
   touch-action: manipulation;
+}
+
+.anvil-focus {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.anvil-focus .grow {
+  flex: 1;
+  min-width: 0;
 }
 
 .anvil-target,
 .anvil-beat {
   position: absolute;
-  width: 3.1rem;
+  width: 2.6rem;
   aspect-ratio: 1;
   border: 1px dashed #ecbe80;
   border-radius: 50%;

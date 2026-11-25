@@ -38,8 +38,19 @@ Read [the build guide](SKILLING_BUILD_GUIDE.md) first. Save id stays `smithing`.
 
 - A **staged forge** takes one base (any base a cheap recipe can make) and runs its stages in a single action.
 - The interval is the purpose-recipe interval, `60 s + 2 s × base required level`, with inputs ×2 the cheap recipe, as purpose recipes cost today.
-- The result is **Rare**, like today's purpose gear.
+- The result is mostly **normal or magic**, with an occasional **rare** (owner, 2026-11-24). Rare odds start near 4% and grow with Forging level, the piece's mastery and the share of stage options unlocked, up to 60%. Normal pieces have no mods; magic pieces one or two. Master forms are always rare. A purpose preset is at least magic, and rare when its two guarantees are the same kind. The Anvil shows the odds. Source: `forgeRarityOdds` in `src/engine/forging.ts`.
 - Each choice multiplies the roll weights of certain mod groups for that craft.
+- **Options unlock by practice (owner, 2026-11-24).** Each option past the two starting Shapes needs a level floor *and* a number of pieces forged with earlier options. The levels in the tables below are the old gates. Saves from before keep every option their level had opened. Purpose presets need the options they use.
+
+| Option | Level floor | Practice |
+|---|---|---|
+| Balanced / Scaled / Twisted | 10 | 20 pieces with any Shape |
+| Deep, Quick | 3 | 8 pieces with any Shape |
+| Oil quench | 20 | 25 pieces with Deep or Quick |
+| First two Edge / Rim / Setting options | 8 | 15 pieces with any Temper |
+| Sturdy / Spiked / Open | 20 | 30 pieces with any Edge, Rim or Setting |
+| Etched | 30 | 40 pieces with any Edge, Rim or Setting |
+| Gilded, Blued | 45 | 50 pieces with Etched |
 
 **Weapons**
 
@@ -91,6 +102,8 @@ Quality increases a weapon's local physical damage or an armour piece's local de
 - Keep today's `SmithingGame` and `strikeResult` (45, 120 and 260 ms windows).
 - The beat interval follows the bar metal: copper 900 ms, falling evenly to world at 550 ms.
 - Show the beat as a pulsing ring with a click sound, and tap to strike.
+- The mark moves one short step each beat along a rough outline of the piece (sword, axe, mace, shield, helmet, body, gloves, boots, ring, amulet, belt); tap the mark itself (owner, 2026-11-24).
+- A dead-on strike gives double Focus, like every focus game's gold zone. The hammer shows the overfill strip and the current speed bonus.
 
 ### Master forms (levels 80–99)
 

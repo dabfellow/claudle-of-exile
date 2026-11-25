@@ -38,7 +38,7 @@ import { newCampaignQuestState, settleCampaignQuests } from './campaignQuests';
 import { newAstrologyState } from './astrology';
 import { migrateDelve, migrateDelveLayerMastery } from './delve';
 import { initialSmelting } from './smelting';
-import { migrateForging, migrateWeaponMastery, settleForging } from './forging';
+import { grandfatherForgeUnlocks, migrateForging, migrateWeaponMastery, settleForging } from './forging';
 import { freshWoodcrafting } from './woodcrafting';
 import { freshGemcutting } from './gemFacets';
 
@@ -623,7 +623,10 @@ const MIGRATIONS: Record<number, Migration> = {
   65: migrateRogueRecruitment,
   66: () => {},
   67: (raw) => migrateWeaponMastery(raw as unknown as GameState),
-  68: migrateDelveLayerMastery,
+  68: (raw) => {
+    migrateDelveLayerMastery(raw);
+    grandfatherForgeUnlocks(raw as unknown as GameState);
+  },
 };
 
 /**

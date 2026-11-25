@@ -13,7 +13,7 @@ import {
   plantPlot, plotDurationMs, stableStrainCount, strainLabel, strainRarity,
 } from '../../engine/foraging';
 import {
-  doubleReady, focusMult, focusOf, maxFocusSpeed, minigameSwing, overflowOf, type SwingResult,
+  focusMult, focusOf, maxFocusSpeed, minigameSwing, overflowOf, type SwingResult,
 } from '../../engine/minigame';
 import { actionIntervalMs, skillLevel, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
@@ -35,7 +35,7 @@ import './foraging-bench.css';
 
 type ForagingTab = 'greenhouse' | 'wild' | 'seeds' | 'herbarium' | 'masterworks';
 
-const DOUBLE_HINT = 'Gold is the double zone: pick while glowing gold and your next harvest pays out twice.';
+const DOUBLE_HINT = 'Gold is the double zone: pick while glowing gold for twice the Focus.';
 const RESULT_TEXT: Record<SwingResult, string> = {
   double: 'Double!',
   hit: 'Clean hit',
@@ -1024,7 +1024,7 @@ function WildTab({ s, notify, onOpenGreenhouse }: { s: GameState; notify: (msg: 
           <div className="foraging-focus-stage">
             <div className="foraging-focus-head">
               <b>Focus · Fertilise Beds</b>
-              <span className="small muted">Tap lit sprouts before they fade. Gold = ×2 next harvest.</span>
+              <span className="small muted">Tap lit sprouts before they fade. Gold = double Focus.</span>
             </div>
 
             {runningAction && runningAction.id !== selectedAction.id && (
@@ -1064,12 +1064,9 @@ function WildTab({ s, notify, onOpenGreenhouse }: { s: GameState; notify: (msg: 
                 <ProgressBar value={running ? focusOf(s) : 0} color={SKILLS.harvesting.color} />
                 <ProgressBar value={running ? overflowOf(s) : 0} color="var(--accent)" className="minigame-overflow" />
               </div>
-              <span className={`minigame-double ${running && doubleReady(s) ? 'ready' : ''}`} title={DOUBLE_HINT}>
-                ×2
-              </span>
               <span
                 className="num small"
-                title={`Max focus speed: +${(maxFocusSpeed(s, 'harvesting') * 100).toFixed(2).replace(/\.?0+$/, '')}% (+0.01% per mastery level in Foraging)`}
+                title={`${DOUBLE_HINT} Max focus speed: +${(maxFocusSpeed(s, 'harvesting') * 100).toFixed(2).replace(/\.?0+$/, '')}% (+0.01% per mastery level in Foraging)`}
               >
                 +{running ? Math.round((focusMult(s, 'harvesting') - 1) * 100) : 0}% speed
               </span>

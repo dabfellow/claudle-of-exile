@@ -13,7 +13,7 @@ import {
   delvePushPayment, delveTraitsAt, installationCovers, installationReach, isDelveAction,
   startDelve, upgradeDelvePick, type DelveState,
 } from '../../engine/delve';
-import { doubleReady, focusMult, focusOf, type SwingResult } from '../../engine/minigame';
+import { focusMult, focusOf, type SwingResult } from '../../engine/minigame';
 import { actionIntervalMs, skillLevel, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, GameState } from '../../engine/types';
@@ -157,9 +157,7 @@ function BraceCard({ s }: { s: GameState }) {
       </div>
       <ProgressBar value={focus} color="#eac583" />
       <div className="delve-focus-hint">
-        <span>{hold > 0 && focus > 0 ? `Held for ${fmtTime(hold)}` : 'Match warnings to build Focus'}</span>
-        {running && doubleReady(s) && <span className="delve-speed">Double ready</span>}
-      </div>
+        <span>{hold > 0 && focus > 0 ? `Held for ${fmtTime(hold)}` : 'Match warnings to build Focus'}</span>      </div>
       {running && (
         <div className="delve-warning">
           <div className="delve-brace-heading">

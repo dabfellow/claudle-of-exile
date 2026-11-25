@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { actionDef, SKILLS } from '../../data/skills';
-import { doubleReady, focusHoldSeconds, focusMult, focusOf, focusRemainingSeconds, hasMinigame, maxFocusSpeed, minigameSwing, overflowOf, type SwingResult } from '../../engine/minigame';
+import { focusHoldSeconds, focusMult, focusOf, focusRemainingSeconds, hasMinigame, maxFocusSpeed, minigameSwing, overflowOf, type SwingResult } from '../../engine/minigame';
 import { splitSwing } from '../../engine/woodcutting';
 import type { GameState, SkillId } from '../../engine/types';
 import { game, useGame } from '../../game';
@@ -10,7 +10,7 @@ import { SkillGame } from './minigames';
 const HOW_TO: Partial<Record<SkillId, string>> = {
   woodcutting: 'Swing the axe down to split each log into two halves that weigh the same. Within 3% of even is a double, 7% a hit, 15% weak.',
   harvesting: 'Tap lit soil beds quickly to fertilise them before they fade. Tap while glowing gold for a double.',
-  thieving: 'Marks: tap rapidly while their back is turned to fill Focus and trigger ×2 lifts — pause when they look back! Focus speed holds for nearly a minute. Heist rooms: tap the lit pins in order.',
+  thieving: 'Marks: tap rapidly while their back is turned to fill Focus; long flurries give double Focus — pause when they look back! Focus speed holds for nearly a minute. Heist rooms: tap the lit pins in order.',
   agility: 'Jump while the marker is in the bright band, or its gold middle for a double.',
   archaeology: 'Brush soil squares to uncover the find. Avoid hairline cracks: 0 chips is a double, 1 a hit, 2 weak, 3+ a miss.',
   woodcrafting: 'Trace the marked line from start to finish in four seconds. A close trace earns a double.',
@@ -23,7 +23,7 @@ const HOW_TO: Partial<Record<SkillId, string>> = {
 };
 
 /** Said once under every game: what gold means. */
-const DOUBLE_HINT = 'Gold is the double zone: hit it and this action makes twice as much next time it finishes.';
+const DOUBLE_HINT = 'Gold is the double zone: hit it for twice the Focus.';
 
 const RESULT_TEXT: Record<SwingResult, string> = { double: 'Double!', hit: 'Clean hit', weak: 'Weak hit', miss: 'Miss' };
 
@@ -72,12 +72,9 @@ export function SkillMinigame({ skill, portrait, targetName }: { skill: SkillId;
           <ProgressBar value={focusOf(s)} color={color} />
           <ProgressBar value={overflowOf(s)} color="var(--accent)" className="minigame-overflow" />
         </div>
-        {(skill !== 'woodcrafting' || !action?.purpose) && <span className={`minigame-double ${doubleReady(s) ? 'ready' : ''}`} title={DOUBLE_HINT}>
-          ×2
-        </span>}
         <span
           className="num small"
-          title={`Max focus speed: +${(maxFocusSpeed(s, skill) * 100).toFixed(2).replace(/\.?0+$/, '')}% (+0.01% per mastery level in ${SKILLS[skill].name})`}
+          title={`${DOUBLE_HINT} Max focus speed: +${(maxFocusSpeed(s, skill) * 100).toFixed(2).replace(/\.?0+$/, '')}% (+0.01% per mastery level in ${SKILLS[skill].name})`}
         >
           +{Math.round((focusMult(s, skill) - 1) * 100)}% speed
         </span>
