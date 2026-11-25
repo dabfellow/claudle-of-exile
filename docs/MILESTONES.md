@@ -4,9 +4,7 @@ Last updated 2026-11-24. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-The Woodcutter's Lodge has clickable pixel-art stations that change as players build upgrades (2026-11-24). An up arrow marks upgrades ready to build, and the Trophy Wall unlocks inside the lodge with a hanging sign and wooden nameplates.
-
-The pending workshop and loot changes are assembled for release. They include Mining layer mastery, the Anvil and Forging progression changes, One Long Curl, equipment stat previews, the greenhouse harvest badge, saved loot filters, ground-first gear drops, crafted gear routing, and Valor Orbs.
+**0.6.7, Workshop Upgrades and Loot**, went live on 2026-11-24. It includes the Woodcutter's Lodge and Trophy Wall, Mining layer mastery, Anvil and Forging progression updates, One Long Curl and equipment stat previews, the greenhouse harvest badge, saved loot filters, ground-first gear drops, crafted gear routing, and Valor Orbs. All 2,055 tests and the production build passed. Browser checks covered the greenhouse badge, map-gated Boss Keys, Forging stages, Woodcrafting's pattern rack and carving surface, and the Trophy Wall purchase. Deployment confirmed the live version and login configuration.
 
 **0.6.6, Foraging Audio, News and Astrology**, went live on 2026-11-24. It removes the Foraging wind sound, keeps rain opt-in, groups News by beta version, corrects the Skilling Revamp numbering to 0.6.x, and makes Astrology slots and labels smaller. All 2,030 tests passed. Browser checks covered News on the title and character screens, Astrology at desktop and phone widths, and Foraging audio. The deploy confirmed the live version and login configuration.
 
@@ -109,7 +107,7 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented. The 12-skill rework, skill retirements, new skilling passive tree, and menu and minigame polish are live in 0.6.0. The Woodcutter's Lodge visual pass is implemented locally. |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented. The 12-skill rework, skill retirements, new skilling passive tree, and menu and minigame polish are live in 0.6.0. The Lodge, layer mastery and crafting workshop updates are live in 0.6.7. |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
@@ -1045,6 +1043,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Released Workshop Upgrades and Loot as 0.6.7. The production build and all 2,055 tests passed, and deployment confirmed the version and login configuration. — done 2026-11-24
 
 - [x] Replaced Woodcutter's Lodge upgrade cards with clickable workshop stations, including the purchasable Trophy Wall. Verified upgrade arrows, purchases, trophy mounts and World Tree planting in desktop and phone-width playtests. All 41 Woodcutting tests passed. — done 2026-11-24
 - [x] Replaced the Lodge's drawn station shapes and Trophy Wall icon with credited itch.io props and signage. Verified the sign, purchase and nameplates on desktop and phone. — done 2026-11-24
