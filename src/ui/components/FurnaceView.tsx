@@ -153,13 +153,13 @@ export function BellowsGame({ metal, tier, onSwing }: { metal: string; tier: num
   );
 }
 
-export function UseBarGrade() {
+export function UseBarGrade({ label = 'Use grade' }: { label?: string } = {}) {
   const s = useGame();
   const selectId = useId();
   return (
     <div className="furnace-select">
       <span className="furnace-label-row">
-        <label htmlFor={selectId}>Use grade</label>
+        <label htmlFor={selectId}>{label}</label>
         <HelpTip tip="Choose which bar purity (Crude, Refined, Pure, or Flawless) is spent first when crafting. Pure and Flawless bars boost item quality and can raise rolled modifier tiers; Crude bars give -1 purity." />
       </span>
       <select id={selectId} value={s.smelting.barGrade} onChange={(event) => {

@@ -126,13 +126,11 @@ Quality increases a weapon's local physical damage or an armour piece's local de
 
 ### Screen
 
-- **Anvil** tab:
-  - The piece drawn simply on an anvil.
-  - The stage track across the top (Blank, Shape, Temper, Edge/Rim/Setting, Finish, and Signature for master forms).
-  - The current stage's choices as cards, each showing its effect in words.
-  - A **Save pattern** button and a pattern dropdown.
-  - The rhythm hammer beside the anvil, below it on phones.
-- Other tabs: **Patterns**, **Pattern book**, **Quick recipes** (cheap bases) and **Master forms**.
+- **Forge gear** opens with the item on the anvil, the materials needed for one craft, and **Forge 1 item**. The hearth animates and the optional rhythm hammer appears while forging.
+- **Choose a different item** browses weapons, shields, armour and jewellery by type. Locked items are hidden until included.
+- **Customise this item** opens guaranteed bonuses where available, or the stage track and its choices. Open **Material settings** to set bar quality, catalysts and salvage.
+- **Repeat while idle or away** saves the current item and stage choices as a recipe. **Saved recipes** starts a saved setup and repeats it while supplies and space last.
+- **More forging options** opens the **Forge journal** (the pattern book), **Quick recipes**, **Master forms** and **Masterworks**.
 
 ### Coming back: the weapon rack
 

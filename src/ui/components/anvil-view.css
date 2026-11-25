@@ -16,8 +16,7 @@
 
 .anvil-heading,
 .anvil-actions,
-.anvil-fields,
-.anvil-cost {
+.forge-main-nav {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -34,68 +33,86 @@
   margin: 0;
 }
 
-/* The forge scene: stone wall, forge fire behind the anvil, and the Forge panel on the right. */
+.forge-navigation {
+  display: grid;
+  gap: .45rem;
+}
+
+.forge-main-nav {
+  justify-content: space-between;
+  border-bottom: 1px solid #34312b;
+}
+
+.forge-main-nav .tabs { border-bottom: 0; }
+
 .forge-scene {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
-  gap: 16px;
-  margin-bottom: 1rem;
-  padding: 16px;
-  border: 1px solid #6b4c33;
-  border-radius: 6px;
-  background:
-    radial-gradient(ellipse 50% 60% at 30% 40%, #ff8a3a1f, #0d070580 75%),
-    linear-gradient(#1a0e09b8, #120a07d9),
-    url('../../assets/smelting/stone-wall.webp') center / 230px repeat;
-  background-blend-mode: normal, multiply, normal;
+  grid-template-columns: minmax(0, 1fr) minmax(0, .95fr);
+  border: 1px solid #5d4735;
+  border-radius: .6rem;
+  overflow: hidden;
 }
 
 .forge-scene-art {
   position: relative;
-  display: grid;
-  justify-items: center;
-  align-content: end;
-  gap: 10px;
   min-width: 0;
-  min-height: 280px;
+  min-height: 275px;
+  overflow: hidden;
+  background:
+    linear-gradient(0deg, #100b08 0%, #1c130dbb 20%, transparent 43%),
+    radial-gradient(ellipse at 29% 37%, #a14e2849, transparent 55%),
+    linear-gradient(90deg, #100c08a0, #110e0bed),
+    url('../../assets/smelting/stone-wall.webp') center top / 230px repeat;
 }
 
-/* A low forge opening in the back wall; it always smoulders and roars while forging. */
 .forge-fire {
   position: absolute;
-  top: 6px;
-  left: 50%;
-  width: min(80%, 260px);
-  height: 110px;
+  top: 16px;
+  left: 8%;
+  width: 44%;
+  max-width: 172px;
+  height: 126px;
   overflow: hidden;
-  transform: translateX(-50%);
-  border: 12px solid transparent;
-  border-bottom: 0;
-  border-radius: 130px 130px 0 0;
+  border: 8px solid transparent;
+  border-bottom: 6px solid #302219;
+  border-radius: 48% 48% 5px 5px;
   background:
-    radial-gradient(ellipse 70% 70% at 50% 100%, #ffa95066, #8a2d1433 55%, transparent 80%) padding-box,
-    radial-gradient(ellipse at 50% 100%, #2a140b, #0b0605 70%) padding-box,
-    linear-gradient(#0e0806a8, #0e0806a8) border-box,
+    radial-gradient(ellipse at 50% 100%, #783919, #120905 68%) padding-box,
+    linear-gradient(#0e080675, #0e0806bb) border-box,
     url('../../assets/smelting/stone-wall.webp') center / 110px border-box;
-  box-shadow: 0 6px 18px #000a;
+  box-shadow: inset 0 0 18px #000b, 0 5px 18px #000a;
 }
-.forge-fire .furnace-flame { opacity: .55; bottom: 0; width: 72px; height: 72px; }
-.forge-fire .furnace-flame.f1 { width: 92px; height: 92px; }
-.forge-lit .forge-fire .furnace-flame { opacity: 1; }
-.forge-lit .forge-fire { box-shadow: 0 6px 18px #000a, 0 0 36px #ff7a2a44; }
+
+.forge-fire span {
+  position: absolute;
+  inset: 0;
+  background: url('../../assets/smelting/forge-hearth-still.webp') center 8px / 126px auto no-repeat;
+  opacity: .68;
+}
+
+.forge-lit .forge-fire span { opacity: 1; }
+.forge-lit .forge-fire { box-shadow: inset 0 0 18px #0008, 0 5px 25px #ff7a2a39; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .forge-lit .forge-fire span {
+    background-image: url('../../assets/smelting/forge-hearth.webp');
+  }
+}
 
 .anvil-piece {
-  position: relative;
+  position: absolute;
+  bottom: 0;
+  left: 60%;
+  transform: translateX(-50%);
   z-index: 1;
   display: grid;
   justify-items: center;
-  margin-top: 120px;
 }
 
 .anvil-piece > :first-child {
   z-index: 1;
-  margin-bottom: -42px;
-  filter: drop-shadow(0 0 10px #ee98585a);
+  margin-bottom: -51px;
+  filter: drop-shadow(0 3px 3px #050301) drop-shadow(0 0 9px #ee985840);
 }
 
 .anvil-sprite {
@@ -110,51 +127,73 @@
   filter: drop-shadow(0 0 6px #ffb067) drop-shadow(0 0 14px #ff7a2a);
 }
 
+.forge-scene-panel {
+  display: grid;
+  align-content: center;
+  gap: .8rem;
+  min-width: 0;
+  padding: clamp(.85rem, 2.5vw, 1.55rem);
+  background: linear-gradient(145deg, #211b17, #161515);
+  border-left: 1px solid #594331;
+}
+
+.forge-selection h2 {
+  margin: 0;
+  color: #f1dfc4;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
+  line-height: 1.15;
+}
+
+.forge-scene-panel p,
+.anvil-plan p,
+.anvil-stage-head h4 { margin: 0; }
+
+.forge-materials,
 .forge-scene-status {
   display: grid;
-  justify-items: center;
-  gap: 5px;
-  width: min(100%, 320px);
-  padding: 7px 12px;
-  border-radius: 4px;
-  background: #0c0705c4;
-  border: 1px solid #6b4c3366;
-  text-align: center;
+  gap: .4rem;
+  padding-block: .65rem;
+  border-block: 1px solid #4b3b2d;
 }
-.forge-scene-status .bar { width: 100%; }
 
-.forge-scene-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  min-width: 0;
-  padding: 12px;
-  border: 1px solid #7353378a;
-  border-radius: 6px;
-  background: #140c08e0;
-  box-shadow: 0 6px 20px #0008;
-}
-.forge-scene-panel p { margin: 0; }
-
-.anvil-step {
+.forge-materials-heading,
+.forge-result {
   display: flex;
   align-items: center;
-  gap: .5rem;
-  margin: .4rem 0 0;
-  font-size: 1rem;
+  justify-content: space-between;
+  gap: .55rem;
 }
-.anvil-step > span {
-  display: inline-grid;
-  place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  background: #3a2718;
-  border: 1px solid #cb9564;
-  color: #f0cf89;
-  font-size: .8rem;
+
+.forge-result { justify-content: flex-start; }
+.forge-start { min-height: 2.65rem; }
+
+.forge-options {
+  display: grid;
+  gap: .45rem;
+  margin-top: .75rem;
 }
-.anvil-step-hint { margin: -.3rem 0 0; }
+
+.forge-option {
+  border: 1px solid #46382e;
+  border-radius: .35rem;
+  background: #1b1917;
+}
+
+.forge-option > summary,
+.forge-picker > summary {
+  color: #e2c49b;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.forge-option > summary { padding: .65rem .8rem; }
+.forge-picker > summary { font-size: .875rem; }
+.forge-picker[open] > summary { margin-bottom: .5rem; }
+.forge-option[open] > summary { border-bottom: 1px solid #46382e; }
+.forge-option .anvil-plan { padding: .8rem; }
+.forge-option .anvil-actions { align-items: end; }
+.anvil-workspace > .anvil-hammer { margin-top: .75rem; }
 
 .anvil-plan {
   display: grid;
@@ -235,6 +274,8 @@
 }
 
 .anvil-cost {
+  display: grid;
+  gap: .35rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -242,9 +283,10 @@
 }
 
 .anvil-cost li {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: .25rem;
+  gap: .45rem;
 }
 
 .anvil-guarantee {
@@ -326,8 +368,7 @@
   gap: .3rem;
 }
 
-.anvil-stage-head,
-.anvil-label-row {
+.anvil-stage-head {
   display: flex;
   align-items: center;
   gap: .45rem;
@@ -342,67 +383,12 @@
   background: #1a1816;
 }
 
-.anvil-blank-picker.focused {
-  border-color: #cb9564;
-  box-shadow: inset 0 0 0 1px #cb956444;
-}
-
 .anvil-blank-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: .45rem .8rem;
-}
-
-.anvil-blank-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(10.5rem, 100%), 1fr));
-  gap: .4rem;
-  max-height: 13.5rem;
-  overflow-y: auto;
-  padding-right: 2px;
-}
-
-.anvil-blank-btn {
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  padding: .42rem .55rem;
-  text-align: left;
-  color: var(--text, #e0d8ca);
-  background: #231f1c;
-  border: 1px solid #45382c;
-  border-radius: .3rem;
-  cursor: pointer;
-}
-
-.anvil-blank-btn:hover {
-  border-color: #8b6c4f;
-}
-
-.anvil-blank-btn.active {
-  border-color: #d9a066;
-  background: #2e241b;
-  box-shadow: inset 0 -2px #b67e48;
-}
-
-.anvil-blank-btn.locked {
-  opacity: .72;
-  border-style: dashed;
-}
-
-.anvil-blank-meta {
-  display: grid;
-  gap: .1rem;
-  min-width: 0;
-  font-size: .8rem;
-}
-
-.anvil-blank-meta b {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ============ The High Crucible (Master forms) ============ */
@@ -526,15 +512,13 @@
 
 .master-crucible .anvil-stage-track button,
 .master-crucible .anvil-choice,
-.master-crucible .anvil-blank-picker,
-.master-crucible .anvil-blank-btn {
+.master-crucible .anvil-blank-picker {
   background: #131722;
   border-color: #36425e;
 }
 
 .master-crucible .anvil-stage-track button.active,
-.master-crucible .anvil-choice.active,
-.master-crucible .anvil-blank-btn.active {
+.master-crucible .anvil-choice.active {
   border-color: #e2b45e;
   box-shadow: inset 0 -2px #c8963e;
   background: #1d1b18;
@@ -542,6 +526,9 @@
 
 .master-crucible .forge-scene {
   border-color: #8a6c3a;
+}
+
+.master-crucible .forge-scene-art {
   background:
     radial-gradient(ellipse 50% 60% at 30% 45%, rgba(79, 120, 196, 0.28), #06081080 75%),
     linear-gradient(#0d1220c0, #090a0fe0),
@@ -562,8 +549,12 @@
   border-color: #6f5a38;
 }
 
-@media (max-width: 720px) {
-  .forge-scene {
-    grid-template-columns: minmax(0, 1fr);
-  }
+@media (max-width: 660px) {
+  .forge-scene { grid-template-columns: minmax(0, 1fr); }
+  .forge-scene-art { min-height: 150px; }
+  .forge-fire { top: 7px; height: 98px; }
+  .forge-fire span { background-size: 105px auto; background-position: center 1px; }
+  .anvil-piece { left: 63%; transform: translateX(-50%) scale(.68); transform-origin: center bottom; bottom: -9px; }
+  .forge-scene-panel { border-left: 0; border-top: 1px solid #594331; }
+  .forge-main-nav { gap: .25rem; }
 }
