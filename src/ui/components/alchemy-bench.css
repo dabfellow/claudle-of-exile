@@ -1,16 +1,126 @@
+/* Alchemy: one Laboratory page — cauldron scene, flask belt, recipe book. */
 .alchemy-bench { display: grid; gap: 14px; }
-.alchemy-belt-row { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-.alchemy-flask-card { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2, rgba(20, 20, 28, 0.7)); cursor: pointer; text-align: left; }
-.alchemy-flask-card.selected { border-color: var(--accent, #d7b56d); }
-.alchemy-flask-card.grand { box-shadow: 0 0 0 1px rgba(215, 181, 109, 0.35); }
-.alchemy-slot { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 8px; border: 1px dashed var(--border); border-radius: 4px; font-size: 12px; }
-.alchemy-slot.filled { border-style: solid; border-color: rgba(155, 109, 222, 0.6); }
-.alchemy-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)); }
-.alchemy-card { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2, rgba(20, 20, 28, 0.6)); min-width: 0; overflow: hidden; align-content: start; }
-.alchemy-card.locked { opacity: 0.7; border-style: dashed; }
-.alchemy-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
-.alchemy-live-banner { display: grid; gap: 8px; padding: 10px 12px; margin-bottom: 10px; border: 1px solid rgba(155, 109, 222, 0.65); border-radius: 6px; background: rgba(155, 109, 222, 0.12); }
-.alchemy-pour-wrap { display: grid; gap: 8px; max-width: 240px; }
-.alchemy-vial { position: relative; height: 140px; width: 72px; border: 2px solid var(--border); border-radius: 6px 6px 14px 14px; overflow: hidden; background: rgba(12, 12, 18, 0.8); }
-.alchemy-liquid { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #b58eff, #6f42c1); transition: height 30ms linear; }
-.alchemy-target { position: absolute; left: 0; right: 0; height: 2px; background: #f2d28a; box-shadow: 0 0 6px #f2d28a; }
+.alch-pixel { image-rendering: pixelated; object-fit: contain; flex: none; }
+.alch-kicker { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.alch-section-head { display: grid; gap: 6px; margin-bottom: 10px; }
+.alch-section-head h3 { margin: 0; }
+.alch-section-head p { margin: 0; max-width: 72ch; }
+.alch-notice { margin: -6px 0 0; color: var(--accent-2); }
+
+/* ---- cauldron scene ---- */
+.alch-scene {
+  position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(180px, 1fr) minmax(0, 1.25fr);
+  align-items: end; gap: 12px; min-height: 290px; padding: 16px; border: 1px solid #5a4630aa; border-radius: 8px; background: #17120e;
+}
+.alch-scene-art { position: absolute; inset: 0; background-size: cover; background-position: 30% 45%; filter: saturate(0.9) brightness(0.72); }
+.alch-scene-shade {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 38% 55% at 24% 78%, color-mix(in srgb, var(--brew) 22%, transparent), transparent 70%),
+    linear-gradient(90deg, transparent 30%, #0f0c0acc 62%, #0f0c0aee),
+    linear-gradient(0deg, #0f0c0acc, transparent 45%);
+  transition: background 0.6s;
+}
+.alch-scene:not(.lit) .alch-scene-shade { background: linear-gradient(90deg, #0f0c0a55 20%, #0f0c0acc 62%, #0f0c0aee), linear-gradient(0deg, #0f0c0add, transparent 50%); }
+.alch-pot { position: relative; justify-self: center; display: grid; justify-items: center; width: 176px; }
+.alch-pot-img { position: relative; z-index: 2; width: 160px; height: 160px; filter: drop-shadow(0 6px 10px #000a); }
+.alch-scene.lit .alch-pot-img { filter: drop-shadow(0 0 14px color-mix(in srgb, var(--brew) 45%, transparent)) drop-shadow(0 6px 10px #000a); }
+.alch-fire { position: relative; z-index: 1; width: 118px; height: 70px; margin-top: -44px; object-fit: cover; object-position: center 70%; image-rendering: pixelated; }
+.alch-scene:not(.lit) .alch-fire { opacity: 0.35; filter: grayscale(0.6); }
+.alch-steam { position: absolute; z-index: 3; left: 50%; top: 22px; width: 90px; height: 120px; transform: translateX(-50%); pointer-events: none; }
+.alch-steam span {
+  position: absolute; bottom: 0; width: 10px; height: 10px; border-radius: 50%;
+  background: color-mix(in srgb, var(--brew) 70%, white); box-shadow: 0 0 8px var(--brew); opacity: 0;
+  animation: alch-bubble 2.6s ease-in infinite;
+}
+.alch-steam span:nth-child(1) { left: 18%; animation-delay: 0s; }
+.alch-steam span:nth-child(2) { left: 42%; animation-delay: 0.7s; width: 7px; height: 7px; }
+.alch-steam span:nth-child(3) { left: 64%; animation-delay: 1.3s; }
+.alch-steam span:nth-child(4) { left: 30%; animation-delay: 1.9s; width: 6px; height: 6px; }
+.alch-steam span:nth-child(5) { left: 76%; animation-delay: 2.2s; width: 8px; height: 8px; }
+@keyframes alch-bubble {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  15% { opacity: 0.95; }
+  100% { transform: translateY(-110px) scale(1.4); opacity: 0; }
+}
+.alch-status { position: relative; z-index: 2; display: grid; gap: 6px; align-self: center; padding: 12px 14px; border: 1px solid #ffffff14; border-radius: 6px; background: #120e0bd9; }
+.alch-status h3 { margin: 0; }
+.alch-status p { margin: 0; }
+.alch-rack { display: grid; gap: 6px; margin-top: 6px; padding-top: 8px; border-top: 1px solid #ffffff12; }
+.alch-rack .row { gap: 8px; }
+.alch-rack-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.alch-tube { position: relative; display: grid; justify-items: center; gap: 2px; width: 66px; padding: 4px 2px 3px; border: 1px solid #ffffff14; border-radius: 5px; background: #ffffff08; }
+.alch-tube.short { opacity: 0.55; }
+.alch-tube-sprite { width: 32px; height: 32px; background-size: 768px 32px; image-rendering: pixelated; animation: alch-tube 2.4s steps(24) infinite; }
+@keyframes alch-tube { to { background-position: -768px 0; } }
+.alch-tube-name { max-width: 100%; overflow: hidden; font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
+.alch-x { position: absolute; top: 0; right: 2px; padding: 0 3px; border: 0; background: none; color: var(--muted); font-size: 14px; line-height: 1; cursor: pointer; }
+.alch-x:hover { color: var(--bad); }
+
+/* ---- flask belt ---- */
+.alch-shelf { display: grid; gap: 8px; padding: 10px 12px; margin-bottom: 12px; border: 1px solid var(--line-2); border-radius: 6px; background: linear-gradient(180deg, #1d1813, #15120f); }
+.alch-shelf .row { gap: 8px; }
+.alch-shelf p { margin: 0; }
+.alch-vials { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 6px; border-bottom: 3px solid #4a3523; box-shadow: 0 3px 0 #2a1d12; }
+.alch-vial { display: grid; justify-items: center; gap: 1px; width: 76px; padding: 5px 3px; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--text); cursor: pointer; transition: transform 0.12s, background 0.12s; }
+.alch-vial:hover { background: #ffffff0a; transform: translateY(-2px); }
+.alch-vial.held { border-color: var(--accent); background: var(--accent-soft); transform: translateY(-6px); }
+.alch-vial-name { max-width: 100%; overflow: hidden; font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
+.alch-vial-str, .alch-socket-str { font-size: 11px; color: var(--good); }
+.alch-hint { color: var(--accent-2); }
+.alch-flasks { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
+.alch-flask { display: grid; align-content: start; gap: 8px; padding: 10px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--panel-2); transition: border-color 0.15s, opacity 0.15s; }
+.alch-flask.unequipped { justify-items: start; border-style: dashed; background: none; }
+.alch-flask.grand { border-color: #8a7146; }
+.alch-flask.can-pour { border-color: var(--accent-line); box-shadow: 0 0 0 1px var(--accent-soft); }
+.alch-flask.wont-fit { opacity: 0.5; }
+.alch-flask-head { display: flex; align-items: center; gap: 10px; padding: 0; border: 0; background: none; color: var(--text); text-align: left; }
+.alch-flask-head > span:last-child { display: grid; }
+.alch-flask.can-pour .alch-flask-head { cursor: pointer; }
+.alch-sockets { display: grid; gap: 5px; }
+.alch-socket { display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 4px 8px; border: 1px solid var(--line-2); border-radius: 17px; background: #0000002a; color: var(--text); text-align: left; }
+.alch-socket.open { border-style: dashed; }
+.alch-socket:not(:disabled) { cursor: pointer; }
+.alch-socket:not(:disabled):hover { border-color: var(--accent); background: var(--accent-soft); }
+.alch-socket.asking { border-color: var(--warn); background: var(--warn-soft); }
+.alch-socket-ring { width: 18px; height: 18px; margin: 0 3px; border: 2px dashed var(--line-2); border-radius: 50%; }
+.alch-socket-name { flex: 1; min-width: 0; overflow: hidden; font-size: 13px; white-space: nowrap; text-overflow: ellipsis; }
+
+/* ---- recipe book ---- */
+.alch-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.alch-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line-2); border-radius: 14px; background: none; color: var(--muted); font-size: 13px; cursor: pointer; }
+.alch-chip:hover { color: var(--text); border-color: var(--accent-line); }
+.alch-chip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-2); }
+.alch-chip.short .num { color: var(--bad); }
+.alch-chip .num { color: var(--muted); font-variant-numeric: tabular-nums; }
+.alch-book-spread { display: grid; grid-template-columns: minmax(200px, 0.8fr) minmax(0, 1.4fr); border: 1px solid #5a4630aa; border-radius: 6px; background: linear-gradient(90deg, #1c1712, #19150f 49.6%, #120e0b 50%, #1b1611); overflow: hidden; }
+.alch-index { margin: 0; padding: 6px; list-style: none; border-right: 1px solid #5a463066; max-height: 520px; overflow-y: auto; }
+.alch-index-row { display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 8px; border: 0; border-radius: 4px; background: none; color: var(--text); text-align: left; cursor: pointer; }
+.alch-index-row:hover { background: #ffffff0a; }
+.alch-index-row.on { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+.alch-index-row.locked { color: var(--dim); }
+.alch-index-row.locked img { filter: grayscale(0.9) brightness(0.7); }
+.alch-index-name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.alch-index-tag { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.alch-ready { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 5px var(--good); }
+.alch-page { min-width: 0; padding: 14px 16px; }
+.alch-page-body { display: grid; gap: 12px; }
+.alch-page-body p { margin: 0; }
+.alch-page-title { display: flex; align-items: flex-start; gap: 14px; }
+.alch-page-title h3 { margin: 2px 0 4px; font-size: 20px; }
+.alch-page-title > div { display: grid; gap: 3px; }
+.alch-effect { font-size: 15px; color: var(--text); }
+.alch-rank, .alch-herbs { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid #ffffff10; border-radius: 6px; background: #00000026; }
+.alch-rank .row { gap: 6px; }
+
+@media (max-width: 720px) {
+  .alch-scene { grid-template-columns: 1fr; min-height: 0; }
+  .alch-pot { width: 140px; }
+  .alch-pot-img { width: 120px; height: 120px; }
+  .alch-book-spread { grid-template-columns: 1fr; background: #1a1611; }
+  .alch-index { max-height: 240px; border-right: 0; border-bottom: 1px solid #5a463066; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alch-steam span, .alch-tube-sprite { animation: none; }
+  .alch-steam span { opacity: 0.6; }
+}

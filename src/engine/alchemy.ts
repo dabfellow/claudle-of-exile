@@ -203,19 +203,32 @@ export function flaskInfusionSlots(f: FlaskInstance): number {
   return f.grand ? 3 : 2;
 }
 
+/** Why this infusion can't go in this flask, or null when it fits. */
+export function infusionFitBlocker(infusionId: string, flask: FlaskInstance): string | null {
+  const def = infusionDef(infusionId);
+  if (!def) return 'Unknown infusion';
+  if (def.grandOnly && !flask.grand) return 'Needs a Grand flask';
+  const fDef = flaskDef(flask.flaskId);
+  if (def.flaskKinds && !def.flaskKinds.includes(fDef.kind)) return `${def.name} only fits Life or Mana flasks`;
+  return null;
+}
+
+/** The first empty infusion slot on a flask, or -1 when every slot is taken. */
+export function firstOpenInfusionSlot(flask: FlaskInstance): number {
+  const used = flask.infusions?.length ?? 0;
+  return used < flaskInfusionSlots(flask) ? used : -1;
+}
+
 export function pourVial(s: GameState, beltSlot: number, infusionSlot: number, vialIndex: number): string | null {
   if (isClassic(s)) return CLASSIC_BLOCK;
   const flask = s.flaskSlots[beltSlot];
   if (!flask) return 'Empty belt slot';
   const vial = s.alchemy.vials[vialIndex];
   if (!vial) return 'Vial not found';
-  const def = infusionDef(vial.infusion);
-  if (!def) return 'Unknown infusion';
   const maxSlots = flaskInfusionSlots(flask);
   if (infusionSlot < 0 || infusionSlot >= maxSlots) return `This flask only holds ${maxSlots} infusions`;
-  if (def.grandOnly && !flask.grand) return 'Requires a Grand flask';
-  const fDef = flaskDef(flask.flaskId);
-  if (def.flaskKinds && !def.flaskKinds.includes(fDef.kind)) return `${def.name} only fits Life or Mana flasks`;
+  const fit = infusionFitBlocker(vial.infusion, flask);
+  if (fit) return fit;
 
   flask.infusions ??= [];
   const next: FlaskInfusion = { id: vial.infusion, strength: vial.strength, strain: vial.strain };

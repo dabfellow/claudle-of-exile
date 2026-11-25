@@ -1,6 +1,6 @@
 # Roadmap and decisions
 
-Last updated 2026-11-24. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-25. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
@@ -730,6 +730,9 @@ The implementation passes the full 1,261-test suite and production typecheck. No
 The consolidated batch specification is retained below as a proposal. Its initial 1.3× attribute wording is superseded by the 0.4.1 attribute rebalance (demanding gems use 1.15×); use code for actual requirements. Its suggested `'maps'` gating/API names are design intent, not existing API contracts. Definitions that conflict with current data require review rather than silently changing gameplay.
 
 ## Other open items
+
+- [ ] Alchemy rebuilt as one Laboratory page: cauldron scene with the brew line-up, flask belt with a vial shelf, and a recipe book (chips, no dropdown) for infusions, flasks, reagents and orbs. New art: Teniers' *The Alchemist* backdrop, John Hargrove's pixel cauldrons (CC-BY), CC0 bottles and bubbling tubes from itch.io. Fixes pours always overwriting slot 1. See [Alchemy](ALCHEMY.md#screen).
+  - Built 2026-11-25; all tests and the build pass, and a quick in-game look at desktop and phone width. Not yet shipped.
 
 - [ ] Smelting Focus game rebuilt as Keep the Heat: tap to pump, a melt meter fills in the band, the fire catches and flares so you ease off, the top of the gauge scorches. See [Smelting](SMELTING_FURNACE.md#focus-minigame-keep-the-heat).
   - Built 2026-11-24; all 2,060 tests and the build pass, and a quick in-game check showed the warm-up, the fire catching, a flare and a scorch. Not yet shipped.

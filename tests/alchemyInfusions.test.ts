@@ -5,7 +5,9 @@ import { actionDef } from '../src/data/skills';
 import {
   brewsForNextRank,
   finishQueuedInfusion,
+  firstOpenInfusionSlot,
   flaskInfusionBuffStats,
+  infusionFitBlocker,
   infusionStrength,
   pourVial,
   prependInfusion,
@@ -59,6 +61,20 @@ describe('Alchemy: Your own flasks', () => {
     // Grand flask accepts grand-only infusion in slot 2
     expect(pourVial(s, 1, 0, 1)).toBeNull(); // last_breath
     expect(s.flaskSlots[1]!.infusions![0].id).toBe('last_breath');
+  });
+
+  it('pours into the first empty slot and reports why a vial will not fit', () => {
+    const s = newGame(1);
+    const life = newFlask(s, 'life_small', 1, false);
+    const granite = newFlask(s, 'granite', 1, false);
+    expect(firstOpenInfusionSlot(life)).toBe(0);
+    life.infusions = [{ id: 'instant', strength: 1.1, strain: 'sunpetal' }];
+    expect(firstOpenInfusionSlot(life)).toBe(1);
+    life.infusions.push({ id: 'cleansing', strength: 1, strain: 'sunpetal' });
+    expect(firstOpenInfusionSlot(life)).toBe(-1);
+    expect(infusionFitBlocker('cleansing', granite)).toBeNull();
+    expect(infusionFitBlocker('instant', granite)).toMatch(/Life or Mana/);
+    expect(infusionFitBlocker('last_breath', life)).toMatch(/Grand/);
   });
 
   it('applies infusion effects in combat stats, duration, cleansing, instant recovery and prism sharing', () => {

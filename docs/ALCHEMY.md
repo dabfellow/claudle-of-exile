@@ -97,7 +97,7 @@ Read [the build guide](SKILLING_BUILD_GUIDE.md) first. Numbers are starting valu
   - It takes 10 minutes and 20 herbs, and gives 200 raw XP.
   - Unlock levels follow the herb: Sunpetal 1, Frostleaf 12, Emberroot 25, Voidbloom 40, Moon Bloom 45, Thornvine 52, Star Bloom 60, Glimmermoss 68.
 - A finished brew becomes a **ready vial** in `alchemy.vials`.
-- **Pouring** a vial into a flask's infusion slot replaces whatever was there. It's instant and happens on the Belt tab, where the pour minigame is.
+- **Pouring** a vial into a flask fills its first empty slot. Replacing an infusion takes a deliberate click on that slot and a second click to confirm (2026-11-25; before this, the belt kept "Slot 1" selected and every pour overwrote it).
 - **Queue:** a list of brews (infusion and herb source) that runs in order while idle and offline. When it's empty, the action stops.
 
 ### Ranks (steady chase)
@@ -150,15 +150,16 @@ Brewing from a strain carrying a giga-rare mutation also unlocks that mutation's
 
 ### Screen
 
-- **Belt** tab: the five equipped flasks in a row, each with its infusion slots. Tap a flask to see its slots, and tap a ready vial to pour it into a chosen slot. The pour game sits beside.
-- Other tabs:
-  - **Infusions**: the book of every infusion with its rank, herb and effect, plus a **Brew** button.
-  - **Queue**.
-  - **Recipes**: flask bases, orbs and grand flasks.
+One **Laboratory** page (rebuilt 2026-11-25), plus the shared Masterworks tab. Top to bottom:
+
+- **Cauldron**: a pixel cauldron over a fire in front of Teniers' *The Alchemist*. The liquid and glow take the colour of what's brewing; it shows time left, Stop, and the **Up next** line-up of queued infusions as bubbling tubes.
+- **Focus** pour game.
+- **Flask belt**: a shelf of ready vials, then each equipped flask with its slots. Pick up a vial, then click a flask (first empty slot) or a filled slot (replace, with a confirm). Flasks the vial can't go in are dimmed with the reason.
+- **Recipe book**: chips for Infusions, Life, Mana, Defence, Utility, Grand, Reagents, Orbs (no dropdown). A list on the left, the chosen recipe's page on the right. Infusion pages explain rank in words, show herb sources as chips, the vial strength as a percentage, and Brew now / Add to line-up. Flask and orb pages show recipe mastery and the mastery batch buttons.
 
 ### Coming back
 
-- A card lists the infusions brewed while away, as ready vials with **Pour** buttons, and any rank-ups.
+- A card lists the vials brewed while away and any rank-ups, and points to the Alchemy page to pour them.
 - Flask charges work as they do today.
 
 ### Migration
@@ -172,7 +173,7 @@ Brewing from a strain carrying a giga-rare mutation also unlocks that mutation's
 - Strength math with rank and mutations.
 - Each infusion effect in combat stats.
 - Two-slot and three-slot limits.
-- Pouring replaces a slot.
+- Pouring fills the first empty slot; replacing needs an explicit slot.
 - Queue running offline.
 - Rank thresholds.
 - Grand recipe gate and grand-only infusions.

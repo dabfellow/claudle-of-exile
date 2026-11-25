@@ -12,6 +12,8 @@ export interface NewsEntry {
  */
 export const UPCOMING: string[] = [
   'Smelting’s Focus game is now Keep the Heat: pump the bellows to hold the furnace in its band and fill the melt meter, then ease off as the fire catches and flares before it scorches.',
+  'Alchemy is one Laboratory page: a bubbling cauldron with your brew line-up, your flask belt with a shelf of ready vials, and a recipe book for infusions, flasks, reagents and orbs.',
+  'Fixed pouring vials always replacing your flask’s first infusion. A vial now fills the first empty slot, and replacing an infusion asks first.',
 ];
 
 export const NEWS: NewsEntry[] = [

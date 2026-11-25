@@ -23,6 +23,14 @@ Files are named after their pack: `codespree-`, `sn-`, `craftpix-`, `freesample-
 - **woodcutting/lodge/cainos-\*.png**: cropped props from [Pixel Art Platformer - Village Props](https://cainos.itch.io/pixel-art-platformer-village-props) by Cainos. The author allows use and modification in free and commercial games. The original pack is not distributed with the game.
 - **woodcutting/lodge/top-bit-\*.png**: the hanging sign and dark panel from [Medieval Pixel UI](https://top-bit-studios.itch.io/free-medieval-pixel-ui) by Top Bit Studios, [CC0](https://creativecommons.org/publicdomain/zero/1.0/). Used for the Trophy Wall sign and nameplates.
 
+## Alchemy lab
+
+- **alchemy/lab-teniers.webp**: David Teniers the Younger, *The Alchemist* (c. 1640–50), Mauritshuis, The Hague (inv. 261), via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:David_Teniers_de_Jonge_-_The_Alchemist_-_261_-_Mauritshuis.jpg). Public domain. Resized to 1600px webp; darkened in CSS behind the cauldron.
+- **alchemy/cauldron-\*.png**: [Alchemy or Witch's Cauldrons](https://opengameart.org/content/alchemy-or-witchs-cauldrons) by John Hargrove, [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). **Credit required:** "Cauldrons by John Hargrove". Cut from the sheet into one 32px file per colour, black background made transparent.
+- **alchemy/bottle-\*.png**: plain bottles from [Pixel Potion Pack](https://cgato1.itch.io/pixel-potion-pack-32x24-alchemy-bottles-with-labels-quality-tags) by CGatO1, CC0. Marked on itch.io as made without generative AI. Shrunk from the 10× sheet to 1× and cut into 24px files.
+- **alchemy/tube-\*.png**: [Boiling Flasks – 32x32 Animated Icons](https://pixelnewbie.itch.io/boiling-flasks) by Pixelnewbie, CC0. Marked as made without generative AI. Each 8×3 frame sheet laid out as a 24-frame strip.
+- The fire under the cauldron reuses `smelting/forge-hearth.webp` (SpriteCanvas, CC0; see Woodcutting/Smelting entries above).
+
 ## Combat terrain backdrops
 
 The `zones/terrain-*.webp` images are existing illustrations, paintings and prints. They were cropped, color-adjusted and converted to WebP for the game. Cleveland Museum of Art images come from its [CC0 Open Access collection](https://www.clevelandart.org/open-access).
