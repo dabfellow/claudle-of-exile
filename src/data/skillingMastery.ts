@@ -72,6 +72,8 @@ const ORDINARY_INPUTS = new Set([
   'ironwood_log', 'ancient_log', 'spirit_log', 'worldwood_log',
   'sunpetal', 'frostleaf', 'emberroot', 'voidbloom', 'copper_bar', 'iron_bar', 'mithril_bar',
   'ash_plank', 'oak_plank', 'yew_plank', 'rough_gem', 'arcane_dust',
+  'flax', 'cotton', 'wild_silk', 'linen_cloth', 'cotton_cloth', 'silk_cloth',
+  'rough_hide', 'thick_pelt', 'scaled_hide', 'rough_leather', 'thick_leather', 'scaled_leather',
   'vellum', 'fine_vellum', 'gall_ink', 'sepia_ink',
 ]);
 
@@ -398,7 +400,7 @@ export function legacyMasteryForAction(a: SkillAction): MasterySpec | undefined 
       const family = b.slot === 'weapon' ? 'weapons' : b.slot === 'offhand' ? 'offhands' : 'garments';
       return production(`woodcrafting.${material}.${family}`, `${materialName(material)} ${materialName(family)}`, a.skill, a);
     }
-    return production(`woodcrafting.${a.id}`, a.name, a.skill, a);
+    return production(`${a.skill}.${a.id}`, a.name, a.skill, a);
   }
   if (a.skill === 'smithing') {
     if (a.baseId) {

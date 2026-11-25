@@ -17,6 +17,10 @@ export const UPCOMING: string[] = [
   'Masterworks have their own page under a new Mastery heading in the sidebar. It opens once five life skills reach level 25.',
   'Ten new masterworks replace the old ones. Each takes level 60+ finds from three or more gathering skills, production goods and a rare drop, and makes a named piece of gear whose every modifier is Tier 1, even after rerolling it with orbs. The higher ranks add a Void Slot, a Doom Implicit or a Doom Tier modifier.',
   'The old masterworks, including the profession tools, are gone. Items you already made keep working, and a project left unfinished can be cancelled from the Masterworks page for all its materials back.',
+  'Tailoring has its own cloth and leather now. Foraging turns up flax, cotton and wild silk beside its herbs; weave them into Linen, Cotton Cloth and Silk. Buy raw hides at the new hide stall and tan them into leather.',
+  'Robes are sewn from cloth and leather armour from leather, instead of planks and copper bars.',
+  'The Tailoring page is redone as a tailor’s table: a workshop banner with your cloth and leather on the shelf, a pattern book, a cutting table, and a Weave & tan tab with the loom, the tanning vats and the hide stall.',
+  'Bow staves, wand blanks and staff shafts have their own pictures.',
 ];
 
 export const NEWS: NewsEntry[] = [

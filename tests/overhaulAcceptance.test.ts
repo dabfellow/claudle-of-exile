@@ -1,3 +1,4 @@
+import { TAILOR_TIERS } from '../src/data/tailoring';
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -139,6 +140,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
     obtainable.add('mineral_fragment');
     obtainable.add('stone_fragment');
     obtainable.add('heartwood_fragment');
+    for (const t of TAILOR_TIERS) obtainable.add(t.hide); // bought at the Tailoring hide stall
     obtainable.add('inscription_fragment');
     obtainable.add('stardust');
     obtainable.add('gilded_stardust');
@@ -279,7 +281,7 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
       { skill: 'smelting', actionId: 'smelt_copper', bank: { copper_ore: 50000 } },
       { skill: 'smithing', actionId: 'smith_rusted_sword', bank: { copper_bar: 50000, ash_plank: 50000 } },
       { skill: 'woodcrafting', actionId: 'smith_short_bow', bank: { copper_bar: 50000, ash_bow_stave: 50000 } },
-      { skill: 'tailoring', actionId: 'smith_simple_robe', bank: { copper_bar: 50000, ash_plank: 50000 } },
+      { skill: 'tailoring', actionId: 'smith_simple_robe', bank: { linen_cloth: 50000 } },
       { skill: 'sawmilling', actionId: 'mill_ash_bow_stave', bank: { ash_log: 50000 } },
       { skill: 'harvesting', actionId: 'forage_sunpetal' },
       { skill: 'alchemy', actionId: 'brew_life_small', bank: { sunpetal: 50000, ash_log: 50000 } },

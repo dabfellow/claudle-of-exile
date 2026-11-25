@@ -40,6 +40,7 @@ import { DelveView } from '../components/DelveView';
 import { AnvilView } from '../components/AnvilView';
 import { WoodBench } from '../components/WoodBench';
 import { SawmillPage } from '../components/Sawmill';
+import { TailorBench } from '../components/TailorBench';
 import { CraftOutputSettings } from '../components/CraftOutputSettings';
 import { LapidaryBench } from '../components/LapidaryBench';
 import { ForagingBench } from '../components/ForagingBench';
@@ -731,7 +732,8 @@ function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing'
     {skill === 'mining' && <DelveView />}
     {skill === 'smelting' && <FurnaceView />}
     {skill === 'smithing' && <AnvilView bossKeys={<BossKeyRecipes />} catalysts={catalysts} />}
-    {(skill === 'woodcrafting' || skill === 'tailoring') && <WoodBench key={skill} skill={skill} catalysts={catalysts} />}
+    {skill === 'woodcrafting' && <WoodBench skill="woodcrafting" catalysts={catalysts} />}
+    {skill === 'tailoring' && <TailorBench catalysts={catalysts} />}
     {skill === 'sawmilling' && <SawmillPage />}
     {skill === 'gemcutting' && <LapidaryBench />}
     {skill === 'harvesting' && <ForagingBench onOpenGreenhouse={() => go?.('greenhouse')} />}

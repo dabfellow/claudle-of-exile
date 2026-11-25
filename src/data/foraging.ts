@@ -1,4 +1,5 @@
 import type { SkillAction } from './skills';
+import { FIBRE_CHANCE, fibreForPatch } from './tailoring';
 
 export type MutationTier = 'magic' | 'rare' | 'unique' | 'legendary';
 export type StrainRarity = 'normal' | MutationTier;
@@ -163,8 +164,10 @@ export const FORAGING_ACTIONS: SkillAction[] = BASE_SPECIES.map((sp): SkillActio
   xp: sp.xp,
   color: sp.color,
   outputs: { [sp.herb]: 1 },
-  bonus: sp.essences.length
-    ? sp.essences.map((id) => ({ id, chance: +(0.02 / sp.essences.length).toFixed(4), qty: 1 }))
-    : [],
+  bonus: [
+    ...sp.essences.map((id) => ({ id, chance: +(0.02 / sp.essences.length).toFixed(4), qty: 1 })),
+    // fibre for Tailoring turns up alongside the herb
+    { id: fibreForPatch(sp.level), chance: FIBRE_CHANCE, qty: 1 },
+  ],
   foraging: { plant: sp.id, mode: 'wild', essences: sp.essences },
 }));
