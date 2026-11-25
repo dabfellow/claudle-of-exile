@@ -83,7 +83,7 @@ function RewardArt({ reward }: { reward: ProjectReward }) {
   return <Icon name="target" size={26} color="var(--accent)" />;
 }
 
-function RewardOutcome({ reward }: { reward: ProjectReward }) {
+function RewardOutcome({ reward, showBaseStats }: { reward: ProjectReward; showBaseStats: boolean }) {
   if (reward.category === 'equipment') {
     const base = baseDef(reward.baseId);
     const u = reward.uniqueId ? uniqueDef(reward.uniqueId) : null;
@@ -100,6 +100,7 @@ function RewardOutcome({ reward }: { reward: ProjectReward }) {
           </Badge>
         </div>
         <div className="dim small">{slotDesc}</div>
+        {showBaseStats && <EquipmentBasePreview base={base} />}
         <div className="project-reward-mods">
           {u?.mods.map((m, idx) => (
             <div key={idx} className="project-reward-mod-line">
@@ -446,7 +447,7 @@ function ProjectCard({
             <span>Crafted Outcome</span>
             <span className="dim">Reward</span>
           </div>
-          <RewardOutcome reward={p.reward} />
+          <RewardOutcome reward={p.reward} showBaseStats={p.skill === 'smithing' || p.skill === 'woodcrafting'} />
         </div>
       </div>
 
@@ -715,3 +716,4 @@ function ProjectCategoryBoard({ skill, go, category }: { skill: SkillId; go?: (s
     </section>
   );
 }
+import { EquipmentBasePreview } from './ItemView';

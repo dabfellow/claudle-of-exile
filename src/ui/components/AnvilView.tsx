@@ -12,6 +12,8 @@ import {
   type ForgePlan, type ForgeRarityOdds, type ForgeSong,
 } from '../../engine/forging';
 import { itemName, openKinds } from '../../engine/items';
+import { stationLockReason } from '../../engine/hideout';
+import { EquipmentBasePreview } from './ItemView';
 import { focusMult, focusOf, maxFocusSpeed, minigameSwing, overflowOf, strikeResult, type SwingResult } from '../../engine/minigame';
 import { actionIntervalMs, skillLevel, stopAction } from '../../engine/skills';
 import { masteryLevel } from '../../engine/skillingMastery';
@@ -281,7 +283,7 @@ export function ForgeRack({ includeSongs = false }: { includeSongs?: boolean } =
   );
 }
 
-type ForgeTab = 'anvil' | 'patterns' | 'book' | 'quick' | 'master' | 'masterworks';
+type ForgeTab = 'anvil' | 'patterns' | 'book' | 'master' | 'masterworks';
 
 const forgeItemGroups: Record<string, string> = {
   sword: 'Swords', axe: 'Axes', dagger: 'Daggers', mace: 'Maces', sceptre: 'Sceptres',
@@ -319,7 +321,7 @@ function PatternBook({ s }: { s: GameState }) {
   );
 }
 
-function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, catalysts, openRecipes }: {
+function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, catalysts, openRecipes, bossKeys }: {
   s: GameState;
   plan: ForgePlan;
   setPlan: (plan: ForgePlan) => void;
@@ -329,9 +331,14 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
   setNotice: (notice: string) => void;
   catalysts?: ReactNode;
   openRecipes: () => void;
+  bossKeys?: ReactNode;
 }) {
   const [stage, setStage] = useState<ForgeStageId>('shape');
-  const [category, setCategory] = useState<ForgeCategory>(() => forgeCategoryOf(plan.baseId));
+  const keysAvailable = !!bossKeys && !stationLockReason(s, 'map_device');
+  const runningAction = s.action?.kind === 'skill' ? actionDef(s.action.actionId) : undefined;
+  const runningKey = runningAction?.skill === 'smithing' && !runningAction.baseId && runningAction.id.includes('key') ? runningAction : undefined;
+  const [category, setCategory] = useState<ForgeCategory | 'keys'>(() => keysAvailable && runningKey ? 'keys' : forgeCategoryOf(plan.baseId));
+  const keysView = keysAvailable && category === 'keys';
   const [group, setGroup] = useState('');
   const [showLocked, setShowLocked] = useState(false);
   const [name, setName] = useState('');
@@ -381,7 +388,7 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
     setStage('shape');
     setNotice('');
   };
-  const selectCategory = (next: ForgeCategory) => {
+  const selectCategory = (next: ForgeCategory | 'keys') => {
     setCategory(next);
     setGroup('');
     setShowLocked(false);
@@ -428,8 +435,11 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
               onClick={() => selectCategory(cat.id)}
             >{cat.label}</button>
           ))}
+          {keysAvailable && <button type="button" aria-pressed={keysView} className={`gem-chip ${keysView ? 'active' : ''}`}
+            onClick={() => selectCategory('keys')}>Boss Keys</button>}
         </div>
       </div>
+      {!keysView && <>
       {groups.length > 1 && (
         <label className="anvil-select">Item type
           <select value={group} onChange={(event) => setGroup(event.target.value)}>
@@ -458,6 +468,7 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
           {' '}Include locked items
         </label>
       )}
+      </>}
     </div>
   );
 
@@ -477,15 +488,17 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
           </div>
         </div>
         <section className="forge-scene-panel" aria-label="Forge gear">
-          <div className="forge-selection">
+          {!keysView && <div className="forge-selection">
             <h2>{base.name}</h2>
             <span className="dim small">Requires Forging Lv {action ? gateOf(action) : 1}</span>
             {action && <span className="dim small">Comes out {forgeOddsText(forgeRarityOdds(s, plan))}</span>}
-          </div>
-          <details className="forge-picker">
+          </div>}
+          <details className="forge-picker" open={keysView || undefined}>
             <summary>Choose a different item</summary>
             {blankPicker}
           </details>
+          {!keysView && <>
+          <EquipmentBasePreview base={base} />
           {action && (
             <div className="forge-materials">
               <div className="forge-materials-heading">
@@ -524,10 +537,16 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
               <span><b>{itemName(lastItem)}</b><br /><small className="dim">Added to your inventory</small></span>
             </div>
           )}
+          </>}
         </section>
       </div>
+      {keysView && <div className="forge-options">
+        <UseBarGrade label="Spend this bar quality first" />
+        {bossKeys}
+        {runningKey && <AnvilHammer recipe={runningKey} s={s} key={runningKey.id} />}
+      </div>}
       {running && <AnvilHammer recipe={running} s={s} key={running.id} />}
-      <div className="forge-options">
+      {!keysView && <div className="forge-options">
         <details className="forge-option" open={master || undefined}>
           <summary>{master ? 'Choose alloy and customise' : 'Customise this item'}</summary>
           <div className="anvil-plan">
@@ -673,13 +692,13 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
             {catalysts}
           </div>
         </details>
-      </div>
+      </div>}
       {notice && <p className="small" role="status">{notice}</p>}
     </section>
   );
 }
 
-export function AnvilView({ quickRecipes, catalysts, masterworks }: { quickRecipes: ReactNode; catalysts?: ReactNode; masterworks?: ReactNode }) {
+export function AnvilView({ bossKeys, catalysts, masterworks }: { bossKeys: ReactNode; catalysts?: ReactNode; masterworks?: ReactNode }) {
   const s = useGame();
   const level = skillLevel(s, 'smithing');
   const [tab, setTab] = useState<ForgeTab>(() => {
@@ -712,7 +731,6 @@ export function AnvilView({ quickRecipes, catalysts, masterworks }: { quickRecip
   ];
   const extraTabs: TabDef<ForgeTab>[] = [
     { id: 'book', label: 'Forge journal' },
-    { id: 'quick', label: 'Quick recipes' },
     {
       id: 'master',
       label: 'Master forms',
@@ -732,17 +750,9 @@ export function AnvilView({ quickRecipes, catalysts, masterworks }: { quickRecip
         </div>
         {extrasOpen && <div id="forge-extras"><Tabs tabs={extraTabs} value={tab} onChange={changeTab} /></div>}
       </div>
-      {tab === 'anvil' && <ForgePlanPanel key="anvil" s={s} plan={plan} setPlan={setPlan} master={false} start={() => start(plan)} notice={notice} setNotice={setNotice} catalysts={catalysts} openRecipes={() => changeTab('patterns')} />}
+      {tab === 'anvil' && <ForgePlanPanel key="anvil" s={s} plan={plan} setPlan={setPlan} master={false} start={() => start(plan)} notice={notice} setNotice={setNotice} catalysts={catalysts} openRecipes={() => changeTab('patterns')} bossKeys={bossKeys} />}
       {tab === 'master' && <ForgePlanPanel key="master" s={s} plan={masterPlan} setPlan={setMasterPlan} master start={() => start(masterPlan)} notice={notice} setNotice={setNotice} catalysts={catalysts} openRecipes={() => changeTab('patterns')} />}
       {(tab === 'anvil' || tab === 'master') && <ForgeRack includeSongs />}
-      {tab === 'quick' && <>
-        <SkillIntro step="Quick recipes">
-          Make basic items and boss keys here. Forge gear lets you shape item bonuses and work toward journal chapters.
-        </SkillIntro>
-        <UseBarGrade label="Spend this bar quality first" />
-        {catalysts}
-        {quickRecipes}
-      </>}
       {tab === 'masterworks' && <><UseBarGrade label="Spend this bar quality first" />{masterworks}</>}
       {tab === 'book' && <PatternBook s={s} />}
       {tab === 'patterns' && (
@@ -763,8 +773,6 @@ export function AnvilView({ quickRecipes, catalysts, masterworks }: { quickRecip
           {notice && <p className="dim small" role="status">{notice}</p>}
         </section>
       )}
-      {tab === 'quick' && s.action?.kind === 'skill' && actionDef(s.action.actionId).skill === 'smithing' && !forgeAction(s, s.action.actionId) &&
-        <AnvilHammer recipe={actionDef(s.action.actionId)} s={s} key={s.action.actionId} />}
     </div>
   );
 }

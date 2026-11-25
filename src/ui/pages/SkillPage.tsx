@@ -469,24 +469,6 @@ function SkillHeader({ skill }: { skill: SkillId }) {
   );
 }
 
-/** Smithing / Forging splits items into tabs by slot first. */
-const FORGE_TABS: { id: string; label: string; slots: string[] }[] = [
-  { id: 'weapon', label: 'Weapons', slots: ['weapon'] },
-  { id: 'offhand', label: 'Shields', slots: ['offhand'] },
-  { id: 'helmet', label: 'Helmets', slots: ['helmet'] },
-  { id: 'body', label: 'Plate Armour', slots: ['body'] },
-  { id: 'gloves', label: 'Gauntlets', slots: ['gloves'] },
-  { id: 'boots', label: 'Greaves', slots: ['boots'] },
-  { id: 'jewellery', label: 'Jewellery', slots: ['belt', 'amulet', 'ring'] },
-  { id: 'keys', label: 'Boss Keys', slots: [] },
-];
-
-function forgeTab(a: SkillAction): string {
-  if (a.id.includes('key')) return 'keys';
-  const slot = a.baseId ? baseDef(a.baseId).slot : '';
-  return FORGE_TABS.find((x) => x.slots.includes(slot))?.id ?? 'weapon';
-}
-
 interface Tier {
   key: string;
   label: string;
@@ -736,18 +718,12 @@ export function SkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId)
   return <OpenSkillPage skill={skill} go={go} />;
 }
 
-function QuickForgeRecipes() {
+function BossKeyRecipes() {
   const s = useGame();
-  const [tab, setTab] = useState('weapon');
   const level = skillLevel(s, 'smithing');
-  const recipes = actionsFor('smithing').filter((a) => !a.purpose && !a.id.startsWith('staged_forge_') && forgeTab(a) === tab);
-  return <>
-    <div className="smith-tabs">
-      {FORGE_TABS.map(({ id, label }) => <button key={id} className={`gem-chip ${tab === id ? 'active' : ''}`} onClick={() => setTab(id)}>{label}</button>)}
-    </div>
-    <ProfessionWorkbench key={tab} skill="smithing" groups={tiersOf('smithing', recipes)} isUnlocked={(a) => a.level <= level}
-      renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />
-  </>;
+  const recipes = actionsFor('smithing').filter((a) => !a.baseId && a.id.includes('key'));
+  return <ProfessionWorkbench skill="smithing" groups={tiersOf('smithing', recipes)} isUnlocked={(a) => a.level <= level}
+    renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />;
 }
 
 function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'gemcutting' | 'harvesting' | 'alchemy' | 'cartography'; go?: (skill: SkillId) => void }) {
@@ -757,7 +733,7 @@ function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing'
     <SkillHeader skill={skill} />
     {skill === 'mining' && <DelveView masterworks={projects} />}
     {skill === 'smelting' && <FurnaceView projects={projects} />}
-    {skill === 'smithing' && <AnvilView quickRecipes={<QuickForgeRecipes />} catalysts={catalysts} masterworks={projects} />}
+    {skill === 'smithing' && <AnvilView bossKeys={<BossKeyRecipes />} catalysts={catalysts} masterworks={projects} />}
     {skill === 'woodcrafting' && <WoodBench catalysts={catalysts} masterworks={projects} />}
     {skill === 'gemcutting' && <LapidaryBench masterworks={projects} />}
     {skill === 'harvesting' && <ForagingBench masterworks={projects} />}

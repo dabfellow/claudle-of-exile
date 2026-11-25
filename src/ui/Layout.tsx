@@ -154,6 +154,8 @@ function Ring({ value, color }: { value: number; color: string }) {
 export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
   const s = useGame();
   const active = activeSkill(s);
+  const now = Date.now();
+  const harvestReady = s.foraging.plots.some((plot) => plot && plot.readyAt <= now);
   const points = pointsLeft(s) + (choiceWaiting(s) ? 1 : canAscend(s) ? Math.max(0, ascendancyPointsLeft(s)) : 0);
   return (
     <nav className="sidebar">
@@ -193,6 +195,9 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
                 {it.page === 'tree' && points > 0 && <span className="nav-badge hot">+{points}</span>}
                 {it.page === 'equipment' && <span className="nav-badge" title="Items in your inventory">{s.inventory.length}</span>}
                 {it.page === 'combat' && s.ground.length + s.offlineHaul.length > 0 && <span className="nav-badge loot" title="Loot waiting to be picked up">{s.ground.length + s.offlineHaul.length}</span>}
+                {it.page === 'harvesting' && harvestReady && (
+                  <span className="nav-badge hot" role="img" title="Greenhouse plants ready to harvest" aria-label="Greenhouse plants ready to harvest">!</span>
+                )}
                 {it.page === 'achievements' && <span className="nav-badge">{s.achievements.length}</span>}
               </button>
             );

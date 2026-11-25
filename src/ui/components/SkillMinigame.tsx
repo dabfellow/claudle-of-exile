@@ -6,6 +6,7 @@ import type { GameState, SkillId } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { ProgressBar } from './common';
 import { SkillGame } from './minigames';
+import { WoodcarvingGame } from './WoodcarvingGame';
 
 const HOW_TO: Partial<Record<SkillId, string>> = {
   woodcutting: 'Swing the axe down to split each log into two halves that weigh the same. Within 3% of even is a double, 7% a hit, 15% weak.',
@@ -13,7 +14,7 @@ const HOW_TO: Partial<Record<SkillId, string>> = {
   thieving: 'Marks: tap rapidly while their back is turned to fill Focus; long flurries give double Focus — pause when they look back! Focus speed holds for nearly a minute. Heist rooms: tap the lit pins in order.',
   agility: 'Jump while the marker is in the bright band, or its gold middle for a double.',
   archaeology: 'Brush soil squares to uncover the find. Avoid hairline cracks: 0 chips is a double, 1 a hit, 2 weak, 3+ a miss.',
-  woodcrafting: 'Trace the marked line from start to finish in four seconds. A close trace earns a double.',
+  woodcrafting: 'Follow the grain in one continuous stroke. An intact shaving earns double Focus.',
   alchemy: 'Hold to pour into the vial and release right on the target line. Dead on is a double.',
   gemcutting: 'Tap when the turning facet line meets the fixed guide. An exact cut earns a double.',
   runecarving: 'Drag from the circle along the whole stroke without leaving the line. Hug the gold middle for a double.',
@@ -33,12 +34,12 @@ function runningSkill(s: GameState): SkillId | null {
 }
 
 /** The manual side of a skill: play it for Focus, or leave it running. */
-export function SkillMinigame({ skill, portrait, targetName }: { skill: SkillId; portrait?: string; targetName?: string }) {
+export function SkillMinigame({ skill, portrait, targetName, showBlank }: { skill: SkillId; portrait?: string; targetName?: string; showBlank?: boolean }) {
   const s = useGame();
   const [result, setResult] = useState<{ id: number; r: SwingResult } | null>(null);
   if (skill === 'mining' || skill === 'smelting' || skill === 'smithing') return null;
   if (!hasMinigame(skill)) return null;
-  if (runningSkill(s) !== skill) return null;
+  if (runningSkill(s) !== skill) return skill === 'woodcrafting' && showBlank ? <WoodcarvingGame /> : null;
 
   const onSwing = (r: SwingResult) => {
     game.act((st, ctx) => (skill === 'woodcutting' ? splitSwing(st, ctx, r) : minigameSwing(st, r)));
@@ -53,20 +54,20 @@ export function SkillMinigame({ skill, portrait, targetName }: { skill: SkillId;
     ? (hold > 0.5 ? `${Math.ceil(hold)}s full · ${Math.ceil(rem)}s left` : `${Math.ceil(rem)}s left`)
     : null;
   return (
-    <div className="card minigame">
+    <div className={skill === 'woodcrafting' ? 'card minigame woodcarving-focus' : 'card minigame'}>
       <div className="card-title">
-        Focus
+        {skill === 'woodcrafting' ? 'One Long Curl' : 'Focus'}
         <span className="grow" />
         <span className="card-hint">{HOW_TO[skill]}</span>
       </div>
-      <SkillGame
+      {skill === 'woodcrafting' ? <WoodcarvingGame key={action?.id} onSwing={onSwing} /> : <SkillGame
         skill={skill}
         matId={matId}
         markLevel={skill === 'thieving' && s.action?.kind === 'skill' ? actionDef(s.action.actionId).level : undefined}
         portrait={portrait}
         targetName={targetName}
         onSwing={onSwing}
-      />
+      />}
       <div className="row minigame-foot">
         <div className="minigame-bars grow">
           <ProgressBar value={focusOf(s)} color={color} />

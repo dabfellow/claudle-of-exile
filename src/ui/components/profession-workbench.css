@@ -224,3 +224,16 @@ html .profession-station .minigame { margin: 16px 0 0; padding: 14px; background
 .agility-shortcut-list li { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 6px 0; border-bottom: 1px solid #2c3231; }
 .agility-shortcut-list li.locked { opacity: 0.6; }
 .agility-shortcut-level { color: var(--profession, #5fc4b0); font-size: 12px; padding-top: 2px; }
+.equipment-base-preview {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-inline-start: 2px solid color-mix(in srgb, var(--profession, #c8a078) 65%, #363530);
+  background: #110f0c45;
+  color: #d1c8b8;
+  font-size: 12px;
+}
+.equipment-base-preview h3 { margin: 0 0 3px; color: #efe2cd; font: 14px Georgia, serif; }
+.equipment-base-preview b { color: #efe2cd; font-variant-numeric: tabular-nums; }
+.equipment-base-implicit { color: #dbbb87; }

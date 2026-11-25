@@ -1,7 +1,7 @@
 import { relicForm } from '../../data/relics';
 import { Fragment } from 'react';
 import { affixDef } from '../../data/affixes';
-import { attributeReq, baseDef, uniqueDef, WEAPON_FAMILIES, type UniqueDef } from '../../data/bases';
+import { attributeReq, baseDef, uniqueDef, WEAPON_FAMILIES, type BaseDef, type UniqueDef } from '../../data/bases';
 import { MECHANIC_INFO } from '../../data/passiveTree';
 import { BASE_ATTACK_MS } from '../../data/gems';
 import { forgeImplicits, hasKingsbronze } from '../../data/forging';
@@ -19,6 +19,36 @@ import { togglePin, Tooltip, useAltKey, Art, artUrl } from './common';
 import { packArtUrl } from '../assets';
 
 const RARITY_LABEL = { normal: 'Normal', magic: 'Magic', rare: 'Rare', unique: 'Unique' };
+
+function EquipmentStatLines({ base, item }: { base: BaseDef; item?: Item }) {
+  const phys = item && base.phys ? weaponPhys(item) : base.phys;
+  const def = item ? itemDefences(item) : base;
+  const aug = (now: number | undefined, was: number | undefined) => (now !== was ? 'mod' : undefined);
+  return <>
+    {base.phys && phys && <>
+      <div>Physical Damage: <b className={aug(phys[1], base.phys[1])}>{phys[0]}–{phys[1]}</b></div>
+      <div>
+        Attack Time: <b>{(BASE_ATTACK_MS / (1 + (base.speed ?? 0) / 100) / 1000).toFixed(2)}s</b>
+        {base.speed ? <span className="dim"> (+{base.speed}% speed)</span> : null} · Crit: <b>{base.crit}%</b>
+      </div>
+    </>}
+    {base.tags.includes('armour') && <>
+      {def.armour ? <div>Armour: <b className={aug(def.armour, base.armour)}>{def.armour}</b></div> : null}
+      {def.evasion ? <div>Evasion Rating: <b className={aug(def.evasion, base.evasion)}>{def.evasion}</b></div> : null}
+      {def.energyShield ? <div>Energy Shield: <b className={aug(def.energyShield, base.energyShield)}>{def.energyShield}</b></div> : null}
+    </>}
+  </>;
+}
+
+export function EquipmentBasePreview({ base }: { base: BaseDef }) {
+  return <section className="equipment-base-preview" aria-label="Base stats">
+    <h3>Base stats</h3>
+    <EquipmentStatLines base={base} />
+    {base.implicits?.filter((implicit) => implicit.text).map((implicit) => (
+      <div className="equipment-base-implicit" key={implicit.text}>{implicit.text}</div>
+    ))}
+  </section>;
+}
 
 function ModLine({ mod, detail, state, uniqueItem }: { mod: RolledMod; detail: boolean; state?: GameState; uniqueItem?: UniqueDef | null }) {
   // class-mechanic knobs do nothing on other classes
@@ -68,10 +98,6 @@ export function ItemTip({
   const cmp = state && compare ? compareItem(state, item, into) : null;
   const implicits = [...(base.implicits ?? []), ...forgeImplicits(item), ...woodImplicits(item)].filter((i) => i.text);
   const extraCraft = hasKingsbronze(item);
-  // shown after local mods; magic-coloured when a mod changed them, as in PoE
-  const phys = base.phys ? weaponPhys(item) : null;
-  const def = itemDefences(item);
-  const aug = (now: number | undefined, was: number | undefined) => (now !== was ? 'mod' : undefined);
   return (
     <div className={`tip item-tip rar-${item.rarity}`}>
       <div className="item-tip-head">
@@ -106,32 +132,7 @@ export function ItemTip({
             </span>
           )}
         </div>
-        {base.phys && phys && (
-          <>
-            <div>
-              Physical Damage: <b className={aug(phys[1], base.phys[1])}>{phys[0]}–{phys[1]}</b>
-            </div>
-            <div>
-              Attack Time: <b>{(BASE_ATTACK_MS / (1 + (base.speed ?? 0) / 100) / 1000).toFixed(2)}s</b>
-              {base.speed ? <span className="dim"> (+{base.speed}% speed)</span> : null} · Crit: <b>{base.crit}%</b>
-            </div>
-          </>
-        )}
-        {base.tags.includes('armour') && def.armour ? (
-          <div>
-            Armour: <b className={aug(def.armour, base.armour)}>{def.armour}</b>
-          </div>
-        ) : null}
-        {base.tags.includes('armour') && def.evasion ? (
-          <div>
-            Evasion Rating: <b className={aug(def.evasion, base.evasion)}>{def.evasion}</b>
-          </div>
-        ) : null}
-        {base.tags.includes('armour') && def.energyShield ? (
-          <div>
-            Energy Shield: <b className={aug(def.energyShield, base.energyShield)}>{def.energyShield}</b>
-          </div>
-        ) : null}
+        <EquipmentStatLines base={base} item={item} />
         {!!item.quality && <div>Quality: <b>+{Number(item.quality.toFixed(1))}%</b></div>}
         <Requirements item={item} state={state} />
         {(implicits.length > 0 || item.doomImplicit || extraCraft) && <div className="sep" />}

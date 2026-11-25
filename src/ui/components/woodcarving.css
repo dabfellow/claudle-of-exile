@@ -1,0 +1,158 @@
+.profession-woodcrafting {
+  --bench-edge: #68472f;
+  --bench-gold: #e5bf82;
+  --bench-ink: #d9bfa0;
+  --bench-grain: repeating-linear-gradient(2deg, transparent 0 9px, #d49a6020 10px, transparent 11px 15px);
+}
+
+html .profession-page.profession-woodcrafting .profession-header {
+  background: var(--bench-grain), linear-gradient(105deg, #4a2b1c, #211712 65%, #171310);
+  border-color: var(--bench-edge);
+  box-shadow: inset 0 1px #be874330;
+}
+
+.profession-woodcrafting .profession-header-icon {
+  color: var(--bench-gold);
+  background: #1b140f;
+  border-color: #95693f;
+  box-shadow: inset 0 0 0 3px #432c1e;
+}
+
+.profession-woodcrafting .profession-header h1,
+.profession-woodcrafting .profession-header-text p { color: #f0d4a8; }
+
+html .profession-woodcrafting > .smith-tabs {
+  gap: 4px;
+  border-color: var(--bench-edge);
+}
+
+html .profession-woodcrafting > .smith-tabs .gem-chip {
+  padding: 9px 13px;
+  color: #cfaf8c;
+}
+
+html .profession-woodcrafting > .smith-tabs .gem-chip.active {
+  background: #4b301e;
+  border-radius: 5px 5px 0 0;
+  color: #ffe1ad;
+  box-shadow: inset 0 -2px #d39756;
+}
+
+.profession-woodcrafting .profession-workspace {
+  grid-template-columns: minmax(215px, .55fr) minmax(0, 1.45fr);
+}
+
+html .profession-page.profession-woodcrafting .profession-catalogue {
+  background: linear-gradient(150deg, #302016, #1e1713);
+  border: 1px solid var(--bench-edge);
+  box-shadow: inset 0 3px #8d61383d;
+}
+
+.profession-woodcrafting .profession-catalogue-head {
+  border-color: var(--bench-edge);
+  color: var(--bench-ink);
+}
+
+.profession-woodcrafting .profession-catalogue-head h2 { color: #f1d0a2; }
+.profession-woodcrafting .profession-group { border-color: #513726; background: #231910; }
+.profession-woodcrafting .profession-group.selected { border-color: #95683d; }
+.profession-woodcrafting .profession-group.selected > .profession-group-head { background: #513623; }
+.profession-woodcrafting .profession-group-head,
+.profession-woodcrafting .profession-activity { color: #ebd2ae; }
+.profession-woodcrafting .profession-group-head small,
+.profession-woodcrafting .profession-activity small { color: #c2a990; }
+.profession-woodcrafting .profession-activity.locked { color: #a48e79; }
+.profession-woodcrafting .profession-activity.selected { border-color: #b8844c; background: #422b1c; }
+.profession-woodcrafting .profession-specimen { background: #1b1510; border: 1px solid #745032; border-radius: 3px; }
+
+.profession-woodcrafting .profession-station {
+  background: #271a13;
+  border: 1px solid #865a36;
+  border-bottom: 5px solid #603820;
+  box-shadow: 0 10px 22px #08050370, inset 0 0 0 3px #20140f;
+}
+
+.profession-woodcrafting .profession-station-rail {
+  background: var(--bench-grain), linear-gradient(95deg, #5f351e, #433022);
+  border-color: #865a36;
+  color: #f0d4a8;
+}
+
+.profession-woodcrafting .profession-station-body {
+  background: radial-gradient(ellipse at 50% 5%, #bf824121, transparent 65%);
+}
+
+.profession-woodcrafting .profession-workpiece { border-color: #80533175; }
+.profession-woodcrafting .profession-eyebrow,
+.profession-woodcrafting .profession-readout { color: var(--bench-ink); }
+.profession-woodcrafting .profession-workpiece h2 { color: #f4d8aa; margin-block: 4px 0; }
+.profession-woodcrafting .profession-readout .working { color: #efc482; }
+
+.woodcraft-pattern-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 52px;
+  height: 48px;
+  border: 1px solid #be9463;
+  border-radius: 3px;
+  background: repeating-linear-gradient(0deg, transparent 0 7px, #80583042 8px), #b08c62;
+  box-shadow: 2px 3px #1e130d;
+}
+
+html .profession-woodcrafting .profession-station .woodcarving-focus,
+html .profession-woodcrafting > .woodcarving-focus {
+  margin: 0 0 16px;
+  background: #201610;
+  border: 1px solid var(--bench-edge);
+  padding: 12px;
+}
+
+.woodcarving-focus .card-title { color: #f1cca0; }
+.woodcarving-focus .card-hint { color: #c8af96; }
+.woodcraft-surface { margin-block: 12px 16px; }
+html .profession-woodcrafting .woodcraft-surface .woodcarving-focus { margin: 0; }
+
+.woodcarving canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 600 / 224;
+  box-sizing: border-box;
+  border-radius: 5px;
+  background: repeating-linear-gradient(0deg, transparent 0 23%, #160c0880 23.5% 24%, #d8914430 24% 24.5%, transparent 25% 26%),
+    repeating-linear-gradient(2deg, transparent 0 5px, #d99b5020 6px, transparent 7px 11px),
+    radial-gradient(ellipse at 45% 35%, #85613c, #593921 55%, #362218 92%);
+  box-shadow: inset 0 0 0 1px #e7a35948, inset 0 -6px #2b1b13;
+}
+
+.woodcarving .woodcarving-playable { touch-action: none; cursor: crosshair; }
+.woodcarving-playable:focus-visible { outline: 2px solid #edb96f; outline-offset: 2px; }
+.woodcarving-status { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; margin: 9px 0; font-size: 12px; color: #e6c7a4; }
+.woodcarving-status b { color: #f3c67f; }
+.woodcarving-keys { display: none; color: #c8af96; font-size: 11px; margin-bottom: 8px; }
+.woodcarving-playable:focus-visible ~ .woodcarving-keys { display: block; }
+
+.profession-woodcrafting .profession-station .action-card .action-section,
+.profession-woodcrafting .profession-station .action-card .skilling-mastery { border-color: #68472f; }
+.profession-woodcrafting .profession-station .action-card .action-head { order: 0; margin-top: 0; }
+.profession-woodcrafting .profession-station .action-card .action-progress { order: 1; }
+.profession-woodcrafting .profession-station .action-card .woodcraft-surface { order: 2; }
+.profession-woodcrafting .profession-station .action-card .action-body { order: 3; }
+.profession-woodcrafting .profession-station .action-card .action-head > .btn {
+  background: linear-gradient(#684427, #4c301d);
+  border-color: #aa7947;
+  color: #ffe1b6;
+}
+.profession-woodcrafting .profession-station .action-card .action-head > .btn:not(:disabled):hover { background: #77502f; }
+.profession-woodcrafting .woodcraft-settings { border-color: var(--bench-edge); background: #281b14; }
+.woodcraft-settings > div { display: grid; gap: 12px; }
+.woodcraft-settings .equipment-purpose { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.woodcraft-settings .equipment-purpose select { max-width: 100%; min-width: 0; }
+
+@container (max-width: 700px) {
+  .profession-woodcrafting .profession-workspace { grid-template-columns: minmax(0, 1fr); }
+  .profession-woodcrafting .profession-groups { max-height: 215px; overflow-y: auto; }
+  .profession-woodcrafting .profession-group { flex: 0 0 auto; }
+  .profession-woodcrafting .profession-activity-list { max-height: 146px; }
+  .woodcarving canvas { min-height: 142px; }
+}

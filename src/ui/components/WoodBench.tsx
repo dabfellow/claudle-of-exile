@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from 'react';
-import { baseDef, obtainable } from '../../data/bases';
+import { Fragment } from 'react';
+import { baseDef, obtainable, WEAPON_FAMILIES } from '../../data/bases';
 import { materialDef } from '../../data/materials';
 import { actionDef, actionsFor, type SkillAction } from '../../data/skills';
 import { JIGS, JIG_TIERS, WOOD_FAMILIES, woodFamily, type Jig, type WoodFamily } from '../../data/woodcrafting';
@@ -19,6 +20,7 @@ import { UseBarGrade } from './FurnaceView';
 import { SkillMinigame } from './SkillMinigame';
 import { MasteryProgress } from './MasteryProgress';
 import { Icon } from './Icon';
+import { EquipmentBasePreview } from './ItemView';
 import { Sawmill } from './Sawmill';
 import './wood-bench.css';
 
@@ -41,6 +43,7 @@ const TUNINGS_TIP = 'Saved dial presets per item family. An active tuning applie
 function slotLabel(a: SkillAction): string {
   if (!a.baseId) return 'Frame';
   const base = baseDef(a.baseId);
+  if (base.family) return WEAPON_FAMILIES[base.family].name;
   if (base.slot === 'offhand') return base.tags.includes('int_armour') ? 'Spirit Shield' : 'Buckler';
   return base.slot[0].toUpperCase() + base.slot.slice(1);
 }
@@ -233,6 +236,13 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
       ...benchLocked.slice(1).filter((a) => a.id === id),
     ];
   const hiddenBenchCount = benchFamilyRecipes.length - visibleBenchRecipes.length;
+  const patterns = new Map<string, SkillAction[]>();
+  for (const recipe of visibleBenchRecipes.slice().sort((a, b) => a.level - b.level)) {
+    const type = slotLabel(recipe);
+    const existing = patterns.get(type);
+    if (existing) existing.push(recipe);
+    else patterns.set(type, [recipe]);
+  }
 
   // Recipes tab list: filtered by family pill, hiding far-future recipes beyond next 1-2 levels
   const tabRecipes = recipeFilter === 'frames'
@@ -292,11 +302,20 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
                 )}
               </div>
 
-              <div className="wood-bench-picker" role="group" aria-label="Select recipe">
-                {visibleBenchRecipes.map((a) => {
+              <div className="wood-pattern-rack" role="group" aria-label="Pattern rack">
+                <h3>Pattern rack</h3>
+                {[...patterns].map(([type, list]) => (
+                  <details key={type}>
+                    <summary>{type}</summary>
+                    <div className="wood-bench-picker">
+                      {list.map((a, index) => {
                   const locked = a.level > level;
                   const active = a.id === id;
+                  const tier = Math.floor((a.level - 1) / 10);
                   return (
+                    <Fragment key={a.id}>
+                    {(index === 0 || Math.floor((list[index - 1].level - 1) / 10) !== tier) &&
+                      <span className="wood-pattern-tier">Levels {tier * 10 + 1}–{tier * 10 + 10}</span>}
                     <button
                       key={a.id}
                       type="button"
@@ -312,8 +331,12 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
                         {locked ? <LockedBadge level={a.level} /> : <span className="dim small num">Lv {a.level}</span>}
                       </span>
                     </button>
+                    </Fragment>
                   );
-                })}
+                      })}
+                    </div>
+                  </details>
+                ))}
               </div>
 
               {base && (
@@ -325,6 +348,7 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
               )}
 
               {base && <>
+                <EquipmentBasePreview base={base} />
                 <Dials s={s} recipe={selection} dials={dials} living={!!living} change={setManual} />
 
                 <div className="wood-tuning-bar">
@@ -414,7 +438,7 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
                 <ProgressBar value={running.progress / actionIntervalMs(s, runningRecipe, d)} />
                 <button className="btn sm" onClick={() => game.act(stopAction)}>Stop carving</button>
               </section>}
-              <SkillMinigame skill="woodcrafting" />
+              <SkillMinigame skill="woodcrafting" showBlank />
               {catalysts}
             </div>
           </div>
