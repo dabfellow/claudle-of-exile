@@ -1,6 +1,6 @@
 # Roadmap and decisions
 
-Last updated 2026-11-24. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-25. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
@@ -115,6 +115,8 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Masterworks reset (2026-11-25, owner's call). Masterworks get their own page under a new **Mastery** sidebar heading, sealed until five life skills reach level 25. Every old profession project (tools, chart, unique and flask projects) is retired, and ten new masterworks replace them: each needs three or more level 60+ gathering finds from different skills, a production good and a rare drop, and makes gear on a masterwork base where every modifier is Tier 1, through any reroll. Ranks add a Void Slot, Doom Implicit or Doom Tier. See [MASTERWORKS.md](MASTERWORKS.md).
 
 - Woodcrafting split (2026-11-24, owner's call). Cloth robes and leather armour move to a new skill, **Tailoring**. Woodcrafting keeps bows, staves, wands, bucklers and spirit shields. The sawmill becomes its own skill, **Sawmilling**, with its own page under Production: planks, heartwood, and weapon parts (bow staves, wand blanks, staff shafts in ash, oak and yew). Every bow, wand and staff needs one part of its wood tier. Both new skills start at the character's Woodcrafting XP. Small calls made in the build: parts unlock at the same Sawmilling level as that wood's planks; Tailoring shares the Woodcrafting Bench hideout station and the Robe form jig (now built from the Tailoring page); living wood stays Woodcrafting-only; mastery track ids keep their old `woodcrafting.` names so practice carries over.
 
@@ -731,6 +733,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [ ] Mastery tab: Masterworks page with a level-25 skill gate and ten new Tier 1 masterworks, replacing every old profession project (see Decisions, 2026-11-25, and [MASTERWORKS.md](MASTERWORKS.md)).
+  - Built 2026-11-25. All 2,048 tests pass and the typecheck is clean. Looked at the sealed and open page in the running game and crafted a Starforged Blade (six Tier 1 modifiers). Not yet shipped; ready for the owner to try.
 - [ ] Smelting Focus game rebuilt as Keep the Heat: tap to pump, a melt meter fills in the band, the fire catches and flares so you ease off, the top of the gauge scorches. See [Smelting](SMELTING_FURNACE.md#focus-minigame-keep-the-heat).
   - Built 2026-11-24; all 2,060 tests and the build pass, and a quick in-game check showed the warm-up, the fire catching, a flare and a scorch. Not yet shipped.
 - [ ] Split Woodcrafting into Woodcrafting and Tailoring, and add Sawmilling with weapon parts (see Decisions, 2026-11-24).
@@ -1022,7 +1026,11 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 - Oak-tier gear starts at level 10 but oak planks and parts need Sawmilling 15, so levels 10–14 can't make their tier yet (was the same with Woodcrafting before the split). Noticed 2026-11-24.
 
-- Give Masterworks distinct visuals across professions in a dedicated design pass (requested 2026-11-22).
+- Give Masterworks distinct visuals across professions in a dedicated design pass (requested 2026-11-22). Largely covered by the Masterworks page (2026-11-25); masterwork items still borrow existing item art.
+
+- Retired-masterwork leftovers (noticed 2026-11-25, left for the owner): the 13 unique items from the old projects (Worldheart, The Sum of All Things, Woundmaker…) now have no source; the profession speed tools (+8% skill speed) are gone with no replacement; Cartography still makes Return, Choir and Circuit Inscriptions, and Stolen Oath Seals and Chart Artisans' Reliquary maps have nothing left to make them or use them.
+
+- The Player Market refuses items with a Void Slot or Doom Tier modifier (any item, not just masterworks), so Master and Grandmaster masterworks can't be listed. The market is closing, so it was left alone. Noticed 2026-11-25.
 
 - 0.5.10 polish sweep follow-ups (2026-11-20), owner calls:
   - The Delegation Chambers (end of Act 3, level 27–28) killed a level 34 Mage and a level 45 Ranger in scenario gear within about 20 seconds (16 enemies on the field). Belongs to the open "judge difficulty in full campaign play" item; not changed.

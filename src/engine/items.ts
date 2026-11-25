@@ -88,6 +88,15 @@ export function openKinds(item: Item, bias?: ModBias): ('prefix' | 'suffix')[] {
 /** How many of an affix's highest unlocked tiers can roll. */
 const TIER_WINDOW = 5;
 
+/**
+ * The tiers of an affix that can roll on an item: the top TIER_WINDOW its item level allows, so high-level items stop
+ * rolling starter tiers. A masterwork base only ever rolls the very top one (Tier 1).
+ */
+function rollableTiers(item: Item, affix: AffixDef): { t: AffixDef['tiers'][number]; i: number }[] {
+  const tiers = affix.tiers.map((t, i) => ({ t, i })).filter((x) => x.t.ilvl <= item.ilvl);
+  return tiers.slice(baseDef(item.baseId).masterwork ? -1 : -TIER_WINDOW);
+}
+
 /** Adds one random modifier. Returns false if there's no room. */
 export function addRandomMod(item: Item, rng: Rng, bias?: ModBias): boolean {
   const kinds = openKinds(item, bias);
@@ -96,8 +105,7 @@ export function addRandomMod(item: Item, rng: Rng, bias?: ModBias): boolean {
   const base = baseDef(item.baseId);
   const affix = pickWeighted(rng, eligibleAffixes(item, kind, bias), (a) => spawnWeight(a, base, bias));
   if (!affix) return false;
-  // only the top TIER_WINDOW tiers the item level allows can roll, so high-level items stop rolling starter tiers
-  const tiers = affix.tiers.map((t, i) => ({ t, i })).filter((x) => x.t.ilvl <= item.ilvl).slice(-TIER_WINDOW);
+  const tiers = rollableTiers(item, affix);
   // higher tiers are rarer: each step up is ~70% as likely as the one below; higher itemTier biases toward top tiers
   const expMult = item.itemTier && item.itemTier > 1 ? 0.7 + 0.06 * (item.itemTier - 1) : 0.7;
   const chosen = pickWeighted(rng, tiers, (x) => Math.pow(expMult, x.i))!;
@@ -130,8 +138,10 @@ const RARE_B: Record<string, string[]> = {
 };
 
 export function rareName(item: Item, rng: Rng): string {
-  const slot = baseDef(item.baseId).slot;
-  return `${pick(rng, RARE_A)} ${pick(rng, RARE_B[slot])}`;
+  const base = baseDef(item.baseId);
+  // a masterwork keeps its own name through every reroll
+  if (base.masterwork) return base.name;
+  return `${pick(rng, RARE_A)} ${pick(rng, RARE_B[base.slot])}`;
 }
 
 /** Full display name for an item. */
@@ -186,7 +196,7 @@ export function rerollMods(item: Item, rng: Rng, bias?: ModBias, keep?: RolledMo
       addRandomMod(item, rng, bias);
     }
   } else if (item.rarity === 'rare') {
-    const targetTotal = Math.max(keptCount, rareModCount(rng));
+    const targetTotal = Math.max(keptCount, baseDef(item.baseId).masterwork ? 6 : rareModCount(rng));
     let attempts = 0;
     while (modCount(item) < targetTotal && attempts < 20) {
       attempts++;
@@ -196,7 +206,7 @@ export function rerollMods(item: Item, rng: Rng, bias?: ModBias, keep?: RolledMo
       const base = baseDef(item.baseId);
       const affix = pickWeighted(rng, eligibleAffixes(item, kind, bias), (a) => spawnWeight(a, base, bias));
       if (!affix) break;
-      const tiers = affix.tiers.map((t, i) => ({ t, i })).filter((x) => x.t.ilvl <= item.ilvl).slice(-TIER_WINDOW);
+      const tiers = rollableTiers(item, affix);
       const expMult = item.itemTier && item.itemTier > 1 ? 0.7 + 0.06 * (item.itemTier - 1) : 0.7;
       const chosen = pickWeighted(rng, tiers, (x) => Math.pow(expMult, x.i))!;
       const mod: RolledMod = { affixId: affix.id, tier: chosen.i, values: rollValues(affix, chosen.i, rng, item.itemTier) };

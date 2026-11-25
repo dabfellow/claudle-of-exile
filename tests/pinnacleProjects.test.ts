@@ -1,107 +1,33 @@
 import { describe, expect, it } from 'vitest';
-import { baseDef, uniqueDef } from '../src/data/bases';
 import { FORBIDDEN, PASSIVE_BY_ID } from '../src/data/passiveTree';
-import { professionProject } from '../src/data/professionProjects';
-import { actionDef } from '../src/data/skills';
-import { worldDropUniques } from '../src/data/uniqueDrops';
 import { zoneDef } from '../src/data/zones';
 import { PLAYER_SPOT } from '../src/engine/battlefield';
 import { combatStep, makeMonster, startCombat } from '../src/engine/combat';
 import { makeCtx, type Ctx } from '../src/engine/context';
 import { applyOrb, impressionReason, orbReason } from '../src/engine/crafting';
-import { equip, unequip } from '../src/engine/equipment';
+import { unequip } from '../src/engine/equipment';
 import { createSkillGem } from '../src/engine/gems';
 import { allMods, createUnique } from '../src/engine/items';
 import { addMaps, addDoomedMaps, doomedHeld, mapStep, startDoomedMap, startMap, ORB_DROUGHT, DOOMED_DROUGHT } from '../src/engine/maps';
 import { simulateOffline } from '../src/engine/offline';
 import { allocate, allocateReason, spentPoints } from '../src/engine/passives';
 import { forbiddenAllowance, sumOfAllMultiplier, sumOfAllRoll } from '../src/engine/pinnacles';
-import { advanceProject, startProject } from '../src/engine/professions';
 import { deserialize, serialize } from '../src/engine/save';
 import { startSkillAction } from '../src/engine/skills';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import { switchPassiveProfile } from '../src/engine/treeProfiles';
-import type { GameState, SkillId } from '../src/engine/types';
+import type { GameState } from '../src/engine/types';
 import { charXpForLevel, xpForLevel } from '../src/engine/xp';
 
 const PINNACLES = ['the_second_heresy', 'worldheart', 'the_sum_of_all_things'] as const;
 const fixed = (v: number) => makeCtx({ next: () => v });
-
-function crafter(id: string): GameState {
-  const s = newGame(3, { name: 'Pinnacle crafter', classId: 'templar' });
-  const p = professionProject(id)!;
-  s.skills.combat = charXpForLevel(90);
-  s.skills[p.skill] = xpForLevel(99);
-  s.professionProgress.work[p.skill] = 100;
-  s.account.hideout.forge = 3;
-  s.account.hideout.rune_board = 1;
-  s.storage.bank = { ...p.inputs };
-  return s;
-}
-
-describe('Phase 17 pinnacle projects', () => {
-  it.each(PINNACLES)('%s: the full recipe grants a fixed ilvl 90 unique with exactly one explicit effect', (id) => {
-    const s = crafter(id), c = fixed(.5), p = professionProject(id)!;
-    expect(startProject(s, c, id)).toBeNull();
-    // inputs are paid in full up front
-    for (const input of Object.keys(p.inputs)) expect(s.storage.bank[input]).toBe(0);
-    advanceProject(s, c, p.durationMs);
-    const item = s.inventory.find((i) => i.uniqueId === id)!;
-    expect(item).toBeTruthy();
-    expect(item.ilvl).toBe(90);
-    expect(allMods(item)).toHaveLength(1);
-    expect(baseDef(item.baseId).implicits ?? []).toEqual([]);
-    expect(baseDef(item.baseId).reqLevel).toBe(80);
-    expect(uniqueDef(id).mods).toHaveLength(1);
-    // no ordinary world-drop route
-    expect(worldDropUniques(90).some((u) => u.id === id)).toBe(false);
-    // equips into its ordinary jewellery slot
-    expect(equip(s, c, item.uid)).toBeNull();
-    const slot = { the_second_heresy: 'ring1', worldheart: 'belt', the_sum_of_all_things: 'amulet' }[id];
-    expect((s.equipment as Record<string, { uid: number } | undefined>)[slot]?.uid).toBe(item.uid);
-  });
-
-  it('completes offline exactly like live work, and needs no combat level to manufacture', () => {
-    const s = crafter('worldheart'), c = makeCtx({ next: () => .5 });
-    s.skills.combat = 0;
-    expect(startProject(s, c, 'worldheart')).toBeNull();
-    simulateOffline(s, c, 3_700_000);
-    expect(s.inventory.filter((i) => i.uniqueId === 'worldheart')).toHaveLength(1);
-    expect(s.professionProgress.projects.worldheart.completed).toBe(1);
-  });
-
-  it('each recipe spans three real endgame activities, and the amulet draws on all twelve professions', () => {
-    const skills = (id: string) => new Set(professionProject(id)!.sources.map((x) => x.skill));
-    const professions: SkillId[] = ['mining', 'woodcutting', 'smelting', 'smithing', 'woodcrafting', 'harvesting', 'alchemy', 'astrology', 'gemcutting', 'thieving', 'archaeology', 'cartography'];
-    for (const skill of professions) expect(skills('the_sum_of_all_things').has(skill)).toBe(true);
-    const sum = professionProject('the_sum_of_all_things')!.inputs;
-    // every named Hard Boss trophy and Uber sigil, one each, not generic trophies
-    for (const id of ['marrow_shard', 'choir_glass', 'black_pearl', 'throne_ash', 'crownless_sigil', 'exile_doom_sigil', 'architect_doom_sigil', 'void_sigil']) expect(sum[id]).toBe(1);
-    // Heresy = Hard Boss + Heist + Expedition; Worldheart = Doomed + Unique Map + Uber
-    expect(professionProject('the_second_heresy')!.inputs).toMatchObject({ crownless_sigil: 1, stolen_oath_seal: 1, restored_taboo_tablet: 1 });
-    expect(professionProject('worldheart')!.inputs).toMatchObject({ world_core_fragment: 3, reliquary_fragment: 1, architect_doom_sigil: 1 });
-    // every component has a real producer in game data
-    for (const id of ['restore_taboo_tablet', 'restore_convergence_relic', 'polish_exceptional', 'inscribe_convergence', 'frame_convergence', 'distill_star', 'chart_endgame_atlas', 'forge_uber_key_2', 'smelt_world']) {
-      expect(actionDef(id), id).toBeTruthy();
-    }
-  });
-});
 
 describe('Phase 17 currency rules', () => {
   it('rolls Sum uniformly from 1 to 200 at craft, endpoints included', () => {
     const s = newGame(1);
     expect(sumOfAllRoll({ equipment: { amulet: createUnique(s, 'the_sum_of_all_things', 90, { next: () => 0 }) } })).toBe(1);
     expect(sumOfAllRoll({ equipment: { amulet: createUnique(s, 'the_sum_of_all_things', 90, { next: () => .99999 }) } })).toBe(200);
-  });
-
-  it('a low roll is still a finished craft and the inputs are spent', () => {
-    const s = crafter('the_sum_of_all_things'), c = fixed(0);
-    expect(startProject(s, c, 'the_sum_of_all_things')).toBeNull();
-    advanceProject(s, c, professionProject('the_sum_of_all_things')!.durationMs);
-    const item = s.inventory.find((i) => i.uniqueId === 'the_sum_of_all_things')!;
-    expect(allMods(item)[0].values).toEqual([1]);
-    expect(Object.values(s.storage.bank).every((n) => !n)).toBe(true);
   });
 
   it('Sum takes one ordinary Divine per reroll, uniform over the range, and the same number may return', () => {

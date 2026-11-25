@@ -3,19 +3,29 @@ import type { Item, SkillId } from '../engine/types';
 export type ProjectReward =
   | { category: 'chart'; id: string }
   | { category: 'progress'; materials: Record<string, number> }
-  | { category: 'equipment'; baseId: string; ilvl: number; rarity: Item['rarity']; name?: string; uniqueId?: string; fixedSuffixes?: Item['suffixes'] }
+  | { category: 'equipment'; baseId: string; ilvl: number; rarity: Item['rarity']; name?: string; uniqueId?: string; fixedSuffixes?: Item['suffixes']; perks?: MasterworkPerk[] }
   | { category: 'flask'; flaskId: string; ilvl: number; rarity: 'unique'; name?: string; uniqueId?: string };
+
+/**
+ * What a masterwork comes out with on top of its six Tier 1 modifiers, using the endgame crafting marks the item
+ * already understands: a Void Slot (a seventh Tier 1 modifier), a Doom Implicit, or one modifier raised to Doom Tier.
+ */
+export type MasterworkPerk = 'voidSlot' | 'doomImplicit' | 'doomTier';
 
 export interface ProfessionRequirement {
   skill: SkillId;
   level: number;
+  /** Every one of these skills must be at least this level too (masterworks span several skills). */
+  skillLevels?: Partial<Record<SkillId, number>>;
   masteryRequirement?: { id: string; level: number; name: string };
   accomplishments?: string[];
   station?: { id: 'forge' | 'smelter' | 'woodcrafting_bench' | 'alchemy_table' | 'rune_board'; level: number };
 }
 
 export interface ProfessionProject extends ProfessionRequirement {
-  category?: 'masteryBatch';
+  category?: 'masteryBatch' | 'masterwork';
+  /** masterworks: how far up the atelier it sits */
+  rank?: MasterworkRank;
   id: string;
   version: number;
   name: string;
@@ -44,355 +54,198 @@ export const PROFESSION_PROJECTS: ProfessionProject[] = [{
   discovery: 'smithing_copper_supply',
   sources: [{ label: 'Copper Vein supplies Copper Ore', skill: 'mining' }],
   use: 'Five Copper Bars for equipment and Forge upgrades. Same base cost, time and XP as five smelts; no yield or conservation bonuses.',
-}, {
-  id: 'tool_mining', version: 1, name: "Prospector's Pick", skill: 'mining', level: 30,
-  accomplishments: ['mining_work_100'], durationMs: 1_200_000, xp: 360, repeatable: true,
-  inputs: { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 },
-  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Prospector's Pick", fixedSuffixes: [{ affixId: 'profession_speed_mining', tier: 0, values: [8] }] },
-  sources: [{ label: 'Mine Copper/Mithril and gather Rough Gems', skill: 'mining' }, { label: 'Smelt Copper/Mithril Bars', skill: 'smithing' }, { label: 'Cut Oak Planks', skill: 'woodcutting' }],
-  use: 'One fixed magic tool: 8% increased Mining speed in the existing weapon slot. No combat bonus; one normal rune slot. Level 1 to equip. Other professions can supply the raw bars/planks. No automatic refining or task switching.',
-}, {
-  id: 'tool_woodcutting', version: 1, name: 'Heartwood Hatchet', skill: 'woodcutting', level: 30,
-  accomplishments: ['woodcutting_work_100'], durationMs: 1_200_000, xp: 360, repeatable: true,
-  inputs: { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 },
-  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: 'Heartwood Hatchet', fixedSuffixes: [{ affixId: 'profession_speed_woodcutting', tier: 0, values: [8] }] },
-  sources: [{ label: 'Mine Copper/Mithril and Rough Gems', skill: 'mining' }, { label: 'Smelt Copper/Mithril Bars', skill: 'smithing' }, { label: 'Cut and refine Oak Planks', skill: 'woodcutting' }],
-  use: 'One fixed magic main-hand tool: 8% increased Woodcutting speed only. No combat bonus; level 1 to equip; one normal rune slot. Raw materials may come from other professions. No automatic task switching.',
-}, {
-  id: 'tool_harvesting', version: 1, name: "Seedkeeper's Sickle", skill: 'harvesting', level: 30,
-  accomplishments: ['harvesting_work_100'], durationMs: 1_200_000, xp: 360, repeatable: true,
-  inputs: { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 },
-  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Seedkeeper's Sickle", fixedSuffixes: [{ affixId: 'profession_speed_harvesting', tier: 0, values: [8] }] },
-  sources: [{ label: 'Mine Copper/Mithril and Rough Gems', skill: 'mining' }, { label: 'Smelt Copper/Mithril Bars', skill: 'smithing' }, { label: 'Cut and refine Oak Planks', skill: 'woodcutting' }],
-  use: 'One fixed magic main-hand tool: 8% increased Foraging speed only. Level 1 to equip; one normal rune slot. Other professions may supply inputs. No automatic task switching.',
-}, {
-  id: 'tool_alchemy', version: 1, name: "Distiller's Stirrer", skill: 'alchemy', level: 30,
-  accomplishments: ['alchemy_work_100'], durationMs: 1_200_000, xp: 360, repeatable: true,
-  inputs: { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 },
-  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Distiller's Stirrer", fixedSuffixes: [{ affixId: 'profession_speed_alchemy', tier: 0, values: [8] }] },
-  sources: [{ label: 'Mine Copper/Mithril and Rough Gems', skill: 'mining' }, { label: 'Smelt Copper/Mithril Bars', skill: 'smithing' }, { label: 'Cut and refine Oak Planks', skill: 'woodcutting' }],
-  use: 'One fixed magic main-hand tool: 8% increased Alchemy speed only. Level 1 to equip; one normal rune slot. Other professions may supply inputs. No automatic task switching.',
-}, {
-  id: 'tool_wayfarer_hammer', version: 1, name: "Wayfarer's Hammer", skill: 'smithing', level: 15,
-  accomplishments: ['smithing_work_20'], station: { id: 'forge', level: 2 }, durationMs: 600_000, xp: 180, repeatable: true,
-  inputs: { copper_bar: 10, iron_bar: 10, ash_plank: 5, oak_plank: 5 },
-  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Wayfarer's Hammer", fixedSuffixes: [{ affixId: 'profession_speed_smithing', tier: 0, values: [8] }] },
-  sources: [{ label: 'Mine Copper and Iron, then select smelting', skill: 'mining' }, { label: 'Cut Ash and Oak, then select plank refinement', skill: 'woodcutting' }],
-  use: 'One fixed magic main-hand tool: 8% increased Smithing speed only. Level 1 to equip; one normal rune slot. Full listed costs, one tool, no conservation or doubled claims. No automatic task switching.',
-}, {
-  id: 'tool_smelter_tongs', version: 1, name: "Smelter's Tongs", skill: 'smelting', level: 15,
-  accomplishments: ['smelting_work_20'], station: { id: 'smelter', level: 2 }, durationMs: 600_000, xp: 180, repeatable: true,
-  inputs: { copper_bar: 15, iron_bar: 5, ash_log: 10 },
-  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Smelter's Tongs", fixedSuffixes: [{ affixId: 'profession_speed_smelting', tier: 0, values: [8] }] },
-  sources: [{ label: 'Mine Copper and Iron', skill: 'mining' }, { label: 'Smelt bars', skill: 'smelting' }],
-  use: 'One fixed magic main-hand tool: 8% increased Smelting speed only. Level 1 to equip; one normal rune slot.',
-}, {
-  id: 'tool_carver_drawknife', version: 1, name: "Carver's Drawknife", skill: 'woodcrafting', level: 15,
-  accomplishments: ['woodcrafting_work_20'], station: { id: 'woodcrafting_bench', level: 2 }, durationMs: 600_000, xp: 180, repeatable: true,
-  inputs: { ash_plank: 10, oak_plank: 10, copper_bar: 5 },
-  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Carver's Drawknife", fixedSuffixes: [{ affixId: 'profession_speed_woodcrafting', tier: 0, values: [8] }] },
-  sources: [{ label: 'Cut Ash and Oak, then select plank refinement', skill: 'woodcutting' }, { label: 'Smelt Copper Bars', skill: 'smelting' }],
-  use: 'One fixed magic main-hand tool: 8% increased Woodcrafting speed only. Level 1 to equip; one normal rune slot.',
-}, {
-  id: 'tool_master_artisan', version: 1, name: "Master Artisan's Omni-Hammer", skill: 'smithing', level: 60,
-  accomplishments: ['smithing_work_60'], station: { id: 'forge', level: 3 }, durationMs: 1_800_000, xp: 600, repeatable: true,
-  inputs: { tempered_alloy: 5, wound_alloy: 2, heartwood_frame: 2, exceptional_crystal: 1 },
-  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Master Artisan's Omni-Hammer", fixedSuffixes: [{ affixId: 'profession_speed_artisan', tier: 0, values: [12] }] },
-  sources: [{ label: 'Cast alloys in Smelting', skill: 'smelting' }, { label: 'Carve frames in Woodcrafting', skill: 'woodcrafting' }],
-  use: 'High-tier hybrid tool: +12% Production speed across all crafting disciplines (Forging, Smelting, and Woodcrafting). Level 1 to equip; one normal rune slot.',
-}, {
-  id: 'tool_gemcutting', version: 1, name: "Lapidary's Chisel", skill: 'gemcutting', level: 30,
-  accomplishments: ['gemcutting_work_100'], durationMs: 1_200_000, xp: 360, repeatable: true,
-  inputs: { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 },
-  reward: { category: 'equipment', baseId: 'profession_hammer', ilvl: 1, rarity: 'magic', name: "Lapidary's Chisel", fixedSuffixes: [{ affixId: 'profession_speed_gemcutting', tier: 0, values: [8] }] },
-  sources: [{ label: 'Mine Copper/Mithril and Rough Gems', skill: 'mining' }, { label: 'Smelt Copper/Mithril Bars', skill: 'smelting' }, { label: 'Cut and refine Oak Planks', skill: 'woodcutting' }],
-  use: 'One fixed magic main-hand tool: 8% increased Gemcutting speed only. Level 1 to equip. Other professions may supply inputs. No automatic task switching.',
 }];
 
-PROFESSION_PROJECTS.push({ id: 'chart_reliquary', version: 1, name: "Chart Artisans' Reliquary", skill: 'cartography', level: 50,
-  accomplishments: ['cartography_work_100'], repeatable: true, durationMs: 1_800_000, xp: 600,
-  inputs: { chart_survey_fragment: 20, fine_vellum: 10, sepia_ink: 5, sextant_journeyman: 1 },
-  reward: { category: 'chart', id: 'umap_artisans_reliquary' },
-  sources: [{ label: 'Survey progress from ordinary Cartography; craft vellum, inks and a Journeyman Sextant', skill: 'cartography' }],
-  use: 'One exclusive chart in the shared Map Case. Map Device campaign access is still required. Twenty packs and a T7 guardian; victory gives a Reliquary Fragment, 10 Rough Gems and 100 Arcane Dust. Failure uses the chart; no existing Unique Map trophy rewards.' });
+export type MasterworkRank = 'adept' | 'master' | 'grandmaster';
 
-PROFESSION_PROJECTS.push(...([
-  ['woundmaker', 'Woundmaker', 'overhaul_great_axe', 60, 1200, { wound_alloy: 3, tempered_alloy: 5, yew_plank: 10 }, 'Up to 8 Bleeds; 60% less hit damage; cannot critically strike. The unique adds no bleed chance beyond the normal axe implicit.'],
-  ['winters_pyre', "Winter's Pyre", 'seraph_staff', 65, 1500, { heartwood_frame: 2, exceptional_crystal: 2, frigid_fossil: 5 }, 'Cold can ignite using normal ignite chance; double ignite damage. No chill/freeze or fire/lightning damage, except the cold-sourced burn.'],
-  ['the_homecoming', 'The Homecoming', 'manticore_greatbow', 65, 1500, { heartwood_frame: 2, return_inscription: 2, tempered_alloy: 5 }, 'Exactly one arrow per attack, overriding extra arrows and repeats. It returns after 500ms along the saved target path; dead or absent targets are skipped.'],
-] as [string, string, string, number, number, Record<string, number>, string][]).map(([id, name, baseId, level, xp, inputs, use]): ProfessionProject => ({
-  id, name, version: 1, skill: 'smithing', level, xp, inputs, use: `${use} Fixed unique, item level 80, combat level 60 and normal base attributes to equip. One normal rune slot. Full costs; no manual double or input conservation.`,
-  station: { id: 'forge', level: 3 }, accomplishments: ['smithing_work_100'], repeatable: true, durationMs: 7_200_000,
-  reward: { category: 'equipment', baseId, ilvl: 80, rarity: 'unique', name, uniqueId: id },
-  sources: [{ label: 'Smithing alloys and frames from Mining and Woodcutting', skill: 'smithing' },
-    ...(id === 'winters_pyre' ? [{ label: 'Exceptional Crystals from Mining shards', skill: 'gemcutting' as const }] : []),
-    ...(id === 'the_homecoming' ? [{ label: 'Prepare Return Inscriptions from Inscription Fragments and Flawless Copper Bars', skill: 'cartography' as const }] : [])],
-})));
+export const MASTERWORK_RANKS: Record<MasterworkRank, { name: string; blurb: string }> = {
+  adept: { name: 'Adept', blurb: 'Six Tier 1 modifiers.' },
+  master: { name: 'Master', blurb: 'Six Tier 1 modifiers and an endgame mark.' },
+  grandmaster: { name: 'Grandmaster', blurb: 'Seven Tier 1 modifiers through a Void Slot, and an endgame mark.' },
+};
 
-PROFESSION_PROJECTS.push({
-  id: 'borrowed_tomorrow',
-  version: 1,
-  name: 'Claim Borrowed Tomorrow',
-  skill: 'thieving',
-  level: 65,
-  durationMs: 60_000,
-  xp: 120,
-  inputs: { treasury_fragment: 120 },
-  reward: {
-    category: 'equipment',
-    baseId: 'overhaul_treasury_amulet',
-    ilvl: 80,
-    rarity: 'unique',
-    name: 'Borrowed Tomorrow',
-    uniqueId: 'borrowed_tomorrow',
-  },
-  repeatable: true,
-  sources: [{ label: 'Occult Treasury rooms for Treasury Fragments', skill: 'thieving' }],
-  use: 'One Borrowed Tomorrow amulet: all eligible wearer life leech is instant; no life regeneration or flask life recovery. Item level 80, combat level 60 to equip. One normal rune slot. Fixed cost; no manual double or input conservation.',
-});
+/** The Masterworks atelier opens once this many life skills reach this level. */
+export const MASTERY_UNLOCK = { skills: 5, level: 25 };
 
-PROFESSION_PROJECTS.push({
-  id: 'assemble_oath',
-  version: 1,
-  name: 'Assemble Stolen Oath',
-  skill: 'thieving',
-  level: 75,
-  durationMs: 60_000,
-  xp: 150,
-  inputs: { oath_fragment: 5 },
-  reward: { category: 'progress', materials: { stolen_oath_seal: 1 } },
-  repeatable: true,
-  sources: [{ label: 'Occult Treasury clean vaults & 12-room progress', skill: 'thieving' }],
-  use: 'One Stolen Oath Seal. Protected component for The Second Heresy pinnacle project. Fixed cost; no manual double or input conservation.',
-});
+const HOUR = 3_600_000;
+
+interface MasterworkSpec {
+  id: string;
+  name: string;
+  rank: MasterworkRank;
+  /** the craft that assembles it: gets the XP */
+  skill: SkillId;
+  skillLevels: Partial<Record<SkillId, number>>;
+  inputs: Record<string, number>;
+  baseId: string;
+  perks?: MasterworkPerk[];
+  hours: number;
+  xp: number;
+  sources: { label: string; skill: SkillId }[];
+  lore: string;
+}
 
 /**
- * The three pinnacle chase projects (docs/SKILLING_OVERHAUL_SPEC.md §§6–8): each spans at least three endgame
- * activities, grants a fixed item level 90 unique with exactly one explicit effect, and is repeatable with fresh inputs.
+ * The ten masterworks (docs/MASTERWORKS.md). Each needs at least three level 60+ gathering finds from different
+ * gathering skills, at least one production good, and a rare drop, and gives a rare item on a masterwork base:
+ * every modifier on it is Tier 1, now and after every reroll.
  */
-const PINNACLE_NOTE = 'Item level 90, combat level 80 to equip. One normal rune slot. Full protected costs; no manual double or input conservation.';
-PROFESSION_PROJECTS.push({
-  id: 'the_second_heresy', version: 1, name: 'The Second Heresy', skill: 'cartography', level: 85,
-  accomplishments: ['cartography_work_100'], repeatable: true,
-  durationMs: 3_600_000, xp: 2400,
-  inputs: { crownless_sigil: 1, stolen_oath_seal: 1, restored_taboo_tablet: 1, inscription_fragment: 5 },
-  reward: { category: 'equipment', baseId: 'overhaul_plain_ring', ilvl: 90, rarity: 'unique', name: 'The Second Heresy', uniqueId: 'the_second_heresy' },
-  sources: [
-    { label: 'Hard Boss: defeat the Crownless King for a Crownless Sigil', skill: 'combat' },
-    { label: 'Heist: Occult Treasury Oath Fragments assemble a Stolen Oath Seal', skill: 'thieving' },
-    { label: 'Expedition: restore a Taboo Tablet after the first Adit discovery', skill: 'archaeology' },
-    { label: 'Inscription Fragments from Tier 5+ Map bosses', skill: 'cartography' },
-  ],
-  use: `One ring: allows one additional Forbidden keystone. Two copies still allow only two. Removing it refunds the newest excess keystone. Fixed effect; no Divine reroll. ${PINNACLE_NOTE}`,
-}, {
-  id: 'worldheart', version: 1, name: 'Worldheart', skill: 'smithing', level: 90,
-  station: { id: 'forge', level: 3 }, accomplishments: ['smithing_work_100'], repeatable: true,
-  durationMs: 3_600_000, xp: 2400,
-  inputs: { world_core_fragment: 3, reliquary_fragment: 1, architect_doom_sigil: 1, world_bar: 5 },
-  reward: { category: 'equipment', baseId: 'overhaul_plain_belt', ilvl: 90, rarity: 'unique', name: 'Worldheart', uniqueId: 'worldheart' },
-  sources: [
-    { label: 'Doomed Maps: one World Core Fragment per final boss victory', skill: 'combat' },
-    { label: 'Unique Maps: one Reliquary Fragment per final boss victory', skill: 'cartography' },
-    { label: "Uber: defeat the Architect of Ruin (Doom Key Fragments forge the key) for an Architect's Doom Sigil", skill: 'combat' },
-    { label: 'World Bars smelted from World Ore', skill: 'smithing' },
-  ],
-  use: `One belt: 30% less Damage taken from hits and damage over time, applied once. Fixed effect; no Divine reroll. ${PINNACLE_NOTE}`,
-}, {
-  id: 'the_sum_of_all_things', version: 1, name: 'The Sum of All Things', skill: 'cartography', level: 90,
-  accomplishments: ['cartography_work_100'], repeatable: true,
-  durationMs: 7_200_000, xp: 3000,
-  inputs: {
-    completed_atlas_chart: 1, reliquary_fragment: 1, fractured: 1,
-    marrow_shard: 1, choir_glass: 1, black_pearl: 1, throne_ash: 1, crownless_sigil: 1,
-    exile_doom_sigil: 1, architect_doom_sigil: 1, void_sigil: 1,
-    stolen_oath_seal: 1, convergence_relic: 1, convergence_frame: 1, star_distillate: 1,
-    gilded_stardust: 5, convergence_crystal: 1, convergence_inscription: 1,
+const MASTERWORK_SPECS: MasterworkSpec[] = [
+  {
+    id: 'mw_starforged_blade', name: 'Starforged Blade', rank: 'adept', skill: 'smithing', baseId: 'mw_starforged_blade',
+    skillLevels: { mining: 60, woodcutting: 60, harvesting: 60, smithing: 60 },
+    inputs: { star_ore: 600, ancient_log: 500, star_bloom: 120, star_bar: 60, boss_trophy: 10 },
+    hours: 2, xp: 2500,
+    sources: [
+      { label: 'Star Ore from Star seams', skill: 'mining' },
+      { label: 'Ancient Logs from the Ancient woods', skill: 'woodcutting' },
+      { label: 'Star Blooms, wild or grown', skill: 'harvesting' },
+      { label: 'Star Bars smelted from Star Ore', skill: 'smelting' },
+      { label: 'Boss Trophy drops from act and map bosses', skill: 'combat' },
+    ],
+    lore: 'Quenched in starlight and wrapped in ancient wood. It holds an edge the way the sky holds stars.',
   },
-  reward: { category: 'equipment', baseId: 'overhaul_plain_amulet', ilvl: 90, rarity: 'unique', name: 'The Sum of All Things', uniqueId: 'the_sum_of_all_things' },
-  sources: [
-    { label: 'Mining ore, fragments and crystal shards (frame and crystal)', skill: 'mining' },
-    { label: 'Ancient Heartwood (Convergence Frame)', skill: 'woodcutting' },
-    { label: 'Smelt Flawless bars and alloys', skill: 'smelting' },
-    { label: 'Convergence Frame from Wound and Stone Alloy', skill: 'smithing' },
-    { label: 'Carve timber frames', skill: 'woodcrafting' },
-    { label: 'Moon and Star Blooms, grown or foraged', skill: 'harvesting' },
-    { label: 'Star Distillate', skill: 'alchemy' },
-    { label: 'Gilded Stardust from researching the sky', skill: 'astrology' },
-    { label: 'Convergence Crystal polished from an Exceptional Crystal', skill: 'gemcutting' },
-    { label: 'Convergence Inscription and the final assembly', skill: 'cartography' },
-    { label: 'Stolen Oath Seal from the Occult Treasury', skill: 'thieving' },
-    { label: 'Convergence Relic restored after the first Heart discovery', skill: 'archaeology' },
-    { label: 'Completed Atlas Chart (ten T10 Map wins) and a Reliquary Fragment (Unique Map)', skill: 'cartography' },
-    { label: 'Doomed Maps (Fractured Orb, guaranteed every ten victories), all five Hard Bosses and all three Ubers', skill: 'combat' },
-  ],
-  use: `One amulet: (1–200)% more Damage, a whole number rolled evenly. It multiplies your hits, ailments, minions and totems once. A low roll is still a finished craft. An ordinary Divine Orb rerolls it (the same number can come up again); no second full recipe needed. ${PINNACLE_NOTE}`,
-});
+  {
+    id: 'mw_glimmerweave_raiment', name: 'Glimmerweave Raiment', rank: 'adept', skill: 'tailoring', baseId: 'mw_glimmerweave_raiment',
+    skillLevels: { harvesting: 68, astrology: 60, thieving: 65, tailoring: 60 },
+    inputs: { glimmermoss: 150, gilded_stardust: 25, treasury_fragment: 150, moon_distillate: 12, prepared_glass: 10, guardian_trophy: 2 },
+    hours: 2, xp: 2500,
+    sources: [
+      { label: 'Glimmermoss, wild or grown', skill: 'harvesting' },
+      { label: 'Gilded Stardust while researching the sky', skill: 'astrology' },
+      { label: 'Treasury Fragments from The Occult Treasury', skill: 'thieving' },
+      { label: 'Moon Distillate and Prepared Glass at the Alchemy Table', skill: 'alchemy' },
+      { label: 'Guardian Trophy drops from Guardian map bosses', skill: 'combat' },
+    ],
+    lore: 'Moss that remembers moonlight, stitched with thread pulled from a stolen star.',
+  },
+  {
+    id: 'mw_ancientwood_longbow', name: 'Ancientwood Longbow', rank: 'adept', skill: 'woodcrafting', baseId: 'mw_ancientwood_longbow',
+    skillLevels: { woodcutting: 65, harvesting: 60, mining: 60, sawmilling: 60, woodcrafting: 60 },
+    inputs: { ancient_log: 600, ancient_resin: 40, star_bloom: 100, star_ore: 300, ancient_plank: 80, heartwood_frame: 3, divine: 2 },
+    hours: 2, xp: 2500,
+    sources: [
+      { label: 'Ancient Logs and Ancient Resin from the Ancient woods', skill: 'woodcutting' },
+      { label: 'Star Blooms, wild or grown', skill: 'harvesting' },
+      { label: 'Star Ore from Star seams', skill: 'mining' },
+      { label: 'Ancient Planks milled at the Sawmill', skill: 'sawmilling' },
+      { label: 'Heartwood Frames assembled at the Forge', skill: 'smithing' },
+      { label: 'Divine Orb drops, rare from monsters and heists', skill: 'combat' },
+    ],
+    lore: 'Strung with resin-soaked star-bloom fibre. It does not creak when drawn; it sighs.',
+  },
+  {
+    id: 'mw_rimebound_crown', name: 'Rimebound Crown', rank: 'master', skill: 'gemcutting', baseId: 'mw_rimebound_crown',
+    skillLevels: { astrology: 70, archaeology: 70, mining: 75, gemcutting: 70 },
+    inputs: { gilded_stardust: 40, rime_relic_fragment: 60, rime_idol: 150, void_ore: 800, exceptional_crystal: 4, choir_glass: 1 },
+    perks: ['doomTier'], hours: 4, xp: 5000,
+    sources: [
+      { label: 'Gilded Stardust while researching the sky', skill: 'astrology' },
+      { label: 'The Rimebound Relic Fragment and Rime Idol finds from Rime digs', skill: 'archaeology' },
+      { label: 'Void Ore from Void seams', skill: 'mining' },
+      { label: 'Exceptional Crystals cut at the wheel', skill: 'gemcutting' },
+      { label: 'Choir Glass from Mother Vael, the Last Choir', skill: 'combat' },
+    ],
+    lore: 'Dug from the Hollow Heart still frozen to its last king. The ice never melted; it just learned to fit.',
+  },
+  {
+    id: 'mw_colossus_bulwark', name: 'Bulwark of the Colossus', rank: 'master', skill: 'smithing', baseId: 'mw_colossus_bulwark',
+    skillLevels: { mining: 75, woodcutting: 75, archaeology: 80, smithing: 75 },
+    inputs: { void_ore: 900, spirit_log: 700, sealed_relic: 1, giant_relic_fragment: 60, stone_alloy: 6, marrow_shard: 1 },
+    perks: ['doomImplicit'], hours: 4, xp: 5000,
+    sources: [
+      { label: 'Void Ore from Void seams', skill: 'mining' },
+      { label: 'Spirit Logs from the Spirit woods', skill: 'woodcutting' },
+      { label: 'A Sealed Relic from The Sealed Reliquary, and The Giants Relic Fragment finds from Giant digs', skill: 'archaeology' },
+      { label: 'Stone Alloy cast in the furnace', skill: 'smelting' },
+      { label: 'Marrow Shard from Ossuar, the Hollow Mountain', skill: 'combat' },
+    ],
+    lore: 'A palm-plate pried off the Fallen Colossus and backed with spirit-wood. Something still pushes back.',
+  },
+  {
+    id: 'mw_wraithstep_boots', name: 'Wraithstep Boots', rank: 'master', skill: 'tailoring', baseId: 'mw_wraithstep_boots',
+    skillLevels: { harvesting: 84, thieving: 75, woodcutting: 75, tailoring: 75 },
+    inputs: { wraithlily: 150, oath_fragment: 12, spirit_resin: 50, moon_distillate: 15, star_distillate: 3, black_pearl: 1 },
+    perks: ['doomTier'], hours: 4, xp: 5000,
+    sources: [
+      { label: 'Wraithlilies, wild or grown', skill: 'harvesting' },
+      { label: 'Oath Fragments from The Occult Treasury vaults', skill: 'thieving' },
+      { label: 'Spirit Resin from the Spirit woods', skill: 'woodcutting' },
+      { label: 'Moon and Star Distillate at the Alchemy Table', skill: 'alchemy' },
+      { label: 'Black Pearl from The Undertow', skill: 'combat' },
+    ],
+    lore: 'Soled with pressed wraithlily. Whoever wears them leaves footprints a heartbeat after they have gone.',
+  },
+  {
+    id: 'mw_twin_forge_gauntlets', name: 'Twin Forge Gauntlets', rank: 'master', skill: 'smelting', baseId: 'mw_twin_forge_gauntlets',
+    skillLevels: { mining: 75, woodcutting: 70, harvesting: 68, smelting: 80 },
+    inputs: { heartstone: 8, legend_heartwood: 2, glimmermoss: 150, kingsbronze: 2, wound_alloy: 4, throne_ash: 1 },
+    perks: ['doomImplicit'], hours: 4, xp: 5000,
+    sources: [
+      { label: 'Heartstone from deep Delve caverns', skill: 'mining' },
+      { label: 'Legend Heartwood from legendary giants', skill: 'woodcutting' },
+      { label: 'Glimmermoss, wild or grown', skill: 'harvesting' },
+      { label: 'Kingsbronze and Wound Alloy cast in the furnace', skill: 'smelting' },
+      { label: 'Throne Ash from The Twin Regents', skill: 'combat' },
+    ],
+    lore: 'One hand cast in kingsbronze, one in wound alloy, both cooled in legend heartwood ash.',
+  },
+  {
+    id: 'mw_converging_ring', name: 'Ring of Converging Stars', rank: 'grandmaster', skill: 'gemcutting', baseId: 'mw_converging_ring',
+    skillLevels: { astrology: 85, mining: 90, harvesting: 84, gemcutting: 85 },
+    inputs: { gilded_stardust: 80, world_ore: 1200, wraithlily: 200, convergence_crystal: 1, void_sigil: 1 },
+    perks: ['voidSlot', 'doomImplicit'], hours: 8, xp: 10000,
+    sources: [
+      { label: 'Gilded Stardust while researching the sky', skill: 'astrology' },
+      { label: 'World Ore from World seams', skill: 'mining' },
+      { label: 'Wraithlilies, wild or grown', skill: 'harvesting' },
+      { label: 'A Convergence Crystal polished at the wheel', skill: 'gemcutting' },
+      { label: 'A Void Sigil from The Void Sovereign', skill: 'combat' },
+    ],
+    lore: 'Seven stars set in world-ore, each one a little closer to the others than the night allows.',
+  },
+  {
+    id: 'mw_world_tree_amulet', name: 'Heart of the World Tree', rank: 'grandmaster', skill: 'woodcrafting', baseId: 'mw_world_tree_amulet',
+    skillLevels: { woodcutting: 90, archaeology: 85, harvesting: 84, thieving: 75, sawmilling: 90, woodcrafting: 85 },
+    inputs: { worldwood_log: 1200, legend_heartwood: 4, convergence_relic: 1, wraithlily: 150, oath_fragment: 20, worldwood_plank: 60, star_distillate: 6, exile_doom_sigil: 1 },
+    perks: ['voidSlot', 'doomTier'], hours: 8, xp: 10000,
+    sources: [
+      { label: 'Worldwood Logs from the Worldwood grove, Legend Heartwood from legendary giants', skill: 'woodcutting' },
+      { label: 'A Convergence Relic restored after the first Heart discovery', skill: 'archaeology' },
+      { label: 'Wraithlilies, wild or grown', skill: 'harvesting' },
+      { label: 'Oath Fragments from The Occult Treasury vaults', skill: 'thieving' },
+      { label: 'Worldwood Planks milled at the Sawmill', skill: 'sawmilling' },
+      { label: 'Star Distillate at the Alchemy Table', skill: 'alchemy' },
+      { label: "An Exile's Doom Sigil from The First Exile", skill: 'combat' },
+    ],
+    lore: 'A knot of worldwood that still beats. Lay your ear against it and you can hear every forest at once.',
+  },
+  {
+    id: 'mw_wanderers_staff', name: "The Wanderer's Staff", rank: 'grandmaster', skill: 'smelting', baseId: 'mw_wanderers_staff',
+    skillLevels: { astrology: 90, archaeology: 75, mining: 75, cartography: 85, smelting: 85 },
+    inputs: { gilded_stardust: 100, restored_taboo_tablet: 1, void_ore: 1000, moonsilver: 2, convergence_inscription: 1, crownless_sigil: 1, architect_doom_sigil: 1 },
+    perks: ['voidSlot', 'doomImplicit'], hours: 8, xp: 10000,
+    sources: [
+      { label: 'Gilded Stardust while watching the Wanderer', skill: 'astrology' },
+      { label: 'A Restored Taboo Tablet from the Imperial Adit', skill: 'archaeology' },
+      { label: 'Void Ore from Void seams', skill: 'mining' },
+      { label: 'Moonsilver cast in the furnace', skill: 'smelting' },
+      { label: 'A Convergence Inscription prepared at the chart table', skill: 'cartography' },
+      { label: "A Crownless Sigil from The Crownless, and an Architect's Doom Sigil from The Architect of Ruin", skill: 'combat' },
+    ],
+    lore: 'Every map of Wraeclast is drawn facing the Wanderer. This staff points the other way.',
+  },
+];
 
-PROFESSION_PROJECTS.push({
-  id: 'the_buried_grudge',
-  version: 1,
-  name: 'Restore The Buried Grudge',
-  skill: 'archaeology',
-  level: 65,
-  accomplishments: ['expedition.dig_colossus.0'],
-  durationMs: 7_200_000,
-  xp: 1500,
-  inputs: { giant_relic_fragment: 40, giant_tally: 100, stone_alloy: 2 },
-  reward: {
-    category: 'equipment',
-    baseId: 'sunforged_bulwark',
-    ilvl: 80,
-    rarity: 'unique',
-    name: 'The Buried Grudge',
-    uniqueId: 'the_buried_grudge',
-  },
-  repeatable: true,
-  sources: [
-    { label: 'Dig The Cairn & The Colossus for Giant Relic Fragments and Giant Tallies', skill: 'archaeology' },
-    { label: 'Smelt Stone Alloy from Adamant, Iron and Stone Fragments', skill: 'smithing' },
-  ],
-  use: 'Blocked hits take 50% of post-mitigation damage. Store prevented damage up to 300% max Life to unleash in a physical shockwave on your next slam. Fixed unique, item level 80, combat level 60 to equip. One normal rune slot.',
-});
+PROFESSION_PROJECTS.push(...MASTERWORK_SPECS.map((m): ProfessionProject => ({
+  id: m.id, version: 1, name: m.name, category: 'masterwork', rank: m.rank,
+  skill: m.skill, level: m.skillLevels[m.skill] ?? 1, skillLevels: m.skillLevels,
+  inputs: m.inputs, durationMs: m.hours * HOUR, xp: m.xp, repeatable: true,
+  reward: { category: 'equipment', baseId: m.baseId, ilvl: 86, rarity: 'rare', name: m.name, perks: m.perks },
+  sources: m.sources, use: m.lore,
+})));
 
-PROFESSION_PROJECTS.push({
-  id: 'witchglass',
-  version: 1,
-  name: 'Witchglass',
-  skill: 'alchemy',
-  level: 65,
-  station: { id: 'alchemy_table', level: 3 },
-  durationMs: 3_600_000,
-  xp: 1200,
-  inputs: { moon_distillate: 5, star_distillate: 2, prepared_glass: 5 },
-  reward: {
-    category: 'flask',
-    flaskId: 'u_flask_witchglass',
-    ilvl: 80,
-    rarity: 'unique',
-    name: 'Witchglass',
-    uniqueId: 'witchglass',
-  },
-  repeatable: true,
-  sources: [
-    { label: 'Distill Moon and Star Blooms at Alchemy Table 3', skill: 'alchemy' },
-    { label: 'Refine Prepared Glass from Rough Gems and Sunpetals at Alchemy Table 3', skill: 'alchemy' },
-  ],
-  use: 'One Witchglass utility flask: 100% of elemental damage converted to chaos while active; cannot inflict elemental ailments. 5s duration, 20 of 40 charges per use. Unique flask; can be instilled.',
-});
-
-PROFESSION_PROJECTS.push({
-  id: 'the_still_heart',
-  version: 1,
-  name: 'The Still Heart',
-  skill: 'alchemy',
-  level: 60,
-  station: { id: 'alchemy_table', level: 3 },
-  durationMs: 3_600_000,
-  xp: 1200,
-  inputs: { moon_distillate: 6, emberroot: 30, prepared_glass: 3 },
-  reward: {
-    category: 'flask',
-    flaskId: 'u_flask_still_heart',
-    ilvl: 80,
-    rarity: 'unique',
-    name: 'The Still Heart',
-    uniqueId: 'the_still_heart',
-  },
-  repeatable: true,
-  sources: [
-    { label: 'Distill Moon Blooms at Alchemy Table 3', skill: 'alchemy' },
-    { label: 'Forage Emberroots in the Wild or Greenhouse', skill: 'harvesting' },
-    { label: 'Refine Prepared Glass at Alchemy Table 3', skill: 'alchemy' },
-  ],
-  use: 'One The Still Heart life flask: recovers 1800 Life over 6s, continuing at full life. Cannot leech or regenerate life during effect. Replaces active recovery on reuse. 20 of 40 charges per use. Borrowed Tomorrow blocks its life recovery entirely.',
-});
-
-PROFESSION_PROJECTS.push({
-  id: 'debt_of_stone',
-  version: 1,
-  name: 'Debt of Stone',
-  skill: 'smithing',
-  level: 70,
-  station: { id: 'forge', level: 3 },
-  accomplishments: ['smithing_work_100'],
-  durationMs: 7_200_000,
-  xp: 1800,
-  inputs: { stone_alloy: 4, adamant_bar: 20, heartwood_frame: 1 },
-  reward: {
-    category: 'equipment',
-    baseId: 'sunforged_plate',
-    ilvl: 80,
-    rarity: 'unique',
-    name: 'Debt of Stone',
-    uniqueId: 'debt_of_stone',
-  },
-  repeatable: true,
-  sources: [
-    { label: 'Smelt Stone Alloy from Adamant, Iron and Stone Fragments', skill: 'smithing' },
-    { label: 'Smelt Adamant Bars from Adamant Ore', skill: 'smithing' },
-    { label: 'Assemble Heartwood Frames from Ancient Heartwood and Yew Planks', skill: 'smithing' },
-  ],
-  use: '50% of incoming hit damage deferred evenly over 4s; cannot gain Energy Shield. Fixed unique, item level 80, combat level 60 to equip. One normal rune slot.',
-});
-
-PROFESSION_PROJECTS.push({
-  id: 'hands_forgotten_choir',
-  version: 1,
-  name: 'Hands of the Forgotten Choir',
-  skill: 'cartography',
-  level: 70,
-  accomplishments: ['cartography_work_100'],
-  durationMs: 7_200_000,
-  xp: 1800,
-  inputs: { choir_inscription: 2, exceptional_crystal: 1 },
-  baseIds: ['hierophant_gloves', 'seraph_gloves'],
-  baseNonUnique: true,
-  reward: {
-    category: 'equipment',
-    baseId: 'seraph_gloves',
-    ilvl: 80,
-    rarity: 'unique',
-    name: 'Hands of the Forgotten Choir',
-    uniqueId: 'hands_forgotten_choir',
-  },
-  repeatable: true,
-  sources: [
-    { label: 'Prepare Choir Inscriptions from Inscription Fragments and Flawless Iron Bars', skill: 'cartography' },
-    { label: 'Cut Exceptional Crystals from Mining Crystal Shards and Rough Gems', skill: 'gemcutting' },
-    { label: 'Crafted Hierophant’s Gloves or Seraph Gloves', skill: 'smithing' },
-  ],
-  use: 'Totem skills place two at once; +2 maximum active totems; you cannot deal damage yourself. Inscribes crafted Hierophant’s Gloves or Seraph Gloves, completely consuming the base into a new unique.',
-});
-
-PROFESSION_PROJECTS.push({
-  id: 'hollow_circuit',
-  version: 1,
-  name: 'Hollow Circuit',
-  skill: 'cartography',
-  level: 70,
-  accomplishments: ['cartography_work_100'],
-  durationMs: 7_200_000,
-  xp: 1800,
-  inputs: { circuit_inscription: 2, exceptional_crystal: 2 },
-  baseId: 'diamond_ring',
-  baseMinIlvl: 45,
-  baseNonUnique: true,
-  reward: {
-    category: 'equipment',
-    baseId: 'diamond_ring',
-    ilvl: 80,
-    rarity: 'unique',
-    name: 'Hollow Circuit',
-    uniqueId: 'hollow_circuit',
-  },
-  repeatable: true,
-  sources: [
-    { label: 'Prepare Circuit Inscriptions from Inscription Fragments and Flawless Mithril Bars', skill: 'cartography' },
-    { label: 'Cut Exceptional Crystals from Mining Crystal Shards and Rough Gems', skill: 'gemcutting' },
-    { label: 'Crafted Diamond Ring of item level 45+', skill: 'smithing' },
-  ],
-  use: '100% of would-be Mana regeneration recovers Energy Shield instead; no Mana regeneration or natural Energy Shield recharge. Inscribes a crafted Diamond Ring of item level 45+, completely consuming the base into a new unique.',
-});
+export const MASTERWORKS = PROFESSION_PROJECTS.filter((p) => p.category === 'masterwork');
 
 export const professionProject = (id: string) => PROFESSION_PROJECTS.find((p) => p.id === id);
 

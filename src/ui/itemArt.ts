@@ -446,6 +446,16 @@ export const ITEM_ART: Record<string, string> = {
   overhaul_plain_ring: new URL('../assets/items/pixel/a-241.png', import.meta.url).href,
   overhaul_plain_belt: new URL('../assets/items/pixel/k-belt-bronze.png', import.meta.url).href,
   overhaul_plain_amulet: new URL('../assets/items/pixel/a-258.png', import.meta.url).href,
+  mw_starforged_blade: new URL('../assets/items/pixel/a-84-gold.png', import.meta.url).href,
+  mw_glimmerweave_raiment: new URL('../assets/items/pixel/a-191-azure.png', import.meta.url).href,
+  mw_ancientwood_longbow: new URL('../assets/items/pixel/a-119.png', import.meta.url).href,
+  mw_rimebound_crown: new URL('../assets/items/pixel/a-168-frost.png', import.meta.url).href,
+  mw_colossus_bulwark: new URL('../assets/items/pixel/a-154-gold.png', import.meta.url).href,
+  mw_wraithstep_boots: new URL('../assets/items/pixel/a-237-violet.png', import.meta.url).href,
+  mw_twin_forge_gauntlets: new URL('../assets/items/pixel/a-212-crimson.png', import.meta.url).href,
+  mw_converging_ring: new URL('../assets/items/pixel/s-ac-ring02-gold.png', import.meta.url).href,
+  mw_world_tree_amulet: new URL('../assets/items/pixel/a-252-frost.png', import.meta.url).href,
+  mw_wanderers_staff: new URL('../assets/items/pixel/s-w-staff05-violet.png', import.meta.url).href,
 };
 
 /** Uniques with their own picture: their base's sprite, recoloured. The rest show their base's art. */

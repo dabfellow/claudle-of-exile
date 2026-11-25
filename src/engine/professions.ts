@@ -1,13 +1,14 @@
-import { ACTIONS, LEGACY_ACTION_PLACES } from '../data/skills';
+import { ACTIONS, LEGACY_ACTION_PLACES, SKILLS } from '../data/skills';
 import { SITES, findDigs, isChamberAction } from '../data/expedition';
 import { hasPassport, passportReason } from './expedition';
 import { HEIST_JOBS } from '../data/heist';
 import { RUNE_FAMILIES, RUNE_GRADES, runeDef } from '../data/runes';
-import { professionProject, type ProfessionProject, type ProfessionRequirement } from '../data/professionProjects';
+import { MASTERY_UNLOCK, professionProject, type MasterworkPerk, type ProfessionProject, type ProfessionRequirement } from '../data/professionProjects';
+import { pick, type Rng } from './rng';
 import { addBank, canAfford, payResolvedCost, resolveRecipeCost } from './bank';
 import { CLASSIC_BLOCK, isClassic, realmOf } from './challenge';
 import type { Ctx } from './context';
-import { createItem, createUnique } from './items';
+import { addRandomMod, allMods, createItem, createUnique } from './items';
 import { bagFull } from './storage';
 import { hasCraftOutputRoom, storeCraftOutput } from './craftOutput';
 import { grantXp } from './skills';
@@ -121,10 +122,32 @@ export function hasAccomplishment(s: GameState, id: string): boolean {
   return false;
 }
 
+/** Life skills that count toward the atelier: every trainable skill but Character level (not Fishing, or removed ones). */
+export const MASTERY_SKILLS: SkillId[] = (Object.keys(SKILLS) as SkillId[])
+  .filter((id) => id !== 'combat' && !SKILLS[id].soon && ACTIONS.some((a) => a.skill === id));
+
+/** Life skills at or above the Mastery unlock level. */
+export function masterySkillsReady(s: GameState): SkillId[] {
+  return MASTERY_SKILLS.filter((id) => levelOf(id, s.skills[id]) >= MASTERY_UNLOCK.level);
+}
+
+/** The Masterworks atelier opens once five life skills reach level 25. */
+export function masteryUnlocked(s: GameState): boolean {
+  return masterySkillsReady(s).length >= MASTERY_UNLOCK.skills;
+}
+
+export function masteryLockReason(s: GameState): string {
+  return `Requires ${MASTERY_UNLOCK.skills} life skills at level ${MASTERY_UNLOCK.level} (${Math.min(MASTERY_UNLOCK.skills, masterySkillsReady(s).length)}/${MASTERY_UNLOCK.skills})`;
+}
+
 export function professionAccessReason(s: GameState, req: ProfessionRequirement): string | null {
   if (isClassic(s)) return CLASSIC_BLOCK;
   if (s.fallen) return 'This character has fallen';
-  if (levelOf(req.skill, s.skills[req.skill]) < req.level) return `Requires ${req.skill} level ${req.level}`;
+  if ((req as ProfessionProject).category === 'masterwork' && !masteryUnlocked(s)) return masteryLockReason(s);
+  if (levelOf(req.skill, s.skills[req.skill]) < req.level) return `Requires ${SKILLS[req.skill].name} level ${req.level}`;
+  for (const [skill, level] of Object.entries(req.skillLevels ?? {}) as [SkillId, number][]) {
+    if (levelOf(skill, s.skills[skill]) < level) return `Requires ${SKILLS[skill].name} level ${level}`;
+  }
   if (req.masteryRequirement && masteryLevel(s, req.masteryRequirement.id) < req.masteryRequirement.level) {
     return `Requires ${req.masteryRequirement.name} mastery ${req.masteryRequirement.level}`;
   }
@@ -235,9 +258,16 @@ export function startProject(s: GameState, ctx: Ctx, id: string, repeats = 1, ui
   return null;
 }
 
+const RETIRED_RECIPE = 'Project recipe needs a compatible game version';
+
+/** An unfinished project whose recipe is no longer in the game (the old Masterworks): it can only be cancelled. */
+export function isRetiredRun(run: ProjectRun | undefined): boolean {
+  return !!run && !professionProject(run.project.id);
+}
+
 function runReason(s: GameState, run: ProjectRun): string | null {
   if (run.realm !== s.account.realm || run.realm !== realmOf(s.character) || run.owner !== s.character.id) return 'Project belongs to a different character or realm';
-  if (s.professionProgress.schema !== 1 || !professionProject(run.project.id) || run.project.version > professionProject(run.project.id)!.version) return 'Project recipe needs a compatible game version';
+  if (s.professionProgress.schema !== 1 || !professionProject(run.project.id) || run.project.version > professionProject(run.project.id)!.version) return RETIRED_RECIPE;
   if (isClassic(s)) return CLASSIC_BLOCK;
   return null;
 }
@@ -259,7 +289,8 @@ export function cancelProject(s: GameState): string | null {
   const run = p.activeProject;
   if (!run) return 'No project';
   const reason = runReason(s, run);
-  if (reason) return reason;
+  // a recipe that was taken out of the game can still be cancelled, so its reserved inputs come back in full
+  if (reason && !(reason === RETIRED_RECIPE && !professionProject(run.project.id))) return reason;
   if (s.action?.kind === 'project') s.action = null;
   if (run.status !== 'return') {
     for (const [id, n] of Object.entries(run.escrow)) addBank(s, id, n);
@@ -273,6 +304,29 @@ export function cancelProject(s: GameState): string | null {
   }
   delete p.activeProject;
   return null;
+}
+
+/** The Doom Implicits an Architect's Doom Sigil can give (engine/crafting.ts). */
+const DOOM_IMPLICITS = ['doom_all_res', 'doom_damage', 'doom_max_life', 'doom_crit'];
+
+/**
+ * A finished masterwork's marks, set the same way the endgame sigils set them, so every orb treats them alike:
+ * a Void Slot adds a seventh (Tier 1) modifier, a Doom Implicit is rolled, and Doom Tier raises one modifier by 30%.
+ */
+export function applyMasterworkPerks(item: Item, perks: MasterworkPerk[], rng: Rng): void {
+  if (perks.includes('voidSlot')) {
+    item.voidSlot = true;
+    addRandomMod(item, rng);
+  }
+  if (perks.includes('doomImplicit')) item.doomImplicit = pick(rng, DOOM_IMPLICITS);
+  if (perks.includes('doomTier')) {
+    const target = pick(rng, allMods(item));
+    if (target) {
+      target.elevated = true;
+      target.values = target.values.map((v) => Math.max(1, Math.round(v * 1.3)));
+      item.elevated = target.affixId;
+    }
+  }
 }
 
 export function completeProject(s: GameState, ctx: Ctx, runId: number): string | null {
@@ -298,6 +352,7 @@ export function completeProject(s: GameState, ctx: Ctx, runId: number): string |
       item.suffixes = structuredClone(r.fixedSuffixes);
     }
     if (r.name) item.name = r.name;
+    applyMasterworkPerks(item, r.perks ?? [], ctx.rng);
     storeCraftOutput(s, item);
     seeUnique(s.account, item);
     events.push({ t: 'loot', item });

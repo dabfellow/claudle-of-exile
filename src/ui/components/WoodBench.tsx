@@ -44,7 +44,7 @@ const BENCH_TEXT: Record<TunedSkill, { bench: string; start: string; stop: strin
 const livingMaterials = ['legend_heartwood', 'world_tree_heart'] as const;
 const tabs = [
   { id: 'bench', label: 'Workbench' }, { id: 'jigs', label: 'Jigs' },
-  { id: 'tunings', label: 'Tunings' }, { id: 'masterworks', label: 'Masterworks' },
+  { id: 'tunings', label: 'Tunings' },
 ] as const;
 type WoodTab = (typeof tabs)[number]['id'];
 
@@ -187,7 +187,7 @@ export function WoodRack() {
   </section>;
 }
 
-export function WoodBench({ skill, catalysts, masterworks }: { skill: TunedSkill; catalysts: ReactNode; masterworks: ReactNode }) {
+export function WoodBench({ skill, catalysts }: { skill: TunedSkill; catalysts: ReactNode }) {
   const s = useGame();
   const all = RECIPES[skill];
   const families = FAMILIES[skill];
@@ -195,7 +195,7 @@ export function WoodBench({ skill, catalysts, masterworks }: { skill: TunedSkill
   const level = skillLevel(s, skill);
   const tuningSelectId = useId();
   const livingSelectId = useId();
-  const [tab, setTab] = useState<WoodTab>(() => s.professionProgress.activeProject?.project.skill === skill ? 'masterworks' : 'bench');
+  const [tab, setTab] = useState<WoodTab>('bench');
   const [id, setId] = useState(() => all.find((a) => !!a.baseId)!.id);
   const [family, setFamily] = useState<WoodFamily>(() => woodFamily(actionDef(id).baseId!));
   const [benchShowLocked, setBenchShowLocked] = useState(false);
@@ -494,7 +494,6 @@ export function WoodBench({ skill, catalysts, masterworks }: { skill: TunedSkill
         </div>
       )}
 
-      {tab === 'masterworks' && masterworks}
       {notice && <p className="wood-notice" role="status">{notice}</p>}
       <WoodRack />
     </section>

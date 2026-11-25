@@ -1,8 +1,4 @@
-import { baseDef, uniqueDef } from '../../data/bases';
-import { flaskDef } from '../../data/flasks';
 import { materialDef } from '../../data/materials';
-import type { ProfessionProject } from '../../data/professionProjects';
-import { describeUniqueModDef } from '../../engine/items';
 import type { SkillId } from '../../engine/types';
 import { materialSources } from './materialSources';
 
@@ -59,58 +55,4 @@ export function resolveMaterialSource(
   }
 
   return undefined;
-}
-
-export function resolveBaseSource(p: ProfessionProject): MaterialSourceTarget | undefined {
-  if (!p.sources) return undefined;
-  const baseNames = (p.baseIds ?? (p.baseId ? [p.baseId] : [])).map((id) =>
-    baseDef(id)?.name?.toLowerCase() ?? ''
-  );
-  return p.sources.find((src) => {
-    const l = src.label.toLowerCase();
-    return baseNames.some((name) => name && (l.includes(name) || l.includes(name.replace(/s$/, ''))));
-  });
-}
-
-export function cleanProjectDesc(p: ProfessionProject): string | null {
-  let text = p.use;
-  if (!text) return null;
-
-  if (p.reward.category === 'equipment') {
-    const u = p.reward.uniqueId ? uniqueDef(p.reward.uniqueId) : null;
-    if (u) {
-      for (const m of u.mods) {
-        const modDesc = describeUniqueModDef(m);
-        text = text.replace(modDesc, '');
-        const cleanMod = modDesc.replace(/[.,;:]+$/, '').trim();
-        if (cleanMod.length > 5) {
-          text = text.replace(cleanMod, '');
-        }
-      }
-      text = text.replace(new RegExp(`^One\\s+${u.name}[^:]*:\\s*`, 'i'), '');
-    }
-
-    text = text.replace(/Fixed unique,?\s*item level \d+,?\s*/i, '');
-    text = text.replace(/item level \d+,?\s*/i, '');
-    text = text.replace(/Fixed cost;\s*no manual double or input conservation\.?/i, '');
-    text = text.replace(/^[;.,\s]+/, '').replace(/[;\s]+$/, '').trim();
-    if (text.length > 0) {
-      text = text.charAt(0).toUpperCase() + text.slice(1);
-      if (!/[.!?]$/.test(text)) text += '.';
-    }
-  } else if (p.reward.category === 'flask') {
-    const f = flaskDef(p.reward.flaskId);
-    const flaskName = p.reward.name ?? f.name;
-    text = text.replace(new RegExp(`^One\\s+${flaskName}[^:]*:\\s*`, 'i'), '');
-    text = text.replace(/Fixed unique,?\s*item level \d+,?\s*/i, '');
-    text = text.replace(/item level \d+,?\s*/i, '');
-    text = text.replace(/Fixed cost;\s*no manual double or input conservation\.?/i, '');
-    text = text.replace(/^[;.,\s]+/, '').replace(/[;\s]+$/, '').trim();
-    if (text.length > 0) {
-      text = text.charAt(0).toUpperCase() + text.slice(1);
-      if (!/[.!?]$/.test(text)) text += '.';
-    }
-  }
-
-  return text.length > 0 ? text : null;
 }

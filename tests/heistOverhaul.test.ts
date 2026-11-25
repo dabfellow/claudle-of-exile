@@ -12,8 +12,7 @@ import {
   stopHeistRepeat,
 } from '../src/engine/heist';
 import { baseDef } from '../src/data/bases';
-import { professionProject } from '../src/data/professionProjects';
-import { completeProject, settleProfessionProgress, startProject } from '../src/engine/professions';
+import { settleProfessionProgress } from '../src/engine/professions';
 import { seeded, type Rng } from '../src/engine/rng';
 import { skillStep, startSkillAction } from '../src/engine/skills';
 import { newGame, tick } from '../src/engine/state';
@@ -328,52 +327,6 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       expect(s.inventory).toHaveLength(bagCap(s));
       expect(s.storage.overflow.some((i) => i.uniqueId === 'borrowed_tomorrow')).toBe(true);
       expect(s.lifetime.uniquesFound).toBeGreaterThanOrEqual(1);
-    });
-  });
-
-  describe('Thieving Profession Projects', () => {
-    it('claims Borrowed Tomorrow amulet at Thieving 65 for 120 Treasury Fragments', () => {
-      const s = makeThief(65, 100);
-      s.storage.bank.treasury_fragment = 120;
-      const proj = professionProject('borrowed_tomorrow');
-      expect(proj).toBeDefined();
-      expect(proj!.skill).toBe('thieving');
-      expect(proj!.level).toBe(65);
-      expect(proj!.durationMs).toBe(60_000);
-      expect(proj!.xp).toBe(120);
-
-      expect(startProject(s, ctx(), 'borrowed_tomorrow')).toBeNull();
-      expect(s.storage.bank.treasury_fragment).toBe(0);
-
-      s.professionProgress.activeProject!.elapsedMs = 60_000;
-      const err = completeProject(s, ctx(), s.professionProgress.activeProject!.runId);
-      expect(err).toBeNull();
-
-      const item = s.inventory.find((i) => i.uniqueId === 'borrowed_tomorrow');
-      expect(item).toBeDefined();
-      expect(item!.baseId).toBe('overhaul_treasury_amulet');
-      expect(item!.ilvl).toBe(80);
-      expect(item!.rarity).toBe('unique');
-    });
-
-    it('assembles Stolen Oath Seal at Thieving 75 for 5 Oath Fragments', () => {
-      const s = makeThief(75, 100);
-      s.storage.bank.oath_fragment = 5;
-      const proj = professionProject('assemble_oath');
-      expect(proj).toBeDefined();
-      expect(proj!.skill).toBe('thieving');
-      expect(proj!.level).toBe(75);
-      expect(proj!.durationMs).toBe(60_000);
-      expect(proj!.xp).toBe(150);
-
-      expect(startProject(s, ctx(), 'assemble_oath')).toBeNull();
-      expect(s.storage.bank.oath_fragment).toBe(0);
-
-      s.professionProgress.activeProject!.elapsedMs = 60_000;
-      const err = completeProject(s, ctx(), s.professionProgress.activeProject!.runId);
-      expect(err).toBeNull();
-
-      expect(s.storage.bank.stolen_oath_seal).toBe(1);
     });
   });
 

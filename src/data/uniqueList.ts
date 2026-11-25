@@ -44,7 +44,7 @@ export function uniqueSections(): [string, UniqueDef[]][] {
   const fromBoss = (u: UniqueDef) => HARD_BOSSES.some((b) => b.uniqueId === u.id) || UBER_BOSSES.some((b) => b.uniques.includes(u.id));
   return [
     ['World drops', sorted.filter(isWorldDropUnique)],
-    ['Profession projects', sorted.filter((u) => !!u.projectSource)],
+    ['Retired masterworks', sorted.filter((u) => !!u.projectSource)],
     ['Boss trophies', sorted.filter(fromBoss)],
     ['Achievement rewards', sorted.filter((u) => !fromBoss(u) && achievementSources(u).length)],
     ['No drop source yet', sorted.filter((u) => !u.projectSource && !isWorldDropUnique(u) && !fromBoss(u) && !achievementSources(u).length)],

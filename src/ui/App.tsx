@@ -17,6 +17,7 @@ import { UpcomingSkillsPage } from './pages/UpcomingSkillsPage';
 import { SkillPage } from './pages/SkillPage';
 import { FishingPage } from './pages/FishingPage';
 import { GreenhousePage } from './pages/GreenhousePage';
+import { MasteryPage } from './pages/MasteryPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { MarketPage } from './pages/MarketPage';
 import { TraderPage } from './pages/TraderPage';
@@ -78,6 +79,8 @@ function Content({ page, go, questMapZone, showQuestOnMap, guildCategory, openGu
       return <FishingPage go={go} />;
     case 'greenhouse':
       return <GreenhousePage go={go} />;
+    case 'mastery':
+      return <MasteryPage go={go} />;
     default:
       return <SkillPage key={page} skill={page} go={go} />;
   }

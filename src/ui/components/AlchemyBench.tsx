@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import {
   ALCHEMY_CATEGORIES, INFUSION_BREW_HERBS, INFUSIONS, MAX_INFUSION_RANK,
   alchemyCategory, infusionDef, type AlchemyCategory,
@@ -21,7 +21,7 @@ import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
 import { SkillMinigame } from './SkillMinigame';
 import './alchemy-bench.css';
 
-type AlchemyTab = 'belt' | 'infusions' | 'queue' | 'recipes' | 'masterworks';
+type AlchemyTab = 'belt' | 'infusions' | 'queue' | 'recipes';
 
 export function AwayVials() {
   const s = useGame();
@@ -342,9 +342,9 @@ function RecipesTab({ s, notify }: { s: GameState; notify: (msg: string) => void
   </section>;
 }
 
-export function AlchemyBench({ masterworks }: { masterworks: ReactNode }) {
+export function AlchemyBench() {
   const s = useGame();
-  const [tab, setTab] = useState<AlchemyTab>(() => s.professionProgress.activeProject?.project.skill === 'alchemy' ? 'masterworks' : 'belt');
+  const [tab, setTab] = useState<AlchemyTab>('belt');
   const [notice, setNotice] = useState('');
 
   const benchTabs: TabDef<AlchemyTab>[] = [
@@ -352,7 +352,6 @@ export function AlchemyBench({ masterworks }: { masterworks: ReactNode }) {
     { id: 'infusions', label: 'Infusions' },
     { id: 'queue', label: 'Queue', count: s.alchemy.queue.length || undefined },
     { id: 'recipes', label: 'Recipes' },
-    { id: 'masterworks', label: 'Masterworks' },
   ];
 
   return <section className="alchemy-bench">
@@ -363,7 +362,6 @@ export function AlchemyBench({ masterworks }: { masterworks: ReactNode }) {
     {tab === 'infusions' && <InfusionsTab s={s} notify={setNotice} />}
     {tab === 'queue' && <QueueTab s={s} notify={setNotice} onTab={setTab} />}
     {tab === 'recipes' && <RecipesTab s={s} notify={setNotice} />}
-    {tab === 'masterworks' && masterworks}
     {notice && <p role="status" className="muted small">{notice}</p>}
   </section>;
 }

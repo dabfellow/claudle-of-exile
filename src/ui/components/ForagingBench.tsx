@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { collectibleFor } from '../../data/collectibles';
 import {
   ALL_MUTATIONS, ALL_SPECIES, BASE_SPECIES, HERBARIUM_PERKS, PLOT_UNLOCK_LEVELS,
@@ -26,7 +26,7 @@ import { LockedBadge } from './SkillHelp';
 import { ForagingBedsIdle, ForagingGame } from './minigames';
 import './foraging-bench.css';
 
-type ForagingTab = 'greenhouse' | 'wild' | 'seeds' | 'herbarium' | 'masterworks';
+type ForagingTab = 'greenhouse' | 'wild' | 'seeds' | 'herbarium';
 
 const DOUBLE_HINT = 'Gold is the double zone: pick while glowing gold for twice the Focus.';
 const RESULT_TEXT: Record<SwingResult, string> = {
@@ -1570,26 +1570,22 @@ function HerbariumTab({ s }: { s: GameState }) {
 }
 
 /**
- * Foraging, a gathering skill: just the set-and-forget Wild patches (and its Masterworks).
+ * Foraging, a gathering skill: just the set-and-forget Wild patches.
  * The Greenhouse, which needs planting and waiting, is its own Production page (GreenhouseBench).
  */
-export function ForagingBench({ masterworks, onOpenGreenhouse }: { masterworks: ReactNode; onOpenGreenhouse: () => void }) {
+export function ForagingBench({ onOpenGreenhouse }: { onOpenGreenhouse: () => void }) {
   const s = useGame();
-  const [tab, setTab] = useState<ForagingTab>(() =>
-    s.professionProgress.activeProject?.project.skill === 'harvesting' ? 'masterworks' : 'wild',
-  );
+  const [tab, setTab] = useState<ForagingTab>('wild');
   const [notice, setNotice] = useState('');
 
   const benchTabs: TabDef<ForagingTab>[] = [
     { id: 'wild', label: 'Wild', count: BASE_SPECIES.length },
-    { id: 'masterworks', label: 'Masterworks' },
   ];
 
   return (
     <section className="foraging-bench">
       <Tabs tabs={benchTabs} value={tab} onChange={(next) => { setTab(next); setNotice(''); }} />
       {tab === 'wild' && <WildTab s={s} notify={setNotice} onOpenGreenhouse={onOpenGreenhouse} />}
-      {tab === 'masterworks' && masterworks}
       {notice && <p role="status" className="muted small">{notice}</p>}
     </section>
   );

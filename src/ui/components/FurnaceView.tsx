@@ -23,7 +23,7 @@ import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
 import { MasteryProgress } from './MasteryProgress';
 import './furnace.css';
 
-type FurnaceTab = 'furnace' | 'recipes' | 'supplies' | 'parts' | 'alloys' | 'masterworks';
+type FurnaceTab = 'furnace' | 'recipes' | 'supplies' | 'parts' | 'alloys';
 const BAND_CENTRE = 0.57;
 const RESULT_TEXT: Record<SwingResult, string> = { double: 'Double!', hit: 'Hit', weak: 'Weak', miss: 'Miss' };
 
@@ -495,23 +495,22 @@ function Parts({ s, level }: { s: GameState; level: number }) {
   </>;
 }
 
-export function FurnaceView({ projects }: { projects?: ReactNode }) {
+export function FurnaceView() {
   const s = useGame();
   const d = deriveStats(s);
   const level = skillLevel(s, 'smelting');
-  const [tab, setTab] = useState<FurnaceTab>(() => s.professionProgress.activeProject?.project.skill === 'smelting' ? 'masterworks' : 'furnace');
+  const [tab, setTab] = useState<FurnaceTab>('furnace');
   const [showLockedRecipes, setShowLockedRecipes] = useState(false);
   const running = s.action?.kind === 'skill' ? actionDef(s.action.actionId) : undefined;
   const active = running?.skill === 'smelting' ? running : undefined;
   const recipes = actionsFor('smelting').filter((a) => !a.batchMastery || masteryLevel(s, `task.${a.batchOf}`) >= a.batchMastery);
-  const baseTabs: TabDef<FurnaceTab>[] = [
+  const tabs: TabDef<FurnaceTab>[] = [
     { id: 'furnace', label: 'Furnace' },
     { id: 'recipes', label: 'Recipes' },
     { id: 'supplies', label: 'Fuel & flux' },
     { id: 'parts', label: 'Furnace parts' },
     { id: 'alloys', label: 'Master alloys', locked: level < 80 ? 'Unlocks at Smelting Lv 80' : undefined },
   ];
-  const tabs = projects ? [...baseTabs, { id: 'masterworks' as const, label: 'Masterworks' }] : baseTabs;
 
   const barAndAlloyRecipes = recipes.filter((a) => !a.id.startsWith('furnace_') && !a.id.startsWith('alloy_master_'));
   const lockedRecipeLevels = [...new Set(barAndAlloyRecipes.filter((a) => a.level > level).map((a) => a.level))].sort((a, b) => a - b);
@@ -560,7 +559,6 @@ export function FurnaceView({ projects }: { projects?: ReactNode }) {
           }))}
         </div>
       </>}
-      {tab === 'masterworks' && <><UseBarGrade />{projects}</>}
     </div>
   );
 }

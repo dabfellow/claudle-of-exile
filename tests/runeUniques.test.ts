@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { uniqueDef } from '../src/data/bases';
-import { professionProject } from '../src/data/professionProjects';
 import { worldDropUniques } from '../src/data/uniqueDrops';
 import { uniqueDropsIn } from '../src/data/uniqueList';
 import { zoneDef } from '../src/data/zones';
@@ -8,11 +7,10 @@ import { combatStep, makeMonster, startCombat, useFlask } from '../src/engine/co
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem, createSupportGem } from '../src/engine/gems';
 import { createItem, createUnique, addFixedMod } from '../src/engine/items';
-import { advanceProject, cancelProject, isEligibleProjectBase, startProject } from '../src/engine/professions';
 import { deserialize, serialize } from '../src/engine/save';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
-import { charXpForLevel, xpForLevel } from '../src/engine/xp';
+import { charXpForLevel } from '../src/engine/xp';
 import { simulateOffline } from '../src/engine/offline';
 import { prepareRuneUniqueBuild } from '../src/dev/overhaulBuilds';
 import { seeded } from '../src/engine/rng';
@@ -59,7 +57,7 @@ describe('Phase 16 Rune-carved Uniques: Hands of the Forgotten Choir & Hollow Ci
       expect(choir).toBeDefined();
       expect(choir.name).toBe('Hands of the Forgotten Choir');
       expect(worldDropUniques(85).some((u) => u.id === 'hands_forgotten_choir')).toBe(false);
-      expect(uniqueDropsIn(choir)).toEqual(['Cartography 70: Hands of the Forgotten Choir project']);
+      expect(uniqueDropsIn(choir)).toEqual(['Retired masterwork, no longer made']);
     });
 
     it('hollow_circuit is excluded from global drops and maps', () => {
@@ -67,122 +65,7 @@ describe('Phase 16 Rune-carved Uniques: Hands of the Forgotten Choir & Hollow Ci
       expect(circuit).toBeDefined();
       expect(circuit.name).toBe('Hollow Circuit');
       expect(worldDropUniques(85).some((u) => u.id === 'hollow_circuit')).toBe(false);
-      expect(uniqueDropsIn(circuit)).toEqual(['Cartography 70: Hollow Circuit project']);
-    });
-
-    it('hands_forgotten_choir project requires Cartography 70 and exact inputs', () => {
-      const p = professionProject('hands_forgotten_choir');
-      expect(p).toBeDefined();
-      expect(p!.skill).toBe('cartography');
-      expect(p!.level).toBe(70);
-      expect(p!.station).toBeUndefined();
-      expect(p!.accomplishments).toContain('cartography_work_100');
-      expect(p!.inputs).toEqual({ choir_inscription: 2, exceptional_crystal: 1 });
-      expect(p!.baseIds).toEqual(['hierophant_gloves', 'seraph_gloves']);
-      expect(p!.baseNonUnique).toBe(true);
-      expect(p!.durationMs).toBe(7_200_000);
-      expect(p!.xp).toBe(1800);
-    });
-
-    it('hollow_circuit project requires Cartography 70 and exact inputs', () => {
-      const p = professionProject('hollow_circuit');
-      expect(p).toBeDefined();
-      expect(p!.skill).toBe('cartography');
-      expect(p!.level).toBe(70);
-      expect(p!.station).toBeUndefined();
-      expect(p!.accomplishments).toContain('cartography_work_100');
-      expect(p!.inputs).toEqual({ circuit_inscription: 2, exceptional_crystal: 2 });
-      expect(p!.baseId).toBe('diamond_ring');
-      expect(p!.baseMinIlvl).toBe(45);
-      expect(p!.baseNonUnique).toBe(true);
-      expect(p!.durationMs).toBe(7_200_000);
-      expect(p!.xp).toBe(1800);
-    });
-  });
-
-  describe('Crafted Base Inscription & Escrow / Consumption', () => {
-    it('isEligibleProjectBase validates glove and ring requirements', () => {
-      const s = newGame(1);
-      const pChoir = professionProject('hands_forgotten_choir')!;
-      const pHollow = professionProject('hollow_circuit')!;
-
-      const seraphG = createItem(s, 'seraph_gloves', 65, 'rare', seeded(1));
-      const hieroG = createItem(s, 'hierophant_gloves', 55, 'normal', seeded(1));
-      const ironG = createItem(s, 'iron_gauntlets', 70, 'rare', seeded(1));
-      const uniqueG = createUnique(s, 'hands_forgotten_choir', 80, seeded(1));
-
-      expect(isEligibleProjectBase(pChoir, seraphG, s)).toBe(true);
-      expect(isEligibleProjectBase(pChoir, hieroG, s)).toBe(true);
-      expect(isEligibleProjectBase(pChoir, ironG, s)).toBe(false);
-      expect(isEligibleProjectBase(pChoir, uniqueG, s)).toBe(false);
-
-      const dRingLow = createItem(s, 'diamond_ring', 40, 'rare', seeded(1));
-      const dRingHigh = createItem(s, 'diamond_ring', 45, 'magic', seeded(1));
-      const rubyRing = createItem(s, 'ruby_ring', 50, 'rare', seeded(1));
-      const uniqueRing = createUnique(s, 'hollow_circuit', 80, seeded(1));
-
-      expect(isEligibleProjectBase(pHollow, dRingLow, s)).toBe(false);
-      expect(isEligibleProjectBase(pHollow, dRingHigh, s)).toBe(true);
-      expect(isEligibleProjectBase(pHollow, rubyRing, s)).toBe(false);
-      expect(isEligibleProjectBase(pHollow, uniqueRing, s)).toBe(false);
-    });
-
-    it('hands_forgotten_choir escrows crafted gloves, returns on cancel, and transforms on completion', () => {
-      const s = newGame(1);
-      const ctx = context();
-      s.skills.cartography = xpForLevel(70);
-      s.professionProgress.work.cartography = 100;
-      s.storage.bank = { choir_inscription: 2, exceptional_crystal: 1 };
-
-      const glove = createItem(s, 'hierophant_gloves', 60, 'rare', ctx.rng);
-      const oldUid = glove.uid;
-      s.inventory.push(glove);
-
-      // Start project
-      expect(startProject(s, ctx, 'hands_forgotten_choir', 1, oldUid)).toBeNull();
-      expect(s.inventory.find((i) => i.uid === oldUid)).toBeUndefined();
-      expect(s.professionProgress.activeProject?.item?.uid).toBe(oldUid);
-      expect(s.storage.bank.choir_inscription).toBe(0);
-
-      // Cancel returns the base item with its exact properties intact
-      expect(cancelProject(s)).toBeNull();
-      const returned = s.inventory.find((i) => i.uid === oldUid);
-      expect(returned).toBeDefined();
-      expect(returned!.baseId).toBe('hierophant_gloves');
-      expect(returned!.rarity).toBe('rare');
-      expect(s.storage.bank.choir_inscription).toBe(2);
-
-      // Re-start and complete
-      expect(startProject(s, ctx, 'hands_forgotten_choir', 1, oldUid)).toBeNull();
-      advanceProject(s, ctx, 7_200_000);
-
-      expect(s.professionProgress.activeProject).toBeUndefined();
-      const created = s.inventory.find((i) => i.uniqueId === 'hands_forgotten_choir');
-      expect(created).toBeDefined();
-      expect(created!.uid).not.toBe(oldUid);
-      expect(created!.baseId).toBe('hierophant_gloves');
-      expect(created!.rarity).toBe('unique');
-    });
-
-    it('hollow_circuit escrows diamond ring and produces unique diamond ring', () => {
-      const s = newGame(1);
-      const ctx = context();
-      s.skills.cartography = xpForLevel(70);
-      s.professionProgress.work.cartography = 100;
-      s.storage.bank = { circuit_inscription: 2, exceptional_crystal: 2 };
-
-      const ring = createItem(s, 'diamond_ring', 55, 'magic', ctx.rng);
-      const oldUid = ring.uid;
-      s.inventory.push(ring);
-
-      expect(startProject(s, ctx, 'hollow_circuit', 1, oldUid)).toBeNull();
-      advanceProject(s, ctx, 7_200_000);
-
-      const created = s.inventory.find((i) => i.uniqueId === 'hollow_circuit');
-      expect(created).toBeDefined();
-      expect(created!.uid).not.toBe(oldUid);
-      expect(created!.baseId).toBe('diamond_ring');
-      expect(created!.rarity).toBe('unique');
+      expect(uniqueDropsIn(circuit)).toEqual(['Retired masterwork, no longer made']);
     });
   });
 

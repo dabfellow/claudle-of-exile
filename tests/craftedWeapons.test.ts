@@ -1,20 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { baseDef, uniqueDef } from '../src/data/bases';
-import { professionProject } from '../src/data/professionProjects';
-import { worldDropUniques } from '../src/data/uniqueDrops';
-import { uniqueDropsIn } from '../src/data/uniqueList';
 import { zoneDef } from '../src/data/zones';
 import { combatStep, makeMonster, releaseNovas, startCombat } from '../src/engine/combat';
 import { makeCtx } from '../src/engine/context';
 import { createSkillGem, createSupportGem } from '../src/engine/gems';
-import { createUnique, createItem } from '../src/engine/items';
-import { advanceProject, completeProject, settleProfessionProgress, startProject } from '../src/engine/professions';
+import { createUnique } from '../src/engine/items';
+import { settleProfessionProgress } from '../src/engine/professions';
 import { deserialize, serialize } from '../src/engine/save';
 import { skillStep, startSkillAction } from '../src/engine/skills';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import { charXpForLevel, xpForLevel } from '../src/engine/xp';
-import { orbReason } from '../src/engine/crafting';
 import { simulateOffline } from '../src/engine/offline';
 import { prepareWeaponBuild } from '../src/dev/overhaulBuilds';
 import { equip } from '../src/engine/equipment';
@@ -53,27 +48,12 @@ function firstHit(s: GameState, c: ReturnType<typeof context>) {
 }
 
 describe('Phase 14 crafted weapons', () => {
-  it('delivers a finished unique to the stash when inventory is full and keeps it through reload', () => {
-    const s = newGame(1), c = context(), p = professionProject('woundmaker')!;
-    s.skills.smithing = xpForLevel(90); s.professionProgress.work.smithing = 100; s.account.hideout.forge = 3;
-    s.storage.bank = { ...p.inputs };
-    for (let i = 0; i < 100; i++) s.inventory.push(createItem(s, 'rusted_sword', 1, 'normal', c.rng));
-    expect(startProject(s, c, p.id)).toBeNull(); advanceProject(s, c, p.durationMs);
-    expect(s.inventory.some((i) => i.uniqueId === p.id)).toBe(false);
-    const back = deserialize(serialize(s)); back.account = structuredClone(s.account);
-    advanceProject(back, c, 0);
-    expect(back.storage.uniqueStash.filter((i) => i.uniqueId === p.id)).toHaveLength(1);
-    expect(back.account.uniquesSeen.filter((id) => id === p.id)).toHaveLength(1);
-    expect(back.professionProgress.activeProject).toBeUndefined();
-    expect(back.storage.bank.wound_alloy).toBe(0);
-  });
-  it.each(['woundmaker', 'winters_pyre', 'the_homecoming'])('uses actually crafted %s in a legal build with matching live/offline combat', (id) => {
+  // The weapons' Masterworks recipes were retired (docs/MASTERWORKS.md); copies players already own keep working.
+  it.each(['woundmaker', 'winters_pyre', 'the_homecoming'])('uses an owned %s in a legal build with matching live/offline combat', (id) => {
     const s = newGame(9, { name: 'Realistic project build', classId: id === 'winters_pyre' ? 'mage' : id === 'the_homecoming' ? 'ranger' : 'duelist' });
-    const c = makeCtx(seeded(9)), p = professionProject(id)!;
+    const c = makeCtx(seeded(9));
     prepareWeaponBuild(s, c, id);
-    s.skills.smithing = xpForLevel(90); s.professionProgress.work.smithing = 100; s.account.hideout.forge = 3;
-    s.storage.bank = { ...p.inputs };
-    expect(startProject(s, c, id)).toBeNull(); advanceProject(s, c, p.durationMs);
+    s.inventory.push(createUnique(s, id, 80, c.rng));
     expect(equip(s, c, s.inventory.at(-1)!.uid, 'weapon')).toBeNull();
     s.unlockedZones.push('shatteredthrone'); expect(startCombat(s, c, 'shatteredthrone')).toBeNull();
     const b = structuredClone(s); b.maps.stock = b.account.maps!;
@@ -86,26 +66,6 @@ describe('Phase 14 crafted weapons', () => {
     expect(s.lifetime.kills).toBeGreaterThan(0);
     expect(s.lifetime.deaths, JSON.stringify({ resists: deriveStats(s).res, events: live.events.slice(-6) })).toBe(0);
   });
-  it.each(['woundmaker', 'winters_pyre', 'the_homecoming'])('delivers %s at exact cost, fixed and exclusive, once online/offline', (id) => {
-    for (const offline of [false, true]) {
-      const s = newGame(1), c = context(), p = professionProject(id)!;
-      s.skills.smithing = xpForLevel(90); s.professionProgress.work.smithing = 100; s.account.hideout.forge = 3;
-      s.storage.bank = { ...p.inputs, divine: 1 };
-      expect(startProject(s, c, id)).toBeNull();
-      const run = s.professionProgress.activeProject!.runId;
-      if (offline) simulateOffline(s, c, p.durationMs); else advanceProject(s, c, p.durationMs);
-      const item = s.inventory.at(-1)!;
-      expect(item.uniqueId).toBe(id); expect(item.ilvl).toBe(80);
-      expect(baseDef(item.baseId).reqLevel).toBe(60);
-      for (const key of Object.keys(p.inputs)) expect(s.storage.bank[key]).toBe(0);
-      expect(completeProject(s, c, run)).toMatch(/settled/);
-      expect(orbReason(s, 'divine', item.uid)).toMatch(/fixed/);
-      expect(worldDropUniques(100).some((u) => u.id === id)).toBe(false);
-      expect(uniqueDropsIn(uniqueDef(id)).join(' ')).toMatch(/Smithing/);
-      expect(s.skills.combat).toBe(0);
-    }
-  });
-
   it('makes the required crystal and inscription from bounded sources without conservation or duplicate output', () => {
     const s = newGame(1), c = context();
     s.skills.gemcutting = s.skills.cartography = xpForLevel(90);
