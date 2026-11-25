@@ -50,7 +50,7 @@ const OVERRIDES: { id: LootOverrideId; name: string; desc: string; value: 'show'
 
 const ACTIONS: { id: LootRuleAction; label: string }[] = [
   { id: 'show', label: 'Show' }, { id: 'hide', label: 'Hide' }, { id: 'highlight', label: 'Highlight colour' },
-  { id: 'sound', label: 'Show + sound' }, { id: 'send_to_stash', label: 'Send to stash' }, { id: 'auto_salvage', label: 'Auto-salvage' },
+  { id: 'sound', label: 'Show + sound' }, { id: 'send_to_stash', label: 'Send to stash (Run filter)' }, { id: 'auto_salvage', label: 'Auto-salvage' },
 ];
 
 interface PickOption { id: string; label: string; hint?: string; search: string }

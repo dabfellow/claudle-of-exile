@@ -158,7 +158,7 @@ describe('hidden drops are left behind', () => {
     const unique = createUnique(s, 'bloodthirst', 20, seeded(6));
     expect(evaluateLootFilter(s, unique).visible).toBe(true);
     placeItem(s, makeCtx(seeded(7)), unique);
-    expect(s.inventory).toHaveLength(1);
+    expect(s.ground).toHaveLength(1);
   });
 
   it('keeps drops an auto-salvage rule matches until salvage is unlocked', () => {
@@ -166,7 +166,7 @@ describe('hidden drops are left behind', () => {
     s.settings.lootFilter!.rules = [{ id: 'sal', name: 'Salvage rares', enabled: true, rarities: ['rare'], action: 'auto_salvage' }];
     const dust = s.storage.bank.arcane_dust ?? 0;
     placeItem(s, makeCtx(seeded(8)), createItem(s, 'rusted_sword', 10, 'rare', seeded(9)));
-    expect(s.inventory).toHaveLength(1);
+    expect(s.ground).toHaveLength(1);
     expect(s.storage.bank.arcane_dust ?? 0).toBe(dust);
   });
 });

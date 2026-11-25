@@ -21,6 +21,7 @@ export function ruleMet(item: Item, rule: StopRule): boolean {
 }
 
 function stepReason(s: GameState, uid: number, method: CraftMethod): string | null {
+  if ('orb' in method && method.orb === 'valor') return 'Use the Valor Orb directly on the item';
   return 'essence' in method ? essenceReason(s, method.essence, uid) : orbReason(s, method.orb, uid, method.fossil, method.sealed);
 }
 

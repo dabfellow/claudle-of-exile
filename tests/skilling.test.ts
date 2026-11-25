@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AUTO_CRAFT_BENCH_LEVEL, BAG_SIZE, BENCH_BUILT_LEVEL } from '../src/data/hideout';
+import { AUTO_CRAFT_BENCH_LEVEL, BAG_SIZE, BENCH_BUILT_LEVEL, STASH_PAGE_SIZE } from '../src/data/hideout';
 import { affixDef } from '../src/data/affixes';
 import { BASES } from '../src/data/bases';
 import { modBias } from '../src/data/craftMats';
@@ -318,18 +318,23 @@ describe('smithing catalysts', () => {
     expect(fossilHit(s.inventory[0], 'scorched_fossil')).toBe(true);
   });
 
-  /** A character with the bench built, plenty of ore, and a full bag if asked. */
+  /** A character with the bench built, plenty of ore, and full gear storage if asked. */
   function smith(full = false): GameState {
     const s = player();
     s.account.hideout.bench = BENCH_BUILT_LEVEL;
     s.storage.bank = { ...s.storage.bank, copper_ore: 10000, copper_bar: 10000, rough_gem: 10000 };
-    if (full) while (s.inventory.length < BAG_SIZE) ring(s);
+    if (full) {
+      while (s.inventory.length < BAG_SIZE) ring(s);
+      for (const page of s.storage.stash) {
+        while (page.length < STASH_PAGE_SIZE) page.push(createItem(s, 'iron_ring', 1, 'normal', seeded(1)));
+      }
+    }
     return s;
   }
 
-  it('stops at a full bag unless salvaging when full', () => {
+  it('stops when both spaces are full unless salvaging when full', () => {
     const stops = smith(true);
-    expect(startSkillAction(stops, ctx(), 'smith_iron_ring')).toBe('Inventory full');
+    expect(startSkillAction(stops, ctx(), 'smith_iron_ring')).toBe('Inventory and stash full');
 
     const s = smith(true);
     setSmithCatalyst(s, { salvageFull: true });
@@ -358,14 +363,27 @@ describe('smithing catalysts', () => {
     expect(s.skills.smithing).toBeGreaterThan(0);
   });
 
+  it('persists the crafting output settings and salvages new gear with both spaces full', () => {
+    const original = smith(true);
+    original.settings.craftFillFirst = 'stash';
+    original.settings.autoSalvageCraftedGear = true;
+    const s = deserialize(serialize(original));
+    s.account = structuredClone(original.account);
+    expect(s.settings.craftFillFirst).toBe('stash');
+    run(s, 'smith_iron_ring', 1);
+    expect(s.inventory).toHaveLength(BAG_SIZE);
+    expect(s.lifetime.salvaged).toBe(1);
+    expect(s.storage.bank.arcane_dust).toBeGreaterThan(0);
+  });
+
   it('salvage toggles need the bench', () => {
     const s = smith(true);
     s.account.hideout.bench = BENCH_BUILT_LEVEL - 1;
     setSmithCatalyst(s, { salvageFull: true, salvageAll: true });
-    expect(startSkillAction(s, ctx(), 'smith_iron_ring')).toBe('Inventory full');
+    expect(startSkillAction(s, ctx(), 'smith_iron_ring')).toBe('Inventory and stash full');
   });
 
-  it('a repeat-until hit with a full bag waits on the ground', () => {
+  it('a repeat-until hit with full storage waits on the ground', () => {
     const s = smith(true);
     s.skills.smithing = xpForLevel(20);
     const r = createItem(s, 'iron_ring', 20, 'normal', seeded(9));

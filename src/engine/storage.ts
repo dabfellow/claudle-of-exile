@@ -73,6 +73,25 @@ export function itemAffinity(item: Item): StashAffinity {
   return 'gear';
 }
 
+export function stashPageFor(s: GameState, item: Item, preferred = 0): number {
+  const affinity = itemAffinity(item);
+  const matching = Object.entries(s.storage.stashAffinities ?? {}).find(([page, value]) => value === affinity && stashPageRoom(s, Number(page)) > 0);
+  if (matching) return Number(matching[0]);
+  if (stashPageRoom(s, preferred) > 0) return preferred;
+  return s.storage.stash.findIndex((_, page) => stashPageRoom(s, page) > 0);
+}
+
+export function addStashItem(s: GameState, item: Item, preferred = 0): boolean {
+  if (item.rarity === 'unique') {
+    shelveUnique(s, item);
+    return true;
+  }
+  const page = stashPageFor(s, item, preferred);
+  if (page < 0) return false;
+  s.storage.stash[page].push(claimOwned(s, item));
+  return true;
+}
+
 export function setStashAffinity(s: GameState, page: number, affinity: StashAffinity | null): void {
   s.storage.stashAffinities ??= {};
   if (!affinity) {
@@ -85,20 +104,10 @@ export function setStashAffinity(s: GameState, page: number, affinity: StashAffi
 /** Move bag items into a stash page (affinity page first, then the given one, then any with room); uniques go to the Uniques tab. Returns how many moved. */
 export function stashItems(s: GameState, ctx: Ctx, uids: number[], page = 0): number {
   const want = new Set(uids);
-  const order = [page, ...s.storage.stash.map((_, i) => i).filter((i) => i !== page)];
   let n = 0;
   s.inventory = s.inventory.filter((i) => {
     if (!want.has(i.uid) || isCraftLocked(s, i.uid)) return true;
-    if (i.rarity === 'unique') {
-      shelveUnique(s, i);
-      n++;
-      return false;
-    }
-    const aff = itemAffinity(i);
-    const affinityPage = Object.entries(s.storage.stashAffinities ?? {}).find(([p, a]) => a === aff && stashPageRoom(s, Number(p)) > 0);
-    const target = affinityPage !== undefined ? Number(affinityPage[0]) : order.find((p) => stashPageRoom(s, p) > 0);
-    if (target === undefined) return true;
-    s.storage.stash[target].push(claimOwned(s, i));
+    if (!addStashItem(s, i, page)) return true;
     n++;
     return false;
   });

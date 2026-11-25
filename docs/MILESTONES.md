@@ -6,6 +6,8 @@ Last updated 2026-11-24. Current implementation: [GAME.md](GAME.md). Engineering
 
 The Woodcutter's Lodge has clickable pixel-art stations that change as players build upgrades (2026-11-24). An up arrow marks upgrades ready to build, and the Trophy Wall unlocks inside the lodge with a hanging sign and wooden nameplates.
 
+The pending workshop and loot changes are assembled for release. They include Mining layer mastery, the Anvil and Forging progression changes, One Long Curl, equipment stat previews, the greenhouse harvest badge, saved loot filters, ground-first gear drops, crafted gear routing, and Valor Orbs.
+
 **0.6.6, Foraging Audio, News and Astrology**, went live on 2026-11-24. It removes the Foraging wind sound, keeps rain opt-in, groups News by beta version, corrects the Skilling Revamp numbering to 0.6.x, and makes Astrology slots and labels smaller. All 2,030 tests passed. Browser checks covered News on the title and character screens, Astrology at desktop and phone widths, and Foraging audio. The deploy confirmed the live version and login configuration.
 
 Weapon-family mastery and master-alloy signatures are live in **0.6.4**. Early recipes build practice for late-game Master Forms in the same family. Existing weapon recipe practice carries over.

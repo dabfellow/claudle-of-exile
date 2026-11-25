@@ -186,7 +186,7 @@ export function tick(s: GameState, ctx: Ctx, dtMs: number): void {
   // any gear change (sets, linked profiles, swaps) settles The Second Heresy's allowance before stats are read
   settleForbiddenAllowance(s, ctx);
   let d = deriveStats(s);
-  const hasLivingEquipment = Object.values(s.equipment).some((item) => item?.living && item.living.growth < 10);
+  const hasLivingEquipment = Object.values(s.equipment).some((item) => item?.living && !item.corrupted && item.living.growth < 10);
   let remaining = dtMs;
   while (remaining > 0) {
     const step = Math.min(STEP_MS, remaining);

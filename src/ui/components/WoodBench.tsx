@@ -151,8 +151,10 @@ function Retune({ s, item, notify }: { s: GameState; item: Item; notify: (messag
   const [dials, setDials] = useState(item.dials ?? []);
   return <details className="card wood-card">
     <summary>{itemName(item)} · Growth {item.living?.growth}/10</summary>
-    <Dials s={s} recipe={actionDef(`smith_${item.baseId}`)} dials={dials} living item={item} change={setDials} />
-    <button className="btn sm" onClick={() => notify(game.act((st) => retuneLivingWood(st, item.uid, dials)) ?? 'Living piece retuned')}>Retune and halve growth</button>
+    {item.corrupted ? <p className="bad small">Corrupted. Growth and tuning are sealed.</p> : <>
+      <Dials s={s} recipe={actionDef(`smith_${item.baseId}`)} dials={dials} living item={item} change={setDials} />
+      <button className="btn sm" onClick={() => notify(game.act((st) => retuneLivingWood(st, item.uid, dials)) ?? 'Living piece retuned')}>Retune and halve growth</button>
+    </>}
   </details>;
 }
 

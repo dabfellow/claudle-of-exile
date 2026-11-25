@@ -9,6 +9,7 @@ import { CLASSIC_BLOCK, isClassic, realmOf } from './challenge';
 import type { Ctx } from './context';
 import { createItem, createUnique } from './items';
 import { bagFull } from './storage';
+import { hasCraftOutputRoom, storeCraftOutput } from './craftOutput';
 import { grantXp } from './skills';
 import { isCraftLocked } from './crafting';
 import { levelOf } from './xp';
@@ -182,7 +183,7 @@ export function awardProtectedProgress(s: GameState, ctx: Ctx, id: string, amoun
 }
 
 export function isEligibleProjectBase(def: ProfessionProject, item: Item, s: GameState): boolean {
-  if (isCraftLocked(s, item.uid)) return false;
+  if (item.corrupted || isCraftLocked(s, item.uid)) return false;
   if (def.baseNonUnique && item.rarity === 'unique') return false;
   if (def.baseId && item.baseId !== def.baseId) return false;
   if (def.baseIds && !def.baseIds.includes(item.baseId)) return false;
@@ -282,7 +283,7 @@ export function completeProject(s: GameState, ctx: Ctx, runId: number): string |
   if (reason) return reason;
   if (run.elapsedMs < run.project.durationMs) return 'Project still in progress';
   const def = run.project;
-  if (def.reward.category === 'equipment' && bagFull(s)) return 'Ready: storage full';
+  if (def.reward.category === 'equipment' && !hasCraftOutputRoom(s, def.reward.uniqueId ? 'unique' : def.reward.rarity)) return 'Ready: storage full';
   const events: GameEvent[] = [];
   const commitCtx: Ctx = { ...ctx, emit: (e) => events.push(e) };
   // All blockers have passed. UID allocation, rewards, XP and watermark commit synchronously.
@@ -297,7 +298,7 @@ export function completeProject(s: GameState, ctx: Ctx, runId: number): string |
       item.suffixes = structuredClone(r.fixedSuffixes);
     }
     if (r.name) item.name = r.name;
-    s.inventory.push(item);
+    storeCraftOutput(s, item);
     seeUnique(s.account, item);
     events.push({ t: 'loot', item });
   } else if (def.reward.category === 'flask') {

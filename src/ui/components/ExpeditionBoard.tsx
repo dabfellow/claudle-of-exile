@@ -483,7 +483,7 @@ function RestorationCard({ s, a }: { s: GameState; a: SkillAction }) {
             title={blocker ?? ''}
             onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, a.id))}
           >
-            {blocker === 'Missing materials' ? 'Missing' : blocker === 'Inventory full' ? 'Full' : a.id.startsWith('sift_') ? 'Sift' : 'Restore'}
+            {blocker === 'Missing materials' ? 'Missing' : blocker === 'Inventory and stash full' ? 'Full' : a.id.startsWith('sift_') ? 'Sift' : 'Restore'}
           </button>
         )}
       </div>

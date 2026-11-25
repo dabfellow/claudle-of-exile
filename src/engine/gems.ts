@@ -431,7 +431,7 @@ export interface SkillNumbers {
 export function skillNumbers(d: Derived, gem: SkillGemInstance | null): SkillNumbers {
   const def = gem ? activeGemDef(gem.gemId) : DEFAULT_ATTACK;
   const supports = (gem?.supports ?? []).filter((x): x is SupportGemInstance => !!x && gemReqLevel(x.supportId) <= d.combatLevel);
-  const level = (gem?.level ?? 1) + facetLevels(gem) + supports.reduce((sum, sup) => sum + facetLevels(sup), 0);
+  const level = (gem?.level ?? 1) + (gem ? d.raw.corruptionGemLevels : 0) + facetLevels(gem) + supports.reduce((sum, sup) => sum + facetLevels(sup), 0);
   const mods = combineMods(supports.map((sup) => facetedSupportMods(supportGemDef(sup.supportId).mods, sup)));
   const isAttack = def.tags.includes('attack');
   const count = (id: string) => countFacet(gem, id) + supports.reduce((sum, sup) => sum + countFacet(sup, id), 0);

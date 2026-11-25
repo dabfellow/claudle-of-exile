@@ -31,7 +31,9 @@ describe('Phase 12 restoration', () => {
     expect(startSkillAction(s, ctx(), 'sift_giant')).toBe('Missing materials');
     expect(startDelve(s, ctx(), 'work')).toBeNull();
     work(s, 25 * actionIntervalMs(s, actionDef('delve_work'), deriveStats(s)));
-    expect(s.storage.bank.rubble).toBe(50);
+    expect(s.storage.bank.rubble).toBeGreaterThanOrEqual(50);
+    // Keep the sift-to-empty part of the test independent of the Mining yield roll.
+    s.storage.bank.rubble = 50;
     const tallyBefore = s.storage.bank.giant_tally ?? 0;
     expect(startSkillAction(s, ctx(), 'sift_giant')).toBeNull();
     work(s, 51 * 10_000);

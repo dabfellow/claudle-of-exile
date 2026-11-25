@@ -257,12 +257,12 @@ export function ForgeRack({ includeSongs = false }: { includeSongs?: boolean } =
       </div>
       <div className="anvil-rack-grid">
         {items.map((item) => (
-          <div key={item.uid} className={`anvil-rack-item ${item.forgeSinging ? 'singing' : ''}`}>
+          <div key={item.uid} className={`anvil-rack-item ${item.forgeSinging && !item.corrupted ? 'singing' : ''}`}>
             <div className="row">
               <ItemCell item={item} />
-              <div><b>{itemName(item)}</b><br /><span className="dim small">{baseDef(item.baseId).name}{item.forgeSinging ? ' · Singing' : ''}</span></div>
+              <div><b>{itemName(item)}</b><br /><span className="dim small">{baseDef(item.baseId).name}{item.corrupted ? ' · Corrupted' : item.forgeSinging ? ' · Singing' : ''}</span></div>
             </div>
-            {item.forgeSinging && (
+            {item.forgeSinging && !item.corrupted && (
               choosing === item.uid
                 ? <div className="anvil-song-choices">
                   {(Object.keys(FORGE_SONGS) as ForgeSong[]).map((song) => (
@@ -534,7 +534,7 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
           {lastItem && (
             <div className="forge-result" role="status">
               <ItemCell item={lastItem} />
-              <span><b>{itemName(lastItem)}</b><br /><small className="dim">Added to your inventory</small></span>
+              <span><b>{itemName(lastItem)}</b><br /><small className="dim">Finished forging</small></span>
             </div>
           )}
           </>}

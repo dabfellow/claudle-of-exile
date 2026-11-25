@@ -53,17 +53,16 @@ function firstHit(s: GameState, c: ReturnType<typeof context>) {
 }
 
 describe('Phase 14 crafted weapons', () => {
-  it('keeps a finished unique reserved through full storage and reload, then delivers once', () => {
+  it('delivers a finished unique to the stash when inventory is full and keeps it through reload', () => {
     const s = newGame(1), c = context(), p = professionProject('woundmaker')!;
     s.skills.smithing = xpForLevel(90); s.professionProgress.work.smithing = 100; s.account.hideout.forge = 3;
     s.storage.bank = { ...p.inputs };
     for (let i = 0; i < 100; i++) s.inventory.push(createItem(s, 'rusted_sword', 1, 'normal', c.rng));
     expect(startProject(s, c, p.id)).toBeNull(); advanceProject(s, c, p.durationMs);
-    expect(s.professionProgress.activeProject!.status).toBe('ready');
     expect(s.inventory.some((i) => i.uniqueId === p.id)).toBe(false);
     const back = deserialize(serialize(s)); back.account = structuredClone(s.account);
-    back.inventory.pop(); advanceProject(back, c, 0);
-    expect(back.inventory.filter((i) => i.uniqueId === p.id)).toHaveLength(1);
+    advanceProject(back, c, 0);
+    expect(back.storage.uniqueStash.filter((i) => i.uniqueId === p.id)).toHaveLength(1);
     expect(back.account.uniquesSeen.filter((id) => id === p.id)).toHaveLength(1);
     expect(back.professionProgress.activeProject).toBeUndefined();
     expect(back.storage.bank.wound_alloy).toBe(0);

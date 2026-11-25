@@ -18,7 +18,7 @@ import { awardProtectedProgress, recordDiscovery } from './professions';
 import { canAfford, payCost } from './bank';
 import { CLASSIC_BLOCK, isClassic } from './challenge';
 import { eligibleAffixes, newUid } from './items';
-import { bagFull } from './storage';
+import { hasCraftOutputRoom, storeCraftOutput } from './craftOutput';
 import { digInscription, ensureArchaeology, newArchaeologyState, relicFormUnlocked, settleDeciphering, stockBonus } from './deciphering';
 
 export function newExpeditionState(): ExpeditionState {
@@ -211,7 +211,7 @@ export function relicReason(s: GameState, lines: RelicLine[]): string | null {
     placed.push(l);
   }
   if (!hasItem(s, ANCIENT_DATA, relicCost(lines))) return 'Not enough Ancient Data';
-  if (bagFull(s)) return 'Inventory full';
+  if (!hasCraftOutputRoom(s)) return 'Inventory and stash full';
   return null;
 }
 
@@ -227,7 +227,7 @@ export function restoreRelic(s: GameState, ctx: Ctx, lines: RelicLine[]): string
     const def = affixDef(l.affixId);
     (def.kind === 'prefix' ? item.prefixes : item.suffixes).push({ affixId: l.affixId, tier: l.tier, values: def.tiers[l.tier].ranges.map(([, hi]) => hi) });
   }
-  s.inventory.push(item);
+  storeCraftOutput(s, item);
   s.expedition.forge = null;
   s.expedition.relicsRestored = (s.expedition.relicsRestored ?? 0) + 1;
   ctx.emit({ t: 'loot', item });

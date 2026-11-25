@@ -4,6 +4,7 @@ import { actionDef } from '../src/data/skills';
 import { recipeStock } from '../src/data/smelting';
 import { baseDef } from '../src/data/bases';
 import { PROFESSION_PROJECTS } from '../src/data/professionProjects';
+import { STASH_PAGE_SIZE } from '../src/data/hideout';
 import { makeCtx } from '../src/engine/context';
 import { newGame, tick } from '../src/engine/state';
 import { actionBlocker, actionIntervalMs, skillStep, startSkillAction } from '../src/engine/skills';
@@ -403,7 +404,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
       expect(s.expedition).toEqual(previous.expedition);
     });
 
-    it('blocks purpose equipment crafting when inventory is full (100/100) without consuming materials', () => {
+    it('blocks purpose equipment crafting when inventory and stash are full without consuming materials', () => {
       const s = newGame(1);
       s.skills.smithing = xpForLevel(20);
       s.account.hideout.forge = 2;
@@ -412,18 +413,19 @@ describe('Phase 05 Equipment Checkpoint', () => {
 
       // Fill bag to 100/100
       s.inventory = Array.from({ length: 100 }, (_, i) => createItem(s, 'driftwood_wand', 1, 'normal', seeded(i)));
+      s.storage.stash = s.storage.stash.map(() => Array.from({ length: STASH_PAGE_SIZE }, (_, i) => createItem(s, 'driftwood_wand', 1, 'normal', seeded(i))));
       expect(s.inventory).toHaveLength(100);
 
       const c = ctx();
-      expect(actionBlocker(s, a)).toBe('Inventory full');
-      expect(startSkillAction(s, c, a.id)).toBe('Inventory full');
+      expect(actionBlocker(s, a)).toBe('Inventory and stash full');
+      expect(startSkillAction(s, c, a.id)).toBe('Inventory and stash full');
 
       // Bank materials not touched, bag still 100
       expect(s.storage.bank).toEqual(a.inputs);
       expect(s.inventory).toHaveLength(100);
     });
 
-    it('holds completed equipment project in ready state when inventory is full and delivers once space is cleared', () => {
+    it('holds completed equipment project when inventory and stash are full and delivers once space is cleared', () => {
       const s = newGame(1);
       s.skills.smithing = xpForLevel(15);
       s.skills.smelting = xpForLevel(15);
@@ -437,8 +439,9 @@ describe('Phase 05 Equipment Checkpoint', () => {
       const c = ctx();
       expect(startProject(s, c, p.id)).toBeNull();
 
-      // Fill bag completely while project is working
+      // Fill both destinations while the project is working
       s.inventory = Array.from({ length: 100 }, (_, i) => createItem(s, 'driftwood_wand', 1, 'normal', seeded(i)));
+      s.storage.stash = s.storage.stash.map(() => Array.from({ length: STASH_PAGE_SIZE }, (_, i) => createItem(s, 'driftwood_wand', 1, 'normal', seeded(i))));
 
       // Advance project to finish
       advanceProject(s, c, p.durationMs);
@@ -448,7 +451,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
       let reloaded = reload(s);
       expect(reloaded.professionProgress.activeProject?.status).toBe('ready');
 
-      // Cannot deliver yet because bag is full
+      // Neither destination can receive the equipment yet.
       const runId = reloaded.professionProgress.activeProject!.runId;
       expect(resumeProject(reloaded)).toBeNull();
       expect(completeProject(reloaded, c, runId)).toBe('Ready: storage full');

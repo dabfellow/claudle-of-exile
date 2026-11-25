@@ -1,6 +1,7 @@
 import { relicForm } from '../../data/relics';
 import { Fragment } from 'react';
 import { affixDef } from '../../data/affixes';
+import { CORRUPTION_IMPLICITS } from '../../data/corruption';
 import { attributeReq, baseDef, uniqueDef, WEAPON_FAMILIES, type BaseDef, type UniqueDef } from '../../data/bases';
 import { MECHANIC_INFO } from '../../data/passiveTree';
 import { BASE_ATTACK_MS } from '../../data/gems';
@@ -61,14 +62,15 @@ function ModLine({ mod, detail, state, uniqueItem }: { mod: RolledMod; detail: b
       {describeMod(mod)}
       {mod.fractured && <span className="mod-tier mod-fractured-badge">(fractured)</span>}
       {mod.elevated && <span className="mod-tier mod-elevated-badge" style={{ color: '#ff4d4d', fontWeight: 'bold' }}> (Doom T0)</span>}
+      {mod.corruptionRange && <span className="mod-tier bad"> (Corruption T0)</span>}
       {mod.crafted && <span className="mod-tier">(crafted)</span>}
       {inactive && <span className="mod-tier">({MECHANIC_INFO[mech].name} — {MECHANIC_INFO[mech].cls} only)</span>}
-      {detail && mod.tier >= 0 && (
+      {detail && (mod.tier >= 0 || mod.corruptionRange) && (
         <span className="mod-tier">
           {tierLabel(mod)} · {tierRangeText(mod)}
         </span>
       )}
-      {detail && uRanges && uRanges.length > 0 && (
+      {detail && !mod.corruptionRange && uRanges && uRanges.length > 0 && (
         <span className="mod-tier">
           ({uRanges.map(([lo, hi]) => (lo === hi ? `${lo}` : `${lo}–${hi}`)).join(' / ')})
         </span>
@@ -96,7 +98,8 @@ export function ItemTip({
   const unique = item.uniqueId ? uniqueDef(item.uniqueId) : null;
   const name = itemName(item);
   const cmp = state && compare ? compareItem(state, item, into) : null;
-  const implicits = [...(base.implicits ?? []), ...forgeImplicits(item), ...woodImplicits(item)].filter((i) => i.text);
+  const implicits = [...(item.lostBaseImplicits ? [] : base.implicits ?? []), ...forgeImplicits(item), ...woodImplicits(item)].filter((i) => i.text);
+  const corruption = item.corruptionImplicit && CORRUPTION_IMPLICITS[item.corruptionImplicit.id]?.text.replace('{0}', String(item.corruptionImplicit.value));
   const extraCraft = hasKingsbronze(item);
   return (
     <div className={`tip item-tip rar-${item.rarity}`}>
@@ -104,8 +107,9 @@ export function ItemTip({
         <div>{name}</div>
         {(item.rarity === 'rare' || item.rarity === 'unique') && <div>{base.name}</div>}
         {item.relic && <div className="relic-tag">✦ Restored Relic ✦</div>}
-        {item.forgeSinging && <div className="relic-tag">Singing · choose an effect at the Forge</div>}
-        {item.living && <div className="relic-tag">Living · Growth {item.living.growth}/10</div>}
+        {item.corrupted && <div className="bad">Corrupted</div>}
+        {item.forgeSinging && !item.corrupted && <div className="relic-tag">Singing · choose an effect at the Forge</div>}
+        {item.living && <div className="relic-tag">Living · Growth {item.living.growth}/10{item.corrupted && ' (sealed)'}</div>}
         {item.balanced !== undefined && <div className="relic-tag">Perfectly balanced</div>}
       </div>
       <div className="item-tip-body">
@@ -135,13 +139,14 @@ export function ItemTip({
         <EquipmentStatLines base={base} item={item} />
         {!!item.quality && <div>Quality: <b>+{Number(item.quality.toFixed(1))}%</b></div>}
         <Requirements item={item} state={state} />
-        {(implicits.length > 0 || item.doomImplicit || extraCraft) && <div className="sep" />}
+        {(implicits.length > 0 || item.doomImplicit || extraCraft || corruption) && <div className="sep" />}
         {implicits.map((i) => (
           <div key={i.text} className="mod">
             {i.text}
           </div>
         ))}
         {extraCraft && <div className="mod">Can have one additional crafted modifier</div>}
+        {corruption && <div className="mod bad">{corruption} (Corruption)</div>}
         {item.doomImplicit && (
           <div className="mod mod-doom" style={{ color: '#e85a4f', fontWeight: 'bold' }}>
             {item.doomImplicit === 'doom_all_res' ? '+16% to all Elemental Resistances (Doom)'
@@ -167,7 +172,7 @@ export function ItemTip({
         )}
         {item.relic && relicForm(item.relic) && <div className="relic-lore">{relicForm(item.relic)!.lore}</div>}
         {cmp && <Comparison cmp={cmp} />}
-        {item.impression && <div className="dim small">Wax impression taken: can be restored from the Inventory crafting panel</div>}
+        {item.impression && !item.corrupted && <div className="dim small">Wax impression taken: can be restored from the Inventory crafting panel</div>}
         {!pinned && (
           <div className="tip-hint">
             {item.rarity !== 'normal' && !alt ? 'Alt: ranges & keep open · ' : alt ? 'Alt held: staying open · ' : ''}Right-click: pin

@@ -1,4 +1,6 @@
 import { affixDef } from '../data/affixes';
+import { CORRUPTED_ITEM, VALOR_ORB } from '../data/corruption';
+import { corruptGear, corruptionReason } from './corruption';
 import { stashedItems, takeOwned } from './storage';
 import { baseDef, uniqueDef } from '../data/bases';
 import { essenceDef, fossilDef, modBias, SEAL, WAX } from '../data/craftMats';
@@ -287,8 +289,11 @@ export function findItem(s: GameState, uid: number): Item | undefined {
 }
 
 export function orbReason(s: GameState, orbId: string, uid: number, fossilId?: string | null, sealed?: string | null): string | null {
+  if (orbId === VALOR_ORB) return corruptionReason(s, uid);
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
+  if (item.corrupted) return CORRUPTED_ITEM;
+  if (!ORBS[orbId]) return 'Unknown crafting orb';
   if (baseDef(item.baseId).projectOnly && item.rarity !== 'unique') return 'Profession tools have fixed modifiers; use the rune slot to customise';
   const dust = tinkerDustCost(s, orbId, item);
   if (!hasItem(s, orbId, 1) && dust === null) {
@@ -313,6 +318,7 @@ export function orbReason(s: GameState, orbId: string, uid: number, fossilId?: s
 }
 
 export function applyOrb(s: GameState, ctx: Ctx, orbId: string, uid: number, fossilId?: string | null, sealed?: string | null): string | null {
+  if (orbId === VALOR_ORB) return corruptGear(s, ctx, uid);
   const reason = orbReason(s, orbId, uid, fossilId, sealed);
   if (reason) return reason;
   const item = findItem(s, uid)!;
@@ -336,6 +342,7 @@ export function applyOrb(s: GameState, ctx: Ctx, orbId: string, uid: number, fos
 export function impressionReason(s: GameState, uid: number): string | null {
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
+  if (item.corrupted) return CORRUPTED_ITEM;
   if (!hasItem(s, WAX, 1)) return "You have no Locksmith's Wax";
   if (item.rarity === 'unique') return 'Cannot take an impression of a unique';
   if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
@@ -357,6 +364,7 @@ export function takeImpression(s: GameState, ctx: Ctx, uid: number): string | nu
 export function restoreReason(s: GameState, uid: number): string | null {
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
+  if (item.corrupted) return CORRUPTED_ITEM;
   if (!item.impression) return 'No impression taken';
   if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
   return null;
@@ -376,6 +384,7 @@ export function restoreImpression(s: GameState, ctx: Ctx, uid: number): string |
 export function whetstoneReason(s: GameState, uid: number, affixId: string): string | null {
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
+  if (item.corrupted) return CORRUPTED_ITEM;
   if (!hasItem(s, WHETSTONE, 1)) return 'You have no Ancient Whetstone';
   if (item.rarity === 'unique') return 'Cannot modify unique items';
   if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
@@ -410,6 +419,7 @@ export function essenceReason(s: GameState, essenceId: string, uid: number): str
   const item = findItem(s, uid);
   if (!ess) return 'Unknown essence';
   if (!item) return 'Select an item';
+  if (item.corrupted) return CORRUPTED_ITEM;
   if (baseDef(item.baseId).projectOnly) return 'Profession tools have fixed modifiers; use the rune slot to customise';
   if (!hasItem(s, essenceId, 1)) return 'You have none';
   if (item.rarity === 'unique') return 'Cannot modify unique items';
@@ -468,6 +478,7 @@ export function benchCraftReason(s: GameState, craftId: string, uid: number): st
   const craft = BENCH_CRAFTS.find((c) => c.id === craftId)!;
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
+  if (item.corrupted) return CORRUPTED_ITEM;
   if (baseDef(item.baseId).projectOnly) return 'Profession tools have fixed modifiers; use the rune slot to customise';
   if ((s.account.hideout.bench ?? 1) < craft.benchLevel) return `Requires Crafting Bench level ${craft.benchLevel}`;
   if (item.rarity === 'unique') return 'Cannot modify unique items';
@@ -507,6 +518,7 @@ export function benchCraft(s: GameState, ctx: Ctx, craftId: string, uid: number)
 export function removeCraftedReason(s: GameState, uid: number): string | null {
   const item = findItem(s, uid);
   if (!item) return 'Select an item';
+  if (item.corrupted) return CORRUPTED_ITEM;
   if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
   if (!allMods(item).some((m) => m.crafted)) return 'Item has no crafted modifiers';
   if ((s.account.hideout.bench ?? 1) < 10 && !hasItem(s, 'scour', 1)) return 'Requires 1 Orb of Scouring';

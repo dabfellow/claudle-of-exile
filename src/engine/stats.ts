@@ -1,4 +1,5 @@
 import { affixDef } from '../data/affixes';
+import { CORRUPTION_IMPLICITS } from '../data/corruption';
 import { perkTotals } from '../data/achievements';
 import { astrologyStats } from './astrology';
 import { classDef } from '../data/classes';
@@ -42,7 +43,11 @@ export function itemStats(item: Item): Partial<Record<StatKey, number>> {
   const out: Partial<Record<StatKey, number>> = {};
   const add = (k: StatKey, v: number) => (out[k] = (out[k] ?? 0) + v);
   const base = baseDef(item.baseId);
-  for (const imp of base.implicits ?? []) add(imp.stat, imp.value);
+  if (!item.lostBaseImplicits) for (const imp of base.implicits ?? []) add(imp.stat, imp.value);
+  if (item.corruptionImplicit) {
+    const implicit = CORRUPTION_IMPLICITS[item.corruptionImplicit.id];
+    if (implicit) add(implicit.stat, item.corruptionImplicit.value);
+  }
   for (const imp of forgeImplicits(item)) add(imp.stat, imp.value);
   for (const imp of woodImplicits(item)) add(imp.stat, imp.value);
   for (const m of [...item.prefixes, ...item.suffixes]) {
@@ -296,13 +301,13 @@ export function rawStats(s: GameState, buffs: Buff[] = s.combat?.buffs ?? []): S
     st.armour += Math.round(bodyDef.armour * 0.5);
     st.evasion += Math.round(bodyDef.evasion * 0.5);
     st.energyShield += Math.round(bodyDef.energyShield * 0.5);
-    for (const imp of baseDef(s.equipment.body.baseId).implicits ?? []) {
+    for (const imp of (s.equipment.body.lostBaseImplicits ? [] : baseDef(s.equipment.body.baseId).implicits ?? [])) {
       st[imp.stat] += Math.round(imp.value * 0.5);
     }
   }
   if (st.jeweledHorizon > 0) {
     for (const item of Object.values(s.equipment)) {
-      if (!item) continue;
+      if (!item || item.lostBaseImplicits) continue;
       const base = baseDef(item.baseId);
       if (base.slot === 'ring' || base.slot === 'amulet') {
         for (const imp of base.implicits ?? []) {
@@ -365,9 +370,9 @@ export function deriveStats(s: GameState, buffs?: Buff[]): Derived {
     weapon ? (offWeapon ? avg(pick(weapon), pick(offWeapon)) : pick(weapon)) : fallback;
 
   const attributes: Attributes = {
-    str: Math.round(raw.str + raw.allAttr),
-    dex: Math.round(raw.dex + raw.allAttr),
-    int: Math.round(raw.int + raw.allAttr),
+    str: Math.round((raw.str + raw.allAttr) * (1 + (raw.corruptionAllAttrPct + raw.corruptionStrPct) / 100)),
+    dex: Math.round((raw.dex + raw.allAttr) * (1 + (raw.corruptionAllAttrPct + raw.corruptionDexPct) / 100)),
+    int: Math.round((raw.int + raw.allAttr) * (1 + (raw.corruptionAllAttrPct + raw.corruptionIntPct) / 100)),
   };
   const A = ATTRIBUTE_EFFECTS;
 

@@ -181,7 +181,7 @@ describe('starter drops', () => {
       s.lifetime.kills = kill;
       rollLoot(s, c, drop, zone, d);
     }
-    const slots = new Set(s.inventory.map((i) => baseDef(i.baseId).slot));
+    const slots = new Set(s.ground.map((i) => baseDef(i.baseId).slot));
     for (const slot of ['weapon', 'gloves', 'boots', 'body', 'helmet']) expect(slots).toContain(slot);
     expect((s.storage.bank.transmute ?? 0) - orbs.transmute).toBeGreaterThanOrEqual(2);
     expect((s.storage.bank.alteration ?? 0) - orbs.alteration).toBeGreaterThanOrEqual(2);

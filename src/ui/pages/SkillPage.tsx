@@ -40,6 +40,7 @@ import { FurnaceView } from '../components/FurnaceView';
 import { DelveView } from '../components/DelveView';
 import { AnvilView } from '../components/AnvilView';
 import { WoodBench } from '../components/WoodBench';
+import { CraftOutputSettings } from '../components/CraftOutputSettings';
 import { LapidaryBench } from '../components/LapidaryBench';
 import { ForagingBench } from '../components/ForagingBench';
 import { AlchemyBench } from '../components/AlchemyBench';
@@ -256,7 +257,7 @@ function ActionCard({ a, level, open, onToggle, workbench = false }: { a: SkillA
             title={blocker ?? ''}
             onClick={() => game.act((st, ctx) => startSkillAction(st, ctx, a.id))}
           >
-            {missing ? 'Missing' : blocker === 'Inventory full' ? 'Full' : blocker ? 'Locked' : a.id.startsWith('restore_') ? 'Restore' : a.id.startsWith('sift_') ? 'Sift' : START_LABEL[a.skill]}
+            {missing ? 'Missing' : blocker === 'Inventory and stash full' ? 'Full' : blocker ? 'Locked' : a.id.startsWith('restore_') ? 'Restore' : a.id.startsWith('sift_') ? 'Sift' : START_LABEL[a.skill]}
           </button>
         )}
       </div>
@@ -378,13 +379,13 @@ function CatalystPanel() {
         </label>
       </div>
       <div className="catalyst-row">
-        <label className="check" title={benchBuilt(s) ? 'Keeps smithing when your bag is full. Gear already in your bag stays.' : BENCH_UNBUILT}>
+        <label className="check" title={benchBuilt(s) ? 'Keeps smithing when both inventory and stash are full.' : BENCH_UNBUILT}>
           <input type="checkbox" checked={cat.salvageFull || cat.salvageAll} disabled={!benchBuilt(s) || cat.salvageAll} onChange={(e) => set({ salvageFull: e.target.checked })} />
-          Salvage new bases when the bag is full
+          Salvage new bases when inventory and stash are full
         </label>
         <label className="check" title={benchBuilt(s) ? 'For levelling Smithing: every new base becomes Arcane Dust. A repeat-until hit is still kept.' : BENCH_UNBUILT}>
           <input type="checkbox" checked={cat.salvageAll} disabled={!benchBuilt(s)} onChange={(e) => set({ salvageAll: e.target.checked })} />
-          Salvage everything I smith
+          Salvage all ordinary bases
         </label>
       </div>
     </div>
@@ -728,7 +729,7 @@ function BossKeyRecipes() {
 
 function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'gemcutting' | 'harvesting' | 'alchemy' | 'cartography'; go?: (skill: SkillId) => void }) {
   const projects = <ProjectBoard skill={skill} go={go} />;
-  const catalysts = <details className="profession-supplies"><summary>Catalysts & salvage settings</summary><CatalystPanel /></details>;
+  const catalysts = <details className="profession-supplies"><summary>Catalysts & crafting output</summary><CatalystPanel /><CraftOutputSettings /></details>;
   return <div className={`page profession-page profession-${skill}`} style={{ ['--profession' as string]: SKILLS[skill].color }}>
     <SkillHeader skill={skill} />
     {skill === 'mining' && <DelveView masterworks={projects} />}

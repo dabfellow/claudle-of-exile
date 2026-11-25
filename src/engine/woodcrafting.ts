@@ -7,6 +7,7 @@ import type { Ctx } from './context';
 import type { ModBias } from './items';
 import { chance, pick } from './rng';
 import { startSkillAction } from './skills';
+import { stashedItems } from './storage';
 import type { GameState, Item } from './types';
 import { levelOf } from './xp';
 
@@ -167,7 +168,7 @@ export function woodGrowthStep(s: GameState, elapsed: number): boolean {
   let changed = false;
   for (const item of Object.values(s.equipment)) {
     const living = item?.living;
-    if (!living || living.growth >= 10) continue;
+    if (item?.corrupted || !living || living.growth >= 10) continue;
     const total = (living.ms ?? 0) + elapsed;
     const grow = Math.floor(total / HOUR);
     living.ms = total % HOUR;
@@ -183,6 +184,7 @@ export function retuneLivingWood(s: GameState, uid: number, dials: number[]): st
   if (isClassic(s)) return CLASSIC_BLOCK;
   const item = [...s.inventory, ...Object.values(s.equipment)].find((i) => i?.uid === uid);
   if (!item?.living) return 'Choose a Living piece you are carrying or wearing';
+  if (item.corrupted) return 'Corrupted gear cannot be modified';
   const a = actionDef(`smith_${item.baseId}`);
   const next = recipeDials(s, a, dials, true);
   if (next.every((value, index) => value === (item.dials?.[index] ?? 0))) return 'Adjust a dial first';
@@ -195,5 +197,5 @@ export function retuneLivingWood(s: GameState, uid: number, dials: number[]): st
 
 export function woodRackItems(s: GameState): Item[] {
   const pending = new Set(s.woodcrafting.rack);
-  return [...s.inventory, ...Object.values(s.equipment)].filter((item): item is Item => !!item && pending.has(item.uid));
+  return [...s.inventory, ...stashedItems(s), ...Object.values(s.equipment)].filter((item): item is Item => !!item && pending.has(item.uid));
 }

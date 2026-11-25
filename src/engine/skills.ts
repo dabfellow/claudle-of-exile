@@ -18,8 +18,9 @@ import { rollPrep } from './heist';
 import { rollRogueRecruit } from './rogues';
 import { cartographyDone, chartDone, hasChartMaps, specialMapDone } from './cartography';
 import { focusMult, focusStep, takeDouble } from './minigame';
-import { bagFull, dropItem } from './storage';
-import { allMods, createItem, eligibleAffixes, salvageValue, spawnWeight } from './items';
+import { dropItem } from './storage';
+import { autoSalvagesCraftOutput, hasCraftOutputRoom, salvageCraftOutput, storeCraftOutput } from './craftOutput';
+import { allMods, createItem, eligibleAffixes, spawnWeight } from './items';
 import { chance, pick, pickWeighted, rInt, type Rng } from './rng';
 import { skillTreeStats, type TreeStats } from './skillTree';
 import type { Derived } from './stats';
@@ -149,7 +150,7 @@ export function actionPlaceNeeded(_s: GameState, _a: SkillAction): string | null
 /** Do new bases go straight to Arcane Dust right now? Needs the bench, like any other salvage. */
 function salvagesBases(s: GameState): boolean {
   const cat = s.smithCatalyst;
-  return benchBuilt(s) && (cat.salvageAll || (cat.salvageFull && bagFull(s)));
+  return autoSalvagesCraftOutput(s) || (benchBuilt(s) && (cat.salvageAll || (cat.salvageFull && !hasCraftOutputRoom(s))));
 }
 
 export function actionBlocker(s: GameState, a: SkillAction, cut: CutSetup | null | undefined = runningCut(s, a)): string | null {
@@ -199,8 +200,7 @@ export function actionBlocker(s: GameState, a: SkillAction, cut: CutSetup | null
     const blocker = cutBlocker(s, a, cut);
     if (blocker) return blocker;
   } else if ((nominalCost && !canAfford(s, nominalCost)) || !hasChartMaps(s, a)) return 'Missing materials';
-  if (staged && bagFull(s)) return 'Inventory full';
-  if (a.baseId && bagFull(s) && (a.purpose || !salvagesBases(s))) return 'Inventory full';
+  if (!staged && a.baseId && !hasCraftOutputRoom(s) && !(a.purpose ? autoSalvagesCraftOutput(s) : salvagesBases(s))) return 'Inventory and stash full';
   if (a.id === 'recycle_gem') {
     if (s.selectedGemRecycleUid == null) return 'Select a gem to recycle';
     const gem = [...s.storage.gems, ...s.storage.supportGems].find((g) => g.uid === s.selectedGemRecycleUid);
@@ -377,25 +377,19 @@ function smithBase(s: GameState, ctx: Ctx, a: SkillAction, t: TreeStats, purity:
 
   const repeating = cat.until && !!cat.fossil;
   if (repeating && fossil && fossilHit(item, fossil)) {
-    // salvage toggles let a full bag get this far: the keeper waits on the ground instead
-    const full = bagFull(s);
-    if (full) dropItem(s, ctx, item);
-    else {
-      s.inventory.push(item);
-      recordWorkshopItem(s, ctx, a, item);
-    }
+    const stored = storeCraftOutput(s, item);
+    if (stored) recordWorkshopItem(s, ctx, a, item);
+    else dropItem(s, ctx, item);
     ctx.emit({ t: 'loot', item });
-    ctx.emit({ t: 'info', text: `${a.name} rolled a ${fossilDef(fossil)!.name} modifier. Stopped.${full ? ' Your bag is full, so it dropped on the ground.' : ''}`, tone: 'good' });
+    ctx.emit({ t: 'info', text: `${a.name} rolled a ${fossilDef(fossil)!.name} modifier. Stopped.${stored ? '' : ' Your inventory and stash are full, so it dropped on the ground.'}`, tone: 'good' });
     s.action = null;
     return;
   }
   if ((repeating && cat.salvageMisses) || salvagesBases(s)) {
-    addBank(s, 'arcane_dust', salvageValue(item));
-    s.lifetime.salvaged += 1;
-    ctx.emit({ t: 'loot', item, salvaged: true });
+    salvageCraftOutput(s, ctx, item);
     return;
   }
-  s.inventory.push(item);
+  storeCraftOutput(s, item);
   recordWorkshopItem(s, ctx, a, item);
   ctx.emit({ t: 'loot', item });
 }
@@ -630,15 +624,18 @@ function complete(s: GameState, ctx: Ctx, a: SkillAction, d: Derived, focusDoubl
     const item = createPurposeItem(s, a, a.skill === 'archaeology' ? Math.min(45, skillLevel(s, 'archaeology')) : smithIlvl(s), ctx.rng, woodBias(a.baseId!, dials));
     if (a.skill === 'smithing' || a.skill === 'woodcrafting') applyBarPurity(item, barPurityBonus(cost), ctx.rng);
     if (a.skill === 'woodcrafting') finishWoodcraft(s, ctx, item, dials, !!livingWood);
-    s.inventory.push(item);
-    recordWorkshopItem(s, ctx, a, item);
     s.lifetime.itemsSmithed += 1;
-    ctx.emit({ t: 'loot', item });
+    if (autoSalvagesCraftOutput(s)) salvageCraftOutput(s, ctx, item);
+    else {
+      storeCraftOutput(s, item);
+      recordWorkshopItem(s, ctx, a, item);
+      ctx.emit({ t: 'loot', item });
+    }
     ctx.emit({ t: 'info', text: `${a.name}: guaranteed equipment complete. Stopped.`, tone: 'good' });
     s.action = null;
   } else if (a.baseId) for (let i = 0; i < focusMultiple && s.action?.kind === 'skill'; i++) {
-    if (i > 0 && bagFull(s) && !salvagesBases(s)) {
-      ctx.emit({ t: 'info', text: `${a.name}: extra equipment suppressed because inventory is full`, tone: 'warn' });
+    if (i > 0 && !hasCraftOutputRoom(s) && !salvagesBases(s)) {
+      ctx.emit({ t: 'info', text: `${a.name}: extra equipment suppressed because inventory and stash are full`, tone: 'warn' });
       break;
     }
     smithBase(s, ctx, a, t, barPurityBonus(cost), dials, !!livingWood);

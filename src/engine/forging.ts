@@ -15,7 +15,8 @@ import { addRandomMod, allMods, createItem, eligibleAffixes, modCount, rareName,
 import { chance, pick, pickWeighted, rInt, type Rng } from './rng';
 import { hasMilestone, MASTERY_CAP, masteryLevel } from './skillingMastery';
 import { actionBlocker, startSkillAction } from './skills';
-import { bagFull } from './storage';
+import { stashedItems } from './storage';
+import { autoSalvagesCraftOutput, hasCraftOutputRoom, salvageCraftOutput, storeCraftOutput } from './craftOutput';
 import type { GameState, Item, RolledMod } from './types';
 import { levelOf } from './xp';
 
@@ -252,7 +253,7 @@ export function forgeActionBlocker(s: GameState, a: SkillAction): string | null 
   if (!isStagedForge(a.id)) return null;
   const plan = s.forging?.running;
   if (!plan || stagedForgeId(plan.baseId) !== a.id) return 'Choose a path at the Anvil';
-  if (bagFull(s)) return 'Inventory full';
+  if (!hasCraftOutputRoom(s) && !autoSalvagesCraftOutput(s)) return 'Inventory and stash full';
   return forgePlanBlocker(s, plan);
 }
 
@@ -458,15 +459,21 @@ export function completeStagedForge(s: GameState, ctx: Ctx, a: SkillAction, opti
   if (!plan) return;
   recordForgePath(s, ctx, plan);
   practiseForgePath(s, plan);
-  for (let copy = 0; copy < options.focusMultiple && !bagFull(s); copy++) {
+  const salvage = autoSalvagesCraftOutput(s);
+  for (let copy = 0; copy < options.focusMultiple && (salvage || hasCraftOutputRoom(s)); copy++) {
     const item = createStagedForgeItem(s, ctx, a, plan, options);
-    if (chance(ctx.rng, forgeSingingChance(s))) {
-      item.forgeSinging = true;
+    const singing = chance(ctx.rng, forgeSingingChance(s));
+    s.lifetime.itemsSmithed++;
+    if (salvage) {
+      salvageCraftOutput(s, ctx, item);
+      continue;
+    }
+    if (singing) item.forgeSinging = true;
+    storeCraftOutput(s, item);
+    if (singing) {
       s.forging.pendingSinging.push(item.uid);
       if (!ctx.offline) ctx.emit({ t: 'info', text: `${item.name} is singing. Choose its song at the Anvil.`, tone: 'good' });
     }
-    s.inventory.push(item);
-    s.lifetime.itemsSmithed++;
     if (ctx.offline) s.forging.rack.push(item.uid);
     ctx.emit({ t: 'loot', item });
   }
@@ -479,14 +486,15 @@ export function completeStagedForge(s: GameState, ctx: Ctx, a: SkillAction, opti
 /** Only the character holding the piece can change its song. */
 export function forgeRackItems(s: GameState): Item[] {
   const seen = new Set(s.forging.rack);
-  return [...s.inventory, ...Object.values(s.equipment).filter((item): item is Item => !!item)]
+  return [...s.inventory, ...stashedItems(s), ...Object.values(s.equipment).filter((item): item is Item => !!item)]
     .filter((item) => seen.has(item.uid) || item.forgeSinging);
 }
 
 export function chooseForgeSong(s: GameState, ctx: Ctx, uid: number, song: ForgeSong): string | null {
   if (isClassic(s)) return CLASSIC_BLOCK;
   const item = forgeRackItems(s).find((item) => item.uid === uid && item.forgeSinging);
-  if (!item) return 'That singing item is not carried or equipped';
+  if (!item) return 'That singing item is not in your personal storage or equipped';
+  if (item.corrupted) return 'Corrupted gear cannot be modified';
   if (isCraftLocked(s, uid)) return 'Stop the active bench craft on this item first';
   if (song === 'mod') {
     if (!addRandomMod(item, ctx.rng)) return 'There is no room for another modifier';

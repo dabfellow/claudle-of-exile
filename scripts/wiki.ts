@@ -17,6 +17,7 @@ import { FLASKS, FLASK_AFFIXES, INSTILL_CONDITIONS } from '../src/data/flasks';
 import { ACTIVE_GEMS, MAX_GEM_LEVEL, MAX_SUPPORT_SLOTS, RULE_LABELS, RULE_UNLOCK_NAMES, SKILL_BAR_SLOTS, SUPPORT_GEMS, TARGET_STATUSES, activeGemDef, gemAct, gemReqLevel, gemWeapons, type ActiveGemDef, type RuleCondition, type RuleUnlock, type SupportGemDef } from '../src/data/gems';
 import { OFFLINE_HAUL_CAP, STATIONS, stationDef, type StationId } from '../src/data/hideout';
 import { CURRENCIES, MATERIALS, type CurrencyDef } from '../src/data/materials';
+import { VALOR_ORB, VALOR_SOURCE } from '../src/data/corruption';
 import { MONSTER_MODS } from '../src/data/monsterMods';
 import { MONSTER_PROFILES } from '../src/data/monsterProfiles';
 import { MEALS, MEAL_MS } from '../src/data/cooking';
@@ -392,7 +393,7 @@ function currencyEntry(c: CurrencyDef) {
   entry('currency', U.currency(c.id), 'currency orb', chip('Currency', 'gold'),
     `<p>${esc(c.desc)}</p>
 ${facts([
-    ['Drops from', c.dropWeight && first ? `Area tier ${c.minTier} and up, first in ${ent(U.area(first.id))}` : 'Does not drop'],
+    ['Drops from', c.id === VALOR_ORB ? VALOR_SOURCE : c.dropWeight && first ? `Area tier ${c.minTier} and up, first in ${ent(U.area(first.id))}` : 'Does not drop'],
     ['Sell value', String(c.value)],
   ])}`);
 }
@@ -591,7 +592,7 @@ function modifiersPage(): string {
 // ---------- currency and materials ----------
 function currencyPage(): string {
   const cur = CURRENCIES.map((c) => {
-    return [`<span id="${c.id}"></span>${ent(U.currency(c.id))}`, esc(c.desc), c.dropWeight ? `Area tier ${c.minTier}+` : 'Does not drop', String(c.value)];
+    return [`<span id="${c.id}"></span>${ent(U.currency(c.id))}`, esc(c.desc), c.id === VALOR_ORB ? VALOR_SOURCE : c.dropWeight ? `Area tier ${c.minTier}+` : 'Does not drop', String(c.value)];
   });
   let body = `<h1>Currency and materials</h1><h2>Currency</h2>${table(['Orb', 'What it does', 'Drops from', 'Sell value'], cur)}`;
   const kinds = new Map<string, typeof MATERIALS>();

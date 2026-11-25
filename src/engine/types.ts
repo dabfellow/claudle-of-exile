@@ -75,6 +75,7 @@ export const STAT_KEYS = [
   'attackSpeedMore', 'critChancePct', 'critMulti', 'armour', 'armourPct', 'armourMore', 'evasion',
   'evasionPct', 'fireRes', 'coldRes', 'lightRes', 'allRes', 'chaosRes', 'itemRarity', 'skillSpeed', 'skillXp', 'miningSpeed',
   'flaskEffect', 'flaskCharges', 'str', 'dex', 'int', 'allAttr', 'accuracy', 'mana', 'manaPct',
+  'corruptionGemLevels', 'corruptionAllAttrPct', 'corruptionStrPct', 'corruptionDexPct', 'corruptionIntPct',
   'manaRegenPct', 'castSpeedPct', 'firePct', 'coldPct', 'lightPct', 'bleedPct', 'poisonPct', 'ignitePct',
   'ailmentPct', 'ailmentDuration', 'bleedDuration', 'poisonDuration', 'igniteDuration', 'bleedDurationFlat',
   'poisonDurationFlat', 'skillDuration', 'guardDuration', 'cooldownRecovery', 'guardCooldown',
@@ -180,6 +181,7 @@ export interface RolledMod {
   crafted?: boolean;
   fractured?: boolean;
   elevated?: boolean;
+  corruptionRange?: [number, number][];
 }
 
 export interface Item {
@@ -191,6 +193,9 @@ export interface Item {
   prefixes: RolledMod[];
   suffixes: RolledMod[];
   uniqueId?: string;
+  corrupted?: true;
+  corruptionImplicit?: { id: import('../data/corruption').CorruptionImplicitId; value: number };
+  lostBaseImplicits?: true;
   /** Locksmith's Wax: how the item looked when the impression was taken, ready to restore */
   impression?: Pick<Item, 'rarity' | 'name' | 'prefixes' | 'suffixes' | 'honed' | 'fractured' | 'elevated' | 'doomImplicit' | 'voidSlot'>;
   /** the one rune slot (docs/GAME.md): a rune id, apart from the modifiers, so no orb touches it */
@@ -880,7 +885,7 @@ export interface SmithCatalyst {
   until: boolean;
   /** while repeating, salvage the bases that miss */
   salvageMisses: boolean;
-  /** with the bench built: salvage new bases instead of stopping when the bag is full */
+  /** With the bench built, salvage new bases when both the inventory and stash are full. */
   salvageFull: boolean;
   /** with the bench built: salvage every new base, for levelling Smithing */
   salvageAll: boolean;
@@ -916,6 +921,8 @@ export interface Targeting {
 
 export interface Settings {
   autoSalvage: Record<Rarity, boolean>;
+  craftFillFirst?: 'inventory' | 'stash';
+  autoSalvageCraftedGear?: boolean;
   /** Class loot filter: automatically salvage non-unique gear that does not fit your class attribute/defences */
   filterOffClassLoot?: boolean;
   /** Active custom loot filter id, or null if using standard settings */

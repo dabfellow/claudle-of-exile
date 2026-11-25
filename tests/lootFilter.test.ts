@@ -92,7 +92,7 @@ describe('custom loot filter engine', () => {
     s.inventory = [];
 
     placeItem(s, c, uniqueItem);
-    expect(s.inventory).toContain(uniqueItem);
+    expect(s.ground).toContain(uniqueItem);
     expect(s.storage.bank.arcane_dust).toBe(0);
   });
 
@@ -171,6 +171,6 @@ describe('custom loot filter engine', () => {
     const rareItem = createItem(s, 'rusted_sword', 1, 'rare', c.rng);
     placeItem(s, c, rareItem);
 
-    expect(s.inventory).toContain(rareItem);
+    expect(s.ground).toContain(rareItem);
   });
 });

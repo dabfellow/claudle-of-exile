@@ -1,20 +1,12 @@
 import { AUTO_SALVAGE_QUARTERMASTER_LEVEL } from '../data/hideout';
-import { claimOwned } from './account';
 import type { Ctx } from './context';
 import { benchBuilt, isCraftLocked, salvage } from './crafting';
 import { stationLevel } from './hideout';
 import { itemMatchesClass } from './items';
 import { inGearSet } from './loadouts';
 import { evaluateLootFilter, shouldSalvageByFilter, type LootFilterResult } from './lootFilter';
-import { bagFull, dropItem, itemAffinity, shelveUnique, stashItems, stashPageRoom } from './storage';
+import { stashItems, stashPageFor } from './storage';
 import type { GameState, Item } from './types';
-
-/*
- * Where loot goes (docs/MILESTONES.md, "Inventory, stash and crafting merge"): the player is the filter.
- * A drop is auto-salvaged (once that's unlocked), hidden, sent to the stash by a "Send to stash" rule,
- * or otherwise lands in the inventory. Only when the inventory is full does it spill onto the ground
- * (or the time-away pile), where deaths can take it.
- */
 
 /** Whether the filter and auto-salvage settings would salvage this item. Uniques never are. */
 export function autoSalvages(s: GameState, item: Item, filter: LootFilterResult = evaluateLootFilter(s, item)): boolean {
@@ -25,40 +17,6 @@ export function autoSalvages(s: GameState, item: Item, filter: LootFilterResult 
   const activeLegacy = s.settings.customLootFilters?.find((f) => f.id === s.settings.activeLootFilterId);
   if (activeLegacy && shouldSalvageByFilter(activeLegacy, item, s.character.classId)) return true;
   return filter.autoSalvage && (!!filter.salvageWithoutUnlock || unlocked);
-}
-
-/** The stash page a new item would go to: an affinity page with room, else the first page with room. -1 when full. */
-function stashPageFor(s: GameState, item: Item): number {
-  const aff = itemAffinity(item);
-  const affinityPage = Object.entries(s.storage.stashAffinities ?? {}).find(([p, a]) => a === aff && stashPageRoom(s, Number(p)) > 0);
-  if (affinityPage) return Number(affinityPage[0]);
-  return s.storage.stash.findIndex((_, p) => stashPageRoom(s, p) > 0);
-}
-
-/** Put a fresh drop straight into the stash. False when there's no room (uniques always fit). */
-function stashDrop(s: GameState, item: Item): boolean {
-  if (item.rarity === 'unique') {
-    shelveUnique(s, item);
-    return true;
-  }
-  const page = stashPageFor(s, item);
-  if (page < 0) return false;
-  s.storage.stash[page].push(claimOwned(s, item));
-  return true;
-}
-
-/**
- * A kept drop (not salvaged, not hidden): to the stash if a rule says so and there's room, else the
- * inventory, else the ground or time-away pile. Returns where it went.
- */
-export function routeDrop(s: GameState, ctx: Ctx, item: Item, filter: LootFilterResult): 'stash' | 'inventory' | 'ground' {
-  if (filter.sendToStash && stashDrop(s, item)) return 'stash';
-  if (!bagFull(s)) {
-    s.inventory.push(item);
-    return 'inventory';
-  }
-  dropItem(s, ctx, item);
-  return 'ground';
 }
 
 export type InventoryFilterAction = 'stash' | 'salvage';

@@ -330,6 +330,7 @@ export function affixRangeText(affixId: string, tier: number): string {
 
 /** PoE-style tier label: T1 is the best tier, T0 is Doom Tier (elevated). */
 export function tierLabel(mod: RolledMod): string {
+  if (mod.corruptionRange) return 'T0';
   if (mod.elevated) return 'T0';
   if (mod.tier < 0) return '';
   const a = affixDef(mod.affixId);
@@ -338,6 +339,7 @@ export function tierLabel(mod: RolledMod): string {
 }
 
 export function tierRangeText(mod: RolledMod): string {
+  if (mod.corruptionRange) return mod.corruptionRange.map(([lo, hi]) => `${lo}–${hi}`).join(' / ');
   if (mod.elevated) return 'Doom Tier (T0)';
   if (mod.tier < 0) return '';
   const a = affixDef(mod.affixId);

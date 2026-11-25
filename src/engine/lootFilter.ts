@@ -82,7 +82,7 @@ export interface LootFilterResult {
   highlightColor?: string;
   sound?: boolean;
   salvageWithoutUnlock?: boolean;
-  /** a "Send to stash" rule matched: the drop skips the inventory (src/engine/lootRouting.ts) */
+  /** A "Send to stash" rule matched. Run filter moves matching items from the inventory. */
   sendToStash?: boolean;
   source: 'preset' | 'override' | 'rule';
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CORRUPTED_ITEM, VALOR_ORB, VALOR_SOURCE } from '../../data/corruption';
 import { affixDef } from '../../data/affixes';
 import { ESSENCES, FOSSILS, fossilDef, SEAL, WAX } from '../../data/craftMats';
 import { WHETSTONE } from '../../data/expedition';
@@ -202,6 +203,7 @@ export function CraftPanel({ s, uid, flaskUid, onClear }: { s: GameState; uid: n
   const [tab, setTab] = useState<CraftTab>('orbs');
   const [craftCategory, setCraftCategory] = useState<BenchCraftCategory>('all');
   const [inspectedRune, setInspectedRune] = useState<string | null>(null);
+  const [confirmValor, setConfirmValor] = useState<number | null>(null);
 
   const item = uid !== null ? findItem(s, uid) : undefined;
   const flask = flaskUid !== null ? findFlask(s, flaskUid) : undefined;
@@ -306,6 +308,7 @@ export function CraftPanel({ s, uid, flaskUid, onClear }: { s: GameState; uid: n
       </div>
       <MoveActions s={s} item={it} onGone={onClear} />
 
+      {it.corrupted ? <p className="bad small">{CORRUPTED_ITEM}.</p> : <>
       <Tabs tabs={tabs} value={tab} onChange={setTab} />
 
       {tab === 'orbs' && (
@@ -344,6 +347,25 @@ export function CraftPanel({ s, uid, flaskUid, onClear }: { s: GameState; uid: n
                 </Tooltip>
               );
             })}
+          </div>
+          <div className="craft-section">
+            <div className="section-label">Corruption</div>
+            <p className="muted small">A Valor Orb permanently seals the item. A benefit, a downside, and no stat change are equally likely. A downside can destroy it.</p>
+            <div className="row wrap">
+              <button className="btn sm danger" disabled={!!orbReason(s, VALOR_ORB, it.uid)} title={orbReason(s, VALOR_ORB, it.uid) ?? VALOR_SOURCE} onClick={() => {
+                if (confirmValor !== it.uid) {
+                  setConfirmValor(it.uid);
+                  return;
+                }
+                setConfirmValor(null);
+                use(VALOR_ORB);
+                if (!findItem(game.state, it.uid)) onClear();
+              }}>
+                <MatIcon id={VALOR_ORB} size={16} /> {confirmValor === it.uid ? 'Confirm corruption' : 'Use Valor Orb'} <span className="num">×{s.storage.bank[VALOR_ORB] ?? 0}</span>
+              </button>
+              {confirmValor === it.uid && <button className="btn sm" onClick={() => setConfirmValor(null)}>Cancel</button>}
+              <span className="dim small">{VALOR_SOURCE}</span>
+            </div>
           </div>
           {(fossil || seal) && (
             <div className="dim small">
@@ -557,6 +579,7 @@ export function CraftPanel({ s, uid, flaskUid, onClear }: { s: GameState; uid: n
           <CraftUntilCard s={s} item={it} />
         </div>
       )}
+      </>}
 
       {benchLvl < BENCH_BUILT_LEVEL && <div className="dim small">Salvaging needs the Crafting Bench built (level {BENCH_BUILT_LEVEL}) in your Hideout.</div>}
 

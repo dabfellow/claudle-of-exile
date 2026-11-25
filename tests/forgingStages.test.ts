@@ -233,20 +233,21 @@ describe('staged forging', () => {
     expect(full.suffixes).toHaveLength(3);
   });
 
-  it('queues a singing result during offline work and grants the selected song once', () => {
+  it.each(['inventory', 'stash'] as const)('queues a singing result in %s during offline work and grants the selected song once', (destination) => {
     const s = setup();
+    s.settings.craftFillFirst = destination;
     const ctx = makeCtx({ next: () => 0 }, 120_000);
     const a = supply(s, weapon);
     expect(startStagedForge(s, ctx, weapon)).toBeNull();
     simulateOffline(s, ctx, actionIntervalMs(s, a, deriveStats(s)) + 1_000);
-    const item = s.inventory.at(-1)!;
+    const item = destination === 'inventory' ? s.inventory.at(-1)! : s.storage.stash.flat().at(-1)!;
     expect(item.forgeSinging).toBe(true);
     expect(s.forging.pendingSinging).toEqual([item.uid]);
     expect(s.forging.rack).toContain(item.uid);
     expect(chooseForgeSong(s, ctx, item.uid, 'quality')).toBeNull();
     expect(item.quality).toBe(30);
     expect(item.forgeSinging).toBeUndefined();
-    expect(chooseForgeSong(s, ctx, item.uid, 'quality')).toMatch(/not carried/);
+    expect(chooseForgeSong(s, ctx, item.uid, 'quality')).toMatch(/not in your personal storage/);
   });
 
   it('uses the bar metal for hammer timing and grants purity to actual item rolls', () => {

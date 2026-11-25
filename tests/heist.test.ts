@@ -255,8 +255,8 @@ describe('Heist', () => {
     if (s.action?.kind === 'heist') s.action.take[GEAR] = 1;
     s.action = s.action?.kind === 'heist' ? { ...s.action, room: 5, lastRoom: 5 } : null;
     clearRoom(s, c);
-    expect(s.inventory).toHaveLength(1);
-    expect(s.inventory.every((i) => i.rarity === 'rare' && i.ilvl === 29)).toBe(true);
+    expect(s.ground).toHaveLength(1);
+    expect(s.ground.every((i) => i.rarity === 'rare' && i.ilvl === 29)).toBe(true);
   });
 
   it('remembers the exit per job', () => {

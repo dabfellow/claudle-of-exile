@@ -6,6 +6,7 @@ import { affixDef } from '../src/data/affixes';
 import { PROFESSION_PROJECTS } from '../src/data/professionProjects';
 import { SMITH_COMPONENTS } from '../src/data/smithing';
 import { recipeStock } from '../src/data/smelting';
+import { STASH_PAGE_SIZE } from '../src/data/hideout';
 import { makeCtx } from '../src/engine/context';
 import { newGame, tick } from '../src/engine/state';
 import { actionBlocker, actionIntervalMs, skillStep, smithIlvl, startSkillAction } from '../src/engine/skills';
@@ -164,6 +165,7 @@ describe('Phase 04 Smithing', () => {
     s.storage.bank = { ...a.inputs! }; const paid = { ...s.storage.bank };
     expect(startSkillAction(s, ctx(), a.id)).toBeNull();
     s.inventory = Array.from({ length: 100 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
+    s.storage.stash = s.storage.stash.map(() => Array.from({ length: STASH_PAGE_SIZE }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng)));
     s.smithCatalyst.salvageAll = true; s.smithCatalyst.salvageFull = true;
     const uid = s.nextUid;
     skillStep(s, ctx(), 200_000, deriveStats(s));
@@ -208,12 +210,13 @@ describe('Phase 04 Smithing', () => {
     expect(summary.items).toBe(1); expect(away.action).toBeNull(); expect(summary.xp[a.skill]).toBeCloseTo(a.xp);
   });
 
-  it('completes the actual early hammer with cancel/refund, full-bag ready/reload and duplicate protection', () => {
+  it('completes the early hammer with refunds, full storage recovery and duplicate protection', () => {
     let s = smith(15, 2); const p = PROFESSION_PROJECTS.find((p) => p.id === 'tool_wayfarer_hammer')!;
     s.professionProgress.work.smithing = 20; s.storage.bank = { ...p.inputs };
     expect(startProject(s, ctx(), p.id)).toBeNull(); expect(cancelProject(s)).toBeNull(); expect(s.storage.bank).toEqual(p.inputs);
     expect(startProject(s, ctx(), p.id)).toBeNull();
     s.inventory = Array.from({ length: 100 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
+    s.storage.stash = s.storage.stash.map(() => Array.from({ length: STASH_PAGE_SIZE }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng)));
     advanceProject(s, ctx(), 600_000); expect(s.professionProgress.activeProject?.status).toBe('ready');
     s = reload(s); s.inventory.pop(); expect(resumeProject(s)).toBeNull();
     const runId = s.professionProgress.activeProject!.runId;

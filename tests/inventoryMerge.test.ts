@@ -6,7 +6,8 @@ import { placeItem } from '../src/engine/loot';
 import { inventoryFilterAction, runFilterOnInventory } from '../src/engine/lootRouting';
 import { seeded } from '../src/engine/rng';
 import { newGame } from '../src/engine/state';
-import { bagCap, bagFull } from '../src/engine/storage';
+import { bagCap, bagFull, pickUp } from '../src/engine/storage';
+import { hasCraftOutputRoom, storeCraftOutput } from '../src/engine/craftOutput';
 import type { GameState, Item } from '../src/engine/types';
 
 const ctx = (offline = false) => ({ ...makeCtx(seeded(5)), offline });
@@ -28,44 +29,55 @@ describe('inventory size', () => {
 });
 
 describe('where loot goes', () => {
-  it('a kept drop lands in the inventory, not on the ground', () => {
+  it('keeps a drop on the ground until it is picked up', () => {
     const s = newGame(1);
-    placeItem(s, ctx(), sword(s));
+    const item = sword(s);
+    placeItem(s, ctx(), item);
+    expect(s.inventory).toHaveLength(0);
+    expect(s.ground).toEqual([item]);
+    expect(pickUp(s, ctx(), 'ground', [item.uid])).toBe(1);
     expect(s.inventory).toHaveLength(1);
     expect(s.ground).toHaveLength(0);
   });
 
-  it('time-away drops land in the inventory too', () => {
+  it('time-away drops wait in the haul', () => {
     const s = newGame(1);
     placeItem(s, ctx(true), sword(s));
-    expect(s.inventory).toHaveLength(1);
-    expect(s.offlineHaul).toHaveLength(0);
+    expect(s.inventory).toHaveLength(0);
+    expect(s.offlineHaul).toHaveLength(1);
   });
 
-  it('a full inventory spills onto the ground, or the time-away pile while away', () => {
+  it('leaves loot on the ground when pickup cannot fit', () => {
     const s = newGame(1);
     fill(s);
     placeItem(s, ctx(), sword(s));
+    expect(s.ground).toHaveLength(1);
+    expect(pickUp(s, ctx(), 'ground', [s.ground[0].uid])).toBe(0);
     expect(s.ground).toHaveLength(1);
     placeItem(s, ctx(true), sword(s));
     expect(s.offlineHaul).toHaveLength(1);
     expect(s.inventory).toHaveLength(bagCap(s));
   });
 
-  it('a Send to stash rule sends the drop to the stash', () => {
+  it('runs Send to stash rules on picked-up items', () => {
     const s = newGame(1);
     s.settings.lootFilter!.rules = [{ id: 'rares', name: 'Rares to stash', enabled: true, rarities: ['rare'], action: 'send_to_stash' }];
     placeItem(s, ctx(), sword(s, 'rare'));
     placeItem(s, ctx(), sword(s, 'normal'));
+    expect(s.storage.stash.flat()).toHaveLength(0);
+    expect(pickUp(s, ctx(), 'ground', s.ground.map((item) => item.uid))).toBe(2);
+    expect(runFilterOnInventory(s, ctx()).stashed).toBe(1);
     expect(s.storage.stash.flat().map((i) => i.rarity)).toEqual(['rare']);
     expect(s.inventory.map((i) => i.rarity)).toEqual(['normal']);
   });
 
-  it('a Send to stash drop falls back to the inventory when the stash is full', () => {
+  it('Run filter leaves a picked-up item in inventory when the stash is full', () => {
     const s = newGame(1);
     s.settings.lootFilter!.rules = [{ id: 'all', name: 'All to stash', enabled: true, action: 'send_to_stash' }];
     for (const page of s.storage.stash) while (page.length < 80) page.push(sword(s));
     placeItem(s, ctx(), sword(s));
+    pickUp(s, ctx(), 'ground', [s.ground[0].uid]);
+    expect(runFilterOnInventory(s, ctx()).stashed).toBe(0);
     expect(s.inventory).toHaveLength(1);
   });
 
@@ -73,12 +85,37 @@ describe('where loot goes', () => {
     const s = newGame(1);
     s.settings.lootFilter!.rules = [{ id: 'n', name: 'Salvage normals', enabled: true, rarities: ['normal'], action: 'auto_salvage' }];
     placeItem(s, ctx(), sword(s));
-    expect(s.inventory).toHaveLength(1);
+    expect(s.ground).toHaveLength(1);
     s.account.hideout.bench = 2;
     s.account.hideout.quartermaster = 4;
     placeItem(s, ctx(), sword(s));
-    expect(s.inventory).toHaveLength(1);
+    expect(s.ground).toHaveLength(1);
     expect(s.storage.bank.arcane_dust).toBeGreaterThan(0);
+  });
+});
+
+describe('where crafted gear goes', () => {
+  it('fills the inventory by default, then uses the stash', () => {
+    const s = newGame(1);
+    expect(storeCraftOutput(s, sword(s))).toBe(true);
+    expect(s.inventory).toHaveLength(1);
+    fill(s);
+    const item = sword(s);
+    expect(storeCraftOutput(s, item)).toBe(true);
+    expect(s.storage.stash[0][0].uid).toBe(item.uid);
+  });
+
+  it('fills the stash first when selected, then falls back to inventory', () => {
+    const s = newGame(1);
+    s.settings.craftFillFirst = 'stash';
+    expect(storeCraftOutput(s, sword(s))).toBe(true);
+    expect(s.inventory).toHaveLength(0);
+    for (const page of s.storage.stash) while (page.length < 80) page.push(sword(s));
+    expect(storeCraftOutput(s, sword(s))).toBe(true);
+    expect(s.inventory).toHaveLength(1);
+    fill(s);
+    expect(hasCraftOutputRoom(s)).toBe(false);
+    expect(storeCraftOutput(s, sword(s))).toBe(false);
   });
 });
 

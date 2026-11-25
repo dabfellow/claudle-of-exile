@@ -223,8 +223,8 @@ describe('Phase 11 — Thieving and Heist Overhaul', () => {
       const safe = fixed(0.999);
       clearRoom(s, safe);
 
-      expect(s.inventory).toHaveLength(1);
-      const dropped = s.inventory[0];
+      expect(s.ground).toHaveLength(1);
+      const dropped = s.ground[0];
       const base = baseDef(dropped.baseId);
       expect(['ring', 'amulet', 'belt']).toContain(base.slot);
       expect(dropped.rarity).toBe('rare');

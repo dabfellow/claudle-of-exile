@@ -73,6 +73,7 @@ export function runeReason(s: GameState, runeId: string, uid: number): string | 
   const item = findItem(s, uid);
   if (!rune) return 'Unknown rune';
   if (!item) return 'Select an item';
+  if (item.corrupted) return 'Corrupted gear cannot be modified';
   if (!hasItem(s, runeId, 1)) return 'You have none';
   if (isCraftLocked(s, uid)) return 'Item is being auto-crafted';
   if (item.ilvl < rune.grade.ilvl) return `Requires item level ${rune.grade.ilvl}`;

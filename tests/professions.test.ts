@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { BAG_SIZE } from '../src/data/hideout';
+import { BAG_SIZE, STASH_PAGE_SIZE } from '../src/data/hideout';
 import { flaskDef } from '../src/data/flasks';
 import { PROFESSION_PROJECTS, type ProfessionProject } from '../src/data/professionProjects';
 import { ACTIONS, actionDef, actionsFor } from '../src/data/skills';
@@ -176,6 +176,7 @@ describe('atomic paid project lifecycle', () => {
     PROFESSION_PROJECTS.push({ ...equipmentProject, baseId: undefined });
     let s = funded();
     while (s.inventory.length < BAG_SIZE) s.inventory.push(createItem(s, 'iron_ring', 1, 'normal', seeded(1)));
+    s.storage.stash = s.storage.stash.map(() => Array.from({ length: STASH_PAGE_SIZE }, () => createItem(s, 'iron_ring', 1, 'normal', seeded(1))));
     startProject(s, ctx(), 'test_equipment');
     const uid = s.nextUid;
     const sum = simulateOffline(s, ctx(), 2000);
@@ -304,13 +305,14 @@ describe('ordinary completion boundaries and return summaries', () => {
     expect(s.professionProgress.work.smithing).toBe(1);
   });
 
-  it('suppresses a doubled extra base with one slot left and stops before paying for a full bag', () => {
+  it('suppresses a doubled extra base with one slot left and stops before paying when both spaces are full', () => {
     const s = funded();
     s.storage.bank.copper_bar = 100;
     s.storage.bank.ash_plank = 100;
     const a = actionDef('smith_iron_ring');
     for (const [id, n] of Object.entries(a.inputs!)) s.storage.bank[id] = n * 3;
     while (s.inventory.length < BAG_SIZE - 1) s.inventory.push(createItem(s, 'iron_ring', 1, 'normal', seeded(1)));
+    s.storage.stash = s.storage.stash.map(() => Array.from({ length: STASH_PAGE_SIZE }, () => createItem(s, 'iron_ring', 1, 'normal', seeded(1))));
     const c = ctx();
     startSkillAction(s, c, a.id);
     if (s.action?.kind === 'skill') s.action.double = true;

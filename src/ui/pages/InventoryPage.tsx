@@ -16,6 +16,7 @@ import type { EquipSlot, GameState } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { CurrencyAmount, fmt, GameIcon, MatIcon, PageHeader, ProgressBar } from '../components/common';
 import { CraftPanel } from '../components/CraftPanel';
+import { CraftOutputSettings } from '../components/CraftOutputSettings';
 import { Fold } from '../components/Fold';
 import { Icon } from '../components/Icon';
 import { FlaskShelf } from '../components/FlaskView';
@@ -368,6 +369,10 @@ export function InventoryPage({ go, openGuildStash, focusStash = false }: { go: 
       <PageHeader title="Inventory" actions={<CurrencyAmount id="gold" amount={s.storage.bank.gold ?? 0} label="gold" />}>
         Click an item to see its actions, including sending spare items to the Guild Stash.
       </PageHeader>
+      <details className="card">
+        <summary>Crafting output</summary>
+        <CraftOutputSettings />
+      </details>
       {(guildUniques > 0 || guildMaps > 0) && (
         <div className="card inventory-guild-stock">
           <span>Withdraw shared stock from the Guild Stash to use it on this character.</span>

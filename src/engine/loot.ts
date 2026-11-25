@@ -5,6 +5,7 @@ import { roughDropBundle } from './roughGems';
 import { MAP_ILVL } from '../data/hideout';
 import { RUNE_DROP, RUNES } from '../data/runes';
 import { CURRENCIES } from '../data/materials';
+import { VALOR_DROP_CHANCE, VALOR_ORB } from '../data/corruption';
 import { rollFlask, rollUniqueFlask, stashFlask } from './flasks';
 import type { ZoneDef } from '../data/zones';
 import { seeUnique } from './account';
@@ -13,7 +14,8 @@ import type { Ctx } from './context';
 import { stationLevel } from './hideout';
 import { createItem, createUnique, droppableBases, salvageValue } from './items';
 import { evaluateLootFilter } from './lootFilter';
-import { autoSalvages, routeDrop } from './lootRouting';
+import { autoSalvages } from './lootRouting';
+import { dropItem } from './storage';
 import { HARD_BOSSES, UBER_BOSSES, uniqueMapDef } from '../data/maps';
 import { encounterWorldDropUniques } from '../data/uniqueDrops';
 import { addMaps, runModifiers } from './maps';
@@ -56,8 +58,7 @@ export function placeItem(s: GameState, ctx: Ctx, item: Item): void {
     ctx.emit({ t: 'loot', item, hidden: true });
     return;
   }
-  // kept: into the inventory (or the stash, by a Send to stash rule); only a full inventory spills onto the ground
-  routeDrop(s, ctx, item, filterResult);
+  dropItem(s, ctx, item);
   s.lifetime.itemsLooted += 1;
   ctx.emit({ t: 'loot', item, filterSound: filterResult.sound && !ctx.offline });
 }
@@ -93,6 +94,10 @@ export function rollLoot(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: Zon
   const rolls = ctx.event?.loot ?? 1;
   const count = Math.floor(rolls) + (rolls % 1 > 0 && ctx.rng.next() < rolls % 1 ? 1 : 0);
   for (let i = 0; i < count; i++) rollDrops(s, ctx, mon, zone, d);
+  if (s.maps.run && mon.isBoss && !s.combat?.monsters.some((other) => other !== mon && other.isBoss && other.life > 0) && chance(ctx.rng, VALOR_DROP_CHANCE)) {
+    const qty = addBank(s, VALOR_ORB, 1);
+    if (qty) ctx.emit({ t: 'loot', currencyId: VALOR_ORB, qty });
+  }
 }
 
 function rollDrops(s: GameState, ctx: Ctx, mon: MonsterInstance, zone: ZoneDef, d: Derived): void {
