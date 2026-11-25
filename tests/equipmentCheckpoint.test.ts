@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { actionDef } from '../src/data/skills';
+import { actionDef, hasAction } from '../src/data/skills';
 import { recipeStock } from '../src/data/smelting';
 import { baseDef } from '../src/data/bases';
 import { PROFESSION_PROJECTS } from '../src/data/professionProjects';
@@ -115,6 +115,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
       s.skills.smithing = xpForLevel(Math.max(a.level, supplierLvl));
       s.skills.smelting = xpForLevel(Math.max(a.level, supplierLvl));
       s.skills.woodcrafting = xpForLevel(Math.max(a.level, supplierLvl));
+      s.skills.sawmilling = xpForLevel(Math.max(a.level, supplierLvl));
       s.skills.mining = xpForLevel(supplierLvl);
       s.skills.woodcutting = xpForLevel(supplierLvl);
       s.account.hideout.forge = reqForge;
@@ -151,8 +152,11 @@ describe('Phase 05 Equipment Checkpoint', () => {
       const barsToSmelt = a.inputs![`${metal}_bar`] ?? 0;
       const totalOreNeeded = directOre + barsToSmelt * 5;
 
-      const directLogs = a.inputs![`${wood}_log`] ?? 0;
-      const planksToMill = a.inputs![`${wood}_plank`] ?? 0;
+      // bows, wands and staves need a sawn part, itself made from logs and planks
+      const parts = Object.entries(a.inputs!).filter(([id]) => hasAction(`mill_${id}`));
+      const partInput = (id: string) => parts.reduce((n, [part, qty]) => n + (actionDef(`mill_${part}`).inputs![id] ?? 0) * qty, 0);
+      const directLogs = (a.inputs![`${wood}_log`] ?? 0) + partInput(`${wood}_log`);
+      const planksToMill = (a.inputs![`${wood}_plank`] ?? 0) + partInput(`${wood}_plank`);
       const totalLogsNeeded = directLogs + planksToMill * 5;
 
       // 1. Gather ore
@@ -176,6 +180,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
         totalElapsedMs += doActionCycles(s, `mill_${wood}`, planksToMill, c);
         expect(s.storage.bank[`${wood}_plank`]).toBeGreaterThanOrEqual(planksToMill);
       }
+      for (const [part, qty] of parts) totalElapsedMs += doActionCycles(s, `mill_${part}`, qty, c);
 
       // 5. Craft purpose equipment
       expect(actionBlocker(s, a)).toBeNull();
@@ -255,7 +260,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
       // 5. Level Smithing and Smelting to 15
       s.skills.smithing = xpForLevel(15);
       s.skills.smelting = xpForLevel(15);
-      s.skills.woodcrafting = xpForLevel(15); // oak planks are sawn at Woodcrafting
+      s.skills.sawmilling = xpForLevel(15); // oak planks are sawn at Sawmilling
 
       // 6. Gather materials for Wayfarer's Hammer:
       // Costs: copper_bar 10, iron_bar 10, ash_plank 5, oak_plank 5

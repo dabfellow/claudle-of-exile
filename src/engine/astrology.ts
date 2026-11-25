@@ -295,7 +295,7 @@ export function chartTotals(s: GameState): Record<string, number> {
 const total = (s: GameState, ...keys: string[]) => keys.reduce((acc, k) => acc + (chartTotals(s)[k] ?? 0), 0);
 
 const GATHERING_YIELD = new Set<SkillId>(['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology', 'astrology']);
-const PRODUCTION_SPEED = new Set<SkillId>(['smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'cartography']);
+const PRODUCTION_SPEED = new Set<SkillId>(['smelting', 'smithing', 'woodcrafting', 'tailoring', 'sawmilling', 'alchemy', 'gemcutting', 'cartography']);
 
 /** Extra yield for a gathering skill, in percent. */
 export function astrologyYield(s: GameState, skill: SkillId): number {

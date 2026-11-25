@@ -41,6 +41,7 @@ import { FurnaceView } from '../components/FurnaceView';
 import { DelveView } from '../components/DelveView';
 import { AnvilView } from '../components/AnvilView';
 import { WoodBench } from '../components/WoodBench';
+import { SawmillPage } from '../components/Sawmill';
 import { CraftOutputSettings } from '../components/CraftOutputSettings';
 import { LapidaryBench } from '../components/LapidaryBench';
 import { ForagingBench } from '../components/ForagingBench';
@@ -77,6 +78,8 @@ const START_LABEL: Record<SkillId, string> = {
   smelting: 'Smelt',
   smithing: 'Forge',
   woodcrafting: 'Craft',
+  tailoring: 'Sew',
+  sawmilling: 'Saw',
   alchemy: 'Brew',
   gemcutting: 'Cut',
   runecarving: 'Carve',
@@ -716,7 +719,7 @@ export function SkillPage({ skill, go }: { skill: SkillId; go?: (page: Page) => 
   const s = useGame();
   const lockedAt = skillLock(s, skill);
   if (lockedAt) return <LockedSkill skill={skill} place={lockedAt} />;
-  if (skill === 'mining' || skill === 'smelting' || skill === 'smithing' || skill === 'woodcrafting' || skill === 'gemcutting' || skill === 'harvesting' || skill === 'alchemy' || skill === 'cartography') return <WorkshopPage key={skill} skill={skill} go={go} />;
+  if (skill === 'mining' || skill === 'smelting' || skill === 'smithing' || skill === 'woodcrafting' || skill === 'tailoring' || skill === 'sawmilling' || skill === 'gemcutting' || skill === 'harvesting' || skill === 'alchemy' || skill === 'cartography') return <WorkshopPage key={skill} skill={skill} go={go} />;
   return <OpenSkillPage skill={skill} go={go} />;
 }
 
@@ -728,7 +731,7 @@ function BossKeyRecipes() {
     renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />;
 }
 
-function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'gemcutting' | 'harvesting' | 'alchemy' | 'cartography'; go?: (page: Page) => void }) {
+function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'tailoring' | 'sawmilling' | 'gemcutting' | 'harvesting' | 'alchemy' | 'cartography'; go?: (page: Page) => void }) {
   const projects = <ProjectBoard skill={skill} go={go} />;
   const catalysts = <details className="profession-supplies"><summary>Catalysts & crafting output</summary><CatalystPanel /><CraftOutputSettings /></details>;
   return <div className={`page profession-page profession-${skill}`} style={{ ['--profession' as string]: SKILLS[skill].color }}>
@@ -736,7 +739,8 @@ function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing'
     {skill === 'mining' && <DelveView masterworks={projects} />}
     {skill === 'smelting' && <FurnaceView projects={projects} />}
     {skill === 'smithing' && <AnvilView bossKeys={<BossKeyRecipes />} catalysts={catalysts} masterworks={projects} />}
-    {skill === 'woodcrafting' && <WoodBench catalysts={catalysts} masterworks={projects} />}
+    {(skill === 'woodcrafting' || skill === 'tailoring') && <WoodBench key={skill} skill={skill} catalysts={catalysts} masterworks={projects} />}
+    {skill === 'sawmilling' && <SawmillPage masterworks={projects} />}
     {skill === 'gemcutting' && <LapidaryBench masterworks={projects} />}
     {skill === 'harvesting' && <ForagingBench masterworks={projects} onOpenGreenhouse={() => go?.('greenhouse')} />}
     {skill === 'alchemy' && <AlchemyBench masterworks={projects} />}

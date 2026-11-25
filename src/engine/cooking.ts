@@ -12,7 +12,7 @@ import { hasFishingPrize } from './fishing';
 export const HEAD_CHEF_MORE = 30;
 
 export const GATHERING_SKILLS: SkillId[] = ['mining', 'woodcutting', 'harvesting', 'thieving', 'archaeology'];
-export const PRODUCTION_SKILLS: SkillId[] = ['smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'];
+export const PRODUCTION_SKILLS: SkillId[] = ['smelting', 'smithing', 'woodcrafting', 'tailoring', 'sawmilling', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography'];
 
 export function cookingOpen(_s: GameState): boolean {
   return true;

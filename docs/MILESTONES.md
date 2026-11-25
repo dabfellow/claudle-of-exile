@@ -114,6 +114,8 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 
 ## Decisions
 
+- Woodcrafting split (2026-11-24, owner's call). Cloth robes and leather armour move to a new skill, **Tailoring**. Woodcrafting keeps bows, staves, wands, bucklers and spirit shields. The sawmill becomes its own skill, **Sawmilling**, with its own page under Production: planks, heartwood, and weapon parts (bow staves, wand blanks, staff shafts in ash, oak and yew). Every bow, wand and staff needs one part of its wood tier. Both new skills start at the character's Woodcrafting XP. Small calls made in the build: parts unlock at the same Sawmilling level as that wood's planks; Tailoring shares the Woodcrafting Bench hideout station and the Robe form jig (now built from the Tailoring page); living wood stays Woodcrafting-only; mastery track ids keep their old `woodcrafting.` names so practice carries over.
+
 - Gathering vs Production (2026-11-24). Gathering skills are set-and-forget. Anything that needs setup or waiting belongs in the Production group (formerly "Crafting" in the sidebar). The Greenhouse moved out of Foraging into its own Production page first.
 
 - Woodcutting Lodge (2026-11-24). Make the workshop stations themselves the entry points for upgrades. Show the Trophy Wall in the lodge after players buy it as an upgrade. The wall keeps its first-legend and 100-plank requirements.
@@ -727,6 +729,10 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [ ] Split Woodcrafting into Woodcrafting and Tailoring, and add Sawmilling with weapon parts (see Decisions, 2026-11-24).
+  - Built 2026-11-24 (save version 70); typecheck, build and all 2,059 tests pass. Looked at in the running game: Sawmilling page sawed a bow stave, Woodcrafting bench shows the stave cost, Tailoring table opens. Not released.
+  - Not done yet: Tailoring still uses planks and bars (no cloth or leather materials exist); neither new skill has a skilling passive-tree branch, a hidden collectible or Masterworks projects; the new parts use a plain placeholder icon.
+
 - [ ] Greenhouse gets its own sidebar page under Production (Beds, Seeds, Herbarium), the Crafting group is renamed Production, and Foraging keeps only the Wild patches and Masterworks.
   - Built 2026-11-24; typecheck and all 2,055 tests pass. Not yet looked at in the running game. Save data is unchanged (still `s.foraging`); beds still unlock with Foraging level.
   - Owner to decide whether other gathering activities with setup or waiting belong under Production too: Fishing port workshop upgrades and voyages, Archaeology's Relic Forge and merchant standing orders, Thieving Heists with the crew, Astrology's star chart, and Woodcutting giant felling plans.
@@ -1009,6 +1015,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 - [x] Passive tree route planning: clicking a node lines up the shortest route to it (`passiveRoute` in `src/engine/passives.ts`), shown in blue with its cost and stat changes; more clicks extend it, clicking a planned node cuts it back, Confirm buys it all and Cancel drops it. Routes never pass through keystones, masteries or Doomed Gates. Masteries, refunds and owned nodes keep the single-node preview. Skilling tree unchanged. — done 2026-11-11, live in 0.4.32 on 2026-11-11
 
 ## Ideas / later
+
+- Oak-tier gear starts at level 10 but oak planks and parts need Sawmilling 15, so levels 10–14 can't make their tier yet (was the same with Woodcrafting before the split). Noticed 2026-11-24.
 
 - Give Masterworks distinct visuals across professions in a dedicated design pass (requested 2026-11-22).
 

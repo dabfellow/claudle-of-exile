@@ -9,7 +9,7 @@ export const MASTERY_BATCH_TIERS = [
 export function supportsMasteryBatch(a: SkillAction): boolean {
   return !!a.inputs && !a.batchOf && !a.soon && !a.baseId && !a.chart && !a.protectedOutputs
     && !a.discovery && !a.outputChance && !a.bonus?.length
-    && ['smelting', 'smithing', 'woodcrafting', 'alchemy', 'cooking', 'gemcutting', 'runecarving', 'cartography', 'woodcutting'].includes(a.skill)
+    && ['smelting', 'smithing', 'woodcrafting', 'tailoring', 'sawmilling', 'alchemy', 'cooking', 'gemcutting', 'runecarving', 'cartography', 'woodcutting'].includes(a.skill)
     && (!!a.gem || !!a.flaskId || Object.keys(a.outputs ?? {}).length > 0)
     && !Object.keys(a.outputs ?? {}).some((id) => /key|sigil|seal|fragment|artifact|chart/.test(id));
 }

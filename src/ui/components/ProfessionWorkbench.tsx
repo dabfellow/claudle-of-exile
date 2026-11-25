@@ -17,6 +17,8 @@ export const PROFESSION_THEMES: Partial<Record<SkillId, { title: string; catalog
   smelting: { title: 'The Crucible', catalogue: 'Furnace charges', station: 'Crucible charge', motif: 'crucible' },
   smithing: { title: 'The Ironwright’s Forge', catalogue: 'Patterns', station: 'Anvil & pattern', motif: 'anvil' },
   woodcrafting: { title: 'The Carver’s Bench', catalogue: 'Templates', station: 'Clamped workpiece', motif: 'timber' },
+  tailoring: { title: 'The Tailor’s Table', catalogue: 'Patterns', station: 'Pinned cloth', motif: 'leaf' },
+  sawmilling: { title: 'The Sawmill', catalogue: 'Cut list', station: 'Saw bench', motif: 'rings' },
   alchemy: { title: 'The Apothecary’s Book', catalogue: 'Formula index', station: 'Mixing bench', motif: 'flask' },
   gemcutting: { title: 'The Lapidary’s Tray', catalogue: 'Gem tray', station: 'Cutting jig', motif: 'facet' },
   runecarving: { title: 'The Inscriber’s Slate', catalogue: 'Inscription tablets', station: 'Carving slate', motif: 'rune' },

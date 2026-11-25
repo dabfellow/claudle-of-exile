@@ -153,12 +153,30 @@ export function lodgeDef(id: LodgeId): LodgeDef {
 export const TROPHY_WALL_PLANKS = 100;
 
 /**
- * Sawmill recipes. They belong to Woodcrafting (owner's call, 2026-11-22): sawing gives Woodcrafting XP and is done at
- * the Woodcrafting bench's Sawmill tab; the ids stay `mill_*` so mastery and saves carry over.
+ * Sawmill recipes. They are their own skill, Sawmilling (owner's call, 2026-11-24), on its own Production page;
+ * the ids stay `mill_*` so mastery and saves carry over.
  */
 const sawmillAction = (id: string, name: string, wood: string, level: number, intervalMs: number, xp: number, color: string, extra: Partial<SkillAction>): SkillAction => ({
-  id, skill: 'woodcrafting', name, level, intervalMs, xp, color, woodcutting: { wood, mode: 'sawmill' }, ...extra,
+  id, skill: 'sawmilling', name, level, intervalMs, xp, color, woodcutting: { wood, mode: 'sawmill' }, ...extra,
 });
+
+/**
+ * Sawn parts for Woodcrafting: bows need a bow stave (split straight from logs), wands a wand blank (turned from planks)
+ * and staves a staff shaft (logs and planks). One part per weapon; the part's wood follows the weapon's tier.
+ */
+const PART_WOOD_DEFS = [
+  { wood: 'ash', name: 'Ash', level: 1, area: undefined, color: '#b89a72' },
+  { wood: 'oak', name: 'Oak', level: 15, area: 'ashwood', color: '#8a6338' },
+  { wood: 'yew', name: 'Yew', level: 30, area: 'shipgrave', color: '#6b3d2c' },
+] as const;
+const SAWN_PART_ACTIONS: SkillAction[] = PART_WOOD_DEFS.flatMap(({ wood, name, level, area, color }, tier): SkillAction[] => [
+  sawmillAction(`mill_${wood}_wand_blank`, `Turn ${name} Wand Blanks`, wood, level, 5000 + tier * 500, [12, 28, 56][tier], color,
+    { inputs: { [`${wood}_plank`]: 1 + tier }, outputs: { [`${wood}_wand_blank`]: 1 }, area }),
+  sawmillAction(`mill_${wood}_bow_stave`, `Split ${name} Bow Staves`, wood, level, 6000 + tier * 500, [16, 34, 66][tier], color,
+    { inputs: { [`${wood}_log`]: 6 + 4 * tier }, outputs: { [`${wood}_bow_stave`]: 1 }, area }),
+  sawmillAction(`mill_${wood}_staff_shaft`, `Shape ${name} Staff Shafts`, wood, level, 7000 + tier * 500, [20, 40, 76][tier], color,
+    { inputs: { [`${wood}_log`]: 4 + 2 * tier, [`${wood}_plank`]: 1 + tier }, outputs: { [`${wood}_staff_shaft`]: 1 }, area }),
+]);
 
 /** Raw XP; the action registry applies its existing 0.3 scale once. */
 export const WOODCUTTING_ACTIONS: SkillAction[] = [
@@ -173,5 +191,6 @@ export const WOODCUTTING_ACTIONS: SkillAction[] = [
   ...WOODS.slice(3).map((w, i) => sawmillAction(`mill_${w.id}`, `Cut ${w.name} Planks`, w.id, w.level, w.ms, [8, 12, 16, 20][i] / 0.3, w.color, {
     inputs: { [`${w.id}_log`]: 5 }, outputs: { [`${w.id}_plank`]: 1 },
   })),
+  ...SAWN_PART_ACTIONS,
   sawmillAction('mill_heartwood', 'Refine Ancient Heartwood', 'ancient', 30, 30000, 100, '#c49b60', { inputs: { heartwood_fragment: 20 }, protectedOutputs: { ancient_heartwood: 1 } }),
 ];

@@ -2,7 +2,7 @@ import { useId, useState, type ReactNode } from 'react';
 import { Fragment } from 'react';
 import { baseDef, obtainable, WEAPON_FAMILIES } from '../../data/bases';
 import { materialDef } from '../../data/materials';
-import { actionDef, actionsFor, type SkillAction } from '../../data/skills';
+import { actionDef, actionsFor, type SkillAction, type TunedSkill } from '../../data/skills';
 import { JIGS, JIG_TIERS, WOOD_FAMILIES, woodFamily, type Jig, type WoodFamily } from '../../data/woodcrafting';
 import { recipeMaterialCount } from '../../engine/bank';
 import { itemName } from '../../engine/items';
@@ -10,7 +10,7 @@ import { actionBlocker, actionIntervalMs, resinBonus, skillLevel, smithIlvl, sto
 import { deriveStats } from '../../engine/stats';
 import type { GameState, Item } from '../../engine/types';
 import {
-  activeWoodTuning, buildWoodJig, chooseWoodTuning, jigUpgrade, recipeDials, removeWoodTuning, retuneLivingWood,
+  activeWoodTuning, buildWoodJig, chooseWoodTuning, jigSkill, jigUpgrade, recipeDials, removeWoodTuning, retuneLivingWood,
   saveWoodTuning, startWoodcraft, woodDialIndices, woodDialRange, woodImplicits, woodRackItems, woodTuningSlots, type WoodPlan,
 } from '../../engine/woodcrafting';
 import { game, useGame } from '../../game';
@@ -21,14 +21,29 @@ import { SkillMinigame } from './SkillMinigame';
 import { MasteryProgress } from './MasteryProgress';
 import { Icon } from './Icon';
 import { EquipmentBasePreview } from './ItemView';
-import { Sawmill } from './Sawmill';
 import './wood-bench.css';
 
-const families = Object.keys(WOOD_FAMILIES) as WoodFamily[];
-const recipes = actionsFor('woodcrafting').filter((a) => !a.purpose && !a.woodcutting && (!a.baseId || obtainable(baseDef(a.baseId))));
+const allFamilies = Object.keys(WOOD_FAMILIES) as WoodFamily[];
+const recipesFor = (skill: TunedSkill) => actionsFor(skill).filter((a) => !a.purpose && !a.woodcutting && (!a.baseId || obtainable(baseDef(a.baseId))));
+const RECIPES: Record<TunedSkill, SkillAction[]> = { woodcrafting: recipesFor('woodcrafting'), tailoring: recipesFor('tailoring') };
+/** Only the families this bench actually makes, in their usual order. */
+const FAMILIES: Record<TunedSkill, WoodFamily[]> = {
+  woodcrafting: allFamilies.filter((f) => RECIPES.woodcrafting.some((a) => a.baseId && woodFamily(a.baseId) === f)),
+  tailoring: allFamilies.filter((f) => RECIPES.tailoring.some((a) => a.baseId && woodFamily(a.baseId) === f)),
+};
+/** At the Woodcrafting bench the cloth and leather dials only cover spirit shields and bucklers. */
+function familyLabel(skill: TunedSkill, family: WoodFamily): string {
+  if (skill === 'woodcrafting' && family === 'cloth') return 'Spirit Shields';
+  if (skill === 'woodcrafting' && family === 'leather') return 'Bucklers';
+  return WOOD_FAMILIES[family].name;
+}
+const BENCH_TEXT: Record<TunedSkill, { bench: string; start: string; stop: string; verb: string }> = {
+  woodcrafting: { bench: 'Woodcrafting bench', start: 'Start carving', stop: 'Stop carving', verb: 'carve' },
+  tailoring: { bench: 'Tailoring table', start: 'Start sewing', stop: 'Stop sewing', verb: 'sew' },
+};
 const livingMaterials = ['legend_heartwood', 'world_tree_heart'] as const;
 const tabs = [
-  { id: 'bench', label: 'Workbench' }, { id: 'sawmill', label: 'Sawmill' }, { id: 'jigs', label: 'Jigs' },
+  { id: 'bench', label: 'Workbench' }, { id: 'jigs', label: 'Jigs' },
   { id: 'tunings', label: 'Tunings' }, { id: 'masterworks', label: 'Masterworks' },
 ] as const;
 type WoodTab = (typeof tabs)[number]['id'];
@@ -111,14 +126,14 @@ function Dials({ s, recipe, dials, living, item, change }: {
   );
 }
 
-function JigsView({ s, level, notify }: { s: GameState; level: number; notify: (message: string) => void }) {
+function JigsView({ s, skill, level, notify }: { s: GameState; skill: TunedSkill; level: number; notify: (message: string) => void }) {
   return (
     <div className="wood-tab-stack">
       <SkillIntro step="Permanent upgrades" action={<HelpTip label="How Jigs work" tip={JIGS_TIP} />}>
         Upgrade permanent workbench fixtures to widen dial min/max limits and unlock extra saved tuning slots at Tier 2.
       </SkillIntro>
       <div className="wood-grid">
-        {(Object.keys(JIGS) as Jig[]).map((jig) => {
+        {(Object.keys(JIGS) as Jig[]).filter((jig) => jigSkill(jig) === skill).map((jig) => {
           const tier = s.woodcrafting.jigs[jig];
           const next = jigUpgrade(s, jig);
           const lockedLevel = next && level < next.level ? next.level : undefined;
@@ -130,7 +145,7 @@ function JigsView({ s, level, notify }: { s: GameState; level: number; notify: (
                 <span className="spacer" />
                 <span className="small num">Tier {tier} / {JIG_TIERS.length}</span>
               </div>
-              <p className="small">Applies to: {families.filter((family) => WOOD_FAMILIES[family].jig === jig).map((family) => WOOD_FAMILIES[family].name).join(', ')}</p>
+              <p className="small">Applies to: {allFamilies.filter((family) => WOOD_FAMILIES[family].jig === jig).map((family) => WOOD_FAMILIES[family].name).join(', ')}{jig === 'form' ? ', and the bucklers and spirit shields at the Woodcrafting bench' : ''}</p>
               {next ? <>
                 <p className="muted small">Next (Lv {next.level}): {next.level === 50 ? 'Extra tuning slot and wider second dial' : 'Wider dial range'}</p>
                 <Costs s={s} inputs={next.cost} />
@@ -172,13 +187,15 @@ export function WoodRack() {
   </section>;
 }
 
-export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; masterworks: ReactNode }) {
+export function WoodBench({ skill, catalysts, masterworks }: { skill: TunedSkill; catalysts: ReactNode; masterworks: ReactNode }) {
   const s = useGame();
-  const all = recipes;
-  const level = skillLevel(s, 'woodcrafting');
+  const all = RECIPES[skill];
+  const families = FAMILIES[skill];
+  const text = BENCH_TEXT[skill];
+  const level = skillLevel(s, skill);
   const tuningSelectId = useId();
   const livingSelectId = useId();
-  const [tab, setTab] = useState<WoodTab>(() => s.professionProgress.activeProject?.project.skill === 'woodcrafting' ? 'masterworks' : 'bench');
+  const [tab, setTab] = useState<WoodTab>(() => s.professionProgress.activeProject?.project.skill === skill ? 'masterworks' : 'bench');
   const [id, setId] = useState(() => all.find((a) => !!a.baseId)!.id);
   const [family, setFamily] = useState<WoodFamily>(() => woodFamily(actionDef(id).baseId!));
   const [benchShowLocked, setBenchShowLocked] = useState(false);
@@ -190,7 +207,7 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
   const activeTuning = activeWoodTuning(s, family);
   const selection = actionDef(id);
   const base = selection.baseId ? baseDef(selection.baseId) : undefined;
-  const running = s.action?.kind === 'skill' && actionDef(s.action.actionId).skill === 'woodcrafting' ? s.action : null;
+  const running = s.action?.kind === 'skill' && actionDef(s.action.actionId).skill === skill ? s.action : null;
   const runningRecipe = running && actionDef(running.actionId);
   const d = deriveStats(s);
   const inputs = { ...selection.inputs, ...(living && base ? { [living]: 1 } : {}) };
@@ -249,13 +266,13 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
       {tab === 'bench' && (
         <div className="wood-tab-stack">
           <SkillIntro step="Start here: Pick a recipe & slide the dials">
-            Pick an item family, click a recipe below to load it on the bench, slide the Dials to trade one stat for another, and start carving.
+            Pick an item family, click a recipe below to load it on the bench, slide the Dials to trade one stat for another, and start to {text.verb}.{skill === 'woodcrafting' && <> Bows, wands and staves each need a part from the <b>Sawmill</b>.</>}
           </SkillIntro>
           <div className="wood-bench-layout">
             <section className="card wood-card wood-piece">
-              <h2>Woodcrafting bench</h2>
+              <h2>{text.bench[0].toUpperCase() + text.bench.slice(1)}</h2>
               <div className="wood-filter-row">
-                <div className="gem-chips" role="tablist" aria-label="Woodcrafting family">
+                <div className="gem-chips" role="tablist" aria-label={`${text.bench} family`}>
                   {families.map((key) => (
                     <button
                       key={key}
@@ -264,9 +281,9 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
                       aria-selected={!!base && family === key}
                       className={`gem-chip ${!!base && family === key ? 'active' : ''}`}
                       onClick={() => chooseFamily(key)}
-                    >{WOOD_FAMILIES[key].name}</button>
+                    >{familyLabel(skill, key)}</button>
                   ))}
-                  <button
+                  {all.some((a) => !a.baseId) && <button
                     type="button"
                     role="tab"
                     aria-selected={!base}
@@ -275,7 +292,7 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
                       const frame = all.find((a) => !a.baseId);
                       if (frame) selectRecipe(frame);
                     }}
-                  >Frames</button>
+                  >Frames</button>}
                 </div>
                 {(hiddenBenchCount > 0 || benchShowLocked) && (
                   <label className="check small">
@@ -385,9 +402,9 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
                   </form>
                 )}
 
-                {manual && <p className="dim small">Draft dials apply to the next piece you carve here. Saved tunings apply automatically to repeats and offline carving.</p>}
+                {manual && <p className="dim small">Draft dials apply to the next piece you {text.verb} here. Saved tunings apply automatically to repeats and offline work.</p>}
 
-                {level >= 80 ? (
+                {skill !== 'woodcrafting' ? null : level >= 80 ? (
                   <div className="wood-living-field">
                     <span className="wood-section-head">
                       <label htmlFor={livingSelectId}>Living wood</label>
@@ -417,24 +434,24 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
               <p className="small muted">{fmtTime(actionIntervalMs(s, selection, d))} · {selection.xp} XP</p>
               <button className="btn primary" disabled={!!reason} onClick={() => {
                 setNotice(game.act((st, ctx) => startWoodcraft(st, ctx, selection, { dials: manual ?? undefined, living })) ?? '');
-              }}>{reason ?? 'Start carving'}</button>
+              }}>{reason ?? text.start}</button>
             </section>
 
             <div className="wood-bench-side">
               {running && runningRecipe && <section className="card wood-card">
                 <b>{runningRecipe.name}</b>
                 <ProgressBar value={running.progress / actionIntervalMs(s, runningRecipe, d)} />
-                <button className="btn sm" onClick={() => game.act(stopAction)}>Stop carving</button>
+                <button className="btn sm" onClick={() => game.act(stopAction)}>{text.stop}</button>
               </section>}
-              <SkillMinigame skill="woodcrafting" showBlank />
+              <SkillMinigame skill={skill} showBlank />
               {catalysts}
             </div>
           </div>
         </div>
       )}
 
-      {tab === 'sawmill' && <Sawmill />}
-      {tab === 'jigs' && <JigsView s={s} level={level} notify={setNotice} />}
+
+      {tab === 'jigs' && <JigsView s={s} skill={skill} level={level} notify={setNotice} />}
 
       {tab === 'tunings' && (
         <div className="wood-tab-stack">
@@ -447,7 +464,7 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
               return (
                 <section className="card wood-card" key={key}>
                   <div className="row">
-                    <b>{WOOD_FAMILIES[key].name}</b>
+                    <b>{familyLabel(skill, key)}</b>
                     <span className="spacer" />
                     <span className="small num">{list.length}/{woodTuningSlots(s, key)} slots</span>
                   </div>
@@ -464,7 +481,7 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
                 </section>
               );
             })}
-            {carriedLiving.length > 0 && (
+            {skill === 'woodcrafting' && carriedLiving.length > 0 && (
               <section className="card wood-card">
                 <div className="row">
                   <b>Living Wood retuning</b>

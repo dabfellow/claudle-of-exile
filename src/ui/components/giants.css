@@ -543,7 +543,7 @@
   color: var(--bad);
 }
 
-/* ---- Woodcrafting's Sawmill ---- */
+/* ---- Sawmilling's Sawmill ---- */
 .sawmill-view {
   display: grid;
   gap: 12px;
@@ -551,6 +551,12 @@
 }
 .sawmill-view > * {
   justify-self: stretch;
+}
+.sawmill-group h3 {
+  margin: 4px 0 2px;
+}
+.sawmill-group > p {
+  margin: 0 0 8px;
 }
 .sawmill-grid {
   display: grid;

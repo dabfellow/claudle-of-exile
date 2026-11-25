@@ -21,7 +21,7 @@ function crafter() {
   const s = newGame(1);
   s.skills.woodcrafting = xpForLevel(82);
   s.account.hideout.woodcrafting_bench = 3;
-  Object.assign(s.storage.bank, { ash_plank: 40, copper_bar: 40, oak_plank: 100, ironwood_plank: 200, spirit_plank: 300, legend_heartwood: 3 });
+  Object.assign(s.storage.bank, { ash_plank: 40, ash_bow_stave: 40, oak_bow_stave: 40, copper_bar: 40, oak_plank: 100, ironwood_plank: 200, spirit_plank: 300, legend_heartwood: 3 });
   return s;
 }
 

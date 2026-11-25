@@ -25,6 +25,8 @@ const VALID_SKILL_IDS = new Set<SkillId>([
   'smithing',
   'smelting',
   'woodcrafting',
+  'tailoring',
+  'sawmilling',
   'astrology',
   'fishing',
   'combat',

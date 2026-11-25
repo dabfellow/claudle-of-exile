@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { ACTIONS, actionDef, actionsFor } from '../src/data/skills';
+import { ACTIONS, actionDef, actionsFor, hasAction } from '../src/data/skills';
 import { BASES, baseDef, obtainable } from '../src/data/bases';
 import { affixDef } from '../src/data/affixes';
 import { PROFESSION_PROJECTS } from '../src/data/professionProjects';
@@ -29,6 +29,7 @@ function smith(level = 90, forge = 3) {
   s.skills.smithing = xpForLevel(level);
   s.skills.smelting = xpForLevel(level);
   s.skills.woodcrafting = xpForLevel(level);
+  s.skills.sawmilling = xpForLevel(level);
   s.account.hideout.forge = forge;
   s.account.hideout.smelter = Math.min(3, forge);
   s.account.hideout.woodcrafting_bench = Math.min(3, forge);
@@ -65,14 +66,18 @@ describe('Phase 04 Smithing', () => {
       }
     };
     const metal = supplier < 30 ? 'iron' : 'mithril', wood = supplier < 30 ? 'oak' : 'yew';
+    // bows, wands and staves need a sawn part, itself made from logs and planks
+    const parts = Object.entries(a.inputs!).filter(([part]) => hasAction(`mill_${part}`));
+    const partInput = (mat: string) => parts.reduce((n, [part, qty]) => n + (actionDef(`mill_${part}`).inputs![mat] ?? 0) * qty, 0);
     const barsNeeded = a.inputs![`${metal}_bar`] ?? 0;
-    const planksNeeded = a.inputs![`${wood}_plank`] ?? 0;
+    const planksNeeded = (a.inputs![`${wood}_plank`] ?? 0) + partInput(`${wood}_plank`);
     const oreNeeded = (a.inputs![`${metal}_ore`] ?? 0) + barsNeeded * 5;
-    const logsNeeded = (a.inputs![`${wood}_log`] ?? 0) + planksNeeded * 5;
+    const logsNeeded = (a.inputs![`${wood}_log`] ?? 0) + partInput(`${wood}_log`) + planksNeeded * 5;
     doCycles(`mine_${metal}`, oreNeeded + 10);
     elapsed += giantCuts(s, c, wood, logsNeeded + 5);
     if (barsNeeded > 0) doCycles(`smelt_${metal}`, barsNeeded);
     if (planksNeeded > 0) doCycles(`mill_${wood}`, planksNeeded);
+    for (const [part, qty] of parts) doCycles(`mill_${part}`, qty);
     doCycles(id, 1);
     expect(equip(s, c, s.inventory.at(-1)!.uid)).toBeNull();
     const after = deriveStats(s);

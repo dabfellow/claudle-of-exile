@@ -20,8 +20,8 @@ import type { CartographyState } from './cartography';
 import type { SpecialMapKind } from '../data/cartography';
 import type { RoughGem } from './roughGems';
 
-export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'agility' | 'archaeology' | 'smelting' | 'smithing' | 'woodcrafting' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'astrology' | 'fishing';
-export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'agility', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology', 'fishing'];
+export type SkillId = 'combat' | 'mining' | 'woodcutting' | 'harvesting' | 'thieving' | 'agility' | 'archaeology' | 'smelting' | 'smithing' | 'woodcrafting' | 'tailoring' | 'sawmilling' | 'alchemy' | 'gemcutting' | 'runecarving' | 'cooking' | 'cartography' | 'astrology' | 'fishing';
+export const SKILL_IDS: SkillId[] = ['combat', 'mining', 'woodcutting', 'harvesting', 'thieving', 'agility', 'archaeology', 'smelting', 'smithing', 'woodcrafting', 'tailoring', 'sawmilling', 'alchemy', 'gemcutting', 'runecarving', 'cooking', 'cartography', 'astrology', 'fishing'];
 
 export type Rarity = 'normal' | 'magic' | 'rare' | 'unique';
 
