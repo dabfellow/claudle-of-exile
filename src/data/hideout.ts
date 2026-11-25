@@ -150,7 +150,7 @@ export const STATIONS: StationDef[] = [
   },
   {
     id: 'quartermaster', name: 'Quartermaster', page: 'hideout', color: '#d6a84b',
-    desc: 'Controls what dropped gear is shown, highlighted or salvaged. Open the station to build layered loot filters.',
+    desc: 'Controls what dropped gear is shown, highlighted or salvaged. Its loot filters live in Settings → Loot filters.',
     levels: [
       { cost: {}, effect: 'Level-scaled loot presets, category overrides and shareable custom rules' },
       { cost: { gold: 7000, oak_plank: 60, iron_bar: 60, rough_gem: 6 }, effect: 'Auto-salvage Normal drops' },

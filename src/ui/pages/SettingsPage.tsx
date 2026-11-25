@@ -6,6 +6,7 @@ import { isCloudAccount } from '../../platform/accounts';
 import { cloudConfigured } from '../../platform/supabase';
 import { fmt, PageHeader, Tabs } from '../components/common';
 import { FeedbackCard } from '../components/FeedbackCard';
+import { LootFilterManager } from '../components/LootFilterManager';
 import { useMusicPrefs } from '../music';
 import { AccountBadge, leaveAccount } from '../screens/Screens';
 import '../round2-session3.css';
@@ -180,13 +181,11 @@ function GameTab() {
 }
 
 function LootTab() {
+  const s = useGame();
   return (
     <div className="card">
-      <div className="card-title">Loot filters moved to the Quartermaster</div>
-      <p className="muted" style={{ marginTop: 0 }}>
-        Open the Quartermaster station in your Hideout to choose a level-scaled preset, add category overrides, build ordered custom rules, or paste a shared filter code.
-      </p>
-      <span className="chip">Hideout → Quartermaster → Open loot filters</span>
+      <div className="card-title">Loot filters</div>
+      <LootFilterManager s={s} />
     </div>
   );
 }

@@ -90,3 +90,38 @@ describe('loot-filter save migration', () => {
     ]);
   });
 });
+
+describe('saved loot filter profiles', () => {
+  it('switches between saved filters and keeps edits to each', async () => {
+    const { addLootFilterProfile, deleteLootFilterProfile, switchLootFilterProfile } = await import('../src/engine/lootFilter');
+    const s = newGame(1);
+    expect(s.settings.lootFilterProfiles!.map((p) => p.name)).toEqual(['My filter', 'Levelling', 'Mapping', 'Endgame']);
+    s.settings.lootFilter!.preset = 'uber';
+    switchLootFilterProfile(s, 'starter-mapping');
+    expect(s.settings.lootFilter!.preset).toBe('strict');
+    s.settings.lootFilter!.overrides.normal_gear = 'hide';
+    switchLootFilterProfile(s, 'my-filter');
+    expect(s.settings.lootFilter!.preset).toBe('uber');
+    switchLootFilterProfile(s, 'starter-mapping');
+    expect(s.settings.lootFilter!.overrides.normal_gear).toBe('hide');
+
+    const id = addLootFilterProfile(s, 'Boss runs')!;
+    expect(s.settings.activeLootFilterProfileId).toBe(id);
+    expect(s.settings.lootFilter!.preset).toBe('strict');
+    deleteLootFilterProfile(s, id);
+    expect(s.settings.activeLootFilterProfileId).toBe('my-filter');
+    expect(s.settings.lootFilter!.preset).toBe('uber');
+  });
+
+  it('gives older saves their current filter as "My filter" plus the ready-made ones', () => {
+    const s = newGame(1);
+    s.settings.lootFilter!.preset = 'very_strict';
+    delete s.settings.lootFilterProfiles;
+    delete s.settings.activeLootFilterProfileId;
+    const loaded = deserialize(serialize(s));
+    expect(loaded.settings.lootFilterProfiles!.length).toBe(4);
+    expect(loaded.settings.activeLootFilterProfileId).toBe('my-filter');
+    expect(loaded.settings.lootFilterProfiles![0].filter.preset).toBe('very_strict');
+    expect(loaded.settings.lootFilter!.preset).toBe('very_strict');
+  });
+});

@@ -5,6 +5,11 @@ import { AUTO_SALVAGE_QUARTERMASTER_LEVEL } from '../../data/hideout';
 import { benchBuilt } from '../../engine/crafting';
 import { stationLevel } from '../../engine/hideout';
 import {
+  addLootFilterProfile,
+  deleteLootFilterProfile,
+  MAX_LOOT_FILTER_PROFILES,
+  renameLootFilterProfile,
+  switchLootFilterProfile,
   ALL_ARMOUR_DEFENCES,
   ALL_ITEM_SLOTS,
   ALL_WEAPON_FAMILIES,
@@ -97,6 +102,7 @@ export function LootFilterManager({ s }: { s: GameState }) {
 
   return (
     <div className="loot-filter-manager">
+      <ProfileBar s={s} />
       <div className="quartermaster-auto">
         <b>Automatic salvage</b>
         <span className="dim small">Rarity salvage works alongside the layers below. Uniques are always protected.</span>
@@ -149,6 +155,66 @@ export function LootFilterManager({ s }: { s: GameState }) {
       ) : (
         <CustomRules s={s} filter={filter} change={change} share={share} setShare={setShare} message={shareMessage} makeCode={makeCode} pasteCode={pasteCode} />
       )}
+    </div>
+  );
+}
+
+/** Saved filters: tap one to switch to it. Edits below always apply to the one in use. */
+function ProfileBar({ s }: { s: GameState }) {
+  const profiles = s.settings.lootFilterProfiles ?? [];
+  const activeId = s.settings.activeLootFilterProfileId;
+  const active = profiles.find((p) => p.id === activeId);
+  const presetName = (p: (typeof profiles)[number]) => {
+    const f = p.id === activeId ? s.settings.lootFilter! : p.filter;
+    const rules = f.rules.length ? ` · ${f.rules.length} rule${f.rules.length === 1 ? '' : 's'}` : '';
+    return `${PRESETS.find((x) => x.id === f.preset)?.name ?? 'Off'}${rules}`;
+  };
+  return (
+    <div className="loot-profiles">
+      <div className="row wrap" style={{ alignItems: 'baseline' }}>
+        <b>Saved filters</b>
+        <span className="dim small grow">Switch any time. Changes below save to the filter in use.</span>
+      </div>
+      <div className="loot-profile-list">
+        {profiles.map((p) => (
+          <button key={p.id} className={`loot-profile ${p.id === activeId ? 'active' : ''}`} onClick={() => game.act((st) => switchLootFilterProfile(st, p.id))}>
+            <b>{p.name}</b>
+            <span>{presetName(p)}</span>
+          </button>
+        ))}
+      </div>
+      <div className="row wrap">
+        <button
+          className="btn sm"
+          disabled={profiles.length >= MAX_LOOT_FILTER_PROFILES}
+          title={profiles.length >= MAX_LOOT_FILTER_PROFILES ? `Up to ${MAX_LOOT_FILTER_PROFILES} saved filters` : 'Save a copy of the filter in use under a new name'}
+          onClick={() => {
+            const name = prompt('Name the new filter (it starts as a copy of the one in use):', `${active?.name ?? 'Filter'} copy`);
+            if (name != null) game.act((st) => void addLootFilterProfile(st, name));
+          }}
+        >
+          + Save as new
+        </button>
+        <button
+          className="btn sm"
+          disabled={!active}
+          onClick={() => {
+            const name = active && prompt('Rename this filter:', active.name);
+            if (active && name) game.act((st) => renameLootFilterProfile(st, active.id, name));
+          }}
+        >
+          Rename
+        </button>
+        <button
+          className="btn sm danger"
+          disabled={!active || profiles.length <= 1}
+          onClick={() => {
+            if (active && confirm(`Delete the "${active.name}" filter?`)) game.act((st) => deleteLootFilterProfile(st, active.id));
+          }}
+        >
+          Delete
+        </button>
+      </div>
     </div>
   );
 }

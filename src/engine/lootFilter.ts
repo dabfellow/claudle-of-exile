@@ -356,6 +356,97 @@ export function settleLootFilters(s: GameState): void {
   s.settings.lootFilter.preset = isStrictness(s.settings.lootFilter.preset) ? s.settings.lootFilter.preset : 'off';
   s.settings.lootFilter.overrides = { ...defaultLayeredLootFilter().overrides, ...(s.settings.lootFilter.overrides ?? {}) };
   s.settings.lootFilter.rules = Array.isArray(s.settings.lootFilter.rules) ? s.settings.lootFilter.rules.slice(0, 100).map(upgradeRule) : [];
+  settleLootFilterProfiles(s);
+}
+
+/** A named, saved loot filter. Players keep several and switch between them in Settings. */
+export interface LootFilterProfile {
+  id: string;
+  name: string;
+  filter: LayeredLootFilter;
+}
+
+export const MAX_LOOT_FILTER_PROFILES = 12;
+const cloneFilter = (filter: LayeredLootFilter): LayeredLootFilter => JSON.parse(JSON.stringify(filter));
+
+/** Ready-made filters every character starts with, alongside their own. */
+export function starterLootFilterProfiles(): LootFilterProfile[] {
+  const make = (id: string, name: string, preset: LootStrictness, overrides: Partial<LayeredLootFilter['overrides']>): LootFilterProfile => {
+    const filter = defaultLayeredLootFilter();
+    filter.preset = preset;
+    filter.overrides = { ...filter.overrides, ...overrides };
+    return { id, name, filter };
+  };
+  return [
+    make('starter-levelling', 'Levelling', 'soft', { life_rings: 'show' }),
+    make('starter-mapping', 'Mapping', 'strict', { life_rings: 'show', top_tier_mods: 'highlight' }),
+    make('starter-endgame', 'Endgame', 'very_strict', { normal_gear: 'hide', top_tier_mods: 'highlight' }),
+  ];
+}
+
+function settleLootFilterProfiles(s: GameState): void {
+  const settings = s.settings;
+  let profiles = Array.isArray(settings.lootFilterProfiles)
+    ? settings.lootFilterProfiles.filter((p) => p && typeof p.id === 'string' && typeof p.name === 'string' && p.filter).slice(0, MAX_LOOT_FILTER_PROFILES)
+    : [];
+  if (!profiles.length) {
+    // First load with saved filters: what the player already had becomes "My filter", with the ready-made ones beside it.
+    profiles = [{ id: 'my-filter', name: 'My filter', filter: cloneFilter(settings.lootFilter!) }, ...starterLootFilterProfiles()];
+    settings.activeLootFilterProfileId = 'my-filter';
+  }
+  for (const p of profiles) {
+    p.filter.preset = isStrictness(p.filter.preset) ? p.filter.preset : 'off';
+    p.filter.overrides = { ...defaultLayeredLootFilter().overrides, ...(p.filter.overrides ?? {}) };
+    p.filter.rules = Array.isArray(p.filter.rules) ? p.filter.rules.slice(0, 100).map(upgradeRule) : [];
+  }
+  settings.lootFilterProfiles = profiles;
+  if (!profiles.some((p) => p.id === settings.activeLootFilterProfileId)) settings.activeLootFilterProfileId = profiles[0].id;
+  // The live filter is the truth for the one in use (older saves get default profiles merged in on load).
+  storeActiveProfile(s);
+}
+
+/** Keep the active profile's saved copy in step with the live filter. */
+function storeActiveProfile(s: GameState): void {
+  const active = s.settings.lootFilterProfiles?.find((p) => p.id === s.settings.activeLootFilterProfileId);
+  if (active && s.settings.lootFilter) active.filter = cloneFilter(s.settings.lootFilter);
+}
+
+export function switchLootFilterProfile(s: GameState, id: string): void {
+  const target = s.settings.lootFilterProfiles?.find((p) => p.id === id);
+  if (!target || id === s.settings.activeLootFilterProfileId) return;
+  storeActiveProfile(s);
+  s.settings.lootFilter = cloneFilter(target.filter);
+  s.settings.activeLootFilterProfileId = id;
+}
+
+/** A new profile starts as a copy of the filter in use, and becomes the active one. */
+export function addLootFilterProfile(s: GameState, name: string): string | null {
+  const profiles = s.settings.lootFilterProfiles ?? [];
+  if (profiles.length >= MAX_LOOT_FILTER_PROFILES || !s.settings.lootFilter) return null;
+  storeActiveProfile(s);
+  const id = `filter-${Date.now().toString(36)}`;
+  profiles.push({ id, name: name.trim().slice(0, 30) || `Filter ${profiles.length + 1}`, filter: cloneFilter(s.settings.lootFilter) });
+  s.settings.lootFilterProfiles = profiles;
+  s.settings.activeLootFilterProfileId = id;
+  return id;
+}
+
+export function renameLootFilterProfile(s: GameState, id: string, name: string): void {
+  const profile = s.settings.lootFilterProfiles?.find((p) => p.id === id);
+  if (profile && name.trim()) profile.name = name.trim().slice(0, 30);
+}
+
+/** The last profile can't be deleted. Deleting the active one switches to the first remaining. */
+export function deleteLootFilterProfile(s: GameState, id: string): void {
+  const profiles = s.settings.lootFilterProfiles ?? [];
+  if (profiles.length <= 1) return;
+  const rest = profiles.filter((p) => p.id !== id);
+  if (rest.length === profiles.length) return;
+  s.settings.lootFilterProfiles = rest;
+  if (s.settings.activeLootFilterProfileId === id) {
+    s.settings.activeLootFilterProfileId = rest[0].id;
+    s.settings.lootFilter = cloneFilter(rest[0].filter);
+  }
 }
 
 /** Old rules kept "any of these modifiers" in `modIds`; it is now the first "must have" group. Matches stay identical. */

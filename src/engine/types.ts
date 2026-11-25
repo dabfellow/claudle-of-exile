@@ -924,6 +924,9 @@ export interface Settings {
   customLootFilters?: import('./lootFilter').CustomLootFilter[];
   /** Level-scaled preset, category overrides and ordered custom loot rules. */
   lootFilter?: import('./lootFilter').LayeredLootFilter;
+  /** Saved loot filters the player switches between. The active one is edited live in `lootFilter`. */
+  lootFilterProfiles?: import('./lootFilter').LootFilterProfile[];
+  activeLootFilterProfileId?: string;
   reducedMotion: boolean;
   movement: Movement;
   /** Legacy posture carried in old saves and feedback snapshots. */

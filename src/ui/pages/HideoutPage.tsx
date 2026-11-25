@@ -23,7 +23,6 @@ import { EventsCard } from '../components/EventCalendar';
 import { openItemMenu } from '../components/ItemMenu';
 import { materialSources } from '../components/materialSources';
 import { PaperDoll } from '../components/PaperDoll';
-import { LootFilterManager } from '../components/LootFilterManager';
 import type { Page } from '../Layout';
 import { Crest } from '../screens/Screens';
 import '../round2-session2.css';
@@ -565,10 +564,21 @@ function StationCard({ st, go }: { st: StationDef; go: (p: Page) => void }) {
         </ol>
       </details>
       {st.id === 'quartermaster' && (
-        <details className="quartermaster-station">
-          <summary>Open loot filters</summary>
-          <LootFilterManager s={s} />
-        </details>
+        <div className="quartermaster-station">
+          <button
+            className="btn sm"
+            onClick={() => {
+              try {
+                localStorage.setItem('poi-settings-tab', 'loot');
+              } catch {
+                // Settings just opens on its usual tab
+              }
+              go('settings');
+            }}
+          >
+            Loot filters are in Settings →
+          </button>
+        </div>
       )}
     </div>
   );

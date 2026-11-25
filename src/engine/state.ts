@@ -23,7 +23,7 @@ import { craftStep } from './craftUntil';
 import { skillStep } from './skills';
 import { advanceProject, newProfessionProgress } from './professions';
 import { deriveStats } from './stats';
-import { defaultLayeredLootFilter, defaultLootFilters } from './lootFilter';
+import { defaultLayeredLootFilter, defaultLootFilters, starterLootFilterProfiles } from './lootFilter';
 import { challengeName } from './challenge';
 import { newCampaignQuestState } from './campaignQuests';
 import { newAstrologyState } from './astrology';
@@ -138,6 +138,8 @@ export function newGame(seed = Date.now(), who: NewCharacter = { name: 'Exile', 
       activeLootFilterId: null,
       customLootFilters: defaultLootFilters(),
       lootFilter: defaultLayeredLootFilter(),
+      lootFilterProfiles: [{ id: 'my-filter', name: 'My filter', filter: defaultLayeredLootFilter() }, ...starterLootFilterProfiles()],
+      activeLootFilterProfileId: 'my-filter',
       reducedMotion: false,
       movement: 'walk',
       autoFlee: true,
