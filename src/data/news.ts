@@ -10,7 +10,14 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
+export const UPCOMING: string[] = [];
+
+export const NEWS: NewsEntry[] = [
+  {
+    version: '0.6.10',
+    date: '25 Nov 2026',
+    title: 'Alchemy Laboratory, Masterworks and Tailoring Cloth',
+    items: [
   'Smelting’s Focus game is now Keep the Heat: pump the bellows to hold the furnace in its band and fill the melt meter, then ease off as the fire catches and flares before it scorches.',
   'Alchemy is one Laboratory page: a bubbling cauldron with your brew line-up, your flask belt with a shelf of ready vials, and a recipe book for infusions, flasks, reagents and orbs.',
   'Fixed pouring vials always replacing your flask’s first infusion. A vial now fills the first empty slot, and replacing an infusion asks first.',
@@ -21,9 +28,8 @@ export const UPCOMING: string[] = [
   'Robes are sewn from cloth and leather armour from leather, instead of planks and copper bars.',
   'The Tailoring page is redone as a tailor’s table: a workshop banner with your cloth and leather on the shelf, a pattern book, a cutting table, and a Weave & tan tab with the loom, the tanning vats and the hide stall.',
   'Bow staves, wand blanks and staff shafts have their own pictures.',
-];
-
-export const NEWS: NewsEntry[] = [
+    ],
+  },
   {
     version: '0.6.9',
     date: '24 Nov 2026',
