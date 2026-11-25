@@ -137,7 +137,7 @@ export const LODGE: LodgeDef[] = [
     ],
   },
 ];
-/** The Trophy Wall, built in the Trophies tab rather than the lodge yard. */
+/** The Trophy Wall uses a cost based on the first legend felled. */
 export const TROPHY_WALL: LodgeDef = {
   id: 'trophyWall', name: 'Trophy Wall', desc: 'Shows the legends you have felled. Needed to plant a World Tree seed.',
   tiers: [{ level: 1, cost: {}, effect: 'Displays felled legends with date and yields.' }],

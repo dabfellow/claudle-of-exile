@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'The Woodcutter’s Lodge has clickable pixel-art stations that change as you build them. An up arrow marks available upgrades, and you can build the Trophy Wall to unveil wooden placards for your legendary trees.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

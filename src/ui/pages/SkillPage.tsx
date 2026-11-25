@@ -53,7 +53,7 @@ import { miningAccessHint, miningPreview } from '../../engine/mining';
 import { woodcuttingAccessHint, woodcuttingPreview } from '../../engine/woodcutting';
 import { smithingPreview } from '../../engine/smithing';
 import { foragingAccessHint, foragingPreview } from '../../engine/foraging';
-import { LEGENDS, WOODS } from '../../data/woodcutting';
+import { WOODS } from '../../data/woodcutting';
 import { unlockedRegions } from '../../engine/woodcutting';
 import { GIANT_TABS, GiantView, isGiantTab } from '../components/GiantView';
 import { alchemyPreview } from '../../engine/alchemy';
@@ -862,7 +862,6 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
               }
             } else if (skill === 'woodcutting') {
               if (x.id === 'giant') countText = `${unlockedRegions(level).length}/${WOODS.length}`;
-              else if (x.id === 'trophies') countText = `${s.giant.legends.length}/${LEGENDS.length}`;
             } else if (skill === 'cartography') {
               if (x.id === 'charts') {
                 countText = `${selectedActions.filter(isUnlocked).length}/${selectedActions.length}`;
@@ -899,7 +898,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
 
       {skill === 'astrology' && tab !== 'masterworks' && <Observatory tab={tab} onTab={setTab} />}
       {skill === 'agility' && <AgilityShortcuts level={level} />}
-      {skill === 'woodcutting' && isGiantTab(tab) && <GiantView tab={tab} go={setTab} />}
+      {skill === 'woodcutting' && isGiantTab(tab) && <GiantView tab={tab} />}
 
       {skill === 'alchemy' && <div className="callout skill-note">Salvage unwanted items in your Inventory for Arcane Dust, then transmute it into orbs here.</div>}
       {skill === 'gemcutting' && (

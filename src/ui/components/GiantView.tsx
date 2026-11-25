@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { collectibleFor } from '../../data/collectibles';
 import { materialDef } from '../../data/materials';
 import {
@@ -17,18 +18,30 @@ import type { Giant, GiantPart, GameState, LodgeId } from '../../engine/types';
 import { game, useGame } from '../../game';
 import { TREE_ART } from '../assets';
 import { Badge, fmt, MatIcon, ProgressBar } from './common';
-import { LockedBadge, SkillIntro } from './SkillHelp';
 import { SkillMinigame } from './SkillMinigame';
 import { SplitIdle } from './SplitLog';
 import CORE_ART from '../../assets/items/pixel/a-275.png';
+import LOOKOUT_FRAME from '../../assets/woodcutting/lodge/cainos-lookout-frame.png';
+import LOOKOUT_ROOF from '../../assets/woodcutting/lodge/cainos-lookout-roof.png';
+import DRYING_AWNING from '../../assets/woodcutting/lodge/cainos-drying-awning.png';
+import DRYING_RACK from '../../assets/woodcutting/lodge/cainos-drying-rack.png';
+import GRINDSTONE_WHEEL from '../../assets/woodcutting/lodge/cainos-grindstone-wheel.png';
+import SAP_BUCKET from '../../assets/woodcutting/lodge/cainos-sap-bucket.png';
+import LOG_RACK from '../../assets/woodcutting/lodge/cainos-log-rack.png';
+import LOG_STACK from '../../assets/woodcutting/lodge/cainos-log-stack.png';
+import LOOSE_LOG from '../../assets/woodcutting/lodge/cainos-loose-log.png';
+import CHISEL_BENCH from '../../assets/woodcutting/lodge/cainos-chisel-bench.png';
+import CHISEL_TOOL from '../../assets/woodcutting/lodge/cainos-chisel-tool.png';
+import WORLD_TREE_STUMP from '../../assets/woodcutting/lodge/cainos-world-tree-stump.png';
+import WORLD_TREE from '../../assets/woodcutting/lodge/cainos-world-tree.png';
+import './woodcutters-lodge.css';
 import './giants.css';
 
-export type GiantTab = 'giant' | 'lodge' | 'trophies';
+export type GiantTab = 'giant' | 'lodge';
 
 export const GIANT_TABS: { id: GiantTab; label: string }[] = [
   { id: 'giant', label: 'Forest' },
   { id: 'lodge', label: 'Lodge' },
-  { id: 'trophies', label: 'Trophies' },
 ];
 
 export function isGiantTab(tab: string): tab is GiantTab {
@@ -352,43 +365,86 @@ function CostRow({ s, cost }: { s: GameState; cost: Record<string, number> }) {
   );
 }
 
-function LodgeCard({ s, def }: { s: GameState; def: LodgeDef }) {
-  const tier = lodgeTierOf(s, def.id);
-  const next = nextLodgeTier(s, def.id);
-  const blocker = lodgeBlocker(s, def.id as LodgeId);
-  const levelLocked = !!next && woodcuttingLevel(s) < next.level;
-  const legendLocked = def.id === 'trophyWall' && !!next && !s.giant.legends.length;
+const LODGE_UPGRADES = [...LODGE, TROPHY_WALL];
+type LodgeStationId = LodgeId | 'worldTree';
+
+function LodgeStationArt({ id, tier }: { id: LodgeStationId; tier: number }) {
+  switch (id) {
+    case 'scoutTower':
+      return <><img className="lookout-frame" src={LOOKOUT_FRAME} alt="" />{tier > 0 && <img className="lookout-roof" src={LOOKOUT_ROOF} alt="" />}</>;
+    case 'dryingShed':
+      return <><img className="drying-rack" src={DRYING_RACK} alt="" /><img className="drying-awning" src={DRYING_AWNING} alt="" />{tier > 0 && <img className="drying-logs" src={LOG_STACK} alt="" />}</>;
+    case 'whetstone':
+      return <><img className="grindstone-stand" src={LOOKOUT_FRAME} alt="" /><img className="grindstone-wheel" src={GRINDSTONE_WHEEL} alt="" /></>;
+    case 'sapBuckets':
+      return <>{Array.from({ length: Math.min(3, tier + 1) }, (_, i) => <img className="sap-bucket" key={i} src={SAP_BUCKET} alt="" />)}</>;
+    case 'logRack':
+      return <><img className="log-rack" src={LOG_RACK} alt="" /><img className="rack-logs" src={tier ? LOG_STACK : LOOSE_LOG} alt="" /></>;
+    case 'heartChisel':
+      return <><img className="chisel-bench" src={CHISEL_BENCH} alt="" />{tier > 0 && <img className="chisel-tool" src={CHISEL_TOOL} alt="" />}</>;
+    case 'worldTree':
+      return <img className={tier ? 'world-tree' : 'world-tree-stump'} src={tier ? WORLD_TREE : WORLD_TREE_STUMP} alt="" />;
+    default:
+      return null;
+  }
+}
+
+function LodgeStation({ id, name, tier, selected, available, onSelect }: {
+  id: LodgeStationId;
+  name: string;
+  tier: number;
+  selected: boolean;
+  available?: boolean;
+  onSelect: () => void;
+}) {
   return (
-    <div className={`giant-card ${levelLocked || legendLocked ? 'locked' : ''}`}>
-      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3>{def.name} <span className="dim small num">Level {tier}/{def.tiers.length}</span></h3>
-        {levelLocked ? (
-          <LockedBadge level={next.level} />
-        ) : legendLocked ? (
-          <LockedBadge reason="Fell a legend first" />
-        ) : null}
-      </div>
-      <span className="muted small">{def.desc}</span>
-      {def.tiers.slice(0, tier).map((t, i) => <span key={i} className="small good">Built: {t.effect}</span>)}
-      {next ? (
-        <>
-          <span className="small">Next: {next.effect}</span>
-          <CostRow s={s} cost={next.cost} />
-          <button
-            className="btn sm primary"
-            disabled={!!blocker}
-            title={blocker ?? undefined}
-            onClick={() => game.act((st, ctx) => buildLodge(st, ctx, def.id))}
-          >
-            {blocker && blocker !== 'Missing materials' ? blocker : `Build${def.tiers.length > 1 ? ` level ${next.tier}` : ''}`}
-          </button>
-        </>
-      ) : <Badge tone="success">Fully built</Badge>}
-    </div>
+    <button type="button" className={`lodge-station station-${id}`} data-tier={tier}
+      aria-expanded={selected} aria-controls="lodge-station-details" onClick={onSelect}>
+      {id !== 'trophyWall' && (
+        <span className="lodge-station-art" aria-hidden="true"><LodgeStationArt id={id} tier={tier} /></span>
+      )}
+      <span className="lodge-station-name">{name}</span>
+      {available && <span className="lodge-up-arrow" title="Upgrade available"><span aria-hidden="true">↑</span><span className="lodge-sr-only">Upgrade available</span></span>}
+    </button>
   );
 }
 
-function WorldTreeCard({ s }: { s: GameState }) {
+function LodgeUpgradeDetails({ s, def }: { s: GameState; def: LodgeDef }) {
+  const tier = lodgeTierOf(s, def.id);
+  const next = nextLodgeTier(s, def.id);
+  const blocker = lodgeBlocker(s, def.id);
+  const legendLocked = def.id === 'trophyWall' && !!next && !s.giant.legends.length;
+  return (
+    <>
+      <div className="lodge-detail-title">
+        <h3>{def.name}</h3>
+        <span className="muted small num">{def.tiers.length === 1 ? 'Unbuilt' : `Level ${tier} / ${def.tiers.length}`}</span>
+      </div>
+      <span className="muted small">{def.desc}</span>
+      <div className="lodge-effects">
+        {def.tiers.slice(0, tier).map((t) => <span key={t.level} className="small good">Built: {t.effect}</span>)}
+      </div>
+      {next ? (
+        <div className="lodge-upgrade-action">
+          <div className="lodge-effects">
+            <span className="small">{next.effect}</span>
+            {!legendLocked && <CostRow s={s} cost={next.cost} />}
+            {blocker && <span className="muted small">{blocker}</span>}
+          </div>
+          <button
+            className="btn sm primary"
+            disabled={!!blocker}
+            onClick={() => game.act((st, ctx) => buildLodge(st, ctx, def.id))}
+          >
+            {def.id === 'trophyWall' ? 'Build Trophy Wall' : `Build level ${next.tier}`}
+          </button>
+        </div>
+      ) : <Badge tone="success">Fully built</Badge>}
+    </>
+  );
+}
+
+function WorldTreeDetails({ s }: { s: GameState }) {
   const wt = s.giant.worldTree;
   const now = Date.now();
   const growth = worldTreeGrowth(s, now);
@@ -396,8 +452,8 @@ function WorldTreeCard({ s }: { s: GameState }) {
   const blocker = plantBlocker(s);
   const daysLeft = wt ? Math.max(0, Math.ceil(((1 - growth) * WORLD_TREE_GROWTH_MS) / 86400000)) : 0;
   return (
-    <div className="card">
-      <div className="card-title">World Tree <span className="grow" /><span className="card-hint">{s.storage.bank.world_tree_seed ?? 0} seeds</span></div>
+    <>
+      <div className="lodge-detail-title"><h3>World Tree</h3><span className="muted small">{s.storage.bank.world_tree_seed ?? 0} seeds</span></div>
       {wt ? (
         <>
           <ProgressBar value={growth} color="var(--success)" label={ready ? 'Fully grown' : `${Math.floor(growth * 100)}%, about ${daysLeft} days to go`} />
@@ -410,83 +466,86 @@ function WorldTreeCard({ s }: { s: GameState }) {
         </>
       ) : (
         <>
-          <p className="muted small">A very rare seed drops from legendary giants. Plant it here (needs the Trophy Wall) and it grows over 120 days into your own giant.</p>
+          <span className="muted small">A rare seed from legendary giants grows here over 120 days. Planting requires the Trophy Wall.</span>
           <button className="btn sm primary" disabled={!!blocker} title={blocker ?? undefined} onClick={() => game.act((st, ctx) => plantWorldTree(st, ctx))}>{blocker ?? 'Plant the seed'}</button>
         </>
       )}
-    </div>
+    </>
   );
 }
 
 function LodgeTab({ s }: { s: GameState }) {
+  const [selected, select] = useState<LodgeStationId | null>(null);
+  const detailsRef = useRef<HTMLDivElement>(null);
+  const selectedUpgrade = LODGE_UPGRADES.find((def) => def.id === selected);
+  const wall = lodgeTierOf(s, TROPHY_WALL.id) > 0;
+  const built = LODGE_UPGRADES.reduce((n, def) => n + lodgeTierOf(s, def.id), 0);
+  const total = LODGE_UPGRADES.reduce((n, def) => n + def.tiers.length, 0);
+  useEffect(() => {
+    if (selected) detailsRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [selected]);
+  const choose = (id: LodgeStationId) => select((current) => current === id ? null : id);
   return (
-    <div className="grid" style={{ gap: 12 }}>
-      <SkillIntro step="Woodcutter's Lodge">
-        Spend your own timber on lasting upgrades. Each building has levels: the first ones are cheap, and the later ones need wood from deeper woods.
-      </SkillIntro>
-      <div className="card">
-        <div className="card-title">The woodcutter&apos;s lodge <span className="grow" /><span className="card-hint">{LODGE.reduce((n, d) => n + lodgeTierOf(s, d.id), 0)} / {LODGE.reduce((n, d) => n + d.tiers.length, 0)} levels built</span></div>
-        <div className="giant-grid">
-          {LODGE.map((def) => <LodgeCard key={def.id} s={s} def={def} />)}
+    <section className="woodcutters-lodge" aria-labelledby="lodge-title">
+      <header className="lodge-header">
+        <div className="lodge-window" aria-hidden="true" />
+        <div className="lodge-heading">
+          <h2 id="lodge-title">Woodcutter&apos;s Lodge</h2>
+          <ProgressBar value={built / total} color="#d5a665" label={`${built} / ${total} upgrade levels built`} />
         </div>
+      </header>
+      <div className="lodge-workshop" role="group" aria-label="Lodge stations">
+        {LODGE_UPGRADES.map((def) => (
+          <LodgeStation key={def.id} id={def.id} name={def.name} tier={lodgeTierOf(s, def.id)}
+            selected={selected === def.id} available={!lodgeBlocker(s, def.id)} onSelect={() => choose(def.id)} />
+        ))}
+        <LodgeStation id="worldTree" name="World Tree" tier={worldTreeReady(s, Date.now()) ? 2 : Number(!!s.giant.worldTree)}
+          selected={selected === 'worldTree'} onSelect={() => choose('worldTree')} />
       </div>
-      <WorldTreeCard s={s} />
-    </div>
+      <div id="lodge-station-details" className="lodge-station-details" ref={detailsRef} hidden={!selected}>
+        {selected === 'worldTree' && <WorldTreeDetails s={s} />}
+        {selected === 'trophyWall' && wall
+          ? <TrophyWall s={s} />
+          : selectedUpgrade && <LodgeUpgradeDetails s={s} def={selectedUpgrade} />}
+      </div>
+    </section>
   );
 }
 
-function TrophiesTab({ s }: { s: GameState }) {
-  const wall = s.giant.lodge.trophyWall >= 1;
+function TrophyWall({ s }: { s: GameState }) {
   return (
-    <div className="grid" style={{ gap: 12 }}>
-      <SkillIntro step="Legendary Trophies">
-        Named legendary giants stand in the deepest woods from Woodcutting level 80. Fell one and it goes up on your Trophy Wall.
-      </SkillIntro>
-      <div className="card">
-        <div className="card-title">
-          Trophy Wall
-          <span className="grow" />
-          {wall && <Badge tone="success">Wall built</Badge>}
-        </div>
-        {!wall && (
-          <div className="giant-grid" style={{ marginBottom: 8 }}>
-            <LodgeCard s={s} def={TROPHY_WALL} />
-          </div>
-        )}
-        <div className="giant-grid">
-          {LEGENDS.map((l) => {
-            const log = s.giant.legendLog[l.id];
-            const felled = s.giant.legends.includes(l.id);
-            return (
-              <div key={l.id} className={`giant-card ${felled ? 'legend' : 'locked'}`}>
-                <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3>{felled ? l.name : '???'}</h3>
-                  {!felled && <LockedBadge reason="Not felled yet" />}
-                </div>
-                <span className="dim small">{woodDef(l.region).region} · Lv 80+</span>
-                {felled && wall ? (
-                  <>
-                    <span className="muted small">{l.desc}</span>
-                    {log && <span className="small">Felled {new Date(log.at).toLocaleDateString()}: {yieldWords(log.yields)}</span>}
-                  </>
-                ) : (
-                  <span className="muted small">{felled ? 'Hidden until the Trophy Wall is built.' : `Cut in the ${woodDef(l.region).region} and this legend may turn up.`}</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+    <section className="lodge-trophy-wall" aria-labelledby="lodge-trophy-title">
+      <div className="lodge-detail-title">
+        <h3 id="lodge-trophy-title">Trophy Wall</h3>
+        <span className="muted small num">{LEGENDS.filter((l) => s.giant.legends.includes(l.id)).length} / {LEGENDS.length} legends felled</span>
       </div>
-    </div>
+      <div className="lodge-mounts">
+        {LEGENDS.map((l) => {
+          const log = s.giant.legendLog[l.id];
+          const felled = s.giant.legends.includes(l.id);
+          return (
+            <article key={l.id} className={`lodge-trophy ${felled ? 'mounted' : ''}`}>
+              <h4 className="lodge-nameplate">{felled ? l.name : 'Empty placard'}</h4>
+              <span className="muted small">{woodDef(l.region).region} · Lv 80+</span>
+              {felled && (
+                <>
+                  <span className="muted small">{l.desc}</span>
+                  {log && <span className="small">Felled {new Date(log.at).toLocaleDateString()} · {yieldWords(log.yields)}</span>}
+                </>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
 /** The Woodcutting screen's content for one of its tabs. */
-export function GiantView({ tab }: { tab: GiantTab; go?: (tab: GiantTab) => void }) {
+export function GiantView({ tab }: { tab: GiantTab }) {
   const s = useGame();
   switch (tab) {
     case 'lodge': return <LodgeTab s={s} />;
-    case 'trophies': return <TrophiesTab s={s} />;
     default: return <ForestTab s={s} />;
   }
 }

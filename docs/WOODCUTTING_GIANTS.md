@@ -39,6 +39,10 @@ The owner reviewed the built page and changed these. They replace Questions 2b, 
 - **Woods mastery is shown and has Woodcutting perks.** Each woods has its own track (`task.giant_<wood>`), shown on the Forest tab with its level and perks. The level itself gives up to 10% cut speed and up to a 10% chance of an extra log (the extra log was never applied to giants before). Perks: 25 Heavy Felling (8% extra log), 50 Sap Sense (crown resin +25% there), 75 Lumberjack's Rhythm (+2% Woodcutting speed everywhere), 100 Old Friend (special giants 25% more common there).
 - **A felled giant leaves its heart.** Owner asked for art instead of the "Timber! The heart is open" text, then for "what a tree would have for a heart" rather than a stump (an oak stump looked wrong under a yew) or a heart shape. The tree's heart is a gnarled, rooted knot of wood (Anvil icon 275, already in the item art), tinted to that woods' wood colour, with a glowing ember core in its cut end. It lies where the tree stood, beside the felled tree, and the glow goes out once the Heart is chopped out.
 
+### Lodge visual pass (2026-11-24)
+
+The Lodge tab has a timber interior with interactive pixel-art stations that change appearance as they are built. An up arrow marks stations that can be upgraded. Choose a station to see its effects, costs and requirements. The Trophy Wall requires felling a legend and paying 100 planks from that legend's woods. Once built, its hanging sign opens the wall of wooden nameplates, with felling dates and yields. The World Tree has its own planting spot. The Woodcutting tabs are Forest, Lodge and Masterworks.
+
 ## Decided on the owner's behalf
 
 - Log splitting: tap where the axe lands, no timer; judged on the two halves' actual size; 7–15% off is a weak strike; log shapes come from the part being worked; replaces the timing swing.

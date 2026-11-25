@@ -524,30 +524,11 @@
   margin: 8px 0 0;
 }
 
-/* ---- lodge, trophies ---- */
-.giant-grid {
-  display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-}
-.giant-card {
-  display: grid;
-  gap: 6px;
-  padding: 10px;
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius, 6px);
-}
-.giant-card.locked {
-  border-style: dashed;
-  opacity: 0.72;
-}
-.giant-card.legend,
+/* ---- felling cards and lodge costs ---- */
 .felling-card.legend {
   border-color: var(--rare);
   background: linear-gradient(180deg, rgba(227, 207, 107, 0.12), var(--panel-2));
 }
-.giant-card h3,
 .felling-card h3 {
   margin: 0;
   font-size: 15px;
