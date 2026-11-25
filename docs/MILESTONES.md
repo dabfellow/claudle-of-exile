@@ -112,6 +112,8 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 
 ## Decisions
 
+- Gathering vs Production (2026-11-24). Gathering skills are set-and-forget. Anything that needs setup or waiting belongs in the Production group (formerly "Crafting" in the sidebar). The Greenhouse moved out of Foraging into its own Production page first.
+
 - Woodcutting Lodge (2026-11-24). Make the workshop stations themselves the entry points for upgrades. Show the Trophy Wall in the lodge after players buy it as an upgrade. The wall keeps its first-legend and 100-plank requirements.
 
 - Forging value decision (2026-11-23). Weapon crafting trains a shared track for the weapon's family across recipes and bases. At family mastery 75, Master Forms roll one of two extra signatures from the chosen alloy. See [Forging](FORGING_STAGES.md#weapon-family-mastery-and-signatures-decided-2026-11-23).
@@ -723,6 +725,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [ ] Greenhouse gets its own sidebar page under Production (Beds, Seeds, Herbarium), the Crafting group is renamed Production, and Foraging keeps only the Wild patches and Masterworks.
+  - Built 2026-11-24; typecheck and all 2,055 tests pass. Not yet looked at in the running game. Save data is unchanged (still `s.foraging`); beds still unlock with Foraging level.
+  - Owner to decide whether other gathering activities with setup or waiting belong under Production too: Fishing port workshop upgrades and voyages, Archaeology's Relic Forge and merchant standing orders, Thieving Heists with the crew, Astrology's star chart, and Woodcutting giant felling plans.
 
 - [ ] Players follow their reports: Settings → Feedback lists each signed-in player's reports with status (Open / Working on it / Resolved) and the developer's replies; Admin gains a "Working on it" status.
   - Built 2026-11-23, tests pass, live in 0.6.3. Owner to run `docs/ops/feedback-tracking.sql` once in the Supabase SQL Editor; until then the list stays hidden and "Working on it" is refused. Not yet checked with a signed-in account.

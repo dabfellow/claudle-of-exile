@@ -14,7 +14,7 @@ import {
   saveWoodTuning, startWoodcraft, woodDialIndices, woodDialRange, woodImplicits, woodRackItems, woodTuningSlots, type WoodPlan,
 } from '../../engine/woodcrafting';
 import { game, useGame } from '../../game';
-import { Art, Badge, EmptyState, fmt, fmtTime, MatIcon, ProgressBar, Tabs } from './common';
+import { Art, Badge, fmt, fmtTime, MatIcon, ProgressBar, Tabs } from './common';
 import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
 import { UseBarGrade } from './FurnaceView';
 import { SkillMinigame } from './SkillMinigame';
@@ -28,11 +28,10 @@ const families = Object.keys(WOOD_FAMILIES) as WoodFamily[];
 const recipes = actionsFor('woodcrafting').filter((a) => !a.purpose && !a.woodcutting && (!a.baseId || obtainable(baseDef(a.baseId))));
 const livingMaterials = ['legend_heartwood', 'world_tree_heart'] as const;
 const tabs = [
-  { id: 'bench', label: 'Workbench' }, { id: 'sawmill', label: 'Sawmill' }, { id: 'recipes', label: 'Recipes' }, { id: 'jigs', label: 'Jigs' },
+  { id: 'bench', label: 'Workbench' }, { id: 'sawmill', label: 'Sawmill' }, { id: 'jigs', label: 'Jigs' },
   { id: 'tunings', label: 'Tunings' }, { id: 'masterworks', label: 'Masterworks' },
 ] as const;
 type WoodTab = (typeof tabs)[number]['id'];
-type RecipeFilter = WoodFamily | 'frames';
 
 const DIALS_TIP = 'Slide each dial left or right to favour one stat over another. Moving a dial boosts that modifier pool weight and grants a positive implicit bonus — paired with an equal downside on the opposite stat.';
 const IMPLICITS_TIP = 'Built-in modifiers stamped directly onto the crafted item (+4% per dial notch, and -4% on the opposite stat). Rarely (1 in 400), a piece crafts Perfectly Balanced with no negative downside.';
@@ -182,9 +181,7 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
   const [tab, setTab] = useState<WoodTab>(() => s.professionProgress.activeProject?.project.skill === 'woodcrafting' ? 'masterworks' : 'bench');
   const [id, setId] = useState(() => all.find((a) => !!a.baseId)!.id);
   const [family, setFamily] = useState<WoodFamily>(() => woodFamily(actionDef(id).baseId!));
-  const [recipeFilter, setRecipeFilter] = useState<RecipeFilter>(() => woodFamily(actionDef(id).baseId!));
   const [benchShowLocked, setBenchShowLocked] = useState(false);
-  const [recipeShowLocked, setRecipeShowLocked] = useState(false);
   const [manual, setManual] = useState<number[] | null>(null);
   const [living, setLiving] = useState<WoodPlan['living']>();
   const [savingTuning, setSavingTuning] = useState(false);
@@ -206,9 +203,7 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
   const selectRecipe = (next: SkillAction) => {
     setId(next.id);
     if (next.baseId) {
-      const fam = woodFamily(next.baseId);
-      setFamily(fam);
-      setRecipeFilter(fam);
+      setFamily(woodFamily(next.baseId));
     } else {
       setLiving(undefined);
     }
@@ -218,7 +213,6 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
   };
   const chooseFamily = (next: WoodFamily) => {
     setFamily(next);
-    setRecipeFilter(next);
     const famRecipes = all.filter((a) => a.baseId && woodFamily(a.baseId) === next);
     const recipe = famRecipes.find((a) => a.level <= level) ?? famRecipes[0];
     if (recipe) selectRecipe(recipe);
@@ -246,17 +240,6 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
     else patterns.set(type, [recipe]);
   }
 
-  // Recipes tab list: filtered by family pill, hiding far-future recipes beyond next 1-2 levels
-  const tabRecipes = recipeFilter === 'frames'
-    ? all.filter((a) => !a.baseId)
-    : all.filter((a) => a.baseId && woodFamily(a.baseId) === recipeFilter);
-  const tabLockedLevels = [...new Set(tabRecipes.filter((a) => a.level > level).map((a) => a.level))].sort((a, b) => a - b);
-  const tabNearLocked = new Set(tabLockedLevels.slice(0, 2));
-  const visibleTabRecipes = recipeShowLocked
-    ? tabRecipes
-    : tabRecipes.filter((a) => a.level <= level || tabNearLocked.has(a.level));
-  const hiddenTabCount = tabRecipes.length - visibleTabRecipes.length;
-
   const carriedLiving = [...s.inventory, ...Object.values(s.equipment)].filter((item): item is Item => !!item?.living);
 
   return (
@@ -266,7 +249,7 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
       {tab === 'bench' && (
         <div className="wood-tab-stack">
           <SkillIntro step="Start here: Pick a recipe & slide the dials">
-            Select an item family &amp; recipe, slide the Dials to trade one stat for another, and start carving.
+            Pick an item family, click a recipe below to load it on the bench, slide the Dials to trade one stat for another, and start carving.
           </SkillIntro>
           <div className="wood-bench-layout">
             <section className="card wood-card wood-piece">
@@ -283,18 +266,16 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
                       onClick={() => chooseFamily(key)}
                     >{WOOD_FAMILIES[key].name}</button>
                   ))}
-                  {(!base || level >= 45) && (
-                    <button
-                      type="button"
-                      role="tab"
-                      aria-selected={!base}
-                      className={`gem-chip ${!base ? 'active' : ''}`}
-                      onClick={() => {
-                        const frame = all.find((a) => !a.baseId);
-                        if (frame) selectRecipe(frame);
-                      }}
-                    >Frames</button>
-                  )}
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={!base}
+                    className={`gem-chip ${!base ? 'active' : ''}`}
+                    onClick={() => {
+                      const frame = all.find((a) => !a.baseId);
+                      if (frame) selectRecipe(frame);
+                    }}
+                  >Frames</button>
                 </div>
                 {(hiddenBenchCount > 0 || benchShowLocked) && (
                   <label className="check small">
@@ -304,15 +285,18 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
                 )}
               </div>
 
-              <div className="wood-pattern-rack" role="group" aria-label="Pattern rack">
-                <h3>Pattern rack</h3>
+              <div className="wood-pattern-rack" role="group" aria-label="Recipes">
+                <h3>Recipes</h3>
+                {patterns.size === 0 && <p className="dim small">No recipes in this group yet. Tick Show locked to preview higher-level recipes.</p>}
                 {[...patterns].map(([type, list]) => (
-                  <details key={type}>
-                    <summary>{type}</summary>
+                  <div key={type} className="wood-pattern-group">
+                    <span className="wood-pattern-type">{type}</span>
                     <div className="wood-bench-picker">
                       {list.map((a, index) => {
                   const locked = a.level > level;
                   const active = a.id === id;
+                  const runningThis = running?.actionId === a.id;
+                  const short = !locked && !runningThis && !!actionBlocker(s, a);
                   const tier = Math.floor((a.level - 1) / 10);
                   return (
                     <Fragment key={a.id}>
@@ -321,8 +305,10 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
                     <button
                       key={a.id}
                       type="button"
-                      className={`wood-bench-item ${active ? 'active' : ''} ${locked ? 'locked' : ''}`}
+                      className={`wood-bench-item ${active ? 'active' : ''} ${locked ? 'locked' : ''} ${short ? 'short' : ''}`}
                       aria-pressed={active}
+                      data-tut={`action-${a.id}`}
+                      title={short ? actionBlocker(s, a) ?? undefined : undefined}
                       onClick={() => selectRecipe(a)}
                     >
                       {a.baseId
@@ -330,14 +316,14 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
                         : <MatIcon id={Object.keys(a.protectedOutputs ?? a.outputs ?? {})[0]} size={20} />}
                       <span className="wood-bench-item-meta">
                         <b>{a.name}</b>
-                        {locked ? <LockedBadge level={a.level} /> : <span className="dim small num">Lv {a.level}</span>}
+                        {runningThis ? <Badge tone="gold" live>Running</Badge> : locked ? <LockedBadge level={a.level} /> : <span className="dim small num">Lv {a.level} · {fmtTime(actionIntervalMs(s, a, d))} · {a.xp} XP</span>}
                       </span>
                     </button>
                     </Fragment>
                   );
                       })}
                     </div>
-                  </details>
+                  </div>
                 ))}
               </div>
 
@@ -444,94 +430,6 @@ export function WoodBench({ catalysts, masterworks }: { catalysts: ReactNode; ma
               {catalysts}
             </div>
           </div>
-        </div>
-      )}
-
-      {tab === 'recipes' && (
-        <div className="wood-tab-stack">
-          <SkillIntro step="Browse & carve">
-            Filter by equipment family to compare material costs, cycle times, and XP. Start carving right here or open a recipe on the Bench to adjust Dials.
-          </SkillIntro>
-          <section className="card wood-card">
-            <div className="wood-filter-row">
-              <div className="gem-chips" role="tablist" aria-label="Recipe families">
-                {families.map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    role="tab"
-                    aria-selected={recipeFilter === key}
-                    className={`gem-chip ${recipeFilter === key ? 'active' : ''}`}
-                    onClick={() => setRecipeFilter(key)}
-                  >{WOOD_FAMILIES[key].name}</button>
-                ))}
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={recipeFilter === 'frames'}
-                  className={`gem-chip ${recipeFilter === 'frames' ? 'active' : ''}`}
-                  onClick={() => setRecipeFilter('frames')}
-                >Frames</button>
-              </div>
-              {(hiddenTabCount > 0 || recipeShowLocked) && (
-                <label className="check small">
-                  <input type="checkbox" checked={recipeShowLocked} onChange={(e) => setRecipeShowLocked(e.target.checked)} />
-                  {' '}Show locked{hiddenTabCount > 0 ? ` (${hiddenTabCount})` : ''}
-                </label>
-              )}
-            </div>
-
-            {visibleTabRecipes.length === 0 ? (
-              <EmptyState small title="No recipes in this group yet">
-                Toggle Show locked above to preview higher-level recipes.
-              </EmptyState>
-            ) : (
-              <div className="wood-recipe-grid">
-                {visibleTabRecipes.map((a) => {
-                  const locked = a.level > level;
-                  const runningThis = running?.actionId === a.id;
-                  const cardBlocker = actionBlocker(s, a);
-                  const interval = actionIntervalMs(s, a, d);
-                  const outId = Object.keys(a.protectedOutputs ?? a.outputs ?? {})[0];
-                  return (
-                    <article key={a.id} className={`wood-recipe-card ${runningThis ? 'running' : ''} ${locked ? 'locked' : ''}`} data-tut={`action-${a.id}`}>
-                      <div className="wood-recipe-head">
-                        <div className="wood-recipe-art">
-                          {a.baseId
-                            ? <Art src={`items/${a.baseId}`} alt="" size={38} fallback={<Icon name={baseDef(a.baseId).slot} size={28} />} />
-                            : outId && <MatIcon id={outId} size={30} />}
-                        </div>
-                        <div className="wood-recipe-title">
-                          <div className="row">
-                            <b>{a.name}</b>
-                            <span className="spacer" />
-                            {runningThis ? <Badge tone="gold" live>Running</Badge> : locked ? <LockedBadge level={a.level} /> : <span className="dim small num">Lv {a.level}</span>}
-                          </div>
-                          <span className="muted small num">{slotLabel(a)} · {fmtTime(interval)} · {a.xp} XP</span>
-                        </div>
-                      </div>
-                      <Costs s={s} inputs={a.inputs ?? {}} />
-                      {runningThis && running && <ProgressBar value={running.progress / interval} />}
-                      {!runningThis && cardBlocker && <span className="dim small">{cardBlocker}</span>}
-                      <div className="wood-recipe-actions">
-                        {runningThis ? (
-                          <button className="btn sm" onClick={() => game.act(stopAction)}>Stop</button>
-                        ) : (
-                          <button
-                            className="btn sm primary"
-                            disabled={!!cardBlocker}
-                            title={cardBlocker ?? undefined}
-                            onClick={() => setNotice(game.act((st, ctx) => startWoodcraft(st, ctx, a, {})) ?? '')}
-                          >Carve</button>
-                        )}
-                        <button className="btn sm" onClick={() => { selectRecipe(a); setTab('bench'); }}>Open on Bench</button>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </section>
         </div>
       )}
 

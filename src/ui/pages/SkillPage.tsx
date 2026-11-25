@@ -1,4 +1,5 @@
 ﻿import { useCallback, useState } from 'react';
+import type { Page } from '../Layout';
 import { baseDef } from '../../data/bases';
 import { FOSSILS, fossilDef, RESINS } from '../../data/craftMats';
 import { flaskDef } from '../../data/flasks';
@@ -711,7 +712,7 @@ function LockedSkill({ skill, place }: { skill: SkillId; place: string }) {
   );
 }
 
-export function SkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) => void }) {
+export function SkillPage({ skill, go }: { skill: SkillId; go?: (page: Page) => void }) {
   const s = useGame();
   const lockedAt = skillLock(s, skill);
   if (lockedAt) return <LockedSkill skill={skill} place={lockedAt} />;
@@ -727,7 +728,7 @@ function BossKeyRecipes() {
     renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />;
 }
 
-function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'gemcutting' | 'harvesting' | 'alchemy' | 'cartography'; go?: (skill: SkillId) => void }) {
+function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'gemcutting' | 'harvesting' | 'alchemy' | 'cartography'; go?: (page: Page) => void }) {
   const projects = <ProjectBoard skill={skill} go={go} />;
   const catalysts = <details className="profession-supplies"><summary>Catalysts & crafting output</summary><CatalystPanel /><CraftOutputSettings /></details>;
   return <div className={`page profession-page profession-${skill}`} style={{ ['--profession' as string]: SKILLS[skill].color }}>
@@ -737,7 +738,7 @@ function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing'
     {skill === 'smithing' && <AnvilView bossKeys={<BossKeyRecipes />} catalysts={catalysts} masterworks={projects} />}
     {skill === 'woodcrafting' && <WoodBench catalysts={catalysts} masterworks={projects} />}
     {skill === 'gemcutting' && <LapidaryBench masterworks={projects} />}
-    {skill === 'harvesting' && <ForagingBench masterworks={projects} />}
+    {skill === 'harvesting' && <ForagingBench masterworks={projects} onOpenGreenhouse={() => go?.('greenhouse')} />}
     {skill === 'alchemy' && <AlchemyBench masterworks={projects} />}
     {skill === 'cartography' && <CartographyBoard masterworks={projects} />}
   </div>;

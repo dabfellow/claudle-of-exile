@@ -20,13 +20,6 @@ import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { xpToReach } from '../../engine/xp';
 import { game, useGame } from '../../game';
-import {
-  playHarvestSound,
-  playPlantSound,
-  playSeedSelectSound,
-  startGreenhouseAmbience,
-  stopGreenhouseAmbience,
-} from '../greenhouseAudio';
 import { Badge, EmptyState, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
 import { MasteryProgress } from './MasteryProgress';
 import { LockedBadge } from './SkillHelp';
@@ -298,12 +291,6 @@ function GreenhouseTab({
   const lvl = skillLevel(s, 'harvesting');
   const hCount = herbariumCount(s);
 
-  const [ambienceOn, setAmbienceOn] = useState(false);
-  useEffect(() => {
-    if (!unlocked) setAmbienceOn(false);
-    return stopGreenhouseAmbience;
-  }, [unlocked]);
-
   const plantable = Object.keys(s.foraging.strains)
     .filter((k) => (s.foraging.seeds[k] ?? 0) > 0 || s.foraging.strains[k]?.stable)
     .sort((a, b) => {
@@ -375,13 +362,6 @@ function GreenhouseTab({
     setPlantingPlot(plotIdx);
     if (!safeP1 && plantable.length) setParent1(plantable[0]);
     if (mode === 'cross' && !safeP2) setActiveSlot(safeP1 ? 2 : 1);
-    playSeedSelectSound();
-  };
-
-  const toggleAmbience = () => {
-    if (ambienceOn) stopGreenhouseAmbience();
-    else startGreenhouseAmbience();
-    setAmbienceOn(!ambienceOn);
   };
 
   const canSelfCross = (key: string) => !!s.foraging.strains[key]?.stable || (s.foraging.seeds[key] ?? 0) >= 2;
@@ -416,7 +396,6 @@ function GreenhouseTab({
   });
 
   const handleSeedTileClick = (key: string) => {
-    playSeedSelectSound();
     if (mode === 'grow') {
       setParent1(key);
       return;
@@ -455,16 +434,11 @@ function GreenhouseTab({
               className="btn sm primary gh-harvest-all"
               onClick={() => {
                 let harvested = 0;
-                let special = false;
                 for (const idx of readyIndices) {
                   const res = game.act((st, ctx) => harvestPlot(st, ctx, idx, Date.now()));
-                  if (typeof res === 'object' && res) {
-                    harvested++;
-                    if (res.mode === 'cross' || res.essences.length > 0 || res.replanted || res.stabilised) special = true;
-                  }
+                  if (typeof res === 'object' && res) harvested++;
                 }
                 if (harvested > 0) {
-                  playHarvestSound(special);
                   notify(`Harvested ${harvested} ready Glasshouse beds.`);
                 }
               }}
@@ -472,16 +446,6 @@ function GreenhouseTab({
               Harvest all ({readyIndices.length})
             </button>
           )}
-          <button
-            type="button"
-            className={`gh-sound-toggle ${ambienceOn ? 'on' : ''}`}
-            aria-pressed={ambienceOn}
-            title="Toggle ambient rain on conservatory glass and water droplets"
-            onClick={toggleAmbience}
-          >
-            <span aria-hidden="true">{ambienceOn ? '🔊' : '🔇'}</span>
-            <span>Rain &amp; Glass</span>
-          </button>
         </div>
       </header>
 
@@ -588,8 +552,6 @@ function GreenhouseTab({
                         const res = game.act((st, ctx) => harvestPlot(st, ctx, i, Date.now()));
                         if (typeof res === 'string') notify(res);
                         else if (res) {
-                          const special = res.mode === 'cross' || res.essences.length > 0 || !!res.replanted || !!res.stabilised;
-                          playHarvestSound(special);
                           if (res.mode === 'grow') notify(`Harvested ${res.herbs?.qty ?? 0} ${strainLabel(res.herbs?.strain ?? '')}${res.replanted ? ' (Everbloom replanted!)' : ''}`);
                           else notify(`Cross harvested: ${res.seeds.map(strainLabel).join(', ')}${res.stabilised ? ` · ${strainLabel(res.stabilised)} stabilised!` : ''}`);
                         }
@@ -632,7 +594,6 @@ function GreenhouseTab({
                   onClick={() => {
                     setMode('grow');
                     setActiveSlot(1);
-                    playSeedSelectSound();
                   }}
                 >
                   Grow Herbs (1 seed)
@@ -644,7 +605,6 @@ function GreenhouseTab({
                   onClick={() => {
                     setMode('cross');
                     setActiveSlot(safeP1 && !safeP2 ? 2 : 1);
-                    playSeedSelectSound();
                   }}
                 >
                   Crossbreed (2 parents)
@@ -662,7 +622,6 @@ function GreenhouseTab({
                 onClick={() => {
                   if (safeP1) setParent1('');
                   setActiveSlot(1);
-                  playSeedSelectSound();
                 }}
                 title={safeP1 ? 'Click to clear socket' : 'Select a seed from the satchel below'}
               >
@@ -695,7 +654,6 @@ function GreenhouseTab({
                     onClick={() => {
                       if (safeP2) setParent2('');
                       setActiveSlot(2);
-                      playSeedSelectSound();
                     }}
                     title={safeP2 ? 'Click to clear Parent 2' : 'Select Parent 2 from the satchel below'}
                   >
@@ -791,7 +749,6 @@ function GreenhouseTab({
                       notify(err);
                       return;
                     }
-                    playPlantSound();
                     notify(parents.length === 2 ? `Planted cross in Bed ${effectivePlot + 1}.` : `Sowed ${strainLabel(safeP1)} in Bed ${effectivePlot + 1}.`);
                     setPlantingPlot(null);
                   }}
@@ -1612,38 +1569,57 @@ function HerbariumTab({ s }: { s: GameState }) {
   );
 }
 
-export function ForagingBench({ masterworks }: { masterworks: ReactNode }) {
+/**
+ * Foraging, a gathering skill: just the set-and-forget Wild patches (and its Masterworks).
+ * The Greenhouse, which needs planting and waiting, is its own Production page (GreenhouseBench).
+ */
+export function ForagingBench({ masterworks, onOpenGreenhouse }: { masterworks: ReactNode; onOpenGreenhouse: () => void }) {
+  const s = useGame();
+  const [tab, setTab] = useState<ForagingTab>(() =>
+    s.professionProgress.activeProject?.project.skill === 'harvesting' ? 'masterworks' : 'wild',
+  );
+  const [notice, setNotice] = useState('');
+
+  const benchTabs: TabDef<ForagingTab>[] = [
+    { id: 'wild', label: 'Wild', count: BASE_SPECIES.length },
+    { id: 'masterworks', label: 'Masterworks' },
+  ];
+
+  return (
+    <section className="foraging-bench">
+      <Tabs tabs={benchTabs} value={tab} onChange={(next) => { setTab(next); setNotice(''); }} />
+      {tab === 'wild' && <WildTab s={s} notify={setNotice} onOpenGreenhouse={onOpenGreenhouse} />}
+      {tab === 'masterworks' && masterworks}
+      {notice && <p role="status" className="muted small">{notice}</p>}
+    </section>
+  );
+}
+
+/** The Greenhouse page (Production): beds, the seed satchel and the Herbarium. Seeds come from Foraging. */
+export function GreenhouseBench({ onGoWild }: { onGoWild: () => void }) {
   const s = useGame();
   const hasGreenhouse = greenhousePlotCount(s) > 0;
   const readyCount = hasGreenhouse ? s.foraging.plots.filter((p) => p && Date.now() >= p.readyAt).length : 0;
   const plantableCount = Object.keys(s.foraging.strains).filter(
     (k) => (s.foraging.seeds[k] ?? 0) > 0 || !!s.foraging.strains[k]?.stable,
   ).length;
-  const [tab, setTab] = useState<ForagingTab>(() => {
-    if (s.professionProgress.activeProject?.project.skill === 'harvesting') return 'masterworks';
-    if (!hasGreenhouse) return 'wild';
-    if (s.foraging.plots.every((p) => !p) && Object.keys(s.foraging.seeds).length === 0) return 'wild';
-    return 'greenhouse';
-  });
+  const [tab, setTab] = useState<ForagingTab>('greenhouse');
   const [notice, setNotice] = useState('');
   const [preselectedSeed, setPreselectedSeed] = useState<string | null>(null);
 
   const benchTabs: TabDef<ForagingTab>[] = [
     {
       id: 'greenhouse',
-      label: 'Greenhouse',
-      locked: !hasGreenhouse ? 'Unlocks at Foraging Lv 5 (2 plots)' : undefined,
+      label: 'Beds',
       count: readyCount > 0 ? readyCount : undefined,
       hot: readyCount > 0,
     },
-    { id: 'wild', label: 'Wild', count: BASE_SPECIES.length },
     {
       id: 'seeds',
       label: 'Seeds',
       count: plantableCount || undefined,
     },
     { id: 'herbarium', label: 'Herbarium', count: herbariumCount(s) || undefined },
-    { id: 'masterworks', label: 'Masterworks' },
   ];
 
   return (
@@ -1653,16 +1629,15 @@ export function ForagingBench({ masterworks }: { masterworks: ReactNode }) {
         <GreenhouseTab
           s={s}
           notify={setNotice}
-          onGoWild={() => setTab('wild')}
+          onGoWild={onGoWild}
           preselectedSeed={preselectedSeed}
           onClearPreselected={() => setPreselectedSeed(null)}
         />
       )}
-      {tab === 'wild' && <WildTab s={s} notify={setNotice} onOpenGreenhouse={() => setTab('greenhouse')} />}
       {tab === 'seeds' && (
         <SeedsTab
           s={s}
-          onGoWild={() => setTab('wild')}
+          onGoWild={onGoWild}
           onPlantInGreenhouse={(key) => {
             setPreselectedSeed(key);
             setNotice('');
@@ -1671,7 +1646,6 @@ export function ForagingBench({ masterworks }: { masterworks: ReactNode }) {
         />
       )}
       {tab === 'herbarium' && <HerbariumTab s={s} />}
-      {tab === 'masterworks' && masterworks}
       {notice && <p role="status" className="muted small">{notice}</p>}
     </section>
   );

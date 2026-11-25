@@ -44,6 +44,7 @@ import { marketInNav } from './marketWindDown';
 import { skillLock } from './skillLock';
 import { fishingOpen } from '../engine/fishing';
 import { stationLockReason } from '../engine/hideout';
+import { greenhousePlotCount } from '../engine/foraging';
 import { professionProgressLabel } from '../engine/professions';
 import { ReportButton } from './components/ReportButton';
 
@@ -65,6 +66,7 @@ export type Page =
   | 'settings'
   | 'admin'
   | 'upcoming'
+  | 'greenhouse'
   | SkillId;
 
 interface NavEntry {
@@ -114,8 +116,10 @@ const NAV: { label: string; items: NavEntry[] }[] = [
     ],
   },
   {
-    label: 'Crafting',
+    // Production: anything that needs setup or waiting. Gathering above is set-and-forget.
+    label: 'Production',
     items: [
+      { page: 'greenhouse', label: 'Greenhouse', icon: 'harvesting' },
       { page: 'smelting', label: 'Smelting', icon: 'smelting', skill: 'smelting' },
       { page: 'smithing', label: 'Forging', icon: 'smithing', skill: 'smithing' },
       { page: 'woodcrafting', label: 'Woodcrafting', icon: 'woodcrafting', skill: 'woodcrafting' },
@@ -164,7 +168,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
         <span className="brand-sub">an idle exile's tale</span>
         <span className="brand-version">v{APP_VERSION}</span>
       </div>
-      {NAV.filter((g) => !isClassic(s) || (g.label !== 'Gathering' && g.label !== 'Crafting')).map((g) => (
+      {NAV.filter((g) => !isClassic(s) || (g.label !== 'Gathering' && g.label !== 'Production')).map((g) => (
         <div className={`nav-group ${g.label ? '' : 'unlabelled'}`} key={g.label || 'top'}>
           {g.label && <div className="nav-label">{g.label}</div>}
           {g.items.filter((it) => it.page !== 'market' || marketInNav(s)).map((it) => {
@@ -172,7 +176,9 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
             const skillRequirement = it.skill && it.skill !== 'combat' ? skillLock(s, it.skill) : null;
             const lockReason = it.page === 'maps'
               ? stationLockReason(s, 'map_device')
-              : skillRequirement && `Unlocks at ${skillRequirement}`;
+              : it.page === 'greenhouse'
+                ? greenhousePlotCount(s) === 0 && 'Unlocks at Foraging level 5'
+                : skillRequirement && `Unlocks at ${skillRequirement}`;
             const isActive = it.skill && it.skill === active;
             const color = it.skill ? SKILLS[it.skill].color : 'var(--muted)';
             return (
@@ -195,7 +201,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
                 {it.page === 'tree' && points > 0 && <span className="nav-badge hot">+{points}</span>}
                 {it.page === 'equipment' && <span className="nav-badge" title="Items in your inventory">{s.inventory.length}</span>}
                 {it.page === 'combat' && s.ground.length + s.offlineHaul.length > 0 && <span className="nav-badge loot" title="Loot waiting to be picked up">{s.ground.length + s.offlineHaul.length}</span>}
-                {it.page === 'harvesting' && harvestReady && (
+                {it.page === 'greenhouse' && harvestReady && (
                   <span className="nav-badge hot" role="img" title="Greenhouse plants ready to harvest" aria-label="Greenhouse plants ready to harvest">!</span>
                 )}
                 {it.page === 'achievements' && <span className="nav-badge">{s.achievements.length}</span>}

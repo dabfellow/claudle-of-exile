@@ -1,0 +1,65 @@
+/* Forging backdrop: the blacksmith's shop. Sizes use cqw so the whole scene
+   scales with its width. */
+.smithy {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  container-type: inline-size;
+  isolation: isolate;
+  background: #120c09;
+}
+.smithy > * { position: absolute; }
+.smithy img, .smithy-tool, .smithy-coals { image-rendering: pixelated; }
+
+.smithy-wall { inset: 0; z-index: 0;
+  background:
+    linear-gradient(180deg, #0b0806 0%, transparent 18%),
+    repeating-linear-gradient(90deg, #2b1c13 0 7.6cqw, #24170f 7.6cqw 8cqw, #1a100a 8cqw 8.4cqw),
+    #22160f; }
+.smithy-stone { left: 0; right: 0; top: max(36.4cqw, 48%); bottom: 0; z-index: 0;
+  background: linear-gradient(#0d0907bb, #0d0907ee), url('../../assets/smelting/stone-wall.webp') center / 26cqw repeat; }
+.smithy-beam { left: 0; right: 0; top: 2.8cqw; height: 4.2cqw; z-index: 2;
+  background: linear-gradient(#5b3a22, #3a2414 70%, #1d120a); box-shadow: 0 1cqw 1.6cqw #000a; }
+.smithy-rack { left: 4%; top: 17.7cqw; width: 40cqw; height: 2.4cqw; z-index: 2;
+  background: linear-gradient(#5a3a22, #3a2414); box-shadow: 0 .6cqw .9cqw #000b; }
+.smithy-tool { z-index: 2; filter: drop-shadow(.4cqw .6cqw .3cqw #000a); }
+.smithy-shelf { right: 4%; top: 28.3cqw; width: 27cqw; height: 1.8cqw; z-index: 2;
+  background: linear-gradient(#5a3a22, #2e1c10); box-shadow: 0 .6cqw .9cqw #000b; }
+.smithy-bars { right: 7%; top: 25.9cqw; display: flex; gap: .5cqw; z-index: 2; }
+.smithy-bars i { width: 5cqw; height: 2.4cqw; border-radius: .3cqw .3cqw 0 0; background: linear-gradient(#8d939b, #4b4f56); box-shadow: inset 0 .4cqw 0 #b8bec5; }
+.smithy-bars i:nth-child(3) { background: linear-gradient(#c98a4a, #7a4a22); box-shadow: inset 0 .4cqw 0 #e8b27a; }
+.smithy-floor { left: 0; right: 0; bottom: 0; height: 17cqw; z-index: 1; background: linear-gradient(#1a120d, #0c0806); }
+.smithy-bench { left: 2%; bottom: 9.2cqw; width: 26cqw; z-index: 3; filter: brightness(.65) drop-shadow(0 1cqw 1cqw #000c); }
+.smithy-coalheap { left: 27%; bottom: 8.5cqw; width: 13cqw; height: 5cqw; z-index: 3; border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  background: radial-gradient(circle at 30% 60%, #2b2622 15%, transparent 17%), radial-gradient(circle at 60% 40%, #34302b 14%, transparent 16%), radial-gradient(circle at 75% 70%, #2b2622 16%, transparent 18%), #15110e; }
+.smithy-bucket { right: 23%; bottom: 8.5cqw; width: 9cqw; z-index: 3; filter: brightness(.7) drop-shadow(0 1cqw 1cqw #000c); }
+.smithy-grind { right: 5%; bottom: 9.2cqw; width: 16cqw; z-index: 3; filter: brightness(.75) drop-shadow(0 1cqw 1cqw #000c); }
+
+/* Anvil: the sprite is 64px with its flat face on row 14 (x 2-40) and its feet
+   ending on row 48, so at 40cqw one sprite pixel is .625cqw. */
+.smithy-anvil { left: 50%; bottom: 9.9cqw; width: 40cqw; transform: translateX(-50%); z-index: 4; display: grid; justify-items: center; }
+.smithy-anvil img { width: 40cqw; height: 40cqw; display: block; margin-bottom: -10cqw; filter: drop-shadow(0 1.2cqw 1.4cqw #000d); }
+.smithy-lit .smithy-anvil img { filter: drop-shadow(0 1.2cqw 1.4cqw #000d) drop-shadow(0 0 1.4cqw #ff8a3a55); }
+.smithy-stump { width: 17cqw; height: 9cqw; border-radius: 0 0 .8cqw .8cqw;
+  background: linear-gradient(90deg, #2a170c, #5a3519 30%, #6e4220 50%, #4a2a13 75%, #22130a);
+  box-shadow: inset 0 .8cqw 0 #7a4c26, 0 1cqw 2cqw #000; }
+/* the bar rests on the face: face top 8.75cqw minus the bar's 1.7cqw height */
+.smithy-bar { position: absolute; top: 7.05cqw; left: 5cqw; width: 16cqw; height: 1.7cqw; z-index: 2;
+  border-radius: .3cqw .3cqw 0 0; background: linear-gradient(#5e636b, #3a3e45); transition: background .6s, box-shadow .6s; }
+.smithy-lit .smithy-bar { background: linear-gradient(#fff1b0, #ffb04a 45%, #e5561c); box-shadow: 0 0 1.6cqw #ff9a3c, 0 0 4cqw #ff6a1f88; }
+.smithy-flash { position: absolute; top: 1cqw; left: 6cqw; width: 14cqw; height: 14cqw; border-radius: 50%; z-index: 3; opacity: 0;
+  background: radial-gradient(circle, #fff3c2 0%, #ffb04a55 35%, transparent 70%); }
+.smithy-flash.on { animation: smithy-flash .35s ease-out; }
+@keyframes smithy-flash { 0% { opacity: 1; transform: scale(.5); } 100% { opacity: 0; transform: scale(1.4); } }
+
+.smithy-coals { left: 0; bottom: 0; width: 100%; height: 24cqw; z-index: 6; }
+.smithy-uplight { inset: 0; z-index: 7; mix-blend-mode: screen; opacity: .35; transition: opacity .6s;
+  background: radial-gradient(ellipse 70% 55% at 50% 100%, #ff7a2a55, transparent 70%); }
+.smithy-lit .smithy-uplight { opacity: 1; }
+.smithy-vignette { inset: 0; z-index: 9; box-shadow: inset 0 0 9cqw 2cqw #000c; }
+.smithy-sparks { inset: 0; width: 100%; height: 100%; z-index: 8; }
+
+@media (prefers-reduced-motion: reduce) {
+  .smithy-flash.on { animation: none; }
+}

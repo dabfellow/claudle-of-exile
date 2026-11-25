@@ -20,14 +20,13 @@ import { masteryLevel } from '../../engine/skillingMastery';
 import { deriveStats } from '../../engine/stats';
 import type { GameState } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
-import { Art, fmt, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
+import { fmt, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
 import { HelpTip, SkillIntro } from './SkillHelp';
 import { UseBarGrade } from './FurnaceView';
 import { ItemCell } from './ItemView';
 import { MasteryProgress } from './MasteryProgress';
-import { Icon } from './Icon';
 import { music } from '../music';
-import anvilSprite from '../../assets/smelting/anvil.png';
+import { ForgeSmithy } from './ForgeSmithy';
 import './furnace.css';
 import './anvil-view.css';
 
@@ -358,7 +357,6 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
   const planBlocker = master && !plan.alloy ? 'Choose a master alloy' : forgePlanBlocker(s, plan);
   const blocker = planBlocker ?? forgeStartBlocker(s, plan);
   const running = s.action?.kind === 'skill' ? forgeAction(s, s.action.actionId) : undefined;
-  const workpiece = running?.baseId ? baseDef(running.baseId) : base;
   const runningTime = running ? actionIntervalMs(s, running, deriveStats(s)) : 1;
   const presetChoices = forgePresetsFor(plan.baseId);
   const savedRecipes = s.forging.patterns.filter(({ alloy: savedAlloy }) => !!savedAlloy === master);
@@ -480,12 +478,8 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
         </SkillIntro>
       )}
       <div className={`forge-scene${running ? ' forge-lit' : ''}`}>
-        <div className="forge-scene-art" aria-hidden="true">
-          <div className="forge-fire"><span /></div>
-          <div className="anvil-piece">
-            <Art src={`items/${workpiece.id}`} alt="" size={94} fallback={<Icon name={workpiece.slot} size={52} />} />
-            <img className="anvil-sprite" src={anvilSprite} alt="" />
-          </div>
+        <div className="forge-scene-art">
+          <ForgeSmithy lit={!!running} />
         </div>
         <section className="forge-scene-panel" aria-label="Forge gear">
           {!keysView && <div className="forge-selection">

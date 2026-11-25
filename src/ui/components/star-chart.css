@@ -226,6 +226,11 @@
   pointer-events: none;
 }
 
+.star-label.empty {
+  font-size: 1.4px;
+  font-weight: 400;
+}
+
 .star-action {
   display: flex;
   flex-wrap: wrap;
@@ -347,6 +352,10 @@
 @media (max-width: 640px) {
   .star-night-sky:not(.dense) .star-label {
     font-size: 2.8px;
+  }
+
+  .star-night-sky:not(.dense) .star-label.empty {
+    font-size: 2.1px;
   }
 
   .star-watch {

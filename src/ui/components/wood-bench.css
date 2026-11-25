@@ -101,69 +101,16 @@
 .wood-costs > span { display: inline-flex; align-items: center; gap: 4px; }
 .wood-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 10px; }
 
-.wood-recipe-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(265px, 100%), 1fr));
-  gap: 10px;
-}
-
-.wood-recipe-card {
-  display: grid;
-  align-content: start;
-  gap: 8px;
-  padding: 11px 12px;
-  border: 1px solid var(--line-2);
-  border-radius: 7px;
-  background: var(--panel-2);
-}
-
-.wood-recipe-card.running {
-  border-color: var(--accent);
-}
-
-.wood-recipe-card.locked {
-  opacity: 0.78;
-  border-style: dashed;
-}
-
-.wood-recipe-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.wood-recipe-art {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  border-radius: 6px;
-  background: #3b2a1d66;
-  border: 1px solid var(--line);
-}
-
-.wood-recipe-title {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.wood-recipe-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: auto;
-}
-
 .wood-tuning { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .wood-recipe { text-align: left; white-space: normal; }
 .wood-curve svg { display: block; background: linear-gradient(135deg, #35271e, #231a16); border: 1px solid #6d5039; border-radius: 6px; cursor: crosshair; }
 .wood-return { display: grid; gap: 8px; }
 .wood-notice { margin: 0; color: var(--accent-2); font-size: var(--fs-xs); }
 @media (max-width: 720px) { .wood-bench-layout { grid-template-columns: minmax(0, 1fr); } }
-.wood-pattern-rack { display: grid; gap: 8px; }
+.wood-pattern-rack { display: grid; gap: 10px; max-height: 360px; overflow-y: auto; padding-right: 2px; }
 .wood-pattern-rack h3 { margin: 0; }
-.wood-pattern-rack summary { color: #e3c39b; cursor: pointer; padding-block: 4px; }
+.wood-pattern-group { display: grid; gap: 4px; }
+.wood-pattern-type { color: #e3c39b; font-weight: 600; }
+.wood-pattern-rack .wood-bench-picker { max-height: none; overflow: visible; grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); }
+.wood-bench-item.short .wood-bench-item-meta .num { color: var(--bad); }
 .wood-pattern-tier { grid-column: 1 / -1; padding-block: 5px; color: var(--muted); font-size: 12px; }

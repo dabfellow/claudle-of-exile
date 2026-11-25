@@ -10,7 +10,13 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Removed the extra Foraging and Glasshouse sound effects, including the Rain & Glass toggle.',
+  'Woodcrafting recipes are now picked right on the Workbench, with time, XP and missing materials shown; the separate Recipes tab is gone.',
+  'The Greenhouse has its own page in the sidebar, and the Crafting group is now called Production. Foraging is just the wild patches now; your beds, seeds and Herbarium are all kept.',
+  'The Forge is now a proper blacksmith\'s shop: tools on the wall, the anvil on its stump and a stone hearth of live coals that flare up while you forge.',
+  'Empty Astrology star slots are just a diamond now, with smaller, plainer text.',
+];
 
 export const NEWS: NewsEntry[] = [
   {
