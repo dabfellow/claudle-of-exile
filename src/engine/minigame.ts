@@ -179,6 +179,114 @@ export function bellowsResult(goldShare: number, bandShare: number): SwingResult
   return bandShare >= 0.3 ? 'weak' : 'miss';
 }
 
+/**
+ * Smelting, keep the heat: each pump of the bellows pushes heat up, and the furnace cools toward cold on its own.
+ * Holding the heat in the band fills the melt meter (faster in the gold centre). The longer you hold it hot, the more
+ * the fire catches: it carries more heat by itself and each pump hits harder, so you have to ease off. Once it's
+ * roaring it flares now and then. Too hot drains the meter, and reaching the top scorches the melt (a miss).
+ */
+export const HEAT_COOL_PER_SEC = 0.45;
+export const HEAT_PUMP_KICK = 0.34;
+const HEAT_KICK_DECAY_MS = 250;
+/** Heat per second the fire adds by itself at full strength. */
+export const HEAT_FIRE_HEAT = 0.18;
+/** Each pump is this much stronger at full fire. */
+export const HEAT_FIRE_PUMP_BONUS = 0.6;
+const FIRE_CATCH_PER_SEC = 0.12;
+const FIRE_FADE_PER_SEC = 0.2;
+/** Melt meter per second in the gold centre, in the rest of the band, too hot and too cool. */
+export const MELT_GOLD_PER_SEC = 1 / 3;
+export const MELT_BAND_PER_SEC = 1 / 4.2;
+const MELT_HOT_DRAIN_PER_SEC = 0.25;
+const MELT_COOL_DRAIN_PER_SEC = 0.08;
+/** A flare needs at least this much fire; it is warned this long before it hits. */
+const FLARE_MIN_FIRE = 0.5;
+const FLARE_CHANCE_PER_SEC = 0.12;
+export const FLARE_WARN_MS = 800;
+const FLARE_KICK = 0.55;
+
+export interface HeatState {
+  heat: number;
+  /** heat still on its way from recent pumps and flares, per second */
+  kick: number;
+  /** 0–1: how well the fire has caught */
+  fire: number;
+  /** 0–1: the melt meter */
+  melt: number;
+  /** the share of `melt` filled in the gold centre */
+  gold: number;
+  /** ms until a warned flare hits, or 0 */
+  flare: number;
+}
+
+export function newHeat(): HeatState {
+  return { heat: 0, kick: 0, fire: 0, melt: 0, gold: 0, flare: 0 };
+}
+
+export function heatPump(h: HeatState): void {
+  h.kick += HEAT_PUMP_KICK * (1 + HEAT_FIRE_PUMP_BONUS * h.fire);
+}
+
+/** Is the furnace at rest, so nothing would change if no one pumps? */
+export function heatAtRest(h: HeatState): boolean {
+  return h.heat < 0.005 && h.kick < 0.005 && h.fire <= 0 && h.melt <= 0 && !h.flare;
+}
+
+/**
+ * Advance the furnace `dt` ms against the band `low`–`high`. Returns the result when the melt meter fills or the
+ * melt scorches, else null. `rand` decides flares.
+ */
+export function heatStep(h: HeatState, dt: number, low: number, high: number, rand: () => number = Math.random): SwingResult | null {
+  const sec = dt / 1000;
+  if (h.flare > 0) {
+    h.flare -= dt;
+    if (h.flare <= 0) {
+      h.flare = 0;
+      h.kick += FLARE_KICK;
+    }
+  } else if (h.fire >= FLARE_MIN_FIRE && rand() < FLARE_CHANCE_PER_SEC * sec) h.flare = FLARE_WARN_MS;
+
+  const decay = Math.exp(-dt / HEAT_KICK_DECAY_MS);
+  // the kick is spent over time: what it loses this step is what goes into heat
+  const spent = h.kick * (1 - decay) * (HEAT_KICK_DECAY_MS / 1000);
+  h.kick *= decay;
+  h.heat += spent + (HEAT_FIRE_HEAT * h.fire - HEAT_COOL_PER_SEC * h.heat) * sec;
+  h.heat = Math.max(0, h.heat);
+
+  if (h.heat >= low) h.fire = Math.min(1, h.fire + FIRE_CATCH_PER_SEC * sec);
+  else h.fire = Math.max(0, h.fire - FIRE_FADE_PER_SEC * sec);
+
+  if (h.heat >= 1) {
+    // scorched: the fire chokes and half the melt is spoiled
+    h.heat = 0.8;
+    h.kick = 0;
+    h.flare = 0;
+    h.fire *= 0.4;
+    h.melt *= 0.5;
+    h.gold *= 0.5;
+    return 'miss';
+  }
+
+  const width = high - low;
+  if (inDoubleZone(h.heat, low, width)) {
+    h.melt += MELT_GOLD_PER_SEC * sec;
+    h.gold += MELT_GOLD_PER_SEC * sec;
+  } else if (h.heat >= low && h.heat <= high) h.melt += MELT_BAND_PER_SEC * sec;
+  else if (h.melt > 0) {
+    const kept = Math.max(0, h.melt - (h.heat > high ? MELT_HOT_DRAIN_PER_SEC : MELT_COOL_DRAIN_PER_SEC) * sec);
+    h.gold *= kept / h.melt;
+    h.melt = kept;
+  }
+
+  if (h.melt >= 1) {
+    const result = bellowsResult(Math.min(1, h.gold / h.melt), 1);
+    h.melt = 0;
+    h.gold = 0;
+    return result;
+  }
+  return null;
+}
+
 export function hasMinigame(skill: SkillId): boolean {
   return MANUAL_SKILLS.includes(skill);
 }

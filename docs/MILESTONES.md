@@ -727,6 +727,9 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [ ] Smelting Focus game rebuilt as Keep the Heat: tap to pump, a melt meter fills in the band, the fire catches and flares so you ease off, the top of the gauge scorches. See [Smelting](SMELTING_FURNACE.md#focus-minigame-keep-the-heat).
+  - Built 2026-11-24; all 2,060 tests and the build pass, and a quick in-game check showed the warm-up, the fire catching, a flare and a scorch. Not yet shipped.
+
 - [ ] Greenhouse gets its own sidebar page under Production (Beds, Seeds, Herbarium), the Crafting group is renamed Production, and Foraging keeps only the Wild patches and Masterworks.
   - Built 2026-11-24; typecheck and all 2,055 tests pass. Not yet looked at in the running game. Save data is unchanged (still `s.foraging`); beds still unlock with Foraging level.
   - Owner to decide whether other gathering activities with setup or waiting belong under Production too: Fishing port workshop upgrades and voyages, Archaeology's Relic Forge and merchant standing orders, Thieving Heists with the crew, Astrology's star chart, and Woodcutting giant felling plans.

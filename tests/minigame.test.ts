@@ -3,6 +3,10 @@ import {
   angleResult,
   bellowsResult,
   braceResult,
+  heatAtRest,
+  heatPump,
+  heatStep,
+  newHeat,
   BRUSH_COLS,
   BRUSH_CRACKS_MAX,
   BRUSH_CRACKS_MIN,
@@ -118,6 +122,62 @@ describe('Furnace bellows', () => {
     expect(bellowsResult(0.3, 0.59)).toBe('weak');
     expect(bellowsResult(0, 0.3)).toBe('weak');
     expect(bellowsResult(0, 0.29)).toBe('miss');
+  });
+});
+
+describe('Furnace keep the heat', () => {
+  const low = 0.45;
+  const high = 0.69;
+  const never = () => 1;
+
+  it('cools to rest with no pumping', () => {
+    const h = newHeat();
+    heatPump(h);
+    for (let i = 0; i < 2000 && !heatAtRest(h); i++) heatStep(h, 16, low, high, never);
+    expect(heatAtRest(h)).toBe(true);
+  });
+
+  it('fills the melt meter in the gold centre for a double', () => {
+    const h = { ...newHeat(), heat: 0.57, kick: 0 };
+    let result = null;
+    for (let i = 0; i < 400 && !result; i++) {
+      h.heat = 0.57; // hold the needle in the centre
+      result = heatStep(h, 16, low, high, never);
+    }
+    expect(result).toBe('double');
+    expect(h.melt).toBe(0);
+  });
+
+  it('a held band edge fills to a hit, and the fire catches', () => {
+    const h = newHeat();
+    let result = null;
+    for (let i = 0; i < 400 && !result; i++) {
+      h.heat = 0.47;
+      result = heatStep(h, 16, low, high, never);
+    }
+    expect(result).toBe('hit');
+    expect(h.fire).toBeGreaterThan(0.3);
+  });
+
+  it('pumping at the cold rhythm once the fire roars scorches the melt', () => {
+    const h = { ...newHeat(), heat: 0.57, fire: 1, melt: 0.6, gold: 0.6 };
+    let result = null;
+    for (let i = 0; i < 1000 && !result; i++) {
+      if (i % 20 === 0) heatPump(h); // ~3 pumps a second
+      result = heatStep(h, 16, low, high, never);
+    }
+    expect(result).toBe('miss');
+    expect(h.melt).toBeLessThan(0.3); // drained while too hot, then halved
+    expect(h.fire).toBeLessThan(1);
+  });
+
+  it('a roaring fire flares after a warning', () => {
+    const h = { ...newHeat(), heat: 0.57, fire: 1 };
+    heatStep(h, 16, low, high, () => 0);
+    expect(h.flare).toBeGreaterThan(0);
+    for (let i = 0; i < 60 && h.flare > 0; i++) heatStep(h, 16, low, high, never);
+    expect(h.flare).toBe(0);
+    expect(h.kick).toBeGreaterThan(0.3);
   });
 });
 

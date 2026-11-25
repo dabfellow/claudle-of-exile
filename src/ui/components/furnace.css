@@ -398,7 +398,54 @@
   background: #fff6db;
   box-shadow: 0 0 0 1px #302419;
 }
-.furnace-pump { min-height: 40px; user-select: none; touch-action: none; }
+.furnace-heat-scorch {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  border-radius: 0 4px 4px 0;
+  background: repeating-linear-gradient(135deg, #b8302f99 0 5px, #6e1d1f99 5px 10px);
+}
+.heat-hot .furnace-needle { background: #ff9a7a; }
+.heat-gold .furnace-needle { background: #fff1b0; box-shadow: 0 0 0 1px #302419, 0 0 8px #ffd77a; }
+.flaring .furnace-heat { animation: furnace-shake 0.12s linear infinite; }
+.furnace-zone.gold { color: #ffe1a6; }
+.furnace-zone.hot { color: #ff9a7a; }
+.furnace-zone.cool { color: var(--muted); }
+.furnace-melt { gap: 8px; align-items: center; }
+.furnace-fire-row { gap: 8px; align-items: center; min-height: 22px; }
+.furnace-fire-pips { display: inline-flex; gap: 3px; }
+.furnace-fire-pips span {
+  width: 9px;
+  height: 13px;
+  border-radius: 50% 50% 40% 40% / 65% 65% 35% 35%;
+  background: #4a3a30;
+}
+.furnace-fire-pips span.lit { background: linear-gradient(#ffd77a, #e0602f); box-shadow: 0 0 5px #ff9b4a88; }
+.furnace-flare { color: #ff9a7a; animation: furnace-blink 0.25s steps(2) infinite; }
+.furnace-pump-row { gap: 10px; align-items: center; }
+.furnace-pump {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  min-width: 132px;
+  user-select: none;
+  touch-action: manipulation;
+}
+.furnace-bellows-art {
+  width: 30px;
+  height: 18px;
+  background: linear-gradient(#8a5a35, #5a3820);
+  clip-path: polygon(0 0, 100% 35%, 100% 65%, 0 100%);
+  transform-origin: right center;
+}
+.furnace-bellows-art.squeeze { animation: furnace-squeeze ease-out; }
+@keyframes furnace-squeeze { 40% { transform: scaleY(0.45); } }
+@keyframes furnace-shake { 50% { transform: translateX(1.5px); } }
+@keyframes furnace-blink { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) {
+  .flaring .furnace-heat, .furnace-flare, .furnace-bellows-art.squeeze { animation: none; }
+}
 
 .furnace-rack { margin: 14px 0; }
 .furnace-rack h3 { margin: 0 0 8px; }

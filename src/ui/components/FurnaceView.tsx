@@ -7,7 +7,9 @@ import {
   type BarGrade, type BarGradePreference, type FurnaceSupply,
 } from '../../data/smelting';
 import { actionDef, actionsFor, type SkillAction } from '../../data/skills';
-import { bellowsResult, focusMult, focusOf, inDoubleZone, minigameSwing, type SwingResult } from '../../engine/minigame';
+import {
+  focusMult, focusOf, heatAtRest, heatPump, heatStep, inDoubleZone, minigameSwing, newHeat, type HeatState, type SwingResult,
+} from '../../engine/minigame';
 import {
   bellowsBandWidth, furnaceBatchSize, furnacePartUpgrade, improveFurnacePart, purityOdds, purityScore, smeltingCost,
 } from '../../engine/smelting';
@@ -22,7 +24,6 @@ import { MasteryProgress } from './MasteryProgress';
 import './furnace.css';
 
 type FurnaceTab = 'furnace' | 'recipes' | 'supplies' | 'parts' | 'alloys' | 'masterworks';
-const ATTEMPT_MS = 3_600;
 const BAND_CENTRE = 0.57;
 const RESULT_TEXT: Record<SwingResult, string> = { double: 'Double!', hit: 'Hit', weak: 'Weak', miss: 'Miss' };
 
@@ -33,89 +34,81 @@ const GRADE_TIPS: Record<BarGrade, string> = {
   flawless: 'Flawless (+2 purity): adds +10% item quality per bar and gives the strongest modifier-tier upgrade odds. Required to cast Master Alloys.',
 };
 
-interface Attempt {
-  started: number;
-  previous: number;
-  heat: number;
-  velocity: number;
-  inBand: number;
-  inGold: number;
-}
+const FIRE_WORDS = ['Smouldering', 'Catching', 'Burning', 'Roaring'];
+/** The gauge's scorch zone starts here; reaching the end of it scorches the melt. */
+const SCORCH_FROM = 0.9;
+/** One pump's squeeze animation. */
+const SQUEEZE_MS = 180;
 
 export function BellowsGame({ metal, tier, onSwing }: { metal: string; tier: number; onSwing: (result: SwingResult) => void }) {
   const width = bellowsBandWidth(metal, tier);
   const low = BAND_CENTRE - width / 2;
   const high = BAND_CENTRE + width / 2;
-  const hold = useRef(false);
-  const attempt = useRef<Attempt | null>(null);
+  const furnace = useRef<HeatState>(newHeat());
   const frame = useRef(0);
-  const [heat, setHeat] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-  const [result, setResult] = useState<SwingResult | null>(null);
+  const previous = useRef(0);
+  const swing = useRef(onSwing);
+  swing.current = onSwing;
+  const [view, setView] = useState<HeatState>(() => newHeat());
+  const [squeeze, setSqueeze] = useState(0);
+  const [result, setResult] = useState<{ r: SwingResult; id: number } | null>(null);
 
   useEffect(() => {
-    const stop = () => {
-      cancelAnimationFrame(frame.current);
-      attempt.current = null;
-      hold.current = false;
-    };
     const onVisibility = () => {
       if (!document.hidden) return;
-      stop();
-      setElapsed(0);
-      setHeat(0);
+      // stepping away lets the furnace go cold
+      cancelAnimationFrame(frame.current);
+      frame.current = 0;
+      furnace.current = newHeat();
+      setView(newHeat());
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
-      stop();
+      cancelAnimationFrame(frame.current);
+      frame.current = 0;
     };
   }, []);
 
   const animate = (time: number) => {
-    const current = attempt.current;
-    if (!current) return;
-    const until = Math.min(time, current.started + ATTEMPT_MS);
-    const delta = until - current.previous;
-    if (delta <= 0) {
-      frame.current = requestAnimationFrame(animate);
-      return;
+    // long gaps (a stalled tab) count as a short step so the heat can't leap past the scorch line unseen
+    const dt = Math.min(50, time - previous.current);
+    previous.current = time;
+    const h = furnace.current;
+    const outcome = dt > 0 ? heatStep(h, dt, low, high) : null;
+    setView({ ...h });
+    if (outcome) {
+      setResult({ r: outcome, id: time });
+      swing.current(outcome);
     }
-    current.previous = until;
-    const speed = hold.current ? 0.56 : -0.24;
-    current.velocity += (speed - current.velocity) * (1 - Math.exp(-delta / 115));
-    current.heat = Math.max(0, Math.min(1, current.heat + current.velocity * delta / 1000));
-    if (current.heat >= low && current.heat <= high) current.inBand += delta;
-    if (inDoubleZone(current.heat, low, width)) current.inGold += delta;
-    setHeat(current.heat);
-    setElapsed(until - current.started);
-
-    if (until - current.started >= ATTEMPT_MS) {
-      const outcome = bellowsResult(current.inGold / ATTEMPT_MS, current.inBand / ATTEMPT_MS);
-      attempt.current = null;
-      setResult(outcome);
-      onSwing(outcome);
+    if (heatAtRest(h)) {
+      frame.current = 0;
       return;
     }
     frame.current = requestAnimationFrame(animate);
   };
 
   const pump = () => {
-    hold.current = true;
-    if (attempt.current) return;
-    const now = performance.now();
-    attempt.current = { started: now, previous: now, heat: 0, velocity: 0, inBand: 0, inGold: 0 };
-    setHeat(0);
-    setElapsed(0);
-    setResult(null);
+    heatPump(furnace.current);
+    setSqueeze((n) => n + 1);
+    if (frame.current) return;
+    previous.current = performance.now();
     frame.current = requestAnimationFrame(animate);
   };
-  const release = () => { hold.current = false; };
-  const zone = inDoubleZone(heat, low, width) ? 'Sweet spot' : heat >= low && heat <= high ? 'In range' : heat < low ? 'Too cool' : 'Too hot';
+
+  const { heat, fire, melt, flare } = view;
+  const zone = inDoubleZone(heat, low, width) ? 'Sweet spot' : heat >= low && heat <= high ? 'In range'
+    : heat < low ? (heat < 0.02 ? 'Cold' : 'Too cool') : heat >= SCORCH_FROM ? 'Scorching!' : 'Too hot';
+  const tone = inDoubleZone(heat, low, width) ? 'gold' : heat >= low && heat <= high ? 'band' : heat > high ? 'hot' : 'cool';
+  const fireWord = FIRE_WORDS[Math.min(FIRE_WORDS.length - 1, Math.floor(fire * FIRE_WORDS.length))];
 
   return (
-    <div className="furnace-bellows">
-      <div className="row"><b>Work the bellows</b><span className="spacer" /><span className="small">{zone}</span></div>
+    <div className={`furnace-bellows heat-${tone}${flare ? ' flaring' : ''}`}>
+      <div className="row">
+        <b>Keep the heat</b>
+        <span className="spacer" />
+        <span className={`small furnace-zone ${tone}`}>{zone}</span>
+      </div>
       <div
         className="furnace-heat"
         role="meter"
@@ -125,30 +118,40 @@ export function BellowsGame({ metal, tier, onSwing }: { metal: string; tier: num
         aria-valuenow={Math.round(heat * 100)}
         aria-valuetext={zone}
       >
+        <div className="furnace-heat-scorch" style={{ left: `${SCORCH_FROM * 100}%` }} aria-hidden />
         <div className="furnace-heat-band" style={{ left: `${low * 100}%`, width: `${width * 100}%` }}>
           <span className="furnace-heat-centre" aria-hidden />
         </div>
-        <span className="furnace-needle" aria-hidden style={{ left: `${heat * 100}%` }} />
+        <span className="furnace-needle" aria-hidden style={{ left: `${Math.min(1, heat) * 100}%` }} />
       </div>
-      <ProgressBar value={elapsed / ATTEMPT_MS} color="var(--accent)" />
-      <p className="muted small">Hold to heat, release to cool. Keep the needle in the centre for a double.</p>
-      <div className="row">
+      <div className="row furnace-melt">
+        <span className="small">Melt</span>
+        <ProgressBar value={melt} color="#f4cd73" className="grow" />
+      </div>
+      <div className="row furnace-fire-row small">
+        <span className="furnace-fire-pips" aria-label={`Fire: ${fireWord}`}>
+          {FIRE_WORDS.map((word, i) => <span key={word} className={fire > i / FIRE_WORDS.length ? 'lit' : ''} />)}
+        </span>
+        <span className="muted">Fire: {fireWord}</span>
+        <span className="spacer" />
+        {flare > 0 && <strong className="furnace-flare" role="alert">Flare! Ease off</strong>}
+      </div>
+      <div className="row furnace-pump-row">
         <button
           className="btn primary furnace-pump"
-          onPointerDown={(event) => { event.currentTarget.setPointerCapture(event.pointerId); pump(); }}
-          onPointerUp={release}
-          onPointerCancel={release}
-          onLostPointerCapture={release}
+          onPointerDown={(event) => { event.preventDefault(); pump(); }}
           onKeyDown={(event) => {
             if (event.key !== ' ' && event.key !== 'Enter') return;
             event.preventDefault();
             if (!event.repeat) pump();
           }}
-          onKeyUp={(event) => { if (event.key === ' ' || event.key === 'Enter') release(); }}
-          onBlur={release}
-        >Hold to pump</button>
-        {result && <strong role="status" className={`minigame-result ${result}`}>{RESULT_TEXT[result]}</strong>}
+        >
+          <span key={squeeze} className={squeeze ? 'furnace-bellows-art squeeze' : 'furnace-bellows-art'} style={{ animationDuration: `${SQUEEZE_MS}ms` }} aria-hidden />
+          Pump
+        </button>
+        {result && <strong key={result.id} role="status" className={`minigame-result ${result.r}`}>{result.r === 'miss' ? 'Scorched!' : RESULT_TEXT[result.r]}</strong>}
       </div>
+      <p className="muted small">Tap Pump to stoke the fire. Hold the needle in the band to fill the melt; the gold centre fills it fastest and makes a double. As the fire catches it runs hotter on its own, so ease off the bellows before it scorches.</p>
     </div>
   );
 }

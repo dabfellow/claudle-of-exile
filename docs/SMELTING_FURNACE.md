@@ -91,16 +91,17 @@ Each needs the listed Flawless bars and at least two furnace parts at tier 4. Ea
 - Each completion with `P` of 8 or more has a 1 in 2,000 chance of 1 `living_metal`.
 - A master alloy craft can take 1 living metal as an optional extra input. The alloy comes out **Living**, and gear forged from it gets a second signature, rolled from the other three alloys.
 
-### Focus minigame: work the bellows
+### Focus minigame: keep the heat
 
-- Hold to pump: the heat needle rises while held and falls when released, with a little inertia.
+Replaced the 3 s hold-and-release attempt on 2026-11-24 (owner's request). Physics: `heatStep` in `src/engine/minigame.ts`.
+
+- Each tap of Pump pushes heat up (spread over ~¼ s); the furnace cools toward cold on its own.
 - The target band's width depends on the metal: copper 0.25 of the gauge, falling evenly to world at 0.12, then multiplied by the Bellows tier. Its centre third is gold.
-- Each attempt is 3 s. Results:
-  - Needle in gold for at least 50% of the time is a **double**.
-  - In the band for at least 60% is a **hit**.
-  - In the band for at least 30% is **weak**.
-  - Anything less is a **miss**.
-- Scoring function: `bellowsResult(goldShare: number, bandShare: number)`.
+- Holding the needle in the band fills the **melt meter**: ~3 s in gold, ~4.2 s in the rest of the band. Too hot drains it quickly, too cool slowly. When it fills: at least half filled in gold is a **double**, otherwise a **hit**.
+- The **fire** catches while the heat is at or above the band (full in ~8 s) and fades when too cool. A roaring fire carries most of the heat by itself and makes each pump hit harder, so you go from ~3 pumps a second to one every couple of seconds.
+- From half fire, the furnace **flares** now and then (warned 0.8 s ahead, then a big heat kick): ease off before it lands.
+- Reaching the top of the gauge **scorches** the melt: a **miss**, half the meter is lost and the fire chokes back.
+- Leaving the tab lets the furnace go cold.
 
 ### State
 
