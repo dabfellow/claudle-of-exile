@@ -10,21 +10,27 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'The Woodcutter’s Lodge has clickable pixel-art stations that change as you build them. An up arrow marks available upgrades, and you can build the Trophy Wall to unveil wooden placards for your legendary trees.',
-  'Each Mining depth has its own Layer Mastery. Mining swings grant 1–3 rubble, with another at Mastery 25. Unlock the Pump Station at 50, Ventilation Shaft at 75, and Rock Bolts at 100.',
-  'Loot Filters are back in Settings. Switch between saved filters or start from the Levelling, Mapping, and Endgame presets.',
-  'Forging opens on a simpler Anvil with a hearth flame, clear material costs, and separate controls for custom stages and repeat crafting. Find Boss Keys in the item picker after unlocking Maps.',
-  'The Forging rhythm mark follows the piece’s outline. The Anvil shows rarity odds, and practice with earlier stage options unlocks new ones. Existing unlocks carry over.',
-  'A gold hit in a skill Focus game now gives double Focus. Woodcrafting’s new One Long Curl game rewards a continuous shaving that follows the grain.',
-  'Woodcrafting groups patterns by item type and level. Woodcrafting, Forging and their equipment Masterworks preview base stats and built-in modifiers.',
-  'The Foraging sidebar shows a gold exclamation mark when greenhouse plants are ready to harvest.',
-  'Gear drops wait on the ground or in your time-away haul for pickup. Run filter can move picked-up gear from inventory to your stash.',
-  'Choose whether crafted gear fills inventory or stash first, with the other as a fallback. You can also auto-salvage regular crafts for Arcane Dust.',
-  'Final Map bosses can drop Valor Orbs. Use one on unequipped gear for an equal chance of an upside, a downside, or no stat change. Surviving items are permanently sealed against further crafting.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.6.7',
+    date: '24 Nov 2026',
+    title: 'Workshop Upgrades and Loot',
+    items: [
+      'The Woodcutter’s Lodge has clickable pixel-art stations that change as you build them. An up arrow marks available upgrades, and you can build the Trophy Wall to unveil wooden placards for your legendary trees.',
+      'Each Mining depth has its own Layer Mastery. Mining swings grant 1–3 rubble, with another at Mastery 25. Unlock the Pump Station at 50, Ventilation Shaft at 75, and Rock Bolts at 100.',
+      'Loot Filters are back in Settings. Switch between saved filters or start from the Levelling, Mapping, and Endgame presets.',
+      'Forging opens on a simpler Anvil with a hearth flame, clear material costs, and separate controls for custom stages and repeat crafting. Find Boss Keys in the item picker after unlocking Maps.',
+      'The Forging rhythm mark follows the piece’s outline. The Anvil shows rarity odds, and practice with earlier stage options unlocks new ones. Existing unlocks carry over.',
+      'A gold hit in a skill Focus game now gives double Focus. Woodcrafting’s new One Long Curl game rewards a continuous shaving that follows the grain.',
+      'Woodcrafting groups patterns by item type and level. Woodcrafting, Forging and their equipment Masterworks preview base stats and built-in modifiers.',
+      'The Foraging sidebar shows a gold exclamation mark when greenhouse plants are ready to harvest.',
+      'Gear drops wait on the ground or in your time-away haul for pickup. Run filter can move picked-up gear from inventory to your stash.',
+      'Choose whether crafted gear fills inventory or stash first, with the other as a fallback. You can also auto-salvage regular crafts for Arcane Dust.',
+      'Final Map bosses can drop Valor Orbs. Use one on unequipped gear for an equal chance of an upside, a downside, or no stat change. Surviving items are permanently sealed against further crafting.',
+    ],
+  },
   {
     version: '0.6.6',
     date: '24 Nov 2026',
