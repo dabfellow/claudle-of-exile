@@ -10,14 +10,20 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Woodcrafting is split in two. Cloth robes and leather armour now have their own skill, Tailoring. Woodcrafting keeps bows, staves, wands, bucklers and spirit shields.',
-  'New skill: Sawmilling, on its own page under Production. It saws planks, refines heartwood, and makes bow staves, wand blanks and staff shafts.',
-  'Every bow now needs a bow stave, every wand a wand blank and every staff a staff shaft, sawn from the wood of its tier.',
-  'Tailoring and Sawmilling start at your current Woodcrafting level, so you keep everything you could already make.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.6.9',
+    date: '24 Nov 2026',
+    title: 'Tailoring and the Sawmill',
+    items: [
+      'Woodcrafting is split in two. Cloth robes and leather armour now have their own skill, Tailoring. Woodcrafting keeps bows, staves, wands, bucklers and spirit shields.',
+      'New skill: Sawmilling, on its own page under Production. It saws planks, refines heartwood, and makes bow staves, wand blanks and staff shafts.',
+      'Every bow now needs a bow stave, every wand a wand blank and every staff a staff shaft, sawn from the wood of its tier.',
+      'Tailoring and Sawmilling start at your current Woodcrafting level, so you keep everything you could already make.',
+    ],
+  },
   {
     version: '0.6.8',
     date: '24 Nov 2026',
