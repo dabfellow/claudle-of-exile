@@ -4,6 +4,8 @@ Last updated 2026-11-24. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
+**0.6.9, Tailoring and the Sawmill**, went live on 2026-11-24. Cloth and leather armour moved to the new Tailoring skill, and the new Sawmilling skill makes planks, heartwood and the bow staves, wand blanks and staff shafts that every bow, wand and staff now needs. All 2,059 tests passed. Browser checks covered the Sawmilling, Woodcrafting and Tailoring pages at desktop width; phone width was not checked. Deployment confirmed the live version and login configuration.
+
 **0.6.8, The Blacksmith's Shop**, went live on 2026-11-24. The Forge is a blacksmith's shop with a stone hearth of live coals. The Greenhouse has its own page under Production, the Crafting sidebar group is renamed Production, Woodcrafting recipes are picked on the Workbench, the extra Foraging sounds are gone, and empty Astrology slots are just the diamond. All 2,055 tests passed. Browser checks covered the Forge at desktop and phone widths, idle and forging, and the Astrology empty slots. The Greenhouse page and Woodcrafting bench were not opened in the browser. Deployment confirmed the live version and login configuration.
 
 **0.6.7, Workshop Upgrades and Loot**, went live on 2026-11-24. It includes the Woodcutter's Lodge and Trophy Wall, Mining layer mastery, Anvil and Forging progression updates, One Long Curl and equipment stat previews, the greenhouse harvest badge, saved loot filters, ground-first gear drops, crafted gear routing, and Valor Orbs. All 2,055 tests and the production build passed. Browser checks covered the greenhouse badge, map-gated Boss Keys, Forging stages, Woodcrafting's pattern rack and carving surface, and the Trophy Wall purchase. Deployment confirmed the live version and login configuration.
@@ -730,7 +732,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 ## Other open items
 
 - [ ] Split Woodcrafting into Woodcrafting and Tailoring, and add Sawmilling with weapon parts (see Decisions, 2026-11-24).
-  - Built 2026-11-24 (save version 70); typecheck, build and all 2,059 tests pass. Looked at in the running game: Sawmilling page sawed a bow stave, Woodcrafting bench shows the stave cost, Tailoring table opens. Not released.
+  - Built 2026-11-24 (save version 70), live in 0.6.9. All 2,059 tests pass. Looked at in the running game: Sawmilling page sawed a bow stave, Woodcrafting bench shows the stave cost, Tailoring table opens.
   - Not done yet: Tailoring still uses planks and bars (no cloth or leather materials exist); neither new skill has a skilling passive-tree branch, a hidden collectible or Masterworks projects; the new parts use a plain placeholder icon.
 
 - [ ] Greenhouse gets its own sidebar page under Production (Beds, Seeds, Herbarium), the Crafting group is renamed Production, and Foraging keeps only the Wild patches and Masterworks.
