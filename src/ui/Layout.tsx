@@ -45,7 +45,7 @@ import { skillLock } from './skillLock';
 import { fishingOpen } from '../engine/fishing';
 import { stationLockReason } from '../engine/hideout';
 import { greenhousePlotCount } from '../engine/foraging';
-import { professionProgressLabel } from '../engine/professions';
+import { masteryLockReason, masteryUnlocked, professionProgressLabel } from '../engine/professions';
 import { ReportButton } from './components/ReportButton';
 
 export type Page =
@@ -67,6 +67,7 @@ export type Page =
   | 'admin'
   | 'upcoming'
   | 'greenhouse'
+  | 'mastery'
   | SkillId;
 
 interface NavEntry {
@@ -131,6 +132,11 @@ const NAV: { label: string; items: NavEntry[] }[] = [
     ],
   },
   {
+    // Mastery: crafts that draw on many skills at once
+    label: 'Mastery',
+    items: [{ page: 'mastery', label: 'Masterworks', icon: 'forge' }],
+  },
+  {
     label: 'Progress',
     items: [
       { page: 'achievements', label: 'Achievements', icon: 'trophy' },
@@ -163,6 +169,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
   const now = Date.now();
   const harvestReady = s.foraging.plots.some((plot) => plot && plot.readyAt <= now);
   const points = pointsLeft(s) + (choiceWaiting(s) ? 1 : canAscend(s) ? Math.max(0, ascendancyPointsLeft(s)) : 0);
+  const masterworkRunning = s.action?.kind === 'project' && s.professionProgress.activeProject?.project.category === 'masterwork';
   return (
     <nav className="sidebar">
       <div className="brand">
@@ -170,7 +177,7 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
         <span className="brand-sub">an idle exile's tale</span>
         <span className="brand-version">v{APP_VERSION}</span>
       </div>
-      {NAV.filter((g) => !isClassic(s) || (g.label !== 'Gathering' && g.label !== 'Production')).map((g) => (
+      {NAV.filter((g) => !isClassic(s) || (g.label !== 'Gathering' && g.label !== 'Production' && g.label !== 'Mastery')).map((g) => (
         <div className={`nav-group ${g.label ? '' : 'unlabelled'}`} key={g.label || 'top'}>
           {g.label && <div className="nav-label">{g.label}</div>}
           {g.items.filter((it) => it.page !== 'market' || marketInNav(s)).map((it) => {
@@ -180,8 +187,10 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
               ? stationLockReason(s, 'map_device')
               : it.page === 'greenhouse'
                 ? greenhousePlotCount(s) === 0 && 'Unlocks at Foraging level 5'
-                : skillRequirement && `Unlocks at ${skillRequirement}`;
-            const isActive = it.skill && it.skill === active;
+                : it.page === 'mastery'
+                  ? !masteryUnlocked(s) && masteryLockReason(s)
+                  : skillRequirement && `Unlocks at ${skillRequirement}`;
+            const isActive = (it.skill && it.skill === active) || (it.page === 'mastery' && masterworkRunning);
             const color = it.skill ? SKILLS[it.skill].color : 'var(--muted)';
             return (
               <button key={it.page} data-tut={`nav-${it.page}`} className={`nav-item ${page === it.page ? 'active' : ''}`} onClick={() => go(it.page)}>
@@ -283,7 +292,8 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
     title = `Project: ${run.project.name}`;
     sub = run.stopReason ?? `${fmtTime(run.project.durationMs - run.elapsedMs)} base work left`;
     progress = run.elapsedMs / run.project.durationMs;
-    target = run.project.skill;
+    // every project lives on the Masterworks page now
+    target = 'mastery';
     color = SKILLS[run.project.skill].color;
   } else if (s.action?.kind === 'craft') {
     const item = findItem(s, s.action.uid);
@@ -316,7 +326,7 @@ export function TopBar({ go }: { go: (p: Page) => void }) {
     <header className="topbar">
       <div className={`activity ${s.action ? 'on' : ''}`} role="button" tabIndex={0} onClick={() => go(target)} onKeyDown={(e) => e.key === 'Enter' && go(target)}>
         <span className="nav-icon" style={{ width: 36, height: 36 }}>
-          <GameIcon name={target === 'hideout' ? 'home' : target} size={18} color={color} />
+          <GameIcon name={target === 'hideout' ? 'home' : target === 'mastery' ? 'forge' : target} size={18} color={color} />
         </span>
         <div className="activity-text">
           <div className="activity-title">

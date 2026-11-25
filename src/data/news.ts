@@ -14,6 +14,9 @@ export const UPCOMING: string[] = [
   'Smelting’s Focus game is now Keep the Heat: pump the bellows to hold the furnace in its band and fill the melt meter, then ease off as the fire catches and flares before it scorches.',
   'Alchemy is one Laboratory page: a bubbling cauldron with your brew line-up, your flask belt with a shelf of ready vials, and a recipe book for infusions, flasks, reagents and orbs.',
   'Fixed pouring vials always replacing your flask’s first infusion. A vial now fills the first empty slot, and replacing an infusion asks first.',
+  'Masterworks have their own page under a new Mastery heading in the sidebar. It opens once five life skills reach level 25.',
+  'Ten new masterworks replace the old ones. Each takes level 60+ finds from three or more gathering skills, production goods and a rare drop, and makes a named piece of gear whose every modifier is Tier 1, even after rerolling it with orbs. The higher ranks add a Void Slot, a Doom Implicit or a Doom Tier modifier.',
+  'The old masterworks, including the profession tools, are gone. Items you already made keep working, and a project left unfinished can be cancelled from the Masterworks page for all its materials back.',
 ];
 
 export const NEWS: NewsEntry[] = [

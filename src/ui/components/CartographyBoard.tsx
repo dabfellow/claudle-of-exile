@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { ATLAS_SPECIAL_PERKS, LOST_PLACES } from '../../data/cartography';
 import { actionDef, actionsFor, type SkillAction } from '../../data/skills';
 import { cartographyPreview, upgradeCost } from '../../engine/cartography';
@@ -17,7 +17,6 @@ const tabs = [
   { id: 'upgrades', label: 'Upgrades' },
   { id: 'sextants', label: 'Sextants & folios' },
   { id: 'atlas', label: 'Atlas' },
-  { id: 'masterworks', label: 'Masterworks' },
 ] as const;
 type CartoTab = (typeof tabs)[number]['id'];
 
@@ -216,9 +215,9 @@ function AtlasTab({ s }: { s: GameState }) {
   </section>;
 }
 
-export function CartographyBoard({ masterworks }: { masterworks: ReactNode }) {
+export function CartographyBoard() {
   const s = useGame();
-  const [tab, setTab] = useState<CartoTab>(() => s.professionProgress.activeProject?.project.skill === 'cartography' ? 'masterworks' : 'board');
+  const [tab, setTab] = useState<CartoTab>('board');
   const [notice, setNotice] = useState('');
   const all = actionsFor('cartography').filter((a) => !a.batchMastery);
   const upgrades = all.filter((a) => a.chart?.upgrade);
@@ -256,7 +255,6 @@ export function CartographyBoard({ masterworks }: { masterworks: ReactNode }) {
       />
     )}
     {tab === 'atlas' && <AtlasTab s={s} />}
-    {tab === 'masterworks' && masterworks}
     {notice && <p role="status" className="muted small">{notice}</p>}
   </section>;
 }

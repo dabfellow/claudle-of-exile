@@ -14,8 +14,6 @@ import { deriveStats } from '../src/engine/stats';
 import { xpForLevel } from '../src/engine/xp';
 import { deserialize, serialize } from '../src/engine/save';
 import { simulateOffline } from '../src/engine/offline';
-import { advanceProject, startProject } from '../src/engine/professions';
-import { equip } from '../src/engine/equipment';
 import { seeded } from '../src/engine/rng';
 import { masteryThreshold } from '../src/engine/skillingMastery';
 import { rollCollectible } from '../src/engine/collectibles';
@@ -649,7 +647,7 @@ describe('Sawmill and the old crafting links', () => {
     }
   });
 
-  it('uses every resin through actual capped Smithing and completes/equips the Woodcutting tool', () => {
+  it('uses every resin through actual capped Smithing', () => {
     const s = newGame(1), c = fixed(0.999999);
     s.skills.woodcutting = xpForLevel(90);
     s.skills.smithing = xpForLevel(15);
@@ -672,17 +670,6 @@ describe('Sawmill and the old crafting links', () => {
     }
     s.skills.smithing = xpForLevel(90);
     expect(smithIlvl(s, 6)).toBe(21);
-    s.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
-    s.professionProgress.work.woodcutting = 100;
-    expect(startProject(s, c, 'tool_woodcutting')).toBeNull();
-    advanceProject(s, c, 1_200_000);
-    const tool = s.inventory.at(-1)!;
-    expect(tool.name).toBe('Heartwood Hatchet');
-    expect(tool.suffixes).toEqual([{ affixId: 'profession_speed_woodcutting', tier: 0, values: [8] }]);
-    const before = actionIntervalMs(s, actionDef('giant_yew'), deriveStats(s));
-    expect(equip(s, c, tool.uid)).toBeNull();
-    expect(actionIntervalMs(s, actionDef('giant_yew'), deriveStats(s))).toBeCloseTo(before / 1.08);
-    expect(deriveStats(s).skillSpeed).toBe(0);
     expect(materialDef('ancient_heartwood').desc).toMatch(/Smithing makes Heartwood Frames/);
     expect(actionsFor('woodcutting').some((a) => a.baseId)).toBe(false);
     expect(actionsFor('woodcrafting').some((a) => a.id === 'frame_heartwood')).toBe(true);

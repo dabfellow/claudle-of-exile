@@ -8,8 +8,6 @@ import {
   rollDelveRough, rollDelveTraits, startDelve, upgradeDelvePick,
 } from '../src/engine/delve';
 import { simulateOffline } from '../src/engine/offline';
-import { startProject } from '../src/engine/professions';
-import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { actionIntervalMs } from '../src/engine/skills';
 import { newGame } from '../src/engine/state';
@@ -351,13 +349,4 @@ describe('Mining Delve', () => {
     expect(same).toEqual(raw);
   });
 
-  it('counts completed Delve work toward the existing Prospector’s Pick project', () => {
-    const s = newGame(11);
-    s.skills.mining = xpForLevel(30);
-    s.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
-    expect(startDelve(s, noRoll(), 'work')).toBeNull();
-    for (let i = 0; i < 100; i++) completeDelve(s);
-    expect(s.professionProgress.work.mining).toBe(100);
-    expect(startProject(s, makeCtx(seeded(11)), 'tool_mining')).toBeNull();
-  });
 });

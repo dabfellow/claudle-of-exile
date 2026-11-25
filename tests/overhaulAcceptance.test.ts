@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { BASES, UNIQUES, baseDef, uniqueDef } from '../src/data/bases';
 import { FLASKS, flaskDef } from '../src/data/flasks';
 import { CURRENCIES, MATERIALS } from '../src/data/materials';
-import { PROFESSION_PROJECTS, professionProject } from '../src/data/professionProjects';
+import { MASTERWORKS, PROFESSION_PROJECTS, professionProject } from '../src/data/professionProjects';
 import { ACTIONS, SKILLS, actionDef, actionsFor } from '../src/data/skills';
 import { SITES } from '../src/data/expedition';
 import { relicFragment } from '../src/data/archaeology';
@@ -14,10 +14,10 @@ import { settleCharacter } from '../src/engine/account';
 import { isClassic } from '../src/engine/challenge';
 import { makeCtx } from '../src/engine/context';
 import { newFlask } from '../src/engine/flasks';
-import { createItem, createUnique } from '../src/engine/items';
+import { createUnique } from '../src/engine/items';
 import { holdItem, holdPayment, receiveDeliveries, releaseHold } from '../src/engine/market';
 import { simulateOffline } from '../src/engine/offline';
-import { advanceProject, completeProject, startProject } from '../src/engine/professions';
+import { startProject } from '../src/engine/professions';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
 import { actionBlocker, startSkillAction } from '../src/engine/skills';
@@ -65,9 +65,11 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
       expect(blocker ?? '').not.toMatch(/Act|Reach|Defeat/i);
     }
 
+    // the old tools, chart and unique projects were retired for the Masterworks atelier (docs/MASTERWORKS.md)
     for (const id of [...ALL_TOOLS, 'chart_reliquary', ...ALL_13_PROJECTS]) {
-      expect(professionProject(id), `missing project ${id}`).toBeDefined();
+      expect(professionProject(id), `retired project ${id}`).toBeUndefined();
     }
+    expect(MASTERWORKS).toHaveLength(10);
 
     for (const uid of EQUIPMENT_11_UNIQUES) {
       const def = uniqueDef(uid);
@@ -147,10 +149,12 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
     obtainable.add('lost_chart');
     obtainable.add('chart_survey_fragment');
     obtainable.add('completed_atlas_chart');
+    obtainable.add('sealed_relic'); // The Sealed Reliquary dig (engine/expedition.ts)
+    obtainable.add('legend_heartwood'); // legendary giants (engine/woodcutting.ts)
     for (const f of ['scorched_fossil', 'frigid_fossil', 'metallic_fossil', 'serrated_fossil', 'dense_fossil']) {
       obtainable.add(f);
     }
-    for (const trophy of ['marrow_shard', 'choir_glass', 'black_pearl', 'throne_ash', 'crownless_sigil', 'exile_doom_sigil', 'architect_doom_sigil', 'void_sigil']) {
+    for (const trophy of ['boss_trophy', 'marrow_shard', 'choir_glass', 'black_pearl', 'throne_ash', 'crownless_sigil', 'exile_doom_sigil', 'architect_doom_sigil', 'void_sigil']) {
       obtainable.add(trophy);
     }
     for (const shard of ['trans_shard', 'aug_shard', 'alt_shard', 'regal_shard', 'chaos_shard', 'exalt_shard', 'divine_shard']) {
@@ -263,45 +267,6 @@ describe('Phase 18 Whole-Overhaul Acceptance', () => {
     expect(isClassic(classic)).toBe(true);
     expect(actionBlocker(classic, actionDef('mine_copper'))).toMatch(/Classic/);
     expect(startProject(classic, ctx(), 'copper_supply')).toMatch(/Classic/);
-  });
-
-  it('completes all 13 unique acquisition routes end-to-end with exact input consumption and no double claim', () => {
-    for (const uid of ALL_13_PROJECTS) {
-      const p = professionProject(uid)!;
-      const s = newGame(1);
-      const c = ctx(77);
-      s.skills[p.skill] = xpForLevel(Math.max(p.level, 90));
-      s.professionProgress.work[p.skill] = 200;
-      if (p.station) s.account.hideout[p.station.id] = p.station.level;
-      for (const acc of p.accomplishments ?? []) {
-        s.professionProgress.discoveries[acc] = true;
-        if (acc.endsWith('_work_100')) s.professionProgress.work[p.skill] = 200;
-      }
-      for (const [k, v] of Object.entries(p.inputs)) s.storage.bank[k] = v;
-      const reqBaseId = p.baseId ?? p.baseIds?.[0];
-      let baseUid: number | undefined;
-      if (reqBaseId) {
-        const baseItem = createItem(s, reqBaseId, Math.max(p.baseMinIlvl ?? 1, 60), 'rare', c.rng);
-        s.inventory.push(baseItem);
-        baseUid = baseItem.uid;
-      }
-
-      const err = startProject(s, c, p.id, 1, baseUid);
-      expect(err, `Failed to start ${p.id}: ${err}`).toBeNull();
-      for (const k of Object.keys(p.inputs)) expect(s.storage.bank[k] ?? 0).toBe(0);
-
-      const runId = s.professionProgress.activeProject!.runId;
-      advanceProject(s, c, p.durationMs);
-      if (p.reward.category === 'equipment') {
-        expect(s.inventory.some((i) => i.uniqueId === uid), `${uid} missing from inventory`).toBe(true);
-      } else if (p.reward.category === 'flask') {
-        const flaskId = p.reward.flaskId;
-        const hasFlask = s.storage.flaskStash.some((f) => f.flaskId === flaskId)
-          || s.flaskSlots.some((f) => f?.flaskId === flaskId);
-        expect(hasFlask, `${uid} missing from flaskStash/flaskSlots`).toBe(true);
-      }
-      expect(completeProject(s, c, runId)).toBe('Project already settled');
-    }
   });
 
   it('verifies representative 8-hour offline parity across all 12 professions', async () => {

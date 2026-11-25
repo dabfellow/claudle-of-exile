@@ -10,12 +10,7 @@ import { deriveStats } from '../src/engine/stats';
 import { xpForLevel } from '../src/engine/xp';
 import { deserialize, serialize } from '../src/engine/save';
 import { simulateOffline } from '../src/engine/offline';
-import { advanceProject, startProject } from '../src/engine/professions';
-import { equip, slotsFor } from '../src/engine/equipment';
 import { seeded } from '../src/engine/rng';
-import { itemName, eligibleAffixes } from '../src/engine/items';
-import { baseDef, obtainable } from '../src/data/bases';
-import { orbReason, essenceReason, benchCraftReason } from '../src/engine/crafting';
 import type { GameState } from '../src/engine/types';
 
 const zeroLuck = () => makeCtx({ next: () => 0.999999 });
@@ -123,29 +118,7 @@ describe('Phase 02 Mining', () => {
     expect(summary.stoppedReason).toBeNull();
   }, 30_000);
 
-  it('shows known material uses and finishes the Mining tool safely without later recipes', () => {
-    const s = newGame(1);
-    s.skills.mining = xpForLevel(30);
-    s.professionProgress.work.mining = 100;
-    s.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
-    const c = makeCtx(seeded(5));
-    expect(startProject(s, c, 'tool_mining')).toBeNull();
-    advanceProject(s, c, 1_200_000);
-    const pick = s.inventory.find((i) => i.baseId === 'profession_hammer')!;
-    expect(pick.name).toBe("Prospector's Pick");
-    expect(itemName(pick)).toBe("Prospector's Pick");
-    expect(obtainable(baseDef(pick.baseId))).toBe(false);
-    expect(eligibleAffixes(pick, 'suffix').some((a) => a.id === 'profession_speed_mining')).toBe(false);
-    expect(orbReason(s, 'alteration', pick.uid)).toMatch(/fixed/);
-    expect(essenceReason(s, 'essence_haste_2', pick.uid)).toMatch(/fixed/);
-    expect(benchCraftReason(s, 'life_1', pick.uid)).toMatch(/fixed/);
-    expect(pick.prefixes).toEqual([]);
-    expect(pick.suffixes).toEqual([{ affixId: 'profession_speed_mining', tier: 0, values: [8] }]);
-    expect(slotsFor(pick)).toEqual(['weapon']);
-    const before = actionIntervalMs(s, actionDef('mine_mithril'), deriveStats(s));
-    expect(equip(s, c, pick.uid)).toBeNull();
-    expect(actionIntervalMs(s, actionDef('mine_mithril'), deriveStats(s))).toBeCloseTo(before / 1.08);
-    expect(deriveStats(s).skillSpeed).toBe(0);
+  it('shows known material uses', () => {
     expect(materialDef('crystal_shard').desc).toMatch(/Exceptional Crystal/);
     for (const id of ['mineral_fragment', 'stone_fragment']) expect(materialDef(id).desc).toMatch(/future/);
     expect(materialDef('world_ore').desc).toMatch(/Smelt 5/);

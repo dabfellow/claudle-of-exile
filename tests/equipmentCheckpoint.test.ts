@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 import { actionDef, hasAction } from '../src/data/skills';
 import { recipeStock } from '../src/data/smelting';
 import { baseDef } from '../src/data/bases';
-import { PROFESSION_PROJECTS } from '../src/data/professionProjects';
 import { STASH_PAGE_SIZE } from '../src/data/hideout';
 import { makeCtx } from '../src/engine/context';
 import { newGame, tick } from '../src/engine/state';
@@ -13,7 +12,6 @@ import { deriveStats } from '../src/engine/stats';
 import { charXpForLevel, xpForLevel } from '../src/engine/xp';
 import { deserialize, serialize } from '../src/engine/save';
 import { simulateOffline } from '../src/engine/offline';
-import { advanceProject, cancelProject, completeProject, resumeProject, startProject } from '../src/engine/professions';
 import { equip } from '../src/engine/equipment';
 import { upgradeStation } from '../src/engine/hideout';
 import { seeded } from '../src/engine/rng';
@@ -211,7 +209,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
   });
 
   describe('Noncombat journey & early exclusive tool project', () => {
-    it('progresses from level 1, buys Forge 2 via profession route, crafts & equips Wayfarer\'s Hammer without combat', () => {
+    it('progresses from level 1, buys Forge 2 via profession route and refines without combat', () => {
       const s = newGame(1);
       s.character.classId = 'warrior';
       s.skills.combat = 0;
@@ -277,34 +275,7 @@ describe('Phase 05 Equipment Checkpoint', () => {
       // Gathering + refining took ~585s (< 10 minutes)
       expect(gatherElapsedMs / 60_000).toBeLessThan(10);
 
-      // 7. Start and complete tool_wayfarer_hammer project
-      const hammerProject = PROFESSION_PROJECTS.find((p) => p.id === 'tool_wayfarer_hammer')!;
-      expect(startProject(s, c, hammerProject.id)).toBeNull();
-
-      // Project work duration is 600s (10 min); with space in inventory, advanceProject completes and delivers directly
-      advanceProject(s, c, 600_000);
-      expect(s.professionProgress.projects[hammerProject.id]?.completed).toBe(1);
-      expect(s.professionProgress.activeProject).toBeUndefined();
-
-      // Tool delivered into inventory
-      const tool = s.inventory.at(-1)!;
-      expect(tool.name).toBe("Wayfarer's Hammer");
-      expect(tool.suffixes).toEqual([{ affixId: 'profession_speed_smithing', tier: 0, values: [8] }]);
-
-      // 8. Equip the tool on combat 1 character with 0 combat XP
-      const smithIntervalBefore = actionIntervalMs(s, actionDef('smith_rusted_sword'), deriveStats(s));
-      expect(equip(s, c, tool.uid)).toBeNull();
-      expect(s.equipment.weapon?.name).toBe("Wayfarer's Hammer");
-
-      // Verify 8% speed bonus applies to Smithing actions (speed bonuses add with task mastery)
-      const smithIntervalAfter = actionIntervalMs(s, actionDef('smith_rusted_sword'), deriveStats(s));
-      expect(smithIntervalAfter).toBeCloseTo(smithIntervalBefore / 1.08, 0);
-      expect(smithIntervalAfter).toBeLessThan(smithIntervalBefore);
-
-      // Total gathering + refining + project <= 25 minutes
-      const totalTimeMin = (gatherElapsedMs + hammerProject.durationMs) / 60_000;
-      expect(totalTimeMin).toBeLessThan(25);
-
+      // (The Wayfarer's Hammer project that used to follow was retired with the old Masterworks.)
       // Still 0 combat XP and 0 bosses defeated
       expect(s.skills.combat).toBe(0);
       expect(s.bossesDefeated).toEqual([]);
@@ -428,74 +399,6 @@ describe('Phase 05 Equipment Checkpoint', () => {
       // Bank materials not touched, bag still 100
       expect(s.storage.bank).toEqual(a.inputs);
       expect(s.inventory).toHaveLength(100);
-    });
-
-    it('holds completed equipment project when inventory and stash are full and delivers once space is cleared', () => {
-      const s = newGame(1);
-      s.skills.smithing = xpForLevel(15);
-      s.skills.smelting = xpForLevel(15);
-      s.account.hideout.forge = 2;
-      s.account.hideout.smelter = 2;
-      s.professionProgress.work.smithing = 20;
-
-      const p = PROFESSION_PROJECTS.find((p) => p.id === 'tool_wayfarer_hammer')!;
-      s.storage.bank = { ...p.inputs };
-
-      const c = ctx();
-      expect(startProject(s, c, p.id)).toBeNull();
-
-      // Fill both destinations while the project is working
-      s.inventory = Array.from({ length: 100 }, (_, i) => createItem(s, 'driftwood_wand', 1, 'normal', seeded(i)));
-      s.storage.stash = s.storage.stash.map(() => Array.from({ length: STASH_PAGE_SIZE }, (_, i) => createItem(s, 'driftwood_wand', 1, 'normal', seeded(i))));
-
-      // Advance project to finish
-      advanceProject(s, c, p.durationMs);
-      expect(s.professionProgress.activeProject?.status).toBe('ready');
-
-      // Re-running or reloading preserves ready state with escrow intact
-      let reloaded = reload(s);
-      expect(reloaded.professionProgress.activeProject?.status).toBe('ready');
-
-      // Neither destination can receive the equipment yet.
-      const runId = reloaded.professionProgress.activeProject!.runId;
-      expect(resumeProject(reloaded)).toBeNull();
-      expect(completeProject(reloaded, c, runId)).toBe('Ready: storage full');
-
-      // Make space in inventory
-      reloaded.inventory.pop();
-      expect(reloaded.inventory).toHaveLength(99);
-
-      // Now completes safely
-      expect(completeProject(reloaded, c, runId)).toBeNull();
-      expect(reloaded.inventory).toHaveLength(100);
-      expect(reloaded.inventory.at(-1)!.name).toBe("Wayfarer's Hammer");
-
-      // Cannot complete again (duplicate protection)
-      expect(completeProject(reloaded, c, runId)).toBe('Project already settled');
-    });
-
-    it('cancels active project, refunds exact escrow to bank, and grants no XP or mastery', () => {
-      const s = newGame(1);
-      s.skills.smithing = xpForLevel(15);
-      s.skills.smelting = xpForLevel(15);
-      s.account.hideout.forge = 2;
-      s.account.hideout.smelter = 2;
-      s.professionProgress.work.smithing = 20;
-      const p = PROFESSION_PROJECTS.find((p) => p.id === 'tool_wayfarer_hammer')!;
-      s.storage.bank = { ...p.inputs };
-
-      const c = ctx();
-      expect(startProject(s, c, p.id)).toBeNull();
-      for (const id of Object.keys(p.inputs)) expect(s.storage.bank[id]).toBe(0);
-
-      advanceProject(s, c, 300_000); // 50% progress
-      expect(cancelProject(s)).toBeNull();
-
-      // Escrow refunded in full
-      expect(s.storage.bank).toEqual(p.inputs);
-      expect(s.professionProgress.activeProject).toBeUndefined();
-      expect(s.skills.smithing).toBe(xpForLevel(15)); // No XP
-      expect(s.skillingMastery[`task.project_${p.id}`]).toBeUndefined(); // No mastery
     });
 
     it('stops safely when inputs run out during refining, with clear message and intact balances', () => {

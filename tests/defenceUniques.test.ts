@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { uniqueDef } from '../src/data/bases';
 import { flaskDef, UNIQUE_FLASKS } from '../src/data/flasks';
-import { professionProject } from '../src/data/professionProjects';
 import { worldDropUniques } from '../src/data/uniqueDrops';
 import { uniqueDropsIn } from '../src/data/uniqueList';
 import { zoneDef } from '../src/data/zones';
@@ -10,11 +9,10 @@ import { makeCtx } from '../src/engine/context';
 import { createSkillGem, createSupportGem } from '../src/engine/gems';
 import { createUnique } from '../src/engine/items';
 import { newFlask } from '../src/engine/flasks';
-import { advanceProject, startProject } from '../src/engine/professions';
 import { deserialize, serialize } from '../src/engine/save';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
-import { charXpForLevel, xpForLevel } from '../src/engine/xp';
+import { charXpForLevel } from '../src/engine/xp';
 import { simulateOffline } from '../src/engine/offline';
 import { prepareDefenceBuild } from '../src/dev/overhaulBuilds';
 import { seeded } from '../src/engine/rng';
@@ -69,115 +67,10 @@ describe('Phase 15 Defence Uniques', () => {
       const worldDrops = worldDropUniques(100);
       for (const id of DEFENCE_EQUIPMENT) {
         expect(worldDrops.some((u) => u.id === id)).toBe(false);
-        expect(uniqueDropsIn(uniqueDef(id)).join(' ')).toMatch(/Thieving|Archaeology|Smithing/);
+        expect(uniqueDropsIn(uniqueDef(id)).join(' ')).toMatch(/Retired masterwork/);
       }
       expect(UNIQUE_FLASKS.some((f) => f.id === 'u_flask_witchglass')).toBe(false);
       expect(UNIQUE_FLASKS.some((f) => f.id === 'u_flask_still_heart')).toBe(false);
-    });
-
-    it('verifies The Buried Grudge exclusive project route and fixed base', () => {
-      const p = professionProject('the_buried_grudge')!;
-      expect(p).toBeDefined();
-      expect(p.skill).toBe('archaeology');
-      expect(p.level).toBe(65);
-      expect(p.reward.category).toBe('equipment');
-      if (p.reward.category === 'equipment') {
-        expect(p.reward.uniqueId).toBe('the_buried_grudge');
-        expect(p.reward.baseId).toBe('sunforged_bulwark');
-      }
-      expect(p.inputs).toEqual({ giant_relic_fragment: 40, giant_tally: 100, stone_alloy: 2 });
-    });
-
-    it('verifies Debt of Stone exclusive project route and fixed base', () => {
-      const p = professionProject('debt_of_stone')!;
-      expect(p).toBeDefined();
-      expect(p.skill).toBe('smithing');
-      expect(p.level).toBe(70);
-      expect(p.station).toEqual({ id: 'forge', level: 3 });
-      expect(p.reward.category).toBe('equipment');
-      if (p.reward.category === 'equipment') {
-        expect(p.reward.uniqueId).toBe('debt_of_stone');
-        expect(p.reward.baseId).toBe('sunforged_plate');
-      }
-      expect(p.inputs).toEqual({ stone_alloy: 4, adamant_bar: 20, heartwood_frame: 1 });
-    });
-
-    it('verifies Witchglass exclusive alchemy project route', () => {
-      const p = professionProject('witchglass')!;
-      expect(p).toBeDefined();
-      expect(p.skill).toBe('alchemy');
-      expect(p.level).toBe(65);
-      expect(p.station).toEqual({ id: 'alchemy_table', level: 3 });
-      expect(p.reward.category).toBe('flask');
-      if (p.reward.category === 'flask') {
-        expect(p.reward.flaskId).toBe('u_flask_witchglass');
-      }
-      expect(p.inputs).toEqual({ moon_distillate: 5, star_distillate: 2, prepared_glass: 5 });
-    });
-
-    it('verifies The Still Heart exclusive alchemy project route', () => {
-      const p = professionProject('the_still_heart')!;
-      expect(p).toBeDefined();
-      expect(p.skill).toBe('alchemy');
-      expect(p.level).toBe(60);
-      expect(p.station).toEqual({ id: 'alchemy_table', level: 3 });
-      expect(p.reward.category).toBe('flask');
-      if (p.reward.category === 'flask') {
-        expect(p.reward.flaskId).toBe('u_flask_still_heart');
-      }
-      expect(p.inputs).toEqual({ moon_distillate: 6, emberroot: 30, prepared_glass: 3 });
-    });
-
-    it('completes The Buried Grudge archaeology project cleanly', () => {
-      const s = newGame(1), c = context(), p = professionProject('the_buried_grudge')!;
-      s.skills.archaeology = xpForLevel(70);
-      s.professionProgress.work.archaeology = 100;
-      s.professionProgress.discoveries['expedition.dig_colossus.0'] = true;
-      s.storage.bank = { ...p.inputs };
-      expect(startProject(s, c, p.id)).toBeNull();
-      advanceProject(s, c, p.durationMs);
-      expect(s.inventory.some((i) => i.uniqueId === 'the_buried_grudge')).toBe(true);
-      expect(s.account.uniquesSeen).toContain('the_buried_grudge');
-      expect(s.storage.bank.stone_alloy ?? 0).toBe(0);
-    });
-
-    it('completes Debt of Stone smithing project cleanly', () => {
-      const s = newGame(1), c = context(), p = professionProject('debt_of_stone')!;
-      s.skills.smithing = xpForLevel(75);
-      s.professionProgress.work.smithing = 100;
-      s.account.hideout.forge = 3;
-      s.storage.bank = { ...p.inputs };
-      expect(startProject(s, c, p.id)).toBeNull();
-      advanceProject(s, c, p.durationMs);
-      expect(s.inventory.some((i) => i.uniqueId === 'debt_of_stone')).toBe(true);
-      expect(s.account.uniquesSeen).toContain('debt_of_stone');
-      expect(s.storage.bank.stone_alloy ?? 0).toBe(0);
-    });
-
-    it('completes Witchglass alchemy project into flaskStash', () => {
-      const s = newGame(1), c = context(), p = professionProject('witchglass')!;
-      s.skills.alchemy = xpForLevel(70);
-      s.professionProgress.work.alchemy = 100;
-      s.account.hideout.alchemy_table = 3;
-      s.storage.bank = { ...p.inputs };
-      expect(startProject(s, c, p.id)).toBeNull();
-      advanceProject(s, c, p.durationMs);
-      expect(s.storage.flaskStash.some((f) => f.flaskId === 'u_flask_witchglass')).toBe(true);
-      expect(s.account.uniquesSeen).toContain('witchglass');
-      expect(s.storage.bank.prepared_glass ?? 0).toBe(0);
-    });
-
-    it('completes The Still Heart alchemy project into flaskStash', () => {
-      const s = newGame(1), c = context(), p = professionProject('the_still_heart')!;
-      s.skills.alchemy = xpForLevel(70);
-      s.professionProgress.work.alchemy = 100;
-      s.account.hideout.alchemy_table = 3;
-      s.storage.bank = { ...p.inputs };
-      expect(startProject(s, c, p.id)).toBeNull();
-      advanceProject(s, c, p.durationMs);
-      expect(s.storage.flaskStash.some((f) => f.flaskId === 'u_flask_still_heart')).toBe(true);
-      expect(s.account.uniquesSeen).toContain('the_still_heart');
-      expect(s.storage.bank.prepared_glass ?? 0).toBe(0);
     });
   });
 

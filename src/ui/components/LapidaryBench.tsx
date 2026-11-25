@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { CUT_FACETS, CUT_FACET_IDS, NAMED_CUTS, NAMED_CUT_IDS, facetFamilies, facetGem, facetLabel, type CutFacet, type NamedCut } from '../../data/gemFacets';
 import { GEMCUTTING_CATEGORIES, gemcuttingCategory, type GemFamily, type GemcuttingCategory } from '../../data/gemcutting';
 import { materialDef } from '../../data/materials';
@@ -22,7 +22,7 @@ import './lapidary.css';
 
 const tabs = [
   { id: 'loupe', label: 'Loupe' }, { id: 'recipes', label: 'Recipes' },
-  { id: 'catalogue', label: 'Catalogue' }, { id: 'recycling', label: 'Recycling' }, { id: 'masterworks', label: 'Masterworks' },
+  { id: 'catalogue', label: 'Catalogue' }, { id: 'recycling', label: 'Recycling' },
 ] as const;
 type LapidaryTab = (typeof tabs)[number]['id'];
 const recipeList = actionsFor('gemcutting');
@@ -172,9 +172,9 @@ function Recycling({ s, notify, onGoLoupe }: { s: GameState; notify: (message: s
   </section>;
 }
 
-export function LapidaryBench({ masterworks }: { masterworks: ReactNode }) {
+export function LapidaryBench() {
   const s = useGame();
-  const [tab, setTab] = useState<LapidaryTab>(() => s.professionProgress.activeProject?.project.skill === 'gemcutting' ? 'masterworks' : 'loupe');
+  const [tab, setTab] = useState<LapidaryTab>('loupe');
   const [category, setCategory] = useState<GemcuttingCategory>('general');
   const [showLocked, setShowLocked] = useState(false);
   const [id, setId] = useState('cut_skill');
@@ -351,7 +351,6 @@ export function LapidaryBench({ masterworks }: { masterworks: ReactNode }) {
     </section>}
     {tab === 'catalogue' && <Catalogue s={s} />}
     {tab === 'recycling' && <Recycling s={s} notify={setNotice} onGoLoupe={() => setTab('loupe')} />}
-    {tab === 'masterworks' && masterworks}
     {notice && <p role="status" className="lapidary-notice">{notice}</p>}
     <GemTray />
   </section>;

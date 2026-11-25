@@ -282,7 +282,7 @@ export function ForgeRack({ includeSongs = false }: { includeSongs?: boolean } =
   );
 }
 
-type ForgeTab = 'anvil' | 'patterns' | 'book' | 'master' | 'masterworks';
+type ForgeTab = 'anvil' | 'patterns' | 'book' | 'master';
 
 const forgeItemGroups: Record<string, string> = {
   sword: 'Swords', axe: 'Axes', dagger: 'Daggers', mace: 'Maces', sceptre: 'Sceptres',
@@ -692,15 +692,12 @@ function ForgePlanPanel({ s, plan, setPlan, master, start, notice, setNotice, ca
   );
 }
 
-export function AnvilView({ bossKeys, catalysts, masterworks }: { bossKeys: ReactNode; catalysts?: ReactNode; masterworks?: ReactNode }) {
+export function AnvilView({ bossKeys, catalysts }: { bossKeys: ReactNode; catalysts?: ReactNode }) {
   const s = useGame();
   const level = skillLevel(s, 'smithing');
-  const [tab, setTab] = useState<ForgeTab>(() => {
-    const project = s.professionProgress.activeProject?.project;
-    if (masterworks && project?.skill === 'smithing' && project.category !== 'masteryBatch') return 'masterworks';
-    return s.forging.running?.alloy && s.action?.kind === 'skill' && forgeAction(s, s.action.actionId) ? 'master' : 'anvil';
-  });
-  const [extrasOpen, setExtrasOpen] = useState(tab === 'master' || tab === 'masterworks');
+  const [tab, setTab] = useState<ForgeTab>(() =>
+    s.forging.running?.alloy && s.action?.kind === 'skill' && forgeAction(s, s.action.actionId) ? 'master' : 'anvil');
+  const [extrasOpen, setExtrasOpen] = useState(tab === 'master');
   const [notice, setNotice] = useState('');
   const [plan, setPlan] = useState(() => s.forging.running && !s.forging.running.alloy ? s.forging.running : firstPlan(forgeRecipes()[0].baseId!, s));
   const [masterPlan, setMasterPlan] = useState(() => s.forging.running?.alloy ? s.forging.running : firstPlan(forgeRecipes()[0].baseId!, s));
@@ -730,7 +727,6 @@ export function AnvilView({ bossKeys, catalysts, masterworks }: { bossKeys: Reac
       label: 'Master forms',
       locked: level < 80 ? 'Unlocks at Forging Lv 80 (Master Alloy gear)' : undefined,
     },
-    ...(masterworks ? [{ id: 'masterworks' as const, label: 'Masterworks' }] : []),
   ];
   return (
     <div className="forge-anvil">
@@ -747,7 +743,6 @@ export function AnvilView({ bossKeys, catalysts, masterworks }: { bossKeys: Reac
       {tab === 'anvil' && <ForgePlanPanel key="anvil" s={s} plan={plan} setPlan={setPlan} master={false} start={() => start(plan)} notice={notice} setNotice={setNotice} catalysts={catalysts} openRecipes={() => changeTab('patterns')} bossKeys={bossKeys} />}
       {tab === 'master' && <ForgePlanPanel key="master" s={s} plan={masterPlan} setPlan={setMasterPlan} master start={() => start(masterPlan)} notice={notice} setNotice={setNotice} catalysts={catalysts} openRecipes={() => changeTab('patterns')} />}
       {(tab === 'anvil' || tab === 'master') && <ForgeRack includeSongs />}
-      {tab === 'masterworks' && <><UseBarGrade label="Spend this bar quality first" />{masterworks}</>}
       {tab === 'book' && <PatternBook s={s} />}
       {tab === 'patterns' && (
         <section className="anvil-patterns">

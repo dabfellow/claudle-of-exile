@@ -30,6 +30,11 @@ export interface BaseDef {
   retired?: boolean;
   /** Available only through a profession project, never random loot/shops/cheap bases. */
   projectOnly?: boolean;
+  /**
+   * Made only at the Masterworks atelier. Every modifier that rolls on it is its affix's top tier (Tier 1), rares
+   * always roll six, and orbs work on it as usual, so a Chaos Orb rerolls it into six new Tier 1 modifiers.
+   */
+  masterwork?: boolean;
 }
 
 export type WeaponFamily = 'mace' | 'axe' | 'sword' | 'dagger' | 'bow' | 'sceptre' | 'wand' | 'staff';
@@ -187,6 +192,10 @@ const A = (
 const J = (id: string, name: string, slot: 'belt' | 'amulet' | 'ring', reqLevel: number, implicits: Implicit[]): BaseDef => ({
   id, name, slot, reqLevel, tags: slot === 'belt' ? ['belt'] : [slot, 'jewellery'], implicits,
 });
+
+/** A masterwork base: never drops or sells, and keeps the base's own built-in mods ahead of its signature ones. */
+const MW = (b: BaseDef, signature: Implicit[]): BaseDef => ({ ...b, implicits: [...(b.implicits ?? []), ...signature], masterwork: true });
+const sig = (stat: StatKey, value: number): Implicit => ({ stat, value, text: describeStat(stat, value) });
 
 export const BASES: BaseDef[] = [
   W('rusted_sword', 'Rusted Sword', 'sword', 1, [4, 10], 20, 5),
@@ -657,6 +666,17 @@ export const BASES: BaseDef[] = [
   { ...J('overhaul_plain_ring', 'Pinnacle Ring', 'ring', 80, []), projectOnly: true },
   { ...J('overhaul_plain_belt', 'Pinnacle Belt', 'belt', 80, []), projectOnly: true },
   { ...J('overhaul_plain_amulet', 'Pinnacle Amulet', 'amulet', 80, []), projectOnly: true },
+  // Masterworks (docs/MASTERWORKS.md): a little above the best level 80 base, plus one signature built-in mod
+  MW(W('mw_starforged_blade', 'Starforged Blade', 'sword', 80, [64, 128], 25, 8), [sig('critMulti', 25)]),
+  MW(A('mw_glimmerweave_raiment', 'Glimmerweave Raiment', 'body', 80, 'int', 400), [sig('spellPct', 20)]),
+  MW(W('mw_ancientwood_longbow', 'Ancientwood Longbow', 'bow', 80, [76, 152], 10, 8), [sig('attackSpeedPct', 10)]),
+  MW(A('mw_rimebound_crown', 'Rimebound Crown', 'helmet', 80, 'str_int', 240), [sig('allRes', 12)]),
+  MW(A('mw_colossus_bulwark', 'Bulwark of the Colossus', 'offhand', 80, 'str', 600), [sig('blockChance', 6)]),
+  MW(A('mw_wraithstep_boots', 'Wraithstep Boots', 'boots', 80, 'dex_int', 160), [sig('moveSpeedPct', 20)]),
+  MW(A('mw_twin_forge_gauntlets', 'Twin Forge Gauntlets', 'gloves', 80, 'str_dex', 160), [sig('physPct', 20)]),
+  MW(J('mw_converging_ring', 'Ring of Converging Stars', 'ring', 80, []), [sig('allRes', 15), sig('allAttr', 15)]),
+  MW(J('mw_world_tree_amulet', 'Heart of the World Tree', 'amulet', 80, []), [sig('lifePct', 10), sig('allAttr', 20)]),
+  MW(W('mw_wanderers_staff', "The Wanderer's Staff", 'staff', 80, [54, 120], 0, 10), [sig('castSpeedPct', 10)]),
 ];
 
 /**
@@ -666,7 +686,7 @@ export const BASES: BaseDef[] = [
 for (const id of ['bone_wand', 'quartz_wand']) BASES.find((b) => b.id === id)!.retired = true;
 
 /** Whether a base can still be found: drops, the shops and crafting new items skip retired ones. */
-export const obtainable = (b: BaseDef) => !b.retired && !b.projectOnly;
+export const obtainable = (b: BaseDef) => !b.retired && !b.projectOnly && !b.masterwork;
 
 const BY_ID: Record<string, BaseDef> = Object.fromEntries(BASES.map((b) => [b.id, b]));
 
@@ -2131,27 +2151,27 @@ export const UNIQUES: UniqueDef[] = [
 ];
 
 UNIQUES.push(
-  { id: 'woundmaker', name: 'Woundmaker', baseId: 'overhaul_great_axe', projectSource: 'Smithing 60, Forge 3: Woundmaker project',
+  { id: 'woundmaker', name: 'Woundmaker', baseId: 'overhaul_great_axe', projectSource: 'Retired masterwork, no longer made',
     flavour: 'The wound remembers every blow.', mods: [{ affixId: 'u_woundmaker', values: [1] }] },
-  { id: 'winters_pyre', name: "Winter's Pyre", baseId: 'seraph_staff', projectSource: "Smithing 65, Forge 3: Winter's Pyre project",
+  { id: 'winters_pyre', name: "Winter's Pyre", baseId: 'seraph_staff', projectSource: 'Retired masterwork, no longer made',
     flavour: 'Even the coldest memory can burn.', mods: [{ affixId: 'u_winters_pyre', values: [1] }] },
-  { id: 'the_homecoming', name: 'The Homecoming', baseId: 'manticore_greatbow', projectSource: 'Smithing 65, Forge 3: The Homecoming project',
+  { id: 'the_homecoming', name: 'The Homecoming', baseId: 'manticore_greatbow', projectSource: 'Retired masterwork, no longer made',
     flavour: 'An arrow always knows the way back.', mods: [{ affixId: 'u_homecoming', values: [1] }] },
-  { id: 'borrowed_tomorrow', name: 'Borrowed Tomorrow', baseId: 'overhaul_treasury_amulet', projectSource: 'Thieving 65: Borrowed Tomorrow heist treasure claim or Occult Treasury vault jackpot',
+  { id: 'borrowed_tomorrow', name: 'Borrowed Tomorrow', baseId: 'overhaul_treasury_amulet', projectSource: 'Retired masterwork, no longer made',
     flavour: 'Every second bought on credit comes due.', mods: [{ affixId: 'u_borrowed_tomorrow', values: [1] }] },
-  { id: 'the_second_heresy', name: 'The Second Heresy', baseId: 'overhaul_plain_ring', projectSource: 'Cartography 85: The Second Heresy project (Crownless Sigil, Stolen Oath Seal, Restored Taboo Tablet, Inscription Fragments)',
+  { id: 'the_second_heresy', name: 'The Second Heresy', baseId: 'overhaul_plain_ring', projectSource: 'Retired masterwork, no longer made',
     flavour: 'One sin is a mistake. Two is a doctrine.', mods: [{ affixId: 'u_second_heresy', values: [1] }] },
-  { id: 'worldheart', name: 'Worldheart', baseId: 'overhaul_plain_belt', projectSource: "Smithing 90, Forge 3: Worldheart project (World Core Fragments, Reliquary Fragment, Architect's Doom Sigil)",
+  { id: 'worldheart', name: 'Worldheart', baseId: 'overhaul_plain_belt', projectSource: 'Retired masterwork, no longer made',
     flavour: 'Beneath every mountain, something is still beating.', mods: [{ affixId: 'u_worldheart', values: [1] }] },
-  { id: 'the_sum_of_all_things', name: 'The Sum of All Things', baseId: 'overhaul_plain_amulet', projectSource: 'Cartography 90: The Sum of All Things project (all twelve professions and every endgame encounter)',
+  { id: 'the_sum_of_all_things', name: 'The Sum of All Things', baseId: 'overhaul_plain_amulet', projectSource: 'Retired masterwork, no longer made',
     flavour: 'Everything you ever made, weighed at once.', mods: [{ affixId: 'u_sum_of_all', ranges: [[1, 200]] }] },
-  { id: 'the_buried_grudge', name: 'The Buried Grudge', baseId: 'sunforged_bulwark', projectSource: 'Archaeology 65: The Buried Grudge restoration project',
+  { id: 'the_buried_grudge', name: 'The Buried Grudge', baseId: 'sunforged_bulwark', projectSource: 'Retired masterwork, no longer made',
     flavour: 'The stone breaks before it bends, and remembers what broke it.', mods: [{ affixId: 'u_the_buried_grudge', values: [1] }] },
-  { id: 'debt_of_stone', name: 'Debt of Stone', baseId: 'sunforged_plate', projectSource: 'Smithing 70, Forge 3: Debt of Stone project',
+  { id: 'debt_of_stone', name: 'Debt of Stone', baseId: 'sunforged_plate', projectSource: 'Retired masterwork, no longer made',
     flavour: 'The earth takes what it gave, grain by grain.', mods: [{ affixId: 'u_debt_of_stone', values: [1] }] },
-  { id: 'hands_forgotten_choir', name: 'Hands of the Forgotten Choir', baseId: 'seraph_gloves', projectSource: 'Cartography 70: Hands of the Forgotten Choir project',
+  { id: 'hands_forgotten_choir', name: 'Hands of the Forgotten Choir', baseId: 'seraph_gloves', projectSource: 'Retired masterwork, no longer made',
     flavour: 'Their voices sing what the hands can no longer speak.', mods: [{ affixId: 'u_hands_forgotten_choir', values: [1] }] },
-  { id: 'hollow_circuit', name: 'Hollow Circuit', baseId: 'diamond_ring', projectSource: 'Cartography 70: Hollow Circuit project',
+  { id: 'hollow_circuit', name: 'Hollow Circuit', baseId: 'diamond_ring', projectSource: 'Retired masterwork, no longer made',
     flavour: 'The current flows where thought once lingered.', mods: [{ affixId: 'u_hollow_circuit', values: [1] }] },
 );
 

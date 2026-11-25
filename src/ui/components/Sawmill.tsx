@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { materialDef } from '../../data/materials';
 import { actionsFor, type SkillAction } from '../../data/skills';
 import { recipeMaterialCount } from '../../engine/bank';
@@ -6,7 +6,7 @@ import { masteryLevel } from '../../engine/skillingMastery';
 import { actionBlocker, actionIntervalMs, skillLevel, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import { game, useGame } from '../../game';
-import { Cost, fmt, MatIcon, ProgressBar, Tabs } from './common';
+import { Cost, fmt, MatIcon, ProgressBar } from './common';
 import { MasteryProgress } from './MasteryProgress';
 import { LockedBadge, SkillIntro } from './SkillHelp';
 import { SkillMinigame } from './SkillMinigame';
@@ -107,13 +107,10 @@ export function Sawmill() {
   );
 }
 
-export function SawmillPage({ masterworks }: { masterworks: ReactNode }) {
-  const s = useGame();
-  const [tab, setTab] = useState<'mill' | 'masterworks'>(() => s.professionProgress.activeProject?.project.skill === 'sawmilling' ? 'masterworks' : 'mill');
+export function SawmillPage() {
   return (
     <section className="wood-bench">
-      <Tabs tabs={[{ id: 'mill', label: 'Sawmill' }, { id: 'masterworks', label: 'Masterworks' }]} value={tab} onChange={setTab} />
-      {tab === 'mill' ? <Sawmill /> : masterworks}
+      <Sawmill />
     </section>
   );
 }

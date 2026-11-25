@@ -16,7 +16,6 @@ import { deriveStats } from '../src/engine/stats';
 import { charXpForLevel, xpForLevel } from '../src/engine/xp';
 import { deserialize, serialize } from '../src/engine/save';
 import { simulateOffline } from '../src/engine/offline';
-import { advanceProject, cancelProject, completeProject, resumeProject, startProject } from '../src/engine/professions';
 import { equip, equipReason } from '../src/engine/equipment';
 import { seeded } from '../src/engine/rng';
 import { giantCuts } from './helpers';
@@ -87,7 +86,7 @@ describe('Phase 04 Smithing', () => {
     expect(s.action).toBeNull();
   });
   it('keeps every cheap base and expands only compatible obtainable purpose pairs', () => {
-    for (const b of BASES.filter((b) => !b.projectOnly)) expect(actionDef(`smith_${b.id}`).baseId).toBe(b.id);
+    for (const b of BASES.filter((b) => !b.projectOnly && !b.masterwork)) expect(actionDef(`smith_${b.id}`).baseId).toBe(b.id);
     const purposes = [...actionsFor('smithing'), ...actionsFor('woodcrafting')].filter((a) => a.purpose);
     expect(purposes.length).toBeGreaterThan(500);
     for (const a of purposes) {
@@ -215,26 +214,6 @@ describe('Phase 04 Smithing', () => {
     expect(summary.items).toBe(1); expect(away.action).toBeNull(); expect(summary.xp[a.skill]).toBeCloseTo(a.xp);
   });
 
-  it('completes the early hammer with refunds, full storage recovery and duplicate protection', () => {
-    let s = smith(15, 2); const p = PROFESSION_PROJECTS.find((p) => p.id === 'tool_wayfarer_hammer')!;
-    s.professionProgress.work.smithing = 20; s.storage.bank = { ...p.inputs };
-    expect(startProject(s, ctx(), p.id)).toBeNull(); expect(cancelProject(s)).toBeNull(); expect(s.storage.bank).toEqual(p.inputs);
-    expect(startProject(s, ctx(), p.id)).toBeNull();
-    s.inventory = Array.from({ length: 100 }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng));
-    s.storage.stash = s.storage.stash.map(() => Array.from({ length: STASH_PAGE_SIZE }, () => createItem(s, 'driftwood_wand', 1, 'normal', ctx().rng)));
-    advanceProject(s, ctx(), 600_000); expect(s.professionProgress.activeProject?.status).toBe('ready');
-    s = reload(s); s.inventory.pop(); expect(resumeProject(s)).toBeNull();
-    const runId = s.professionProgress.activeProject!.runId;
-    expect(completeProject(s, ctx(), runId)).toBeNull(); expect(completeProject(s, ctx(), runId)).toBe('Project already settled');
-    const tool = s.inventory.at(-1)!; expect(tool.name).toBe("Wayfarer's Hammer");
-    expect(tool.suffixes).toEqual([{ affixId: 'profession_speed_smithing', tier: 0, values: [8] }]);
-    const interval = actionIntervalMs(s, actionDef('smith_rusted_sword'), deriveStats(s));
-    expect(equip(s, ctx(), tool.uid)).toBeNull();
-    expect(actionIntervalMs(s, actionDef('smith_rusted_sword'), deriveStats(s))).toBeCloseTo(interval / 1.08);
-    expect(s.skills.combat).toBe(0); expect(s.professionProgress.projects[p.id].completed).toBe(1);
-    for (const id of Object.keys(p.inputs)) expect(s.storage.bank[id]).toBe(0);
-  });
-
   it('preserves a busy old full-bag save with mastery and existing material balances across two loads', () => {
     const fixture = JSON.parse(readFileSync(new URL('./fixtures/profession-v46.json', import.meta.url), 'utf8'));
     let s = deserialize(JSON.stringify(fixture.ordinary));
@@ -244,6 +223,6 @@ describe('Phase 04 Smithing', () => {
     expect(s.action).toEqual(previous.action); expect(s.skillingMastery).toEqual(previous.mastery);
     expect(s.storage.bank).toEqual(previous.bank); expect(s.inventory).toEqual(previous.inventory);
     expect(ACTIONS.some((a) => a.id.includes('woundmaker'))).toBe(false);
-    expect(PROFESSION_PROJECTS.some((p) => p.id === 'woundmaker')).toBe(true); // Finished exclusive project added in Phase14, never a cheap base action.
+    expect(PROFESSION_PROJECTS.some((p) => p.id === 'woundmaker')).toBe(false); // its Masterworks recipe was retired; it was never a cheap base action either
   });
 });

@@ -23,7 +23,7 @@ import { skillLock } from '../src/ui/skillLock';
 import { realmOf } from '../src/engine/challenge';
 import { readFileSync } from 'node:fs';
 import type { AccountState } from '../src/engine/types';
-import { cleanProjectDesc, resolveBaseSource, resolveMaterialSource } from '../src/ui/components/projectHelpers';
+import { resolveMaterialSource } from '../src/ui/components/projectHelpers';
 
 const ctx = () => makeCtx(seeded(123));
 const reload = (s: ReturnType<typeof newGame>) => {
@@ -403,41 +403,16 @@ describe('pre-overhaul serialized compatibility', () => {
     expect(again.professionProgress).toEqual(s.professionProgress);
   });
 
-  it('resolves clickable material sources and eliminates redundant unique mod descriptions', () => {
-    const debt = PROFESSION_PROJECTS.find((p) => p.id === 'debt_of_stone')!;
-    expect(debt).toBeDefined();
-
-    // Check material source resolution
-    const stoneAlloySrc = resolveMaterialSource('stone_alloy', debt.sources);
-    expect(stoneAlloySrc).toBeDefined();
-    expect(stoneAlloySrc?.skill).toBe('smithing');
+  it('resolves clickable material sources on every masterwork', () => {
+    const bulwark = PROFESSION_PROJECTS.find((p) => p.id === 'mw_colossus_bulwark')!;
+    const stoneAlloySrc = resolveMaterialSource('stone_alloy', bulwark.sources);
+    expect(stoneAlloySrc?.skill).toBe('smelting');
     expect(stoneAlloySrc?.label).toMatch(/Stone Alloy/i);
-
-    const adamantBarSrc = resolveMaterialSource('adamant_bar', debt.sources);
-    expect(adamantBarSrc).toBeDefined();
-    expect(adamantBarSrc?.skill).toBe('smithing');
-    expect(adamantBarSrc?.label).toMatch(/Adamant Bar/i);
-
-    const heartwoodSrc = resolveMaterialSource('heartwood_frame', debt.sources);
-    expect(heartwoodSrc).toBeDefined();
-    expect(heartwoodSrc?.skill).toBe('smithing');
-    expect(heartwoodSrc?.label).toMatch(/Heartwood Frame/i);
-
-    // Check description cleaning: strips duplicate unique mod verbatim
-    const cleanedDebt = cleanProjectDesc(debt);
-    expect(cleanedDebt).toBeDefined();
-    expect(cleanedDebt).not.toContain('50% of incoming hit damage deferred');
-    expect(cleanedDebt).not.toContain('item level 80');
-    expect(cleanedDebt).toContain('Combat level 60 to equip');
-    expect(cleanedDebt).toContain('One normal rune slot');
-
-    // Check Hands of the Forgotten Choir base source and description
-    const choir = PROFESSION_PROJECTS.find((p) => p.id === 'hands_forgotten_choir')!;
-    expect(choir).toBeDefined();
-    const baseSrc = resolveBaseSource(choir);
-    expect(baseSrc?.skill).toBe('smithing');
-    const cleanedChoir = cleanProjectDesc(choir);
-    expect(cleanedChoir).not.toContain('Totem skills place two at once');
-    expect(cleanedChoir).toContain('completely consuming the base into a new unique');
+    expect(resolveMaterialSource('sealed_relic', bulwark.sources)?.skill).toBe('archaeology');
+    expect(resolveMaterialSource('marrow_shard', bulwark.sources)?.skill).toBe('combat');
+    // every input on every masterwork points somewhere a player can go
+    for (const p of PROFESSION_PROJECTS.filter((x) => x.category === 'masterwork')) {
+      for (const id of Object.keys(p.inputs)) expect(resolveMaterialSource(id, p.sources), `${p.id}: ${id}`).toBeDefined();
+    }
   });
 });

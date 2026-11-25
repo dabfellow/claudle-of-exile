@@ -21,10 +21,8 @@ import { AGILITY_SHORTCUTS } from '../../data/agility';
 import { actionBlocker, actionIntervalMs, actionPlaceNeeded, agilityBlocker, gemCutPool, setSmithCatalyst, skillLevel, smithIlvl, startSkillAction, stopAction } from '../../engine/skills';
 import { deriveStats } from '../../engine/stats';
 import type { GameEvent, SkillId } from '../../engine/types';
-import { ProjectBoard } from '../components/ProjectBoard';
-import { PROFESSION_PROJECTS } from '../../data/professionProjects';
 import { weaponComponentPreview } from '../../engine/weaponProjects';
-import { hasAccomplishment, professionAccessReason } from '../../engine/professions';
+import { hasAccomplishment } from '../../engine/professions';
 import type { GameState } from '../../engine/types';
 import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
@@ -531,13 +529,8 @@ function getSkillTabs(skill: SkillId): { id: string; label: string }[] | null {
   else if (skill === 'astrology') baseTabs = [{ id: 'chart', label: 'Chart' }, { id: 'research', label: 'Research' }, { id: 'watch', label: 'Watch' }, { id: 'fallen', label: 'Fallen' }];
   else if (skill === 'woodcutting') baseTabs = [...GIANT_TABS];
 
-  const hasProjects = PROFESSION_PROJECTS.some((p) => p.skill === skill && p.category !== 'masteryBatch');
-  if (!baseTabs && !hasProjects) return null;
-  const list = baseTabs ? [...baseTabs] : [];
-  if (hasProjects) {
-    list.push({ id: 'masterworks', label: 'Masterworks' });
-  }
-  return list;
+  // masterworks have their own page under Mastery, so a skill page only lists its own tabs
+  return baseTabs ? [...baseTabs] : null;
 }
 
 function defaultSkillTab(skill: SkillId): string {
@@ -720,7 +713,7 @@ export function SkillPage({ skill, go }: { skill: SkillId; go?: (page: Page) => 
   const lockedAt = skillLock(s, skill);
   if (lockedAt) return <LockedSkill skill={skill} place={lockedAt} />;
   if (skill === 'mining' || skill === 'smelting' || skill === 'smithing' || skill === 'woodcrafting' || skill === 'tailoring' || skill === 'sawmilling' || skill === 'gemcutting' || skill === 'harvesting' || skill === 'alchemy' || skill === 'cartography') return <WorkshopPage key={skill} skill={skill} go={go} />;
-  return <OpenSkillPage skill={skill} go={go} />;
+  return <OpenSkillPage skill={skill} />;
 }
 
 function BossKeyRecipes() {
@@ -732,23 +725,22 @@ function BossKeyRecipes() {
 }
 
 function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing' | 'woodcrafting' | 'tailoring' | 'sawmilling' | 'gemcutting' | 'harvesting' | 'alchemy' | 'cartography'; go?: (page: Page) => void }) {
-  const projects = <ProjectBoard skill={skill} go={go} />;
   const catalysts = <details className="profession-supplies"><summary>Catalysts & crafting output</summary><CatalystPanel /><CraftOutputSettings /></details>;
   return <div className={`page profession-page profession-${skill}`} style={{ ['--profession' as string]: SKILLS[skill].color }}>
     <SkillHeader skill={skill} />
-    {skill === 'mining' && <DelveView masterworks={projects} />}
-    {skill === 'smelting' && <FurnaceView projects={projects} />}
-    {skill === 'smithing' && <AnvilView bossKeys={<BossKeyRecipes />} catalysts={catalysts} masterworks={projects} />}
-    {(skill === 'woodcrafting' || skill === 'tailoring') && <WoodBench key={skill} skill={skill} catalysts={catalysts} masterworks={projects} />}
-    {skill === 'sawmilling' && <SawmillPage masterworks={projects} />}
-    {skill === 'gemcutting' && <LapidaryBench masterworks={projects} />}
-    {skill === 'harvesting' && <ForagingBench masterworks={projects} onOpenGreenhouse={() => go?.('greenhouse')} />}
-    {skill === 'alchemy' && <AlchemyBench masterworks={projects} />}
-    {skill === 'cartography' && <CartographyBoard masterworks={projects} />}
+    {skill === 'mining' && <DelveView />}
+    {skill === 'smelting' && <FurnaceView />}
+    {skill === 'smithing' && <AnvilView bossKeys={<BossKeyRecipes />} catalysts={catalysts} />}
+    {(skill === 'woodcrafting' || skill === 'tailoring') && <WoodBench key={skill} skill={skill} catalysts={catalysts} />}
+    {skill === 'sawmilling' && <SawmillPage />}
+    {skill === 'gemcutting' && <LapidaryBench />}
+    {skill === 'harvesting' && <ForagingBench onOpenGreenhouse={() => go?.('greenhouse')} />}
+    {skill === 'alchemy' && <AlchemyBench />}
+    {skill === 'cartography' && <CartographyBoard />}
   </div>;
 }
 
-function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) => void }) {
+function OpenSkillPage({ skill }: { skill: SkillId }) {
   const s = useGame();
   const level = skillLevel(s, skill);
   const isUnlocked = (a: SkillAction) =>
@@ -767,9 +759,8 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
   // Keep mastery batches in line with normal activities, hiding them until unlocked.
   const actions = allActions.filter((a) => !a.batchMastery || isUnlocked(a));
   const [skillTabs, setSkillTabs] = useState<Record<string, string>>({});
-  const activeSkillProject = s.professionProgress.activeProject?.project.skill === skill && s.professionProgress.activeProject?.project.category !== 'masteryBatch';
   const fallbackTab = skill === 'astrology' && !Object.keys(s.astrology.stars).length && !s.astrology.fallen.length ? 'research' : defaultSkillTab(skill);
-  const tab = skillTabs[skill] ?? (activeSkillProject ? 'masterworks' : fallbackTab);
+  const tab = skillTabs[skill] ?? fallbackTab;
   const setTab = (t: string) => setSkillTabs((prev) => ({ ...prev, [skill]: t }));
   const tabs = getSkillTabs(skill);
   const selectedActions = actions;
@@ -790,7 +781,6 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
   const tiers = tiersOf(skill, inTab);
 
   const showActivities =
-    tab !== 'masterworks' &&
     skill !== 'archaeology' &&
     skill !== 'thieving' &&
     skill !== 'fishing' &&
@@ -808,12 +798,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
           {tabs.map((x) => {
             let countText = '';
             let isActiveProject = false;
-            if (x.id === 'masterworks') {
-              const projects = PROFESSION_PROJECTS.filter((p) => p.skill === skill && p.category !== 'masteryBatch');
-              const unlockedProjects = projects.filter((p) => !professionAccessReason(s, p)).length;
-              countText = `${unlockedProjects}/${projects.length}`;
-              isActiveProject = s.professionProgress.activeProject?.project.skill === skill && s.professionProgress.activeProject?.project.category !== 'masteryBatch';
-            } else if (skill === 'thieving') {
+            if (skill === 'thieving') {
               if (x.id === 'marks') countText = `${selectedActions.filter(isUnlocked).length}/${selectedActions.length}`;
               else if (x.id === 'heists') countText = `${HEIST_JOBS.filter((j) => !jobBlocker(s, j)).length}/${HEIST_JOBS.length}`;
               else if (x.id === 'crew') {
@@ -878,7 +863,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
         </div>
       )}
 
-      {skill === 'astrology' && tab !== 'masterworks' && <Observatory tab={tab} onTab={setTab} />}
+      {skill === 'astrology' && <Observatory tab={tab} onTab={setTab} />}
       {skill === 'agility' && <AgilityShortcuts level={level} />}
       {skill === 'woodcutting' && isGiantTab(tab) && <GiantView tab={tab} />}
 
@@ -918,7 +903,7 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
       {skill === 'thieving' && tab === 'heists' && <HeistBoard view="jobs" />}
       {skill === 'thieving' && tab === 'crew' && <HeistBoard view="crew" />}
 
-      {skill === 'archaeology' && tab !== 'masterworks' && <ExpeditionBoard view={tab as 'desk' | 'codex' | 'relics' | 'merchants'} />}
+      {skill === 'archaeology' && <ExpeditionBoard view={tab as 'desk' | 'codex' | 'relics' | 'merchants'} />}
       {skill === 'fishing' && (
         <div className="callout skill-note">
           Fishing is coming soon. The rod is strung, the spots are scouted and the passive tree is ready. The fish have not been told.
@@ -929,11 +914,10 @@ function OpenSkillPage({ skill, go }: { skill: SkillId; go?: (skill: SkillId) =>
         <ProfessionWorkbench key={`${skill}:${tab}`} skill={skill} groups={tiers} isUnlocked={isUnlocked} renderAction={(a) => <ActionCard key={a.id} a={a} level={level} open workbench onToggle={() => {}} />} />
       )}
 
-      {skill === 'runecarving' && tab !== 'masterworks' && <details className="profession-supplies"><summary>Equipped runes & resonance reference</summary><RuneBoard /></details>}
-      {skill === 'cooking' && tab !== 'masterworks' && <details className="profession-supplies"><summary>Pantry & active meal</summary><PantryBoard /></details>}
-      {skill === 'cartography' && tab !== 'masterworks' && <details className="profession-supplies"><summary>Map case & Sextant supplies</summary><MapCaseBoard /></details>}
+      {skill === 'runecarving' && <details className="profession-supplies"><summary>Equipped runes & resonance reference</summary><RuneBoard /></details>}
+      {skill === 'cooking' && <details className="profession-supplies"><summary>Pantry & active meal</summary><PantryBoard /></details>}
+      {skill === 'cartography' && <details className="profession-supplies"><summary>Map case & Sextant supplies</summary><MapCaseBoard /></details>}
 
-      {tab === 'masterworks' && <ProjectBoard skill={skill} go={go} />}
     </div>
   );
 }

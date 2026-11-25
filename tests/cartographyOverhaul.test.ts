@@ -3,12 +3,10 @@ import { actionDef } from '../src/data/skills';
 import { uniqueMapDef } from '../src/data/maps';
 import { encounterWorldDropUniques, worldDropUniques } from '../src/data/uniqueDrops';
 import { UNIQUE_MAPS } from '../src/data/maps';
-import { professionProject } from '../src/data/professionProjects';
 import { newGame } from '../src/engine/state';
 import { startSkillAction, skillStep } from '../src/engine/skills';
 import { deriveStats } from '../src/engine/stats';
 import { xpForLevel } from '../src/engine/xp';
-import { completeProject, startProject } from '../src/engine/professions';
 import { addUniqueMaps, mapStep, startUniqueMap, uniqueMapHeld, MAPS_PREVIEW, addMaps, startMap } from '../src/engine/maps';
 import { simulateOffline } from '../src/engine/offline';
 import { cartographyPreview } from '../src/engine/cartography';
@@ -35,18 +33,11 @@ describe('Phase 13 charts and encounters', () => {
     expect(s.maps.tally.runs).toBe(1);
     expect(s.storage.bank.reliquary_fragment).toBe(1);
   });
-  it('produces dependable chart progress without combat, protects folio counters, and crafts one chart offline', () => {
+  it('produces dependable chart progress without combat and protects folio counters', () => {
     const s = make(); s.storage.bank.ash_log = 2400;
     expect(startSkillAction(s, ctx(), 'chart_vellum')).toBeNull();
     skillStep(s, ctx(), 600 * 3500, deriveStats(s));
     expect(s.storage.bank.chart_survey_fragment).toBe(20);
-    const p = professionProject('chart_reliquary')!;
-    Object.assign(s.storage.bank, p.inputs);
-    expect(startProject(s, ctx(), p.id)).toBeNull();
-    simulateOffline(s, ctx(), p.durationMs);
-    expect(uniqueMapHeld(s, 'umap_artisans_reliquary')).toBe(1);
-    expect(s.professionProgress.projects.chart_reliquary.completed).toBe(1);
-    expect(completeProject(s, ctx(), 1)).toMatch(/settled/);
     s.storage.bank.vellum = 100; s.storage.bank.gall_ink = 100;
     const before = s.professionProgress.work.cartography!;
     startSkillAction(s, ctx(), 'chart_folio_t1'); skillStep(s, ctx(), 60_000, deriveStats(s));

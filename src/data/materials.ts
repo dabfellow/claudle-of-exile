@@ -30,8 +30,8 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'choir_inscription', name: 'Choir Inscription', kind: 'component', color: '#d6453d', value: 0, desc: 'Cartography 70: 10 Inscription Fragments + 5 Flawless Iron Bars. Two are used in the Hands of the Forgotten Choir project.' },
   { id: 'circuit_inscription', name: 'Circuit Inscription', kind: 'component', color: '#f2d14c', value: 0, desc: 'Cartography 70: 10 Inscription Fragments + 5 Flawless Mithril Bars. Two are used in the Hollow Circuit project.' },
   { id: 'convergence_inscription', name: 'Convergence Inscription', kind: 'component', color: '#9b8e7e', value: 0, desc: 'Cartography 90: 5 Inscription Fragments + 5 Flawless Star Bars. Protected component for the Sum of All Things pinnacle project.' },
-  { id: 'treasury_fragment', name: 'Treasury Fragment', kind: 'component', color: '#c9a35a', value: 0, desc: 'Awarded for completing rooms in The Occult Treasury. 120 fragments claim Borrowed Tomorrow at Thieving 65.' },
-  { id: 'oath_fragment', name: 'Oath Fragment', kind: 'component', color: '#e8c25a', value: 0, desc: 'Awarded from clean Occult Treasury vaults and every 12 completed rooms. Five assemble a Stolen Oath Seal at Thieving 75.' },
+  { id: 'treasury_fragment', name: 'Treasury Fragment', kind: 'component', color: '#c9a35a', value: 0, desc: 'Awarded for completing rooms in The Occult Treasury. Woven into the Glimmerweave Raiment masterwork.' },
+  { id: 'oath_fragment', name: 'Oath Fragment', kind: 'component', color: '#e8c25a', value: 0, desc: 'Awarded from clean Occult Treasury vaults and every 12 completed rooms. Used in the Wraithstep Boots and Heart of the World Tree masterworks.' },
   { id: 'stolen_oath_seal', name: 'Stolen Oath Seal', kind: 'component', color: '#f7e08a', value: 0, desc: 'Thieving 75: assembled from 5 Oath Fragments. Protected component for The Second Heresy pinnacle project.' },
   { id: 'gold', name: 'Gold', kind: 'gold', color: '#e8c25a', value: 1 },
 

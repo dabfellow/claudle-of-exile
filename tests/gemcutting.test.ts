@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { gemReqLevel } from '../src/data/gems';
 import { DEFENCE_SUPPORTS, GEMCUTTING_CATEGORIES, gemcuttingCategory, staticFamilyPool, type GemFamily } from '../src/data/gemcutting';
 import { actionDef, SKILLS } from '../src/data/skills';
-import { PROFESSION_PROJECTS } from '../src/data/professionProjects';
 import type { Ctx } from '../src/engine/context';
-import { equip } from '../src/engine/equipment';
 import {
   gemcuttingPreview,
   getUnequippedGems,
@@ -15,11 +13,10 @@ import {
 import { createSkillGem, createSupportGem } from '../src/engine/gems';
 import { hasMinigame } from '../src/engine/minigame';
 import { simulateOffline } from '../src/engine/offline';
-import { advanceProject, awardProfessionProgress, startProject } from '../src/engine/professions';
+import { awardProfessionProgress } from '../src/engine/professions';
 import { seeded } from '../src/engine/rng';
 import { masteryForAction } from '../src/data/skillingMastery';
-import { skillTreeStats } from '../src/engine/skillTree';
-import { actionBlocker, actionIntervalMs, skillLevel, skillStep, startSkillAction } from '../src/engine/skills';
+import { actionBlocker, skillLevel, skillStep, startSkillAction } from '../src/engine/skills';
 import { newGame, tick } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
 import type { GameState } from '../src/engine/types';
@@ -293,39 +290,6 @@ describe('Gemcutting: exceptional crystals and Lapidary’s Chisel', () => {
     expect(s.storage.bank.convergence_crystal).toBe(1);
   });
 
-  it('crafts Lapidary’s Chisel and verifies +8% Gemcutting speed', () => {
-    const s = newGame(1);
-    s.skills.gemcutting = xpForLevel(30);
-    awardProfessionProgress(s, 'gemcutting', 100);
-
-    const project = PROFESSION_PROJECTS.find((p) => p.id === 'tool_gemcutting')!;
-    expect(project).toBeDefined();
-    expect(project.level).toBe(30);
-
-    give(s, project.inputs);
-    expect(startProject(s, ctx(), project.id)).toBeNull();
-    expect(s.professionProgress.activeProject?.project.id).toBe('tool_gemcutting');
-
-    // Advance 20 minutes
-    advanceProject(s, ctx(), 1200000);
-
-    const tool = s.inventory.find((i) => i.name === "Lapidary's Chisel");
-    expect(tool).toBeDefined();
-    expect(tool?.suffixes?.[0].affixId).toBe('profession_speed_gemcutting');
-
-    // Base Gemcutting speed without tool
-    expect(skillTreeStats(s).gemcuttingSpeed ?? 0).toBe(0);
-    const a = actionDef('cut_skill');
-    const intervalWithout = actionIntervalMs(s, a, deriveStats(s));
-
-    // Equip tool
-    expect(equip(s, ctx(), tool!.uid)).toBeNull();
-    expect(skillTreeStats(s).gemcuttingSpeed).toBe(8);
-
-    // Verify action interval decreases by ~8%
-    const intervalWith = actionIntervalMs(s, a, deriveStats(s));
-    expect(intervalWith).toBeLessThan(intervalWithout);
-  });
 });
 
 describe('Gemcutting: 8-hour live vs offline catch-up parity', () => {

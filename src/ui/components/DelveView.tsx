@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import {
   DELVE_HAZARDS, DELVE_INSTALLATIONS, DELVE_MASTERY_MAX, DELVE_MASTERY_ORE_BONUS, DELVE_PICKS,
   DELVE_RUBBLE_MASTERY_LEVEL, DELVE_RUBBLE_PER_WORK, DELVE_TRAITS, WORLDROOT_DEPTH,
@@ -23,7 +23,7 @@ import { Icon } from './Icon';
 import { HelpTip, LockedBadge } from './SkillHelp';
 import './delve.css';
 
-type DelveTab = 'shaft' | 'upgrades' | 'masterworks';
+type DelveTab = 'shaft' | 'upgrades';
 
 const BRACE_LABEL: Record<SwingResult, string> = { double: 'Perfect brace', hit: 'Hazard braced', weak: 'Late brace', miss: 'Missed brace' };
 
@@ -451,17 +451,14 @@ export function MineActivity({ delve }: { delve: DelveState }) {
   );
 }
 
-export function DelveView({ masterworks }: { masterworks?: ReactNode } = {}) {
+export function DelveView() {
   const s = useGame();
   const delve = s.delve;
-  const [tab, setTab] = useState<DelveTab>(() =>
-    masterworks && s.professionProgress.activeProject?.project.skill === 'mining' ? 'masterworks' : 'shaft',
-  );
+  const [tab, setTab] = useState<DelveTab>('shaft');
   const [selected, select] = useState<number | null>(null);
   const [destination, setDestination] = useState('');
   const [traitFilter, setTraitFilter] = useState<DelveTrait | ''>('');
   const tabs: TabDef<DelveTab>[] = [{ id: 'shaft', label: 'Shaft' }, { id: 'upgrades', label: 'Mine Upgrades' }];
-  if (masterworks) tabs.push({ id: 'masterworks', label: 'Masterworks' });
 
   const layer = Math.max(1, Math.min(selected ?? delve.deepest, delve.deepest));
   const band = delveBand(layer);
@@ -627,7 +624,6 @@ export function DelveView({ masterworks }: { masterworks?: ReactNode } = {}) {
       )}
 
       {tab === 'upgrades' && <DelveUpgrades s={s} layer={layer} chooseDepth={() => setTab('shaft')} />}
-      {tab === 'masterworks' && masterworks && <div className="delve-masterworks">{masterworks}</div>}
 
       {delve.landmarkPending && (
         <div className="modal-backdrop">

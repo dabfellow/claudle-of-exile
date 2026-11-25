@@ -11,9 +11,7 @@ import { deriveStats } from '../src/engine/stats';
 import { xpForLevel } from '../src/engine/xp';
 import { deserialize, serialize } from '../src/engine/save';
 import { simulateOffline } from '../src/engine/offline';
-import { advanceProject, startProject } from '../src/engine/professions';
 import { upgradeStation } from '../src/engine/hideout';
-import { equip } from '../src/engine/equipment';
 import type { GameState } from '../src/engine/types';
 
 const ctx = () => makeCtx({ next: () => 0.999999 });
@@ -163,29 +161,6 @@ describe('Phase 07 Alchemy', () => {
     expect(s.storage.bank.star_distillate).toBe(1);
     expect(s.storage.bank.star_bloom).toBe(2);
     expect(s.storage.bank.voidbloom).toBe(10);
-  });
-
-  it('crafts and equips Distiller’s Stirrer providing +8% Alchemy speed', () => {
-    const s = advancedAlchemist();
-    s.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
-
-    expect(startProject(s, ctx(), 'tool_alchemy')).toBeNull();
-    advanceProject(s, ctx(), 1_200_000);
-
-    const tool = s.inventory.find((i) => i.name === "Distiller's Stirrer")!;
-    expect(tool).toBeDefined();
-    expect(tool.rarity).toBe('magic');
-    expect(tool.suffixes).toEqual([{ affixId: 'profession_speed_alchemy', tier: 0, values: [8] }]);
-
-    const dBefore = deriveStats(s);
-    const intervalBefore = actionIntervalMs(s, actionDef('brew_mana_medium'), dBefore);
-
-    expect(equip(s, ctx(), tool.uid)).toBeNull();
-    const dAfter = deriveStats(s);
-    const intervalAfter = actionIntervalMs(s, actionDef('brew_mana_medium'), dAfter);
-
-    expect(intervalAfter).toBeLessThan(intervalBefore);
-    expect(+(intervalBefore / intervalAfter).toFixed(2)).toBe(1.08);
   });
 
   it('preserves 8-hour live vs offline catch-up parity for Alchemy', () => {

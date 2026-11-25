@@ -7,9 +7,8 @@ import { createItem, createUnique } from '../src/engine/items';
 import { newGame } from '../src/engine/state';
 import { seeded } from '../src/engine/rng';
 import type { Item } from '../src/engine/types';
-import { startProject, advanceProject } from '../src/engine/professions';
-import { makeCtx } from '../src/engine/context';
-import { xpForLevel } from '../src/engine/xp';
+import { applyMasterworkPerks } from '../src/engine/professions';
+import { MASTERWORKS } from '../src/data/professionProjects';
 
 /** The real docs/ops/market.sql on a throwaway database, with just enough of Supabase around it. */
 const ALICE = '00000000-0000-0000-0000-00000000000a';
@@ -292,18 +291,15 @@ describe('the sanity check', () => {
   const s = newGame(1);
   const rng = seeded(1234);
 
-  it.each(['mining', 'woodcutting', 'smithing', 'harvesting'] as const)('accepts the actual fixed %s tool under existing equipment trading rules', async (skill) => {
-    const miner = newGame(1);
-    miner.skills[skill] = xpForLevel(30);
-    miner.professionProgress.work[skill] = 100;
-    miner.storage.bank = { copper_bar: 10, mithril_bar: 10, oak_plank: 5, rough_gem: 5 };
-    if (skill === 'smithing') { miner.account.hideout.forge = 2; miner.storage.bank = { copper_bar: 10, iron_bar: 10, ash_plank: 5, oak_plank: 5 }; }
-    const c = makeCtx(seeded(5));
-    expect(startProject(miner, c, skill === 'smithing' ? 'tool_wayfarer_hammer' : `tool_${skill}`)).toBeNull();
-    advanceProject(miner, c, 1_200_000);
-    const tool = miner.inventory.find((i) => i.baseId === 'profession_hammer')!;
-    const problem = (await db.query<{ p: string | null }>('select market_item_problem($1) as p', [JSON.stringify(tool)])).rows[0].p;
-    expect(problem).toBeNull();
+  // Adept masterworks only: the market has never accepted the endgame sigil marks (Void Slot, Doom Tier) that the
+  // higher ranks carry, on any item. The market is closing, so that stays as it is.
+  it.each(MASTERWORKS.filter((p) => p.rank === 'adept').map((p) => p.id))('accepts the %s masterwork under existing equipment trading rules', async (id) => {
+    const p = MASTERWORKS.find((x) => x.id === id)!;
+    if (p.reward.category !== 'equipment') throw new Error('masterworks are equipment');
+    const item = createItem(s, p.reward.baseId, p.reward.ilvl, 'rare', seeded(5));
+    applyMasterworkPerks(item, p.reward.perks ?? [], seeded(6));
+    const problem = (await db.query<{ p: string | null }>('select market_item_problem($1) as p', [JSON.stringify(item)])).rows[0].p;
+    expect(problem, JSON.stringify(item)).toBeNull();
   });
 
   it('accepts everything the game can really make', async () => {

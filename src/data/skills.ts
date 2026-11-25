@@ -275,7 +275,7 @@ function smithInputs(b: BaseDef): Record<string, number> {
   return inputs;
 }
 
-const EQUIPMENT_ACTIONS: SkillAction[] = BASES.filter((b) => !b.projectOnly).map((b) => ({
+const EQUIPMENT_ACTIONS: SkillAction[] = BASES.filter((b) => !b.projectOnly && !b.masterwork).map((b) => ({
   id: `smith_${b.id}`,
   skill: equipmentSkill(b),
   name: b.name,

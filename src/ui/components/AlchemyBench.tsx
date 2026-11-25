@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import {
   ALCHEMY_CATEGORIES, INFUSION_BREW_HERBS, INFUSIONS, MAX_INFUSION_RANK,
   alchemyCategory, infusionDef, type AlchemyCategory, type InfusionDef,
@@ -21,7 +21,7 @@ import {
   BREW_GLOW, LAB_BACKDROP, bottleArt, cauldronArt, infusionColor, recipeColor, tubeArt, type BrewColor,
 } from '../alchemyArt';
 import { FLASK_ART } from '../itemArt';
-import { Cost, fmtTime, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
+import { Cost, fmtTime, MatIcon, ProgressBar } from './common';
 import { FlaskIcon } from './FlaskView';
 import { MasteryProgress } from './MasteryProgress';
 import { SkillMinigame } from './SkillMinigame';
@@ -454,26 +454,16 @@ function RecipeBook({ s, notify }: { s: GameState; notify: (msg: string) => void
 
 // ---------------------------------------------------------------- page
 
-type AlchemyTab = 'lab' | 'masterworks';
-
-export function AlchemyBench({ masterworks }: { masterworks: ReactNode }) {
+/** One Laboratory page. Masterworks live on their own Mastery page. */
+export function AlchemyBench() {
   const s = useGame();
-  const [tab, setTab] = useState<AlchemyTab>(() => s.professionProgress.activeProject?.project.skill === 'alchemy' ? 'masterworks' : 'lab');
   const [notice, setNotice] = useState('');
-  const tabs: TabDef<AlchemyTab>[] = [
-    { id: 'lab', label: 'Laboratory', count: s.alchemy.vials.length || undefined, hot: s.alchemy.vials.length > 0 },
-    { id: 'masterworks', label: 'Masterworks' },
-  ];
 
   return <section className="alchemy-bench">
-    <Tabs tabs={tabs} value={tab} onChange={(next) => { setTab(next); setNotice(''); }} />
-    {tab === 'lab' && <>
-      <Cauldron s={s} notify={setNotice} />
-      {notice && <p role="status" className="alch-notice small">{notice}</p>}
-      <SkillMinigame skill="alchemy" />
-      <FlaskBelt s={s} notify={setNotice} />
-      <RecipeBook s={s} notify={setNotice} />
-    </>}
-    {tab === 'masterworks' && masterworks}
+    <Cauldron s={s} notify={setNotice} />
+    {notice && <p role="status" className="alch-notice small">{notice}</p>}
+    <SkillMinigame skill="alchemy" />
+    <FlaskBelt s={s} notify={setNotice} />
+    <RecipeBook s={s} notify={setNotice} />
   </section>;
 }
