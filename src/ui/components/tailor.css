@@ -1,0 +1,206 @@
+/* Tailoring: the tailor's table. Quiet frames, warm workshop tones; the cloth itself carries the colour. */
+.tailor-shop {
+  --tailor-linen: #d9ccae;
+  --tailor-linen-dark: #b8a983;
+  --tailor-leather: #8a5a34;
+  --tailor-leather-dark: #5e3a20;
+  --tailor-chalk: rgba(255, 252, 240, 0.55);
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* ---- banner: the cobbler's room, with the stock shelf on the right ---- */
+.tailor-scene {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 20px;
+  min-height: 170px;
+  padding: 16px 18px;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, rgba(12, 10, 8, 0.92) 0%, rgba(12, 10, 8, 0.6) 55%, rgba(12, 10, 8, 0.82) 100%),
+    var(--scene) center 40% / cover no-repeat,
+    var(--panel);
+}
+.tailor-scene-text { display: grid; gap: 6px; max-width: 420px; }
+.tailor-scene-text p { margin: 0; color: var(--text); font-size: 0.9rem; line-height: 1.45; }
+.tailor-scene-kicker {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--accent-2);
+  letter-spacing: 0.02em;
+}
+
+.tailor-shelf {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  background: linear-gradient(180deg, rgba(59, 39, 21, 0.85), rgba(40, 26, 14, 0.9));
+  border: 1px solid rgba(209, 173, 114, 0.25);
+  border-bottom: 4px solid var(--wood-dark);
+  border-radius: 6px;
+}
+.tailor-shelf-tier { display: grid; gap: 4px; }
+.tailor-shelf-slot {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 6px;
+  min-width: 74px;
+  padding: 4px 6px;
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 4px;
+}
+.tailor-shelf-slot b { font-size: 0.95rem; }
+.tailor-shelf-raw {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+/* ---- sew: pattern book | cutting table | side ---- */
+.tailor-sew {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.8fr) minmax(0, 1.4fr) minmax(200px, 0.8fr);
+  gap: 12px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .tailor-sew { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr); }
+  .tailor-side { grid-column: 1 / -1; }
+}
+@media (max-width: 720px) {
+  .tailor-sew { grid-template-columns: minmax(0, 1fr); }
+}
+
+.tailor-patterns { display: grid; gap: 8px; padding: 12px; margin: 0; align-content: start; }
+.tailor-patterns p { margin: 0; }
+.tailor-family { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.tailor-family-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 8px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.tailor-family-btn.active { color: var(--text); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-2)); }
+.tailor-pattern-group { display: grid; gap: 4px; }
+.tailor-pattern-slot {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.tailor-pattern {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.tailor-pattern:hover { background: var(--bg-2); border-color: var(--line-2); }
+.tailor-pattern.active { background: color-mix(in srgb, var(--accent) 12%, var(--bg-2)); border-color: var(--accent-line); }
+.tailor-pattern.locked { opacity: 0.6; }
+.tailor-pattern.short .tailor-pattern-cost { color: var(--bad); }
+.tailor-pattern-name { display: grid; gap: 2px; min-width: 0; font-size: 0.84rem; }
+.tailor-pattern-name b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tailor-pattern-cost { display: inline-flex; gap: 8px; color: var(--muted); font-size: 0.74rem; }
+.tailor-pattern-cost span { display: inline-flex; align-items: center; gap: 2px; }
+
+/* the cutting table: the piece pinned to a length of cloth or a hide, with a chalk outline */
+.tailor-table { display: grid; gap: 10px; min-width: 0; }
+.tailor-cloth {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 22px 16px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.35), 0 4px 0 var(--wood-dark);
+}
+.tailor-table.cloth .tailor-cloth {
+  color: #2b2116;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at 50% 40%, var(--tailor-linen), var(--tailor-linen-dark));
+}
+.tailor-table.leather .tailor-cloth {
+  color: #f4e6d0;
+  --tailor-chalk: rgba(255, 240, 210, 0.45);
+  background:
+    radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.12) 0 2px, transparent 3px) 0 0 / 14px 14px,
+    radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.05) 0 2px, transparent 3px) 0 0 / 18px 18px,
+    radial-gradient(ellipse at 50% 40%, var(--tailor-leather), var(--tailor-leather-dark));
+}
+.tailor-chalk {
+  display: grid;
+  place-items: center;
+  width: 150px;
+  height: 150px;
+  border: 2px dashed var(--tailor-chalk);
+  border-radius: 46% 54% 50% 50%;
+}
+.tailor-piece-name { display: grid; justify-items: center; gap: 2px; text-align: center; }
+.tailor-piece-name strong { font-family: var(--font-display); font-size: 1.15rem; }
+.tailor-fit { display: grid; gap: 10px; padding: 14px; margin: 0; }
+.tailor-running { display: grid; gap: 6px; }
+.tailor-side { display: grid; gap: 10px; align-content: start; min-width: 0; }
+
+/* ---- weave & tan ---- */
+.tailor-prep-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.tailor-prep-layout > :first-child { grid-column: 1 / -1; }
+.tailor-station, .tailor-stall { display: grid; gap: 8px; padding: 12px; margin: 0; }
+.tailor-station h3, .tailor-stall h3, .tailor-stall p { margin: 0; }
+.tailor-prep {
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+}
+.tailor-prep.running { border-color: var(--accent); }
+.tailor-prep.locked { opacity: 0.65; }
+.tailor-prep-head { display: flex; align-items: center; gap: 8px; }
+.tailor-prep-title { display: grid; flex: 1; min-width: 0; }
+.tailor-stall-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+}
+.tailor-stall-row.locked { opacity: 0.65; }
+.tailor-stall-name { display: grid; flex: 1; min-width: 0; }
+.tailor-stall-buy { display: inline-flex; gap: 4px; }

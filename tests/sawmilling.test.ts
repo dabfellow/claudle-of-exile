@@ -3,6 +3,7 @@ import { baseDef } from '../src/data/bases';
 import { actionDef, actionsFor } from '../src/data/skills';
 import { makeCtx } from '../src/engine/context';
 import { splitWoodcrafting } from '../src/engine/save';
+import { buyHides } from '../src/engine/tailoring';
 import { actionBlocker, actionIntervalMs, skillStep, startSkillAction } from '../src/engine/skills';
 import { newGame } from '../src/engine/state';
 import { deriveStats } from '../src/engine/stats';
@@ -44,6 +45,27 @@ describe('Woodcrafting split: Tailoring and Sawmilling', () => {
     expect(s.storage.bank.ash_log).toBe(0);
     expect(s.skills.sawmilling).toBeGreaterThan(0);
     expect(actionBlocker(s, actionDef('smith_short_bow'))).toBeNull();
+  });
+
+  it('sews cloth armour from cloth and leather armour from leather, never planks or bars', () => {
+    expect(actionDef('smith_simple_robe').inputs).toEqual({ linen_cloth: 4 });
+    expect(actionDef('smith_shabby_jerkin').inputs).toEqual({ rough_leather: 4 });
+    for (const a of actionsFor('tailoring').filter((r) => r.baseId)) {
+      expect(Object.keys(a.inputs ?? {}).every((id) => /_(cloth|leather)$/.test(id)), a.id).toBe(true);
+    }
+  });
+
+  it('finds fibre while Foraging and sells hides at the stall', () => {
+    expect(actionDef('forage_sunpetal').bonus).toContainEqual({ id: 'flax', chance: 0.25, qty: 1 });
+    expect(actionDef('forage_frostleaf').bonus).toContainEqual({ id: 'cotton', chance: 0.25, qty: 1 });
+    expect(actionDef('forage_voidbloom').bonus).toContainEqual({ id: 'wild_silk', chance: 0.25, qty: 1 });
+    const s = newGame(1);
+    const c = makeCtx({ next: () => 0.5 });
+    s.storage.bank.gold = 200;
+    expect(buyHides(s, c, 'thick_pelt', 1)).toMatch(/Tailoring level 15/);
+    expect(buyHides(s, c, 'rough_hide', 10)).toBeNull();
+    expect(s.storage.bank).toMatchObject({ gold: 50, rough_hide: 10 });
+    expect(buyHides(s, c, 'rough_hide', 10)).toBe('Not enough gold');
   });
 
   it('starts Tailoring and Sawmilling at the old Woodcrafting XP', () => {

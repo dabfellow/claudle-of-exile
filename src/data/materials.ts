@@ -8,6 +8,7 @@ import { MINING_METALS } from './mining';
 import { WOODS } from './woodcutting';
 import { FURNACE_MATERIALS } from './smelting';
 import { DELVE_ROUGH_SIZES } from './delve';
+import { TAILORING_MATERIALS } from './tailoring';
 
 export type MaterialKind = 'ore' | 'log' | 'component' | 'trophy' | 'herb' | 'gem' | 'dust' | 'fossil' | 'essence' | 'resin' | 'shard' | 'contraband' | 'rune' | 'artifact' | 'ingredient' | 'food' | 'chart' | 'currency' | 'gold' | 'fish';
 
@@ -119,6 +120,7 @@ export const MATERIALS: MaterialDef[] = [
   ...COOKING_MATERIALS,
   ...CHART_MATERIALS,
   ...ASTROLOGY_MATERIALS,
+  ...TAILORING_MATERIALS,
 ];
 
 export interface CurrencyDef extends MaterialDef {

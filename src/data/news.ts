@@ -10,7 +10,12 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Tailoring has its own cloth and leather now. Foraging turns up flax, cotton and wild silk beside its herbs; weave them into Linen, Cotton Cloth and Silk. Buy raw hides at the new hide stall and tan them into leather.',
+  'Robes are sewn from cloth and leather armour from leather, instead of planks and copper bars.',
+  'The Tailoring page is redone as a tailor’s table: a workshop banner with your cloth and leather on the shelf, a pattern book, a cutting table, and a Weave & tan tab with the loom, the tanning vats and the hide stall.',
+  'Bow staves, wand blanks and staff shafts have their own pictures.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

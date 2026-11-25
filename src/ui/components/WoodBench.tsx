@@ -25,7 +25,7 @@ import './wood-bench.css';
 
 const allFamilies = Object.keys(WOOD_FAMILIES) as WoodFamily[];
 const recipesFor = (skill: TunedSkill) => actionsFor(skill).filter((a) => !a.purpose && !a.woodcutting && (!a.baseId || obtainable(baseDef(a.baseId))));
-const RECIPES: Record<TunedSkill, SkillAction[]> = { woodcrafting: recipesFor('woodcrafting'), tailoring: recipesFor('tailoring') };
+export const RECIPES: Record<TunedSkill, SkillAction[]> = { woodcrafting: recipesFor('woodcrafting'), tailoring: recipesFor('tailoring') };
 /** Only the families this bench actually makes, in their usual order. */
 const FAMILIES: Record<TunedSkill, WoodFamily[]> = {
   woodcrafting: allFamilies.filter((f) => RECIPES.woodcrafting.some((a) => a.baseId && woodFamily(a.baseId) === f)),
@@ -52,7 +52,7 @@ const DIALS_TIP = 'Slide each dial left or right to favour one stat over another
 const IMPLICITS_TIP = 'Built-in modifiers stamped directly onto the crafted item (+4% per dial notch, and -4% on the opposite stat). Rarely (1 in 400), a piece crafts Perfectly Balanced with no negative downside.';
 const LIVING_TIP = 'At Woodcrafting Lv 80, embed Legend Heartwood or World Tree Heart to unlock a 3rd Dial. Living gear gains +5% dial implicit strength per equipped hour (up to +50% at Growth 10/10).';
 const JIGS_TIP = 'Permanent workbench fixtures for each craft group. Tier 1 (Lv 20) widens dial limits by +1; Tier 2 (Lv 50) adds a 3rd tuning slot and widens the 2nd dial; Tier 3 (Lv 75) widens all dials by +1 more (up to ±6).';
-const TUNINGS_TIP = 'Saved dial presets per item family. An active tuning applies automatically when repeating or crafting away; moving sliders manually creates a one-time draft for your next craft.';
+export const TUNINGS_TIP = 'Saved dial presets per item family. An active tuning applies automatically when repeating or crafting away; moving sliders manually creates a one-time draft for your next craft.';
 
 function slotLabel(a: SkillAction): string {
   if (!a.baseId) return 'Frame';
@@ -62,7 +62,7 @@ function slotLabel(a: SkillAction): string {
   return base.slot[0].toUpperCase() + base.slot.slice(1);
 }
 
-function Costs({ s, inputs }: { s: GameState; inputs: Record<string, number> }) {
+export function Costs({ s, inputs }: { s: GameState; inputs: Record<string, number> }) {
   return (
     <div className="io wood-costs">
       {Object.entries(inputs).map(([id, count]) => {
@@ -78,7 +78,7 @@ function Costs({ s, inputs }: { s: GameState; inputs: Record<string, number> }) 
   );
 }
 
-function Dials({ s, recipe, dials, living, item, change }: {
+export function Dials({ s, recipe, dials, living, item, change }: {
   s: GameState; recipe: SkillAction; dials: number[]; living: boolean; item?: Item; change: (dials: number[]) => void;
 }) {
   const family = woodFamily(recipe.baseId!);
@@ -126,7 +126,7 @@ function Dials({ s, recipe, dials, living, item, change }: {
   );
 }
 
-function JigsView({ s, skill, level, notify }: { s: GameState; skill: TunedSkill; level: number; notify: (message: string) => void }) {
+export function JigsView({ s, skill, level, notify }: { s: GameState; skill: TunedSkill; level: number; notify: (message: string) => void }) {
   return (
     <div className="wood-tab-stack">
       <SkillIntro step="Permanent upgrades" action={<HelpTip label="How Jigs work" tip={JIGS_TIP} />}>

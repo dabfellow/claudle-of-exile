@@ -4,6 +4,7 @@ import { WEAPON_COMPONENT_ACTIONS } from './weaponProjects';
 import { ARCHAEOLOGY_RECIPES } from './archaeology';
 import { MINING_ACTIONS, type MiningDeposit } from './mining';
 import { WOODCUTTING_ACTIONS, type WoodcuttingSource } from './woodcutting';
+import { TAILORING_ACTIONS, tailorInputs } from './tailoring';
 import { FORAGING_ACTIONS, foragingSource, type ForagingSource } from './foraging';
 import { ALCHEMY_EXPANSION_ACTIONS } from './alchemy';
 import { purposeRecipes, SMITH_COMPONENTS, type SmithPurpose } from './smithing';
@@ -259,6 +260,7 @@ function smithInputs(b: BaseDef): Record<string, number> {
     ring: [1, 0],
   };
   const [pri, sec] = size[b.slot];
+  if (isTailorBase(b)) return tailorInputs(b.tags, pri, tier);
   const inputs: Record<string, number> = {};
   if (part) {
     inputs[part] = 1;
@@ -426,7 +428,7 @@ export const BOSS_KEY_CRAFTS: SkillAction[] = [
 /** Global pacing knob for gathering/production xp (values above are authored at 1×). */
 export const SKILL_XP_SCALE = 0.3;
 
-const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...THIEVING, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...ASTROLOGY, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
+const AUTHORED_ACTIONS: SkillAction[] = [...GATHERING, ...MINING_ACTIONS, ...WOODCUTTING_ACTIONS, ...FORAGING_ACTIONS, ...THIEVING, ...ARCHAEOLOGY, ...ARCHAEOLOGY_RECIPES, ...ASTROLOGY, ...FISHING, ...SMELTING, ...SMITH_COMPONENTS, ...TAILORING_ACTIONS, ...EQUIPMENT_ACTIONS, ...purposeRecipes(EQUIPMENT_ACTIONS), ...ALCHEMY, ...ALCHEMY_EXPANSION_ACTIONS, ...FUSING, ...BATCHES, ...GEMCUTTING, ...CARTOGRAPHY, ...BOSS_KEY_CRAFTS];
 /** Historical access evidence used only by save migration. */
 const ALL_AUTHORED_ACTIONS = [
   ...AUTHORED_ACTIONS,

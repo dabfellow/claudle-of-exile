@@ -42,6 +42,7 @@ import { DelveView } from '../components/DelveView';
 import { AnvilView } from '../components/AnvilView';
 import { WoodBench } from '../components/WoodBench';
 import { SawmillPage } from '../components/Sawmill';
+import { TailorBench } from '../components/TailorBench';
 import { CraftOutputSettings } from '../components/CraftOutputSettings';
 import { LapidaryBench } from '../components/LapidaryBench';
 import { ForagingBench } from '../components/ForagingBench';
@@ -739,7 +740,8 @@ function WorkshopPage({ skill, go }: { skill: 'mining' | 'smelting' | 'smithing'
     {skill === 'mining' && <DelveView masterworks={projects} />}
     {skill === 'smelting' && <FurnaceView projects={projects} />}
     {skill === 'smithing' && <AnvilView bossKeys={<BossKeyRecipes />} catalysts={catalysts} masterworks={projects} />}
-    {(skill === 'woodcrafting' || skill === 'tailoring') && <WoodBench key={skill} skill={skill} catalysts={catalysts} masterworks={projects} />}
+    {skill === 'woodcrafting' && <WoodBench skill="woodcrafting" catalysts={catalysts} masterworks={projects} />}
+    {skill === 'tailoring' && <TailorBench catalysts={catalysts} masterworks={projects} />}
     {skill === 'sawmilling' && <SawmillPage masterworks={projects} />}
     {skill === 'gemcutting' && <LapidaryBench masterworks={projects} />}
     {skill === 'harvesting' && <ForagingBench masterworks={projects} onOpenGreenhouse={() => go?.('greenhouse')} />}
