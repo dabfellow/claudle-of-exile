@@ -745,13 +745,13 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
-- [ ] Illustrated station overhaul for the remaining plain-box screens, to match Gemcutting and Cartography. Shared banner pieces in `StationDock.tsx` and `station-hero.css`.
+- [x] Illustrated station overhaul for the remaining plain-box screens, to match Gemcutting and Cartography — done 2026-11-26, live in 0.6.12. Shared banner pieces in `StationDock.tsx` and `station-hero.css`.
   - Mining: shaft banner with an ore dock, continuous Delve shaft, Focus moved under the mining bar, a Layer Mastery milestone track, illustrated Mine Upgrades.
   - Sawmilling: banner with a log dock, and a two-column Sawbench (recipe index plus a log-to-plank carriage) in place of the 12-box grid.
   - Foraging and Greenhouse: illustrated banners with docks; beds, minigame and tabs unchanged.
   - Guild Stash (item grid plus inspector), Quests (chronicle plaques), Achievements (Hall of Deeds).
   - Free art in `public/assets/stations/` (credits in its CREDITS.md): Bodom sawmill and Blechen palm-house banners, plank and rusted-iron textures, eight game-icons.net icons. Mining and Foraging keep their existing banner art; the free paintings tried there didn't read at banner height.
-  - Built 2026-11-26; build and tests pass and every page was looked at in game. Not committed yet.
+  - Built 2026-11-26; build and tests pass and every page was looked at in game at desktop and phone width. Live in 0.6.12.
 
 - [x] Redesign the Cartography station and its four tabs — done 2026-11-25.
 
@@ -1095,6 +1095,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Illustrated stations for Mining, Sawmilling, Foraging, Greenhouse, Guild Stash, Quests and Achievements — done 2026-11-26, live in 0.6.12.
 
 - [x] Redesign the four Gemcutting tabs around an illustrated workbench — done 2026-11-25. Desktop and phone checks used a demo character to cut, scour and run or stop a recycling batch.
 
