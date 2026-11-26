@@ -745,7 +745,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
-- [x] Station overhaul, round two: Woodcrafting, Sawmilling, Smelting and Astrology brought up to Alchemy/Cartography quality — done 2026-11-26, not yet shipped.
+- [x] Station overhaul, round two: Woodcrafting, Sawmilling, Smelting and Astrology brought up to Alchemy/Cartography quality — done 2026-11-26, live in 0.6.13.
   - Woodcrafting: Carver's Workshop banner and dock, carving-bench stage, socketed inputs, brass draw-weight slider.
   - Sawmilling: warmer lantern-lit banner, wood-species row accents, metal buzzsaw carriage with log → plank sockets.
   - Smelting: foundry banner with five-ore dock, ore selector strip replacing the Quick Smelt grid, furnace-first layout.
