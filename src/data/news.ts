@@ -10,14 +10,22 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Mining has an illustrated mine-shaft banner with your Rubble and ores docked in it, one continuous Delve shaft, Focus right under the mining bar, and a Layer Mastery milestone track.',
-  'Sawmilling is now a two-column Sawbench: pick a cut from the timber index and saw it on the log carriage.',
-  'Foraging and the Greenhouse have illustrated banners showing your herbs, beds, ready seeds and pressed strains.',
-  'The Guild Stash is a dense item grid with an inspector, Quests read as chronicle plaques, and Achievements became the Hall of Deeds.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.6.12',
+    date: '26 Nov 2026',
+    title: 'Illustrated stations',
+    items: [
+      'Mining has an illustrated mine-shaft banner with your Rubble and ores docked in it, one continuous Delve shaft, Focus right under the mining bar, and a Layer Mastery milestone track.',
+      'Mine Upgrades shows the Prospector\'s Pick on an anvil with an 8-step tier bar, and each installation has its own emblem.',
+      'Sawmilling is now a two-column Sawbench under a painted waterfall mill: pick a cut from the timber index and saw it on the log carriage.',
+      'Foraging and the Greenhouse have illustrated banners showing your herbs, beds, ready seeds and pressed strains. The Greenhouse banner is a painted palm house.',
+      'The Guild Stash is a dense item grid with an inspector, Quests read as chronicle plaques, and Achievements became the Hall of Deeds.',
+      'On phones, notifications sit at the bottom of the screen, two at a time, instead of covering page headers.',
+    ],
+  },
   {
     version: '0.6.11',
     date: '25 Nov 2026',
