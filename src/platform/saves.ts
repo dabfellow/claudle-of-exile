@@ -1,4 +1,6 @@
 import type { ClassId } from '../data/classes';
+import { actionDef, SKILLS } from '../data/skills';
+import { zoneDef } from '../data/zones';
 import { absorbAccount, fillAccount, freshAccount, reconcileAccounts } from '../engine/account';
 import { realmOf, STANDARD_REALM } from '../engine/challenge';
 import { deserialize, SAVE_KEY, serialize } from '../engine/save';
@@ -22,6 +24,8 @@ export interface CharacterSummary {
   totalLevel: number;
   createdAt: number;
   lastPlayed: number;
+  /** what the character was doing when last saved, for the character list ("Fighting in The Mud Flats"); left out on older summaries */
+  activity?: string;
   /** the game session that wrote this cloud row (cloud rows only), so a save whose reply was lost can recognise its own write */
   savedBy?: string;
 }
@@ -70,7 +74,26 @@ export function summarize(s: GameState): CharacterSummary {
     totalLevel: SKILL_IDS.filter((k) => k !== 'combat' && k !== 'fishing').reduce((a, k) => a + levelOf(k, s.skills[k]), 0),
     createdAt: s.character.createdAt,
     lastPlayed: s.lastSaved,
+    activity: activityText(s),
   };
+}
+
+/** A short line for what the character is busy with while you're away. Never throws, so a renamed action can't break saving. */
+function activityText(s: GameState): string {
+  const a = s.action;
+  try {
+    if (!a) return 'Resting';
+    if (a.kind === 'combat') return `Fighting in ${zoneDef(a.zoneId).name}`;
+    if (a.kind === 'skill') {
+      const act = actionDef(a.actionId);
+      return `${SKILLS[act.skill].verb} · ${act.name}`;
+    }
+    if (a.kind === 'heist') return 'On a heist';
+    if (a.kind === 'craft') return 'Crafting';
+    return 'Building';
+  } catch {
+    return 'Resting';
+  }
 }
 
 /** Saves in browser storage: an index of summaries plus one key per character. */

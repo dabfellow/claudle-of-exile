@@ -34,10 +34,37 @@ export function Crest({ classId, size = 56 }: { classId: ClassId; size?: number 
   );
 }
 
-function ScreenShell({ children, wide }: { children: React.ReactNode; wide?: boolean }) {
+/** The class's colour for the stripe down a character card; the three starting classes use brighter tones there. */
+const CARD_STRIPE: Partial<Record<ClassId, string>> = { warrior: '#ef4444', ranger: '#10b981', mage: '#3b82f6' };
+
+/** A class portrait in a square gold-rimmed frame, for the character list and the quick-continue card. */
+function ExilePortrait({ classId, size = 64 }: { classId: ClassId; size?: number }) {
+  const c = classDef(classId);
   return (
-    <div className="screen" style={sceneStyle('scenes/title')}>
+    <span className="exile-portrait" style={{ width: size, height: size, ['--class' as string]: c.color }}>
+      <Art src={`portraits/class_${classId}`} alt={c.name} cover fallback={<Icon name={c.icon} size={size * 0.5} color={c.color} stroke={1.8} />} />
+    </span>
+  );
+}
+
+/** One small badge per challenge mode the character runs under. */
+function ChallengeBadges({ challenge }: { challenge?: ChallengeFlags }) {
+  if (!challenge || (!challenge.ssf && !challenge.hardcore && !challenge.classic)) return null;
+  return (
+    <span className="challenge-badges">
+      {challenge.ssf && <span className="challenge-badge ssf">SSF</span>}
+      {challenge.hardcore && <span className="challenge-badge hardcore">Hardcore</span>}
+      {challenge.classic && <span className="challenge-badge classic">Classic</span>}
+    </span>
+  );
+}
+
+/** Brand on top, the screen's content below, and an optional caption pinned to the bottom of the window. */
+function ScreenShell({ children, wide, footer }: { children: React.ReactNode; wide?: boolean; footer?: React.ReactNode }) {
+  return (
+    <div className={`screen ${footer ? 'has-footer' : ''}`} style={sceneStyle('scenes/title')}>
       <Embers />
+      {footer && <footer className="screen-footer">{footer}</footer>}
       <div className={`screen-inner ${wide ? 'wide' : ''}`}>
         <div className="screen-brand">
           <span className="brand-title" style={{ fontSize: 40 }}>
@@ -114,7 +141,7 @@ function AccountForm({ startOn = 'login' }: { startOn?: 'login' | 'create' }) {
         )}
         {error && <div className="warn small">{error}</div>}
         {notice && <div className="good small">{notice}</div>}
-        <button className="btn lg" type="submit" disabled={!online || !!busy}>
+        <button className="btn lg btn-bronze" type="submit" disabled={!online || !!busy}>
           {busy === 'email' ? 'One moment…' : mode === 'login' ? 'Log in' : mode === 'create' ? 'Create account' : 'Send reset link'}
           {!online && <span className="soon">offline</span>}
         </button>
@@ -154,9 +181,21 @@ function AccountForm({ startOn = 'login' }: { startOn?: 'login' | 'create' }) {
 export function TitleScreen() {
   useGame();
   return (
-    <ScreenShell wide>
-      <div className="title-layout">
-        <div className="card title-card">
+    <ScreenShell
+      wide
+      footer={
+        <>
+          <p>
+            {game.hasGuest
+              ? 'Guest progress stays in this browser. Make an account and you can move your guest characters to it.'
+              : "The demo isn't saved: it ends when you close or refresh the tab. Make an account during it to keep your character."}
+          </p>
+          <p>An account stores your email and character saves; Google or Discord also share your name and avatar. No ads, no tracking.</p>
+        </>
+      }
+    >
+      <div className="landing-layout">
+        <div className="card title-card landing-panel">
           <p className="muted" style={{ margin: 0, textAlign: 'center' }}>
             Gather, forge and fight your way up from the Mud Flats. Progress continues while you're away.
           </p>
@@ -167,14 +206,6 @@ export function TitleScreen() {
             <span>or use an account to save your progress and play anywhere</span>
           </div>
           <AccountForm />
-          <p className="dim" style={{ fontSize: 'var(--fs-xs)', margin: 0, textAlign: 'center' }}>
-            {game.hasGuest
-              ? 'Guest progress stays in this browser. Make an account and you can move your guest characters to it.'
-              : "The demo isn't saved: it ends when you close or refresh the tab. Make an account during it to keep your character."}
-          </p>
-          <p className="dim" style={{ fontSize: 'var(--fs-xs)', margin: 0, textAlign: 'center' }}>
-            An account stores your email and character saves; Google or Discord also share your name and avatar. No ads, no tracking.
-          </p>
         </div>
         <NewsCard />
       </div>
@@ -208,6 +239,8 @@ function NewsCard() {
     else groups.push({ key, entries: [n] });
   }
   return (
+    // the column takes the row's height and the panel fills it, so news always matches the panel beside it
+    <div className="news-col">
     <section className="card news-card" aria-label="News">
       <h2>News</h2>
       {groups.map((g, index) => (
@@ -224,6 +257,7 @@ function NewsCard() {
         </details>
       ))}
     </section>
+    </div>
   );
 }
 
@@ -374,26 +408,32 @@ function CharacterCard({ c }: { c: CharacterSummary }) {
   const [typed, setTyped] = useState('');
   const cls = classDef(c.classId);
   return (
-    <div className="card char-card" style={{ ['--class' as string]: cls.color }}>
-      <div className="row" style={{ gap: 14 }}>
-        <Crest classId={c.classId} />
+    <div className="card char-card" style={{ ['--class' as string]: cls.color, ['--stripe' as string]: CARD_STRIPE[c.classId] ?? cls.color }}>
+      {!confirming && (
+        <button className="char-delete" title="Delete character" aria-label={`Delete ${c.name}`} onClick={() => setConfirming(true)}>
+          <Icon name="close" size={12} />
+        </button>
+      )}
+      <div className="row char-card-body">
+        <ExilePortrait classId={c.classId} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="char-name">{c.name}</div>
+          <div className="char-name-row">
+            <span className="char-name">{c.name}</span>
+            <ChallengeBadges challenge={c.challenge} />
+          </div>
           <div className="muted" style={{ fontSize: 'var(--fs-sm)' }}>
             Level {c.combatLevel} {cls.name} · Total level {c.totalLevel}
           </div>
-          <ChallengeTag challenge={c.challenge} />
+          <div className="char-status">
+            <span className="char-status-dot" />
+            {c.activity ?? 'Resting'}
+          </div>
           <div className="dim small">Last played {ago(c.lastPlayed)}</div>
         </div>
         {!confirming && (
-          <>
-            <button className="btn ghost sm" title="Delete character" onClick={() => setConfirming(true)}>
-              <Icon name="close" size={14} />
-            </button>
-            <button className="btn primary" onClick={() => game.enter(c.id)}>
-              Play
-            </button>
-          </>
+          <button className="btn primary char-play" onClick={() => game.enter(c.id)}>
+            Play
+          </button>
         )}
       </div>
       {confirming && (
@@ -425,10 +465,45 @@ function AccountSummary() {
   const a = game.realm;
   const items = a.stash.flat().length;
   return (
-    <div className="dim small" style={{ textAlign: 'center' }}>
+    <div className="realm-bar small">
       Shared by your normal characters: Hideout, {a.automation.offlineHours} hour offline cap, {a.stash.length} Guild Stash pages ({items} items)
       {a.overflow.length > 0 && <span className="warn"> · {a.overflow.length} in stash overflow</span>}
     </div>
+  );
+}
+
+/** The exile you played last, one click from carrying on. */
+function QuickContinue({ c }: { c: CharacterSummary }) {
+  const cls = classDef(c.classId);
+  return (
+    <button
+      className="quick-continue"
+      style={{ ['--class' as string]: cls.color, ['--stripe' as string]: CARD_STRIPE[c.classId] ?? cls.color }}
+      title={`Continue as ${c.name}`}
+      onClick={() => game.enter(c.id)}
+    >
+      <span className="quick-continue-label">Continue your journey</span>
+      <span className="quick-continue-body">
+        <ExilePortrait classId={c.classId} size={72} />
+        <span className="quick-continue-info">
+          <span className="char-name-row">
+            <span className="char-name">{c.name}</span>
+            <ChallengeBadges challenge={c.challenge} />
+          </span>
+          <span className="muted" style={{ fontSize: 'var(--fs-sm)' }}>
+            Level {c.combatLevel} {cls.name}
+          </span>
+          <span className="char-status">
+            <span className="char-status-dot" />
+            {c.activity ?? 'Resting'}
+          </span>
+          <span className="dim small">Last played {ago(c.lastPlayed)}</span>
+        </span>
+        <span className="quick-continue-arrow" aria-hidden>
+          ›
+        </span>
+      </span>
+    </button>
   );
 }
 
@@ -438,10 +513,11 @@ export function AccountScreen() {
   const a = game.account;
   if (!a) return null;
   const count = game.characters.length;
+  const recent = game.characters.reduce<CharacterSummary | null>((best, c) => (!best || c.lastPlayed > best.lastPlayed ? c : best), null);
   return (
     <ScreenShell wide>
-      <div className="title-layout select-layout">
-        <div className="card title-card account-card">
+      <div className="landing-layout">
+        <div className="card title-card landing-panel account-card">
           <div className="muted small" style={{ textAlign: 'center' }}>
             Signed in as
           </div>
@@ -457,6 +533,8 @@ export function AccountScreen() {
           <div className="dim small" style={{ textAlign: 'center' }}>
             {count === 0 ? 'No characters yet' : `${count} character${count === 1 ? '' : 's'}`}
           </div>
+          <div className="account-spacer" />
+          {recent && <QuickContinue c={recent} />}
           <button className="btn primary lg" onClick={() => game.play()}>
             Play
           </button>
@@ -480,15 +558,19 @@ export function CharacterSelect() {
   const slice = game.characters.slice(shown * PAGE_SIZE, (shown + 1) * PAGE_SIZE);
   return (
     <ScreenShell wide>
-      <div className="title-layout select-layout">
-        <div className="grid" style={{ gap: 12 }}>
-          <div className="row wrap">
-            <h2 style={{ fontSize: 20 }}>Choose your exile</h2>
-            <span className="spacer" />
-            <AccountBadge />
-            <button className="btn ghost sm" onClick={leaveAccount}>
-              {isCloudAccount(game.account) ? 'Sign out' : 'Title'}
-            </button>
+      <div className="landing-layout">
+        <div className="card title-card landing-panel select-card">
+          <div className="select-head">
+            <h2>Choose your exile</h2>
+            <div className="select-head-account">
+              <AccountBadge />
+              <span className="select-head-sep" aria-hidden>
+                •
+              </span>
+              <button className="link-btn" onClick={leaveAccount}>
+                {isCloudAccount(game.account) ? 'Sign out' : 'Title'}
+              </button>
+            </div>
           </div>
           {game.notice && (
             <div className="card" role="alert" style={{ borderColor: 'var(--warn, #d9a441)' }}>

@@ -10,7 +10,9 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'The login, account and character screens now share one ornate frame beside a matching News panel, with a Continue card for the exile you played last and what each character is busy doing while you are away.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

@@ -1,0 +1,394 @@
+/* ============ landing screens: title, account and character select ============
+ * All three share one shell: the ornate panel on the left, the news on the right,
+ * both stretched to the same height so nothing jumps between screens. */
+
+.landing-layout {
+  display: grid;
+  grid-template-columns: minmax(420px, 520px) 420px;
+  justify-content: center;
+  align-items: stretch;
+  gap: 20px;
+}
+
+.landing-panel {
+  min-height: min(680px, 74vh);
+}
+
+/* the news column takes the row's height and the panel inside fills it */
+.news-col {
+  position: relative;
+  min-height: min(680px, 74vh);
+}
+
+.news-col > .news-card {
+  position: absolute;
+  inset: 0;
+  max-height: none;
+}
+
+@media (max-width: 1000px) {
+  .landing-layout {
+    grid-template-columns: minmax(0, 520px);
+  }
+
+  .landing-panel,
+  .news-col {
+    min-height: 0;
+  }
+
+  .news-col > .news-card {
+    position: static;
+    max-height: 60vh;
+  }
+}
+
+/* ---------- news chronicle ---------- */
+.screen .news-card {
+  background: rgba(15, 18, 24, 0.88);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid #4a3f2d;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  scrollbar-width: thin;
+  scrollbar-color: #4a3f2d transparent;
+}
+
+.screen .news-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.screen .news-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.screen .news-card::-webkit-scrollbar-thumb {
+  background: #4a3f2d;
+  border-radius: 3px;
+}
+
+.screen .news-card::-webkit-scrollbar-thumb:hover {
+  background: #6b5a3c;
+}
+
+.screen .news-card h2 {
+  font-family: var(--font-display);
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #4a3f2d;
+}
+
+.screen .news-group-head {
+  color: var(--accent-2);
+}
+
+.screen .news-older {
+  border-top-color: #3a3122;
+}
+
+.screen .news-card article + article {
+  border-top-color: #2e2719;
+}
+
+/* ---------- login ---------- */
+/* saved emails and passwords keep the dark field instead of the browser's pale blue */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus,
+.input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #12151c inset;
+  box-shadow: 0 0 0 1000px #12151c inset;
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  transition: background-color 9999s ease-out 0s;
+}
+
+.btn.btn-bronze {
+  background: linear-gradient(180deg, #8a5a2b, #6a421f);
+  border-color: #b07a3c;
+  color: #f6e2bd;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.btn.btn-bronze:hover:not(:disabled) {
+  background: linear-gradient(180deg, #a06a34, #7c4e25);
+  border-color: #d0975a;
+}
+
+.btn.btn-bronze:disabled {
+  background: var(--panel-2);
+  border-color: var(--line-2);
+  color: var(--muted);
+  text-shadow: none;
+}
+
+/* the storage and privacy notes, out of the frame and along the bottom of the window */
+.screen.has-footer {
+  padding-bottom: 96px;
+}
+
+.screen-footer {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  z-index: 1;
+  width: min(760px, calc(100% - 32px));
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--dim);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.screen-footer p {
+  margin: 2px 0;
+}
+
+/* ---------- account ---------- */
+.screen .account-card {
+  align-self: stretch;
+}
+
+.account-spacer {
+  flex: 1;
+}
+
+.quick-continue {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  background: rgba(10, 12, 16, 0.7);
+  border: 1px solid #4a3f2d;
+  border-left: 4px solid var(--stripe);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: border-color 0.2s, transform 0.2s, background 0.2s;
+}
+
+.quick-continue:hover {
+  border-color: var(--accent-line);
+  border-left-color: var(--stripe);
+  background: rgba(16, 19, 25, 0.8);
+  transform: translateY(-1px);
+}
+
+.quick-continue-label {
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.quick-continue-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.quick-continue-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.quick-continue-arrow {
+  font-size: 30px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+/* ---------- character cards ---------- */
+.exile-portrait {
+  display: grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 2px solid #b08a4a;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--class) 28%, transparent), color-mix(in srgb, var(--class) 6%, var(--bg-2)) 70%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.7), 0 0 0 1px #3a2c18, 0 0 12px color-mix(in srgb, var(--class) 22%, transparent);
+}
+
+.exile-portrait img.art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 22%;
+}
+
+/* class portraits stay crisp at any size */
+.crest img.art,
+.crest img.art.crisp,
+.exile-portrait img.art,
+.exile-portrait img.art.crisp,
+img.art.class-art {
+  image-rendering: pixelated;
+}
+
+.char-name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.challenge-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.challenge-badge {
+  padding: 1px 6px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.challenge-badge.ssf {
+  color: #8fb8e8;
+}
+
+.challenge-badge.hardcore {
+  color: var(--bad);
+}
+
+.challenge-badge.classic {
+  color: var(--accent);
+}
+
+.char-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: var(--good);
+}
+
+.char-status-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  animation: status-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .char-status-dot {
+    animation: none;
+  }
+}
+
+.select-card .char-grid {
+  grid-template-columns: minmax(0, 1fr);
+  margin-bottom: auto;
+}
+
+.screen .char-card {
+  position: relative;
+  padding: 12px 14px;
+  background: rgba(10, 12, 16, 0.72);
+  border-left: 4px solid var(--stripe);
+}
+
+.screen .char-card:hover {
+  border-left-color: var(--stripe);
+}
+
+.char-card-body {
+  gap: 14px;
+  align-items: center;
+}
+
+/* kept in the corner, away from Play */
+.char-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--dim);
+  opacity: 0.6;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.char-delete:hover,
+.char-delete:focus-visible {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 55%, transparent);
+  opacity: 1;
+}
+
+.char-play {
+  align-self: flex-end;
+  margin-top: 26px;
+}
+
+/* ---------- character select frame ---------- */
+.select-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(176, 138, 74, 0.35);
+}
+
+.select-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--accent-2);
+  letter-spacing: 0.04em;
+}
+
+.select-head-account {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.select-head-sep {
+  color: var(--dim);
+}
+
+.realm-bar {
+  padding: 8px 12px;
+  border: 1px solid #2b2418;
+  border-radius: 6px;
+  background: rgba(6, 8, 11, 0.72);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+  color: var(--muted);
+  text-align: center;
+}
