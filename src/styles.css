@@ -396,7 +396,7 @@ h3 {
   --topbar-height: 64px;
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr) 300px;
-  grid-template-rows: var(--topbar-height) minmax(0, 1fr) 40px;
+  grid-template-rows: auto minmax(0, 1fr) 40px;
   grid-template-areas:
     'side top top'
     'side main feed'
@@ -421,10 +421,6 @@ h3 {
     display: block;
     grid-area: content;
     overflow-y: auto;
-  }
-
-  .hideout-app .topbar {
-    min-height: var(--topbar-height);
   }
 
   .hideout-app .main {
@@ -784,106 +780,19 @@ h3 {
   border-top: 1px solid var(--line);
 }
 
-/* top bar */
+/* pinned currency bar */
 .topbar {
   grid-area: top;
-  /* activity · character plate (centred) · currency */
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  display: flex;
   align-items: center;
-  gap: var(--s-4);
+  justify-content: flex-end;
+  min-width: 0;
+  min-height: var(--topbar-height);
   padding: 0 var(--s-5);
   border-bottom: 1px solid var(--line);
   background: var(--panel);
   z-index: 5;
-  min-width: 0;
 }
-
-.activity {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  min-width: 0;
-  max-width: 380px;
-  padding: 4px 8px;
-  margin-left: -10px;
-  border-radius: var(--r);
-  border: 1px solid transparent;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--dur-fast), border-color var(--dur-fast);
-}
-
-.activity:hover {
-  background: var(--panel-2);
-}
-
-.activity.on {
-  border-color: color-mix(in srgb, var(--success) 45%, transparent);
-  background: var(--success-soft);
-}
-
-.activity-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  flex: 1;
-  gap: 5px;
-}
-
-.activity-title {
-  font-weight: 600;
-  font-size: var(--fs-sm);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.activity-title small {
-  color: var(--muted);
-  font-weight: 400;
-  font-size: var(--fs-xs);
-  margin-left: 6px;
-}
-
-.char-plate {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 14px 4px 6px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--bg-2);
-}
-
-.char-plate-body {
-  width: 240px;
-  display: grid;
-  gap: 3px;
-}
-
-.char-plate-name {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: var(--fs-sm);
-  line-height: 1.1;
-  white-space: nowrap;
-}
-
-.char-plate-name b {
-  font-family: var(--font-display, inherit);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.char-plate-name .dim {
-  font-size: var(--fs-xs);
-}
-
-/* keep the currency pills clear of the character plate on narrower screens */
 .currency-strip {
   overflow: hidden;
 }
@@ -891,9 +800,6 @@ h3 {
 @media (max-width: 1500px) {
   .currency-strip .chip .dim {
     display: none;
-  }
-  .char-plate-body {
-    width: 210px;
   }
 }
 
@@ -4705,18 +4611,8 @@ g.tut-hint circle.body {
   animation: levelup-sweep 1.4s ease-out forwards;
 }
 
-.topbar-life {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
 .bar.thin {
   height: 6px;
-}
-
-.topbar-life .bar.thin {
-  height: 4px;
 }
 
 @keyframes xp-sheen {
@@ -8008,15 +7904,12 @@ img.art.mat-art {
   .app {
     grid-template-columns: 220px minmax(0, 1fr) 260px;
   }
-  .char-plate-body {
-    width: 220px;
-  }
 }
 
 @media (max-height: 760px) and (min-width: 861px) {
   .app {
     --topbar-height: 56px;
-    grid-template-rows: var(--topbar-height) minmax(0, 1fr) 34px;
+    grid-template-rows: auto minmax(0, 1fr) 34px;
   }
   .topbar {
     padding: 0 var(--s-4);
@@ -8049,7 +7942,7 @@ img.art.mat-art {
 }
 
 @media (max-width: 860px) {
-  /* Scroll the whole phone layout so navigation and character bars leave the
+  /* Scroll the whole phone layout so navigation leaves the
      screen with the page instead of permanently crowding the content. */
   html,
   body,
@@ -8149,17 +8042,9 @@ img.art.mat-art {
     font-size: var(--fs-2xs);
   }
   .topbar {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--s-2) var(--s-3);
+    justify-content: flex-start;
+    min-height: 0;
     padding: 8px 12px;
-    height: auto;
-  }
-  .activity {
-    display: none;
-  }
-  .char-plate-body {
-    width: auto;
-    min-width: 160px;
   }
   .main {
     padding: var(--s-4) var(--s-3);

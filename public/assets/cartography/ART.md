@@ -1,0 +1,5 @@
+# Cartography banner
+
+Made with the built-in ImageGen tool for Path of Idle. The banner is saved as `cartography-bench-bg.webp`, and `folio-texture.webp` is a detail from the same image.
+
+> Create a game environment painting for the Path of Idle dark fantasy RPG. A very wide panoramic banner, candlelit medieval cartographer's drafting table of black oak, with a broad unrolled hand-inked fantasy map showing organic pen-drawn mountain contours and coastline, a fine detailed circular aged brass astrolabe resting on it, an inkwell with quill, and a single short amber candle. Oblique overhead view at close range, material-rich realism with painterly detail, tarnished brass and sepia vellum set against deep charcoal and walnut shadows. Compose for a very wide center crop about 7:1: keep the recognizable stone, brass, wax, paper and wood subject details along the middle horizontal band, the astrolabe around 64 percent from the left, and keep the outer left and right in shadow for live UI overlays. High-end hand-painted dark fantasy game station art, natural shadow and restrained ochre highlights. Edge to edge image, no UI, no text, no letters, no border, no people.

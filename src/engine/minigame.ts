@@ -7,13 +7,13 @@ import type { GameState, SkillId } from './types';
  * Skilling mini-games: playing fills Focus, which speeds up the running action on top of the
  * normal idle rate. It can only ever add speed, and it never runs offline.
  */
-export const MAX_FOCUS_SPEED = 0.45;
-/** Focus past full: adds no speed, but buys this much drain time before speed starts to fall (5 s for most skills). */
+export const MAX_FOCUS_SPEED = 2;
+/** Focus past full holds top speed for up to 6.25 seconds for most skills. */
 const FOCUS_OVERFLOW = 0.5;
-const FOCUS_HIT = 0.25;
-const FOCUS_WEAK = 0.05;
+const FOCUS_HIT = 0.28;
+const FOCUS_WEAK = 0.075;
 const FOCUS_MISS = 0.1;
-const FOCUS_DRAIN_PER_SEC = 0.1;
+const FOCUS_DRAIN_PER_SEC = 0.08;
 /** Thieving holds Focus much longer (~28.6 s at peak, ~57 s total) so waiting out glances feels rewarding. */
 export const THIEVING_FOCUS_OVERFLOW = 1.0;
 export const THIEVING_FOCUS_DRAIN_PER_SEC = 0.035;
@@ -493,7 +493,7 @@ export function focusRemainingSeconds(s: GameState, skill?: SkillId | null): num
 
 /**
  * Maximum focus speed bonus for the given skill (or current running manual action).
- * Base is 45% (0.45); each mastery level earned across all things in that skill adds +0.01% (+0.0001).
+ * Base is +200%. Each mastery level earned in that skill adds +0.01%.
  */
 export function maxFocusSpeed(s: GameState, skill?: SkillId | null): number {
   const targetSkill = skill ?? currentMinigameSkill(s);

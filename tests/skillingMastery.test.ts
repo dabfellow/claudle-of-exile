@@ -284,39 +284,39 @@ describe('non-combat action mastery', () => {
     const iron = actionDef('mine_iron').mastery!;
     const ash = actionDef('giant_ash').mastery!;
 
-    // Initial state: no practice -> max focus speed is baseline 45% (0.45)
+    // Initial state: no practice, so full Focus gives +200% speed.
     expect(totalMasteryLevels(s, 'mining')).toBe(0);
-    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.45);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(2, 6);
 
     // Practice > 0 at level 1 adds 1 level (+0.01% -> +0.0001)
     s.skillingMastery[copper.id] = 10;
     expect(totalMasteryLevels(s, 'mining')).toBe(1);
-    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.45 + 0.0001);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(2.0001, 6);
 
     // Copper at Level 50 adds 50 levels (+0.50% -> +0.005)
     s.skillingMastery[copper.id] = masteryThreshold(50);
     expect(totalMasteryLevels(s, 'mining')).toBe(50);
-    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.45 + 0.005);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(2.005, 6);
 
     // Copper at Level 100 adds 100 levels (+1.00% -> +0.01)
     s.skillingMastery[copper.id] = MASTERY_CAP;
     expect(totalMasteryLevels(s, 'mining')).toBe(100);
-    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.46);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(2.01, 6);
 
     // Adding Iron at Level 75 adds 75 levels (total 175 levels -> +1.75%)
     s.skillingMastery[iron.id] = masteryThreshold(75);
     expect(totalMasteryLevels(s, 'mining')).toBe(175);
-    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.45 + 0.0175);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(2.0175, 6);
 
     // Unrelated skill (woodcutting) masteries don't affect mining minigame
     s.skillingMastery[ash.id] = MASTERY_CAP;
     expect(totalMasteryLevels(s, 'mining')).toBe(175);
-    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(0.45 + 0.0175);
+    expect(maxFocusSpeed(s, 'mining')).toBeCloseTo(2.0175, 6);
     expect(totalMasteryLevels(s, 'woodcutting')).toBe(100);
-    expect(maxFocusSpeed(s, 'woodcutting')).toBeCloseTo(0.46);
+    expect(maxFocusSpeed(s, 'woodcutting')).toBeCloseTo(2.01, 6);
 
     // focusMult reflects the increased max speed when focus is full
     s.action = { kind: 'skill', actionId: 'mine_copper', progress: 0, focus: 1 };
-    expect(focusMult(s)).toBeCloseTo(1 + 0.45 + 0.0175);
+    expect(focusMult(s)).toBeCloseTo(3.0175, 6);
   });
 });

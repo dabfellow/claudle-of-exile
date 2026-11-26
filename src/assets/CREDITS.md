@@ -20,6 +20,14 @@ Files are named after their pack: `codespree-`, `sn-`, `craftpix-`, `freesample-
 - **sn-\*.png**: Fantasy Pixel Icons, Skills (v002) and Elements (v004) free tiers, attributed to SanguineNite. No licence file in the download; check before release.
 - **zones/gegx-\*.webp, scenes/gegx-\*.webp**: Painterly Backgrounds free sample by GegX (gegx.itch.io), AI-generated and hand-curated, resized to 1600px webp. Free for commercial and non-commercial projects; may not be redistributed as an asset pack or used to train image models.
 
+## Cartography station
+
+- `public/assets/cartography/cartography-bench-bg.webp` and its `folio-texture.webp` detail were made with the built-in ImageGen tool for Path of Idle. [Banner prompt](../../public/assets/cartography/ART.md).
+- `astrolabe.webp` is a cropped photograph by [Daderot](https://commons.wikimedia.org/wiki/File:Astrolabe,_Strasbourg,_1466_AD,_brass_-_Hessisches_Landesmuseum_Darmstadt_-_Darmstadt,_Germany_-DSC00536.jpg), CC0 1.0.
+- `celestial-atlas.webp` is a resized [1661 celestial chart by Andreas Cellarius](https://commons.wikimedia.org/wiki/File:1661_celestial_map_of_the_Southern_Sky_by_Andreas_Cellarius.jpg), public domain.
+- `wax-seal.png` is [Wax seal by Lorc](https://game-icons.net/1x1/lorc/wax-seal.html), CC BY 3.0. The game applies the wax colors in CSS.
+- The remaining Cartography PNGs reuse and recolor the Kibyra compass, map, parchment and scroll props, and 7Soul1's CC0 map and claw icons. Original pack terms are listed above.
+
 ## Woodcutter's Lodge
 
 - **woodcutting/lodge/cainos-\*.png**: cropped props from [Pixel Art Platformer - Village Props](https://cainos.itch.io/pixel-art-platformer-village-props) by Cainos. The author allows use and modification in free and commercial games. The original pack is not distributed with the game.

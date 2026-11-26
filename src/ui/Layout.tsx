@@ -1,18 +1,10 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { classDef } from '../data/classes';
-import { CRAFT_STEP_MS } from '../data/hideout';
-import { heistJob } from '../data/heist';
 import { isMaterial, materialDef } from '../data/materials';
 import { actionDef, SKILLS } from '../data/skills';
-import { zoneDef } from '../data/zones';
-import { queueSkill, retreat, useFlask } from '../engine/combat';
-import { findItem } from '../engine/crafting';
-import { methodName } from '../engine/craftUntil';
-import { alarmChance, roomMs } from '../engine/heist';
+import { queueSkill, useFlask } from '../engine/combat';
 import { ascendancyPointsLeft, canAscend, choiceWaiting } from '../engine/ascendancy';
 import { pointsLeft } from '../engine/passives';
-import { actionIntervalMs, stopAction } from '../engine/skills';
-import { deriveStats } from '../engine/stats';
 import type { GameState, SkillId } from '../engine/types';
 import { characterLevel } from '../engine/character';
 import { levelOf, maxLevelOf, progressOf, xpToReach } from '../engine/xp';
@@ -23,8 +15,7 @@ import { itemName } from '../engine/items';
 import { GemIcon } from './components/GemView';
 import { ItemIcon, ItemTip } from './components/ItemView';
 import { SKILL_KEYS } from './pages/SkillGemsPage';
-import { fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tooltip } from './components/common';
-import { PinnedCurrencies } from './components/CurrencyPins';
+import { fmt, GameIcon, MatIcon, ProgressBar, Tooltip } from './components/common';
 import { RubbingsCard } from './components/ScholarsDesk';
 import { DelveReplay, MineActivity } from './components/DelveView';
 import { IngotRack } from './components/FurnaceView';
@@ -266,116 +257,6 @@ export function Sidebar({ page, go }: { page: Page; go: (p: Page) => void }) {
         <span className="nav-version-mobile">v{APP_VERSION}</span>
       </div>
     </nav>
-  );
-}
-
-export function TopBar({ go }: { go: (p: Page) => void }) {
-  const s = useGame();
-  const d = deriveStats(s);
-  let title = 'Idle in the hideout';
-  let sub = 'Pick an activity to begin';
-  let progress = 0;
-  let color = 'var(--dim)';
-  let target: Page = 'hideout';
-
-  if (s.action?.kind === 'skill') {
-    const a = actionDef(s.action.actionId);
-    const sk = SKILLS[a.skill];
-    const interval = actionIntervalMs(s, a, d);
-    title = `${sk.verb}: ${a.name}`;
-    sub = `${fmtTime(interval - s.action.progress)} left`;
-    progress = s.action.progress / interval;
-    color = sk.color;
-    target = a.skill;
-  } else if (s.action?.kind === 'project' && s.professionProgress.activeProject) {
-    const run = s.professionProgress.activeProject;
-    title = `Project: ${run.project.name}`;
-    sub = run.stopReason ?? `${fmtTime(run.project.durationMs - run.elapsedMs)} base work left`;
-    progress = run.elapsedMs / run.project.durationMs;
-    // every project lives on the Masterworks page now
-    target = 'mastery';
-    color = SKILLS[run.project.skill].color;
-  } else if (s.action?.kind === 'craft') {
-    const item = findItem(s, s.action.uid);
-    title = `Crafting: ${item ? itemName(item) : 'item'}`;
-    sub = `${methodName(s.action.method)} · ${s.action.steps} step${s.action.steps === 1 ? '' : 's'}`;
-    progress = s.action.progress / CRAFT_STEP_MS;
-    color = 'var(--currency)';
-    target = 'bench';
-  } else if (s.action?.kind === 'heist') {
-    const job = heistJob(s.action.jobId);
-    title = `Heist: ${job.name}`;
-    sub = `Room ${s.action.room} of ${s.action.lastRoom} · ${Math.round(alarmChance(s, job, s.action.room) * 100)}% alarm`;
-    progress = s.action.progress / roomMs(s, job, d);
-    color = SKILLS.thieving.color;
-    target = 'thieving';
-  } else if (s.action?.kind === 'combat' && s.combat) {
-    const z = zoneDef(s.combat.zoneId);
-    const pack = s.combat.monsters;
-    const alive = pack.filter((m) => m.life > 0);
-    const total = pack.reduce((a, m) => a + m.maxLife, 0);
-    const left = alive.reduce((a, m) => a + Math.max(0, m.life), 0);
-    title = `Fighting in ${z.name}`;
-    sub = alive.length ? (alive.length === 1 ? alive[0].name : `${alive.length} enemies`) : 'Searching…';
-    progress = total ? 1 - left / total : 0;
-    color = 'var(--life)';
-    target = 'combat';
-  }
-
-  return (
-    <header className="topbar">
-      <div className={`activity ${s.action ? 'on' : ''}`} role="button" tabIndex={0} onClick={() => go(target)} onKeyDown={(e) => e.key === 'Enter' && go(target)}>
-        <span className="nav-icon" style={{ width: 36, height: 36 }}>
-          <GameIcon name={target === 'hideout' ? 'home' : target === 'mastery' ? 'forge' : target} size={18} color={color} />
-        </span>
-        <div className="activity-text">
-          <div className="activity-title">
-            {title}
-            <small>{sub}</small>
-          </div>
-          <ProgressBar value={progress} color={color} />
-        </div>
-        {s.action && (
-          <button
-            className="btn sm ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              game.act((st) => (st.action?.kind === 'combat' ? retreat(st) : stopAction(st)));
-            }}
-          >
-            Stop
-          </button>
-        )}
-      </div>
-      <div className="char-plate">
-        <Crest classId={s.character.classId} size={38} />
-        <div className="char-plate-body">
-          <div className="char-plate-name">
-            <b>{s.character.name}</b>
-            <span className="dim">
-              Lv {characterLevel(s)} {classDef(s.character.classId).name}
-            </span>
-          </div>
-          <div className="topbar-life">
-            {d.maxEs > 0 && (
-              <span title={`Energy Shield ${fmt(s.es)} / ${fmt(d.maxEs)}`}>
-                <ProgressBar value={s.es / d.maxEs} color="linear-gradient(90deg, var(--es), var(--es-2))" className="thin" />
-              </span>
-            )}
-            <span title="Life">
-              <ProgressBar value={s.life / d.maxLife} color="linear-gradient(90deg, var(--life), var(--life-2))" size="md" label={`${fmt(s.life)} / ${fmt(d.maxLife)}`} />
-            </span>
-            <span title={`Mana ${fmt(s.mana)} / ${fmt(d.maxMana)}`}>
-              <ProgressBar value={d.maxMana ? s.mana / d.maxMana : 0} color="linear-gradient(90deg, var(--mana), var(--mana-2))" className="thin" />
-            </span>
-          </div>
-        </div>
-      </div>
-      {/* only what you pinned from the Stash's Currency tab; the box stays so the character plate keeps the middle */}
-      <div className="topbar-pins">
-        <PinnedCurrencies s={s} />
-      </div>
-    </header>
   );
 }
 

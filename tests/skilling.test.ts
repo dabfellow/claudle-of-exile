@@ -10,7 +10,7 @@ import { ruleMet, startCraftUntil } from '../src/engine/craftUntil';
 import { equip } from '../src/engine/equipment';
 import { sellItems } from '../src/engine/hideout';
 import { allMods, createItem, rerollMods, spawnWeight } from '../src/engine/items';
-import { chargeResult, focusMult, focusOf, hasMinigame, MAX_FOCUS_SPEED, minigameSwing, overflowOf, strikeResult } from '../src/engine/minigame';
+import { chargeResult, focusMult, focusOf, focusStep, hasMinigame, MAX_FOCUS_SPEED, minigameSwing, overflowOf, strikeResult } from '../src/engine/minigame';
 import { simulateOffline } from '../src/engine/offline';
 import { seeded } from '../src/engine/rng';
 import { deserialize, serialize } from '../src/engine/save';
@@ -50,12 +50,17 @@ describe('skilling mini-games', () => {
     return s.action as Extract<GameState['action'], { kind: 'skill' }>;
   };
 
-  it('adds at most 45% speed', () => {
+  it('triples base speed at full Focus with ordinary hits', () => {
     const s = player();
     start(s);
-    for (let i = 0; i < 20; i++) minigameSwing(s, 'hit');
+    const c = ctx();
+    for (const result of ['hit', 'hit', 'weak', 'hit', 'miss', 'hit'] as const) {
+      minigameSwing(s, result);
+      focusStep(s, c, 750);
+    }
+    minigameSwing(s, 'hit');
     expect(focusOf(s)).toBe(1);
-    expect(focusMult(s)).toBeCloseTo(1 + MAX_FOCUS_SPEED);
+    expect(focusMult(s)).toBe(3);
   });
 
   it('holds top speed while overflow drains, with no extra speed', () => {
@@ -66,7 +71,7 @@ describe('skilling mini-games', () => {
     expect(focusMult(s)).toBeCloseTo(1 + MAX_FOCUS_SPEED);
     action.progress = -1e9;
     const d = deriveStats(s);
-    skillStep(s, ctx(), 4_900, d);
+    skillStep(s, ctx(), 6_000, d);
     expect(overflowOf(s)).toBeGreaterThan(0);
     expect(focusMult(s)).toBeCloseTo(1 + MAX_FOCUS_SPEED);
     skillStep(s, ctx(), 1_000, d);
@@ -88,7 +93,7 @@ describe('skilling mini-games', () => {
     const c = ctx();
     const d = deriveStats(s);
     action.progress = -1e9;
-    skillStep(s, c, 10_000, d);
+    skillStep(s, c, 12_500, d);
     expect(focusOf(s)).toBe(0);
   });
 

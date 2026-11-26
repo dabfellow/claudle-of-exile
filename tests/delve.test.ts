@@ -88,7 +88,11 @@ describe('Mining Delve', () => {
     expect(s.storage.bank.rubble).toBe(15);
     s.delve.warning = { hazard: 'gas', action: 'delve_push', startsAt: s.clock, layer: 2, timerMs: 3000 };
     expect(braceDelve(s, ctx, 'gas')).toBe('double');
-    completeDelve(s, makeCtx({ next: () => 0.99 }));
+    if (s.action?.kind !== 'skill') throw new Error('A Delve action must be running');
+    const d = deriveStats(s);
+    s.action.progress = actionIntervalMs(s, actionDef(s.action.actionId), d);
+    s.clock += 1;
+    delveStep(s, ctx, 1, d);
     expect(s.delve.deepest).toBe(2);
     expect(s.storage.bank.rubble).toBe(10);
     completeDelve(s, ctx);
@@ -130,10 +134,10 @@ describe('Mining Delve', () => {
       s.delve.warning = { action: 'delve_work', hazard: 'gas', layer: 1, startsAt: s.clock - 1500, timerMs: 3000 };
       expect(braceDelve(s, ctx, 'gas')).toBe('hit');
       advance(60_000);
-      expect(focusOf(s)).toBe(hit / 4);
+      expect(focusOf(s)).toBeCloseTo(Math.min(1, hit * 0.28));
     }
-    advance(6_000);
-    expect(focusOf(s)).toBeCloseTo(0.9);
+    advance(7_000);
+    expect(focusOf(s)).toBeCloseTo(0.96);
     expect(startDelve(s, ctx, 'work')).toBeNull();
     expect(s.delve.focusHoldUntil).toBeUndefined();
     expect(focusOf(s)).toBe(0);

@@ -277,7 +277,7 @@ describe('Archaeology brushing patch', () => {
 });
 
 describe('Thieving extended Focus duration', () => {
-  it('holds Focus overflow past 25 seconds for Thieving while keeping Mining at 5s/10s', () => {
+  it('holds Focus overflow past 25 seconds for Thieving and 6.25 seconds for Mining', () => {
     const ctx = { rng: seeded(1), now: 0, emit: () => {} };
     const thief = newGame(1, { name: 'T', classId: 'shadow' });
     startSkillAction(thief, ctx, 'mark_peddler');
@@ -292,7 +292,7 @@ describe('Thieving extended Focus duration', () => {
     const miner = newGame(1, { name: 'M', classId: 'warrior' });
     startSkillAction(miner, ctx, 'mine_copper');
     for (let i = 0; i < 8; i++) minigameSwing(miner, 'hit');
-    expect(focusHoldSeconds(miner, 'mining')).toBeCloseTo(5, 1);
-    expect(focusRemainingSeconds(miner, 'mining')).toBeCloseTo(15, 1);
+    expect(focusHoldSeconds(miner, 'mining')).toBeCloseTo(6.25);
+    expect(focusRemainingSeconds(miner, 'mining')).toBeCloseTo(18.75);
   });
 });

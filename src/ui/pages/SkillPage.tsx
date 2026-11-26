@@ -42,10 +42,10 @@ import { WoodBench } from '../components/WoodBench';
 import { SawmillPage } from '../components/Sawmill';
 import { TailorBench } from '../components/TailorBench';
 import { CraftOutputSettings } from '../components/CraftOutputSettings';
-import { LapidaryBench } from '../components/LapidaryBench';
+import { LapidaryBench, LapidaryMaterials } from '../components/LapidaryBench';
 import { ForagingBench } from '../components/ForagingBench';
 import { AlchemyBench } from '../components/AlchemyBench';
-import { CartographyBoard } from '../components/CartographyBoard';
+import { CartographyBoard, CartographyStocks } from '../components/CartographyBoard';
 import { ProfessionWorkbench, PROFESSION_THEMES } from '../components/ProfessionWorkbench';
 import { Icon, Orb, Swatch } from '../components/Icon';
 import { MasteryProgress } from '../components/MasteryProgress';
@@ -443,7 +443,7 @@ function SkillHeader({ skill }: { skill: SkillId }) {
   const maxed = level >= maxLevelOf(skill);
   const rate = game.xpPerHour(skill);
   return (
-    <div className="card profession-header" style={{ ['--skill' as string]: def.color }}>
+    <div className={`card profession-header ${skill === 'gemcutting' ? 'lapidary-hero' : ''}`} style={{ ['--skill' as string]: def.color }}>
       <div className="profession-header-icon">
         <GameIcon name={skill} size={32} color={def.color} />
       </div>
@@ -469,6 +469,8 @@ function SkillHeader({ skill }: { skill: SkillId }) {
           <span>{maxed ? 'Max level' : `${fmt(next - xp)} XP to level ${level + 1}`}</span>
         </div>
       </div>
+      {skill === 'cartography' && <CartographyStocks s={s} />}
+      {skill === 'gemcutting' && <LapidaryMaterials s={s} />}
     </div>
   );
 }

@@ -4,6 +4,14 @@ Last updated 2026-11-25. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
+The illustrated Cartography station is implemented and playtested locally (2026-11-25). Its four tabs use the existing recipes, costs, map stock and Atlas progress. The output map sprites stay crisp, the phone folio uses even rows, and phone notifications show two at a time.
+
+Full Focus triples base skilling speed, fills more easily from hits, and drains a little more slowly for most skills. Thieving keeps its dedicated timer (2026-11-25).
+
+The illustrated Gemcutting station includes a recipe preview tray, Catalogue and filtered bulk recycling. Desktop and phone playtests covered cutting, Focus, scouring and recycling (2026-11-25).
+
+The top activity and character displays have been removed. The top row appears when currencies are pinned (2026-11-25).
+
 **0.6.10, Alchemy Laboratory, Masterworks and Tailoring Cloth**, went live on 2026-11-25. Alchemy is one Laboratory page and vials no longer overwrite each other; Masterworks have their own Mastery page with ten new masterworks; Tailoring has cloth, leather and a hide stall; Smelting's Focus game is Keep the Heat. Gathered from every session's unsaved work: only the Masterworks and Tailoring folders held anything not already live. All 2,051 tests passed. The merged pages were not looked at in the browser after combining.
 
 **0.6.9, Tailoring and the Sawmill**, went live on 2026-11-24. Cloth and leather armour moved to the new Tailoring skill, and the new Sawmilling skill makes planks, heartwood and the bow staves, wand blanks and staff shafts that every bow, wand and staff now needs. All 2,059 tests passed. Browser checks covered the Sawmilling, Woodcrafting and Tailoring pages at desktop width; phone width was not checked. Deployment confirmed the live version and login configuration.
@@ -113,10 +121,12 @@ Ashen Codex world-map illustration and general campaign route integrated 2026-11
 | 8 | Additional Maps expansion | Released in 0.4.3: plain/shared maps T1–T10, permanent tier mechanics, Sextants, 100-node Atlas with up to 70 allocated points, Doomed Maps I–V and Cartography T1–T10/Sextants |
 | 9 | Hard bosses / Uber layer | Released in 0.4.4: five Hard Bosses (`ossuar`, `mother_vael`, `undertow`, `twin_regents`, `crownless`) and three Uber Bosses (`uber_first_exile`, `uber_architect_ruin`, `uber_void_sovereign`) with keyed Map Device arenas, reactive `weakPoint` and `choir` aims, boss trophies, Doom Sigils, key crafting recipes, and 11 exclusive uniques |
 | 10 | Top-end crafting/hideout | Released in 0.4.4: Fractured items/orbs (10A), Bench L6 meta-crafts with Forger's Seal auto-crafting (10B), Station expansions L5–6 with Stash affinities (10C), Uber Bosses with Doom Sigil crafting (10D), and Crafting Bench UI overhaul with affix capacity tracker and categorized navigation |
-| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented. The 12-skill rework, skill retirements, new skilling passive tree, and menu and minigame polish are live in 0.6.0. The Lodge, layer mastery and crafting workshop updates are live in 0.6.7. |
+| 11 | Long tail | Challenge modes, Unique discovery and per-task life-skill mastery implemented. The 12-skill rework, skill retirements, new skilling passive tree, and menu and minigame polish are live in 0.6.0. The Lodge, layer mastery and crafting workshop updates are live in 0.6.7. The illustrated Cartography station is verified locally (2026-11-25). |
 | 1.0 | Launch designation | Fresh wipe decided 2026-11-08; old saves move to a Legacy area (see Decisions); needs a clear announcement |
 
 ## Decisions
+
+- Illustrated Cartography station (2026-11-25). The Atlas keeps all existing entries and milestones. Eighteen pedestals fit on each full folio, with the remaining entries on a second folio.
 
 - Masterworks reset (2026-11-25, owner's call). Masterworks get their own page under a new **Mastery** sidebar heading, sealed until five life skills reach level 25. Every old profession project (tools, chart, unique and flask projects) is retired, and ten new masterworks replace them: each needs three or more level 60+ gathering finds from different skills, a production good and a rare drop, and makes gear on a masterwork base where every modifier is Tier 1, through any reroll. Ranks add a Void Slot, Doom Implicit or Doom Tier. See [MASTERWORKS.md](MASTERWORKS.md).
 
@@ -735,6 +745,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Redesign the Cartography station and its four tabs — done 2026-11-25.
+
 - [x] Alchemy rebuilt as one Laboratory page: cauldron scene with the brew line-up, flask belt with a vial shelf, and a recipe book (chips, no dropdown) for infusions, flasks, reagents and orbs. New art: Teniers' *The Alchemist* backdrop, John Hargrove's pixel cauldrons (CC-BY), CC0 bottles and bubbling tubes from itch.io. Fixes pours always overwriting slot 1. See [Alchemy](ALCHEMY.md#screen).
   - Built 2026-11-25; all tests and the build pass, and a quick in-game look at desktop and phone width. Live in 0.6.10 — done 2026-11-25. Its Masterworks tab went to the new Mastery page.
 - [x] Mastery tab: Masterworks page with a level-25 skill gate and ten new Tier 1 masterworks, replacing every old profession project (see Decisions, 2026-11-25, and [MASTERWORKS.md](MASTERWORKS.md)).
@@ -1075,6 +1087,12 @@ The consolidated batch specification is retained below as a proposal. Its initia
   - The other salvage commits are superseded (old trash-monster damage tuning, the gem shelf already on main) or are early-November playtest notes.
 
 ## Done
+
+- [x] Redesign the four Gemcutting tabs around an illustrated workbench — done 2026-11-25. Desktop and phone checks used a demo character to cut, scour and run or stop a recycling batch.
+
+- [x] Remove the top activity and character displays — done 2026-11-25. Verified pinned currencies and the mobile combat vitals.
+
+- [x] Redesign the Cartography station and its four tabs — done 2026-11-25. Desktop checks covered special-map drafting and entry, sighting, upgrades, crafting and Atlas pagination. A 390px touch check covered all tabs, drafting and level locks. All 2,051 tests passed.
 
 - [x] Released Workshop Upgrades and Loot as 0.6.7. The production build and all 2,055 tests passed, and deployment confirmed the version and login configuration. — done 2026-11-24
 

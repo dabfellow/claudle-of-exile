@@ -62,10 +62,12 @@ export function PinnedCurrencies({ s }: { s: GameState }) {
   const pins = pinnedCurrencies(s);
   if (!pins.length) return null;
   return (
-    <div className="currency-strip">
-      {pins.map((id) => (
-        <CurrencyAmount key={id} id={id} amount={s.storage.bank[id] ?? 0} label={id === 'gold' ? 'gold' : currencyDef(id).short} />
-      ))}
-    </div>
+    <header className="topbar">
+      <div className="currency-strip">
+        {pins.map((id) => (
+          <CurrencyAmount key={id} id={id} amount={s.storage.bank[id] ?? 0} label={id === 'gold' ? 'gold' : currencyDef(id).short} />
+        ))}
+      </div>
+    </header>
   );
 }

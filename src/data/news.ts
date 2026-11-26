@@ -10,7 +10,15 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Cartography has a candlelit drafting table, a tier selector and fusion pedestal, illustrated supply shelves, and a celestial Atlas.',
+  'The large maps on the Cartography workbench stay crisp, and the map folio has even rows on phones.',
+  'Phones show up to two notifications at a time so they cover less of the game.',
+  'Full Focus triples skilling speed before mastery bonuses. Hits fill it a little faster, and it lasts longer for most skills.',
+  'Gemcutting has an illustrated jeweler’s bench, a recipe preview tray, a display case for discovered cuts, and filters and bulk selection for recycling.',
+  'Gemcutting shows a single set of controls for the active cut, brings recipe previews into view on phones, and moves scouring details into a tooltip.',
+  'Removed the activity and character bars from the top of the game. The top row appears only when you pin currency.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

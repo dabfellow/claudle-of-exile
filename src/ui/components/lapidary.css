@@ -1,30 +1,394 @@
-.lapidary { display: grid; gap: 12px; }
-.lapidary-work { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
-.lapidary-side, .lapidary-card, .lapidary-card form { display: grid; align-content: start; gap: 10px; min-width: 0; }
-.lapidary .lapidary-card { padding: 14px; margin: 0; }
-.lapidary-card h2, .lapidary-card h3, .lapidary-card p, .lapidary-tray p { margin: 0; }
+.profession-page.profession-gemcutting {
+  --lapidary-brass: #d9b680;
+  --lapidary-line: #644832;
+  --lapidary-paper: #f5e5cd;
+  --lapidary-velvet: #14111d;
+  --lapidary-fabric: url('../../../public/assets/gemcutting/velvet.webp');
+  --lapidary-wood: url('../../../public/assets/gemcutting/dark-wood.webp');
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+}
+
+.profession-gemcutting .profession-header.lapidary-hero {
+  --lapidary-hero-shade: linear-gradient(90deg, #0d090bef 5%, #130d11bb 29%, transparent 54%, #160e14ba 79%, #110d14f2);
+  display: grid;
+  grid-template-columns: auto minmax(0, 268px) 1fr auto;
+  grid-template-areas: "emblem title . materials" "emblem experience . materials";
+  align-content: center;
+  align-items: center;
+  gap: 10px 16px;
+  min-height: 180px;
+  padding: 18px 23px;
+  border: 1px solid #8d6643;
+  background:
+    var(--lapidary-hero-shade),
+    url('../../../public/assets/gemcutting/lapidary-bench-bg.webp') center 55% / cover;
+  box-shadow: inset 0 0 0 3px #1d1214c9, inset 0 0 0 4px #99714b63, 0 6px 22px #08060950;
+}
+
+.lapidary-hero .profession-header-icon {
+  grid-area: emblem;
+  width: 54px;
+  color: #90d3b7;
+  border-color: #997349;
+  background: radial-gradient(circle, #22463a, #151118 77%);
+  box-shadow: 0 0 16px #263b326e, inset 0 0 0 2px #211712;
+}
+
+.lapidary-hero .profession-header-text { grid-area: title; }
+.lapidary-hero .profession-header-text h1 { color: var(--lapidary-paper); text-shadow: 0 2px 7px #000; }
+.lapidary-hero .profession-header-text p { color: var(--lapidary-brass); }
+.lapidary-hero .xp { grid-area: experience; min-width: 0; }
+.lapidary-hero .xp-meta { color: #d6c4b4; }
+
+.lapidary-material-dock {
+  grid-area: materials;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lapidary-material-dock li {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 3px;
+  padding: 7px 8px;
+  border: 1px solid #947248;
+  border-radius: 6px;
+  background: linear-gradient(#1c1420f2, #100c16f4);
+  box-shadow: inset 0 0 0 2px #211719, 0 3px 8px #120b0e90;
+  color: #e0c8aa;
+  text-align: center;
+  font-size: .7rem;
+}
+
+.lapidary-material-dock b { color: var(--lapidary-paper); font-size: 1rem; }
+.lapidary-art { display: block; flex: none; object-fit: contain; filter: drop-shadow(0 3px 4px #07050ac2); }
+.lapidary-painted-gem { position: relative; display: block; width: fit-content; }
+.lapidary-sigil {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: clamp(15px, 37%, 27px);
+  aspect-ratio: 1;
+  border: 1px solid #a58964;
+  border-radius: 50%;
+  background: #1c1520f5;
+  color: #eed8b6;
+  font-size: .58rem;
+  font-weight: 700;
+}
+.lapidary-sigil span { width: 70%; aspect-ratio: 1; background: currentColor; mask: var(--lapidary-glyph) center / contain no-repeat; }
+.lapidary-socket {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: fit-content;
+  padding: 4px;
+  border: 1px solid #98754c88;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #33253f, #110d18 75%);
+  box-shadow: inset 0 0 6px #080609, 0 1px 2px #09070c;
+}
+
+.lapidary {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  container: lapidary / inline-size;
+}
+
+.lapidary > .tabs {
+  margin: 0;
+  padding: 5px 8px 0;
+  border: 1px solid var(--lapidary-line);
+  border-radius: 6px;
+  background: linear-gradient(#271a17e8, #160e13ee), var(--lapidary-wood) center / 520px;
+}
+
+.lapidary .tabs .tab.active { color: #fae0ad; border-color: var(--lapidary-brass); }
+
+.lapidary-work,
+.lapidary-recipes { display: grid; align-items: start; gap: 12px; }
+.lapidary-work { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.lapidary-recipes { grid-template-columns: minmax(235px, 340px) minmax(0, 1fr); }
+.lapidary-side,
+.lapidary .lapidary-card { display: grid; align-content: start; gap: 12px; min-width: 0; }
+
+.lapidary .lapidary-card {
+  margin: 0;
+  padding: 15px;
+  border: 1px solid var(--lapidary-line);
+  border-radius: 8px;
+  background: linear-gradient(145deg, #211928f2, #14111df7), var(--lapidary-fabric) center / 290px;
+  box-shadow: inset 0 0 0 2px #130e17b0, 0 4px 13px #09070b3d;
+}
+
+.lapidary .lapidary-wheel,
+.lapidary .lapidary-index {
+  background: linear-gradient(145deg, #291b1ae8, #18111bec), var(--lapidary-wood) center / 510px;
+}
+
+.lapidary-card :is(h2, h3, p), .lapidary-tray p { margin: 0; }
+.lapidary-card h2 { color: var(--lapidary-paper); font: 500 1.35rem/1.1 Georgia, serif; }
+.lapidary-card h3 { color: var(--lapidary-paper); }
 .lapidary-card label { display: grid; gap: 5px; }
 .lapidary-card select, .lapidary-card input { min-width: 0; max-width: 100%; }
-.lapidary-stone { display: grid; gap: 10px; justify-items: center; padding: 16px; background: #20312e; border-radius: 8px; }
-.lapidary-rough { width: 66px; height: 78px; clip-path: polygon(18% 9%, 79% 0, 100% 42%, 83% 90%, 30% 100%, 0 54%); background: linear-gradient(134deg,#bfb9ff,#4d487f 51%,#292646 52%,#8074c0); box-shadow: inset 0 0 16px #b1b3ef; }
-.lapidary-stone.star .lapidary-rough { background: radial-gradient(circle at center,#fff8ad,#eeb963 23%,#7d4854 56%,#372043); }
+.lapidary-panel-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.lapidary-panel-head > :is(div, h2, h3) { flex: 1; min-width: 0; }
+.lapidary-panel-head > div > p { margin-top: 4px; }
+.lapidary-tool { display: grid; place-items: center; flex: none; }
+
+.lapidary-stone {
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  gap: 8px;
+  min-height: 238px;
+  padding: 22px 10px 14px;
+  border: 1px solid #9a764f;
+  border-radius: 6px;
+  background:
+    radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--stone) 42%, transparent), transparent 52%),
+    linear-gradient(transparent 24%, #0e0a11dc 78%, #100b12 100%),
+    url('../../../public/assets/gemcutting/faceting-wheel.webp') center 47% / cover;
+  box-shadow: inset 0 0 16px #050408f5, inset 0 0 0 2px #211713;
+}
+
+.lapidary-mounted-gem { margin-block: 7px 3px; }
+.lapidary-mounted-gem .lapidary-art {
+  filter: drop-shadow(0 7px 7px #080508d9) drop-shadow(0 0 13px color-mix(in srgb, var(--stone) 67%, transparent));
+}
+.lapidary-stone > b { color: var(--lapidary-paper); font: 600 1.25rem Georgia, serif; text-shadow: 0 2px 3px #09050b; }
+
 .lapidary-faces, .lapidary-costs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-.lapidary-face { border: 1px solid #55766c; border-radius: 4px; padding: 4px 8px; color: var(--muted); background: none; font-size: 12px; }
-.lapidary-face.filled { color: #e2fff0; background: #365f51; cursor: pointer; }
+.lapidary-face { border: 1px solid #a3855a80; border-radius: 4px; padding: 4px 8px; color: #dbccbd; background: #14111de0; font-size: .72rem; }
+.lapidary-face.filled { color: #b7e8ce; border-color: #639680; background: #223f35; cursor: pointer; }
 .lapidary-face.pill { cursor: default; }
-.lapidary-costs { justify-content: flex-start; gap: 6px 12px; }
-.lapidary-facet-list, .lapidary-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(185px,100%),1fr)); gap: 8px; }
-.lapidary .lapidary-choice { display: grid; gap: 4px; text-align: left; white-space: normal; align-content: start; min-width: 0; }
-.lapidary .lapidary-choice.locked { opacity: 0.68; border-style: dashed; }
-.lapidary-entry { padding: 7px 9px; background: #25312c; border-radius: 5px; }
-.lapidary-recycle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(270px, 100%), 1fr)); gap: 10px; }
-.lapidary-recycle-card { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2, rgba(20, 28, 26, 0.72)); min-width: 0; align-content: start; }
-.lapidary-recycle-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.lapidary-costs { justify-content: flex-start; gap: 6px 10px; }
+.lapidary-costs > span { display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px; border-radius: 4px; background: #130f19; font-size: .78rem; }
+.lapidary-label { color: var(--lapidary-brass); font-size: .72rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+
+.lapidary-facet-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.lapidary .lapidary-choice {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  padding: 7px 9px;
+  border-color: #574250;
+  background: #211b28;
+  text-align: left;
+  white-space: normal;
+}
+.lapidary .lapidary-choice:hover:enabled { border-color: #a17f55; background: #332638; }
+.lapidary .minigame { min-width: 0; margin: 0; border-color: var(--lapidary-line); background: #161019; }
+.lapidary-dop {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 123px;
+  padding: 15px 8px 7px;
+  border: 1px solid #8a6646;
+  border-radius: 5px;
+  color: #f9e4c1;
+  background: linear-gradient(#180f1a8c, #150f1ad9), url('../../../public/assets/gemcutting/dark-wood.webp') center / 480px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.lapidary-guide { position: absolute; z-index: 1; top: 6px; left: calc(50% - 1px); width: 2px; height: 19px; background: #ffd980; box-shadow: 0 0 6px #ffd980; }
+.lapidary-rotor {
+  position: relative;
+  display: block;
+  width: 78px;
+  height: 78px;
+  border: 2px solid #9f7747;
+  border-radius: 50%;
+  background: url('../../../public/assets/gemcutting/sapphire-support.png') center / 64px no-repeat, radial-gradient(circle, #352842, #150e1c 68%);
+  box-shadow: inset 0 0 8px #110c18, 0 3px 5px #100b11;
+}
+.lapidary-rotor span { display: block; width: 2px; height: 37px; margin: auto; background: #fff0dd; box-shadow: 0 0 4px #201129; }
+
+.lapidary-categories { display: flex; flex-wrap: wrap; gap: 5px; }
+.lapidary :is(.lapidary-categories, .lapidary-crusher) .gem-chip.active {
+  border-color: #a9855b;
+  color: #ffe2b2;
+  background: #3b2933;
+}
+.lapidary-card .lapidary-show-locked { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.lapidary-index-list { display: grid; gap: 4px; max-height: 476px; overflow-y: auto; scrollbar-color: #785d52 #211522; }
+.lapidary-index-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 5px 7px;
+  border: 1px solid #5b414050;
+  border-inline-start: 2px solid var(--stone);
+  border-radius: 4px;
+  background: #1b131c;
+  color: var(--lapidary-paper);
+  text-align: left;
+  cursor: pointer;
+}
+.lapidary-index-row:hover { background: #302334; }
+.lapidary-index-row[aria-pressed="true"] { border-color: #ba986c; border-inline-start-color: var(--stone); background: #382936; box-shadow: inset 2px 0 var(--stone); }
+.lapidary-index-row > :last-child { white-space: nowrap; }
+
+.lapidary-cushion {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  min-height: 172px;
+  padding: 17px 22px;
+  border: 1px solid #92714f;
+  border-radius: 8px;
+  background:
+    radial-gradient(ellipse at 85px 50%, color-mix(in srgb, var(--stone) 27%, transparent), transparent 54%),
+    linear-gradient(#17101dd6, #14111dec), var(--lapidary-fabric) center / 325px var(--lapidary-velvet);
+  box-shadow: inset 0 0 0 3px #15101a, inset 0 0 22px #0b0811;
+}
+.lapidary-cushion > .lapidary-art { filter: drop-shadow(0 6px 8px #030205d9); }
+.lapidary-cushion h3 { margin-bottom: 6px; font: 500 clamp(1.2rem, 2.6vw, 1.8rem)/1.1 Georgia, serif; }
+.lapidary-reagents ul { display: flex; flex-wrap: wrap; gap: 7px; margin: 8px 0 0; padding: 0; list-style: none; }
+.lapidary-reagents li {
+  display: flex;
+  align-items: center;
+  flex: 1 1 125px;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid #5e4846;
+  border-radius: 5px;
+  background: #1b1520;
+  color: var(--lapidary-paper);
+  font-size: .78rem;
+}
+.lapidary-reagents li b { display: block; margin-top: 2px; font-size: .71rem; }
+.lapidary-reagents .lapidary-panel-head > span { text-align: right; }
+.lapidary .lapidary-load { width: 100%; min-height: 40px; }
+.lapidary .btn.primary:enabled { border-color: #b9895b; background: linear-gradient(#d5a669, #a57649); color: #201310; }
+.lapidary .btn.primary:hover:enabled { background: #ecc48b; }
+.lapidary :is(button, a, select, [tabindex]):focus-visible { outline: 2px solid #f1c582; outline-offset: 1px; }
+
+.lapidary-milestones {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 10px 3px;
+  border: 1px solid #664d45;
+  border-radius: 5px;
+  background: #100d18;
+  list-style: none;
+}
+.lapidary-milestones li { position: relative; display: grid; justify-items: center; align-content: start; gap: 7px; padding: 0 3px; text-align: center; }
+.lapidary-milestones li + li::before { position: absolute; top: 18px; left: -50%; width: 100%; height: 2px; background: #7d5d43; content: ''; }
+.lapidary-milestones li.earned + li.earned::before { background: #68aa88; }
+.lapidary-milestones b {
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #a17b54;
+  border-radius: 50%;
+  color: #f2d5ae;
+  background: #322331;
+  box-shadow: inset 0 0 0 2px #1a1119;
+  font-size: .8rem;
+}
+.lapidary-milestones li.earned b { border-color: #a7c998; color: #e0ffd7; background: #275642; box-shadow: inset 0 0 0 2px #182a25, 0 0 10px #6fbc8a38; }
+.lapidary-milestones li > span { color: #d3c4ba; font-size: .74rem; overflow-wrap: anywhere; }
+.lapidary-milestones li.earned > span { color: #b3e3c5; }
+
+.lapidary-display, .lapidary-recycle-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.lapidary-entry, .lapidary-recycle-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 8px;
+  border: 1px solid #69503d;
+  border-radius: 6px;
+  background: linear-gradient(#231b2bf2, #140f1df2), var(--lapidary-fabric) center / 250px;
+  box-shadow: inset 0 0 9px #0c0913a8;
+  color: var(--lapidary-paper);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.lapidary-crusher-controls, .lapidary-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-block: 6px 9px;
+  border-bottom: 1px solid var(--lapidary-line);
+}
+.lapidary-bulk > span { flex: 1 1 180px; }
+.lapidary-recycle-card { justify-items: stretch; grid-template-rows: 1fr auto; border-top: 2px solid var(--stone); }
+.lapidary-recut-tip { position: absolute; z-index: 1; top: 6px; right: 6px; }
+.lapidary-recycle-head { display: grid; justify-items: center; align-content: start; gap: 6px; min-width: 0; }
+.lapidary-recycle-head .lapidary-socket { border-color: color-mix(in srgb, var(--stone) 65%, #6a443d); }
+.lapidary-gem-name { display: flex; align-items: center; justify-content: center; gap: 5px; flex-wrap: wrap; margin-bottom: 5px; font-size: .84rem; }
+.lapidary-recycle-head .lapidary-faces { align-items: center; gap: 3px; min-height: 28px; }
+.lapidary-recycle-head .lapidary-face { padding: 3px 5px; }
+.lapidary-split-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-self: end; gap: 4px; }
+.lapidary-split-actions .btn { min-width: 0; padding-inline: 3px; }
+.lapidary-split-actions .btn:only-child { grid-column: 1 / -1; }
+.lapidary-card .lapidary-pick-gem { position: absolute; z-index: 1; display: grid; place-items: center; top: 3px; left: 3px; width: 28px; height: 28px; cursor: pointer; }
+.lapidary-pick-gem input { accent-color: #dcb078; }
+.lapidary-recycle-card:has(.lapidary-pick-gem input:checked) { outline: 1px solid #edbd7f; background-color: #432c39; }
+
 .lapidary-tray { display: grid; gap: 8px; }
 .lapidary-tray-piece { display: flex; gap: 8px; align-items: center; }
 .lapidary-tray-piece.star { color: #ffd487; }
-.lapidary-dop { display: grid; justify-items: center; gap: 6px; min-height: 125px; width: 100%; position: relative; border: 1px solid #547367; border-radius: 7px; background: #212d2d; color: #e1eee9; padding: 8px; cursor: pointer; touch-action: manipulation; }
-.lapidary-guide { position: absolute; height: 17px; width: 2px; background: var(--accent); top: 6px; left: calc(50% - 1px); z-index: 1; }
-.lapidary-rotor { position: relative; width: 76px; height: 76px; display: block; border: 3px solid #8ca5bd; clip-path: polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%); background: linear-gradient(45deg,#303663,#9ea8e4 49%,#5d6a9e 50%,#656fab); }
-.lapidary-rotor span { display: block; height: 36px; width: 2px; background: #fff; margin: auto; }
-@media (max-width: 720px) { .lapidary-work { grid-template-columns: minmax(0,1fr); } }
+.lapidary-notice { margin: 0; color: #e5c58d; }
+.lapidary-credits { justify-self: end; color: #b9a28e; font-size: .7rem; }
+
+@container lapidary (max-width: 735px) {
+  .lapidary-display, .lapidary-recycle-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lapidary-recipes { grid-template-columns: minmax(210px, .85fr) minmax(0, 1fr); }
+}
+@container lapidary (max-width: 560px) {
+  .lapidary-work, .lapidary-recipes { grid-template-columns: minmax(0, 1fr); }
+  .lapidary-display, .lapidary-recycle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lapidary-index-list { max-height: 200px; }
+  .lapidary-recipe-tray { scroll-margin-top: 12px; }
+  .lapidary-cushion { min-height: 114px; gap: 10px; padding: 9px; }
+  .lapidary-cushion .lapidary-art { width: 78px; height: 78px; }
+  .lapidary .lapidary-card { padding: 11px; }
+  .lapidary-stone { min-height: 191px; }
+  .lapidary-milestones li > span { font-size: .66rem; }
+  .lapidary-milestones li + li::before { top: 14px; }
+  .lapidary-milestones b { width: 30px; height: 30px; }
+}
+@media (max-width: 760px) {
+  .profession-gemcutting .profession-header.lapidary-hero {
+    --lapidary-hero-shade: linear-gradient(90deg, rgba(13, 16, 21, .92), rgba(13, 16, 21, .55) 70%, transparent);
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "emblem title" "emblem experience" "materials materials";
+    justify-content: start;
+    gap: 9px;
+    padding: 15px;
+    background-position: center 48%;
+  }
+  .lapidary-hero .profession-header-icon { width: 44px; }
+  .lapidary-material-dock li { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0 4px; padding: 4px; }
+  .lapidary-material-dock .lapidary-socket { grid-row: span 2; padding: 2px; }
+  .lapidary-material-dock .lapidary-art { width: 23px; height: 23px; }
+}

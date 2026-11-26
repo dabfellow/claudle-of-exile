@@ -78,6 +78,9 @@ html .toast:hover {
     font-size: var(--fs-xs);
     justify-content: space-between;
   }
+  html .toasts > .toast:nth-last-child(n + 3) {
+    display: none;
+  }
   html .toast .toast-text {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -86,25 +89,20 @@ html .toast:hover {
 }
 
 /* ============ top bar: pinned currencies only ============ */
-.topbar-pins {
-  display: flex;
-  justify-content: flex-end;
-  min-width: 0;
-}
-
-html .topbar-pins .currency-strip {
+html .topbar .currency-strip {
   display: flex;
   gap: 6px;
+  justify-content: flex-start;
   overflow-x: auto;
   scrollbar-width: none;
 }
 
-html .topbar-pins .currency-strip .chip {
+html .topbar .currency-strip .chip {
   display: inline-flex;
 }
 
 /* with only what you chose up there, there's room to say which orb is which */
-html .topbar-pins .currency-strip .chip .dim {
+html .topbar .currency-strip .chip .dim {
   display: inline;
 }
 
@@ -140,21 +138,6 @@ html .currency-slot.pinned {
 }
 
 @media (max-width: 860px) {
-  /* nothing pinned: the character plate takes the whole second row */
-  html .topbar-pins:not(:has(.currency-strip)) {
-    display: none;
-  }
-  html .topbar:not(:has(.topbar-pins .currency-strip)) .char-plate {
-    grid-column: 1 / -1;
-  }
-  /* something pinned: its own row under the plate, scrolling sideways if it's long */
-  html .topbar-pins {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-  }
-  html .char-plate-body {
-    flex: 1;
-  }
   .nav-version-mobile {
     display: flex;
     align-items: center;
@@ -234,11 +217,6 @@ html .matchup {
   }
   /* the dock has the skills and flasks: no second copy under the field */
   html .combat-page .action-bar {
-    display: none;
-  }
-  /* the dock has your life, shield and mana too: the top bar keeps only the name plate while you fight */
-  html .app:has(.combat-page) .topbar .activity,
-  html .app:has(.combat-page) .topbar-life {
     display: none;
   }
   .dock-row {

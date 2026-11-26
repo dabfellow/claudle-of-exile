@@ -4,7 +4,8 @@ import { PinDock } from './components/common';
 import { ItemMenuHost } from './components/ItemMenu';
 import { QuestTracker } from './components/QuestTracker';
 import { CampaignJournal } from './components/CampaignJournal';
-import { Feed, OfflineModal, Sidebar, Toasts, TopBar, useFlaskHotkeys, usePage, XpBar, type Page } from './Layout';
+import { PinnedCurrencies } from './components/CurrencyPins';
+import { Feed, OfflineModal, Sidebar, Toasts, useFlaskHotkeys, usePage, XpBar, type Page } from './Layout';
 import { AchievementsPage } from './pages/AchievementsPage';
 import { CampaignPage } from './pages/CampaignPage';
 import { CombatPage } from './pages/CombatPage';
@@ -109,7 +110,7 @@ function GameScreen() {
   useFlaskHotkeys();
   const mainRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    // On phones the whole shell scrolls, including navigation and vitals.
+    // On phones the whole shell scrolls, including navigation.
     mainRef.current?.closest('.app')?.scrollTo({ top: 0 });
     mainRef.current?.parentElement?.scrollTo({ top: 0 });
     mainRef.current?.scrollTo({ top: 0 });
@@ -121,7 +122,7 @@ function GameScreen() {
     <div className={`app ${page === 'hideout' ? 'hideout-app' : ''} ${s.settings.reducedMotion ? 'reduced-motion' : ''}`}>
       <Sidebar page={page} go={go} />
       <div className="game-content">
-        <TopBar go={go} />
+        <PinnedCurrencies s={s} />
         <main className="main" ref={mainRef}>
           <QuestTracker floating />
           <DemoBanner />
