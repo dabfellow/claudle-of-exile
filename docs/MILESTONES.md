@@ -1103,7 +1103,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-- [x] Skills page as The War Table — done 2026-11-26. Kivshenko war-council banner with the loadout tray docked (full list under Manage), attribute-tinted skill pedestals with linked support sockets, cast-rank crests and rule pills, a cast-order timeline, gem bag beside a live Inspector (Equip to Q–Y, Link to a bar skill), and Collection racks. Build passes; desktop and phone checked in game with a demo character. Styles in `src/ui/components/war-table.css`.
+- [x] Skills page as The War Table — done 2026-11-26, live in 0.6.14. Kivshenko war-council banner with the loadout tray docked (full list under Manage), attribute-tinted skill pedestals with linked support sockets, cast-rank crests and rule pills, a cast-order timeline, gem bag beside a live Inspector (Equip to Q–Y, Link to a bar skill), and Collection racks. Build passes; desktop and phone checked in game with a demo character. Styles in `src/ui/components/war-table.css`.
 
 - [x] Illustrated stations for Mining, Sawmilling, Foraging, Greenhouse, Guild Stash, Quests and Achievements — done 2026-11-26, live in 0.6.12.
 
