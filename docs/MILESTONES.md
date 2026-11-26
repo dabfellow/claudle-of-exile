@@ -4,7 +4,7 @@ Last updated 2026-11-26. Current implementation: [GAME.md](GAME.md). Engineering
 
 ## Next steps
 
-The Town page is now The Exile's Bazaar (2026-11-26), built and checked in game but not yet shipped.
+**0.6.15, The Exile's Bazaar**, went live on 2026-11-26. The Town page has painted stalls and keepers, a purse tray, a rarity-glow counter, attribute-tinted gem cards and the Appraisal Ledger. All 2,051 tests passed; deploy confirmed the live version and login.
 
 The illustrated Cartography station is implemented and playtested locally (2026-11-25). Its four tabs use the existing recipes, costs, map stock and Atlas progress. The output map sprites stay crisp, the phone folio uses even rows, and phone notifications show two at a time.
 
@@ -1105,7 +1105,7 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Done
 
-- [x] Town page as The Exile's Bazaar — done 2026-11-26, not yet live. A painted stall banner per shop (Brueghel curio cabinet, Brueghel armour heap, Christus goldsmith, Massys moneylender; credits in `public/assets/town/CREDITS.md`) with pixel keeper portraits (the striped awning was removed at the owner's request), gold/new-stock/restock docked in a brass purse tray, a 4-column counter (plain dark; the oak planks were dropped at the owner's request) of rarity-glowing pedestals with category badges and mod summaries, attribute-tinted gem cards with a NEW badge, and the Sell tab as inventory plus a sticky Appraisal Ledger (one Sell Items button for picked gear and flasks). Build passes; desktop and phone checked in game with a demo character, including a buy and a sell. Styles in `src/ui/pages/bazaar.css`.
+- [x] Town page as The Exile's Bazaar — done 2026-11-26, live in 0.6.15. A painted stall banner per shop (Brueghel curio cabinet, Brueghel armour heap, Christus goldsmith, Massys moneylender; credits in `public/assets/town/CREDITS.md`) with pixel keeper portraits (the striped awning was removed at the owner's request), gold/new-stock/restock docked in a brass purse tray, a 4-column counter (plain dark; the oak planks were dropped at the owner's request) of rarity-glowing pedestals with category badges and mod summaries, attribute-tinted gem cards with a NEW badge, and the Sell tab as inventory plus a sticky Appraisal Ledger (one Sell Items button for picked gear and flasks). Build passes; desktop and phone checked in game with a demo character, including a buy and a sell. Styles in `src/ui/pages/bazaar.css`.
 - [x] Skills page as The War Table — done 2026-11-26, live in 0.6.14. Kivshenko war-council banner with the loadout tray docked (full list under Manage), attribute-tinted skill pedestals with linked support sockets, cast-rank crests and rule pills, a cast-order timeline, gem bag beside a live Inspector (Equip to Q–Y, Link to a bar skill), and Collection racks. Build passes; desktop and phone checked in game with a demo character. Styles in `src/ui/components/war-table.css`.
 
 - [x] Illustrated stations for Mining, Sawmilling, Foraging, Greenhouse, Guild Stash, Quests and Achievements — done 2026-11-26, live in 0.6.12.
