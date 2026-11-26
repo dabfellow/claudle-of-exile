@@ -56,7 +56,7 @@ function Content({ page, go, questMapZone, showQuestOnMap, guildCategory, openGu
     case 'upcoming':
       return <UpcomingSkillsPage />;
     case 'skills':
-      return <SkillGemsPage />;
+      return <SkillGemsPage go={go} />;
     case 'tree':
       return <TreePage />;
     // Stash and the Crafting Bench are part of the Inventory screen now; old links to them land there

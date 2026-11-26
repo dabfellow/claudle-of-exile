@@ -159,6 +159,60 @@ export function GearSets({ s }: { s: GameState }) {
   );
 }
 
+/**
+ * The compact loadout tray docked in the Skills banner: one pill per saved loadout (click to load), a name box and
+ * Save current. Renaming, updating and deleting stay in the full list, opened with Manage.
+ */
+export function SkillLoadoutTray({ s, managing, onManage }: { s: GameState; managing: boolean; onManage: () => void }) {
+  const [name, setName] = useState('');
+  const placeholder = `Loadout ${s.loadouts.skills.length + 1}`;
+  const save = () => {
+    game.act((st) => saveSkillSet(st, name.trim() || placeholder));
+    setName('');
+  };
+  return (
+    <div className="wt-tray" aria-label="Skill loadouts">
+      <div className="wt-tray-head">
+        <span>Loadouts</span>
+        <button type="button" className={`wt-tray-manage ${managing ? 'active' : ''}`} aria-expanded={managing} onClick={onManage}>
+          {managing ? 'Done' : 'Manage'}
+        </button>
+      </div>
+      <div className="wt-tray-pills">
+        {s.loadouts.skills.length === 0 && <span className="wt-tray-empty">No saved loadouts yet</span>}
+        {s.loadouts.skills.map((set) => {
+          const active = skillSetActive(s, set);
+          return (
+            <button
+              key={set.id}
+              type="button"
+              className={`wt-tray-pill ${active ? 'active' : ''}`}
+              title={active ? `${set.name} is in use` : `Load ${set.name}`}
+              onClick={() => !active && game.act((st) => applySkillSet(st, set.id))}
+            >
+              {set.name}
+            </button>
+          );
+        })}
+      </div>
+      <div className="wt-tray-save">
+        <input
+          className="input sm"
+          placeholder={placeholder}
+          value={name}
+          maxLength={24}
+          aria-label="New loadout name"
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && save()}
+        />
+        <button type="button" className="btn sm" onClick={save}>
+          Save current
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function SkillSets({ s }: { s: GameState }) {
   return (
     <SetsCard

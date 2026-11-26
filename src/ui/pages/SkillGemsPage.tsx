@@ -41,15 +41,22 @@ import {
 import { deriveStats } from '../../engine/stats';
 import type { GameState, SkillGemInstance } from '../../engine/types';
 import { game, useGame } from '../../game';
-import { EmptyState, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
+import { EmptyState, ProgressBar, Tabs, Tooltip } from '../components/common';
 import { GEM_KINDS, GemFilters, kindMatches, type GemKind } from '../components/GemFilters';
 import '../round2-session3.css';
 import { GemIcon, GemTip, rulesLabel, ruleText, SupportTip } from '../components/GemView';
 import { Icon } from '../components/Icon';
-import { SkillSets } from '../components/Loadouts';
+import { SkillLoadoutTray, SkillSets } from '../components/Loadouts';
 import { CollectionPanel } from '../components/CollectionPanel';
+import type { Page } from '../Layout';
+import '../components/station-hero.css';
+import '../components/war-table.css';
 
 export const SKILL_KEYS = ['Q', 'W', 'E', 'R', 'T', 'Y'];
+
+/** The War Table's attribute tints: crimson Strength, emerald Dexterity, cobalt Intelligence. */
+const WT_ATTR: Record<GemAttr, string> = { str: '#ef4444', dex: '#10b981', int: '#3b82f6' };
+const attrStyle = (attr: GemAttr) => ({ ['--wt-attr' as string]: WT_ATTR[attr] });
 
 const RULE_CATEGORIES: { id: string; label: string; icon: string; conditions: RuleCondition[] }[] = [
   {
@@ -391,13 +398,19 @@ function CastOrder({ s }: { s: GameState }) {
   const order = castOrder(s);
   if (order.length < 2) return null;
   return (
-    <div className="cast-order small">
-      <span className="dim">Cast order</span>
-      {order.map((slot, i) => (
-        <span key={slot} className="gem-chip">
-          {i + 1}. {activeGemDef(s.skillBar[slot]!.gemId).name}
-        </span>
-      ))}
+    <div className="cast-order wt-timeline small">
+      <span className="wt-timeline-label">Cast order</span>
+      {order.map((slot, i) => {
+        const def = activeGemDef(s.skillBar[slot]!.gemId);
+        return (
+          <span key={slot} className="wt-timeline-step" style={attrStyle(def.attr)}>
+            {i > 0 && <span className="wt-timeline-arrow" aria-hidden="true">➔</span>}
+            <span className="wt-timeline-node">
+              <b className="num">{i + 1}</b> {def.name}
+            </span>
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -481,17 +494,41 @@ function UpgradeButton({ s, gem }: { s: GameState; gem: SkillGemInstance }) {
 }
 
 /** One slot of the bar, drawn like the combat skill bar: click to set it up, or to drop a picked gem in. */
-function SlotTile(props: { s: GameState; slot: number; pickedGem: number | null; onOpen: () => void; onPlaced: () => void }) {
+type SlotProps = { s: GameState; slot: number; pickedGem: number | null; rank: number; onOpen: () => void; onPlaced: () => void; onInspect: () => void };
+
+function SlotTile(props: SlotProps) {
   const gem = props.s.skillBar[props.slot];
   return (
-    <div className="slot-wrap">
+    <div className="slot-wrap wt-pedestal-wrap" onMouseEnter={gem ? props.onInspect : undefined} onFocus={gem ? props.onInspect : undefined}>
       <SlotButton {...props} />
       {gem && <UpgradeButton s={props.s} gem={gem} />}
     </div>
   );
 }
 
-function SlotButton({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; slot: number; pickedGem: number | null; onOpen: () => void; onPlaced: () => void }) {
+/** A skill's support sockets as linked PoE-style sockets: filled ones show the support, empty ones a dark well. */
+function LinkedSockets({ gem }: { gem: SkillGemInstance }) {
+  const n = supportSlots(gem);
+  if (!n) return <span className="wt-links none dim">No support sockets</span>;
+  return (
+    <span className="wt-links" aria-label={`${gem.supports.filter(Boolean).length} of ${n} supports socketed`}>
+      {Array.from({ length: n }, (_, i) => {
+        const sup = gem.supports[i];
+        const def = sup ? supportGemDef(sup.supportId) : null;
+        return (
+          <span key={i} className="wt-link-cell">
+            {i > 0 && <span className={`wt-link-bar ${sup && gem.supports[i - 1] ? 'lit' : ''}`} aria-hidden="true" />}
+            <span className={`wt-socket ${def ? 'wt-socket-filled' : 'wt-socket-open'}`} style={def ? attrStyle(def.attr) : undefined}>
+              {def && <GemIcon def={def} size={17} support />}
+            </span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+function SlotButton({ s, slot, pickedGem, rank, onOpen, onPlaced }: SlotProps) {
   const gem = s.skillBar[slot];
   const click = () => {
     if (pickedGem === null) return onOpen();
@@ -499,9 +536,9 @@ function SlotButton({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; sl
   };
   if (!gem) {
     return (
-      <button className={`skill-btn empty setup ${pickedGem !== null ? 'target' : ''}`} onClick={click}>
+      <button className={`skill-btn empty setup wt-pedestal ${pickedGem !== null ? 'target' : ''}`} onClick={click}>
         <span className="slot-key">{SKILL_KEYS[slot]}</span>
-        <span className="skill-prio">#{slot + 1}</span>
+        <span className="wt-empty-well" aria-hidden="true" />
         <span className="dim small">{pickedGem !== null ? 'Place here' : 'Empty · click to add'}</span>
       </button>
     );
@@ -513,10 +550,14 @@ function SlotButton({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; sl
   const locked = gemUseReason(stats.combatLevel, stats.attributes, gem);
   return (
     <Tooltip content={<GemTip gem={gem} state={s} />}>
-      <button className={`skill-btn setup ${pickedGem !== null ? 'target' : ''}`} onClick={click}>
+      <button className={`skill-btn setup wt-pedestal filled ${pickedGem !== null ? 'target' : ''}`} style={attrStyle(def.attr)} onClick={click}>
         <span className="slot-key">{SKILL_KEYS[slot]}</span>
-        <span className="skill-prio">#{slot + 1}</span>
-        <span className="skill-gem">
+        {rank >= 0 && (
+          <span className="wt-crest num" title={`${ordinal(rank + 1)} in cast order`}>
+            #{rank + 1}
+          </span>
+        )}
+        <span className="skill-gem wt-gem-well">
           <GemIcon def={def} size={40} />
         </span>
         <span className="skill-name">{def.name}</span>
@@ -526,17 +567,14 @@ function SlotButton({ s, slot, pickedGem, onOpen, onPlaced }: { s: GameState; sl
           {nums.manaCost > 0 && <span style={{ color: 'var(--mana-2)' }}>{nums.manaCost} mana</span>}
           {!nums.lifeCost && !nums.manaCost && <span className="dim">free</span>}
         </span>
-        <span className="skill-supports">
-          {Array.from({ length: supportSlots(gem) }, (_, i) => {
-            const sup = gem.supports[i];
-            return sup ? <GemIcon key={i} def={supportGemDef(sup.supportId)} size={16} support /> : <span key={i} className="socket-dot" />;
-          })}
-        </span>
-        <span className="skill-rule" style={locked ? { color: 'var(--life-2)' } : undefined}>{locked ?? rulesLabel(s, gem.rules)}</span>
+        <LinkedSockets gem={gem} />
+        <span className={`skill-rule wt-rule-pill ${locked ? 'locked' : ''}`}>{locked ?? rulesLabel(s, gem.rules)}</span>
       </button>
     </Tooltip>
   );
 }
+
+const ordinal = (n: number) => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
 
 /** The support sockets of one skill: click a filled one to take it out, an empty one to see what fits. */
 function Sockets({ s, gem, pickedSupport, onPlaced }: { s: GameState; gem: SkillGemInstance; pickedSupport: number | null; onPlaced: () => void }) {
@@ -728,7 +766,146 @@ function SlotModal({
   );
 }
 
-function SkillGemsBody({ tabs }: { tabs: ReactNode }) {
+/** The banner over both Skills tabs: Kivshenko's council of war, the crest, the title and whatever docks on the right. */
+function WarTableBanner({ subtitle, children }: { subtitle: ReactNode; children?: ReactNode }) {
+  return (
+    <header className="card wt-hero station-hero">
+      <div className="wt-crest-emblem" aria-hidden="true">
+        <span className="wt-crest-gem str" />
+        <span className="wt-crest-gem dex" />
+        <span className="wt-crest-gem int" />
+      </div>
+      <div className="wt-hero-text">
+        <h1>
+          Skills <small>The War Table</small>
+        </h1>
+        <p>{subtitle}</p>
+      </div>
+      {children && <div className="wt-hero-dock">{children}</div>}
+    </header>
+  );
+}
+
+/**
+ * The live inspector beside the gem bag: a picked spare gem with one-click equip/link buttons, or else the bar skill
+ * last hovered, with its numbers, rules and links. The full rule editor stays in the slot window.
+ */
+function SkillInspector({
+  s,
+  pickedGem,
+  pickedSupport,
+  inspectSlot,
+  onOpen,
+  onPlaced,
+}: {
+  s: GameState;
+  pickedGem: number | null;
+  pickedSupport: number | null;
+  inspectSlot: number | null;
+  onOpen: (slot: number) => void;
+  onPlaced: () => void;
+}) {
+  const d = deriveStats(s, []);
+  const spare = pickedGem !== null ? s.storage.gems.find((g) => g.uid === pickedGem) : undefined;
+  const sup = pickedSupport !== null ? s.storage.supportGems.find((g) => g.uid === pickedSupport) : undefined;
+  const slotGem = inspectSlot !== null ? s.skillBar[inspectSlot] : null;
+
+  let body: ReactNode;
+  if (spare) {
+    const reason = gemUseReason(d.combatLevel, d.attributes, spare);
+    body = (
+      <>
+        <GemTip gem={spare} state={s} />
+        <div className="wt-insp-actions">
+          <span className="wt-insp-label">Equip to</span>
+          <div className="wt-key-row">
+            {SKILL_KEYS.map((k, i) => {
+              const there = s.skillBar[i];
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  className="wt-key-btn"
+                  disabled={!!reason}
+                  title={reason ?? (there ? `Swap with ${activeGemDef(there.gemId).name}` : `Put it on ${k}`)}
+                  onClick={() => {
+                    if (!game.act((st) => placeOnBar(st, spare.uid, i))) onPlaced();
+                  }}
+                >
+                  {k}
+                  {there && <span className="wt-key-dot" aria-hidden="true" />}
+                </button>
+              );
+            })}
+          </div>
+          {reason && <span className="chip bad xs">{reason}</span>}
+        </div>
+      </>
+    );
+  } else if (sup) {
+    const targets = s.skillBar.flatMap((b, i) => (b && !supportReason(b, sup.supportId) ? [i] : []));
+    body = (
+      <>
+        <SupportTip supportId={sup.supportId} />
+        <div className="wt-insp-actions">
+          <span className="wt-insp-label">Link to</span>
+          {targets.length === 0 && <span className="dim small">It doesn't fit any skill on your bar.</span>}
+          <div className="wt-link-targets">
+            {targets.map((i) => {
+              const b = s.skillBar[i]!;
+              const open = Array.from({ length: supportSlots(b) }, (_, j) => j).find((j) => !b.supports[j]);
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  className="btn sm"
+                  disabled={open === undefined}
+                  title={open === undefined ? 'All its sockets are full: open the skill to swap one out' : `Socket into ${activeGemDef(b.gemId).name}`}
+                  onClick={() => {
+                    game.act((st) => socketSupport(st, b.uid, sup.uid, open!));
+                    onPlaced();
+                  }}
+                >
+                  <span className="r2-key">{SKILL_KEYS[i]}</span> {activeGemDef(b.gemId).name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </>
+    );
+  } else if (slotGem && inspectSlot !== null) {
+    body = (
+      <>
+        <GemTip gem={slotGem} state={s} />
+        <div className="wt-insp-actions">
+          <span className="wt-insp-label">Links</span>
+          <LinkedSockets gem={slotGem} />
+          <span className="wt-insp-label">Trigger</span>
+          <span className="wt-rule-pill">{rulesLabel(s, slotGem.rules)}</span>
+          <button type="button" className="btn sm primary" onClick={() => onOpen(inspectSlot)}>
+            Edit {SKILL_KEYS[inspectSlot]} · rules, supports, priority
+          </button>
+        </div>
+      </>
+    );
+  } else {
+    body = <div className="wt-insp-empty dim small">Hover a skill on the bar, or pick a gem from the bag, to see its numbers here.</div>;
+  }
+
+  return (
+    <aside className="card wt-inspector" aria-label="Skill inspector">
+      <div className="card-title">
+        Inspector
+        <span className="grow" />
+        <span className="card-hint">{spare || sup ? 'Picked gem' : slotGem && inspectSlot !== null ? `Slot ${SKILL_KEYS[inspectSlot]}` : ''}</span>
+      </div>
+      {body}
+    </aside>
+  );
+}
+
+function SkillGemsBody({ tabs, go }: { tabs: ReactNode; go: (p: Page) => void }) {
   const s = useGame();
   const [pickedGem, setPickedGem] = useState<number | null>(null);
   const [pickedSupport, setPickedSupport] = useState<number | null>(null);
@@ -742,6 +919,12 @@ function SkillGemsBody({ tabs }: { tabs: ReactNode }) {
   const [supFit, setSupFit] = useState('');
   const [bagTab, setBagTab] = useState<'skills' | 'supports'>('skills');
   const [openSlot, setOpenSlot] = useState<number | null>(null);
+  const [managing, setManaging] = useState(false);
+  const [inspectSlot, setInspectSlot] = useState<number | null>(() => {
+    const first = s.skillBar.findIndex(Boolean);
+    return first >= 0 ? first : null;
+  });
+  const order = castOrder(s);
   const clear = () => {
     setPickedGem(null);
     setPickedSupport(null);
@@ -766,36 +949,49 @@ function SkillGemsBody({ tabs }: { tabs: ReactNode }) {
     .sort((a, b) => supportGemDef(a.supportId).name.localeCompare(supportGemDef(b.supportId).name));
 
   return (
-    <div className="page">
-      <PageHeader
-        title="Skills"
-        actions={
-          (pickedGem !== null || pickedSupport !== null) && (
-            <button className="btn" onClick={clear}>
-              Cancel selection
-            </button>
-          )
+    <div className="page war-table-page">
+      <WarTableBanner
+        subtitle={
+          <>
+            Runs in cast order; reactive rules taught at the Hideout's War Table. Press <b>Q–Y</b> to cast manually.
+          </>
         }
       >
-        Your bar runs in cast order: the first skill whose rules all pass and that you can pay for (rules keep 40% of your Life back), otherwise a free Default Attack. Reactive rules are
-        taught at the Hideout's War Table. Press <b>Q–Y</b> in combat to cast a slot manually.
-      </PageHeader>
+        <SkillLoadoutTray s={s} managing={managing} onManage={() => setManaging(!managing)} />
+      </WarTableBanner>
       {tabs}
+      {managing && <SkillSets s={s} />}
 
-      <div className="card">
+      <div className="card wt-bar-card">
         <div className="card-title">
           Skill bar
           <span className="grow" />
+          {(pickedGem !== null || pickedSupport !== null) && (
+            <button className="btn sm" onClick={clear}>
+              Cancel selection
+            </button>
+          )}
           <span className="card-hint">{pickedSupport !== null ? 'Click a skill to socket the picked support' : 'Click a skill to set its supports, trigger and priority'}</span>
         </div>
-        <div className="skill-bar">
+        <p className="wt-rules-note dim small">
+          The first skill whose rules all pass and that you can pay for fires (rules keep 40% of your Life back), otherwise a free Default Attack.
+        </p>
+        <div className="skill-bar wt-bar">
           {Array.from({ length: SKILL_BAR_SLOTS }, (_, i) => (
-            <SlotTile key={i} s={s} slot={i} pickedGem={pickedGem} onOpen={() => setOpenSlot(i)} onPlaced={clear} />
+            <SlotTile
+              key={i}
+              s={s}
+              slot={i}
+              pickedGem={pickedGem}
+              rank={order.indexOf(i)}
+              onOpen={() => setOpenSlot(i)}
+              onPlaced={clear}
+              onInspect={() => setInspectSlot(i)}
+            />
           ))}
         </div>
         <CastOrder s={s} />
       </div>
-      <SkillSets s={s} />
       {openSlot !== null && (
         <SlotModal
           key={openSlot}
@@ -808,7 +1004,8 @@ function SkillGemsBody({ tabs }: { tabs: ReactNode }) {
         />
       )}
 
-      <div className="card r2-gem-bag">
+      <div className="wt-workbench">
+      <div className="card r2-gem-bag wt-bag">
         <div className="card-title">
           Gem bag
           <span className="grow" />
@@ -839,7 +1036,16 @@ function SkillGemsBody({ tabs }: { tabs: ReactNode }) {
                 </select>
               </GemFilters>
             )}
-            {s.storage.gems.length === 0 && <EmptyState small>No spare skill gems. Buy them at the Town's Gem shop.</EmptyState>}
+            {s.storage.gems.length === 0 && (
+              <EmptyState small>
+                No spare skill gems. Buy them at the Town's Gem shop.
+                <div style={{ marginTop: 8 }}>
+                  <button type="button" className="btn sm primary" onClick={() => go('vendor')}>
+                    Go to the Town
+                  </button>
+                </div>
+              </EmptyState>
+            )}
             {s.storage.gems.length > 0 && gems.length === 0 && <div className="dim small">No gems match these filters.</div>}
             {GEM_GROUPS.map((group) => {
               const list = gems.filter((g) => gemGroup(activeGemDef(g.gemId)) === group.id);
@@ -849,20 +1055,25 @@ function SkillGemsBody({ tabs }: { tabs: ReactNode }) {
                   <div className="r2-gem-section-head">
                     {group.label} <span className="dim num">{list.length}</span>
                   </div>
-                  <div className="gem-bag r2-gem-grid">
+                  <div className="gem-bag r2-gem-grid wt-tile-grid">
                     {list.map((g) => {
                       const reason = gemUseReason(d.combatLevel, d.attributes, g);
+                      const def = activeGemDef(g.gemId);
                       return (
                         <Tooltip key={g.uid} content={<GemTip gem={g} state={s} />}>
                           <button
-                            className={`gem-card ${pickedGem === g.uid ? 'selected' : ''} ${reason ? 'nofit' : ''}`}
+                            className={`gem-card wt-tile ${pickedGem === g.uid ? 'selected' : ''} ${reason ? 'nofit' : ''}`}
+                            style={attrStyle(def.attr)}
                             onClick={() => (setPickedSupport(null), setPickedGem(pickedGem === g.uid ? null : g.uid))}
                           >
-                            <GemIcon def={activeGemDef(g.gemId)} size={30} />
-                            <span className="r2-gem-text">
-                              <b>{activeGemDef(g.gemId).name}</b>
-                              <span className="dim small">Lv {g.level}{reason ? ` · ${reason}` : ''}</span>
+                            <span className="wt-tile-socket">
+                              <GemIcon def={def} size={30} />
                             </span>
+                            <span className="r2-gem-text">
+                              <b>{def.name}</b>
+                              <span className="dim small">{reason ?? (pickedGem === g.uid ? 'Picked: choose a slot' : 'Click to equip')}</span>
+                            </span>
+                            <span className="wt-lv num">Lv {g.level}</span>
                           </button>
                         </Tooltip>
                       );
@@ -900,17 +1111,20 @@ function SkillGemsBody({ tabs }: { tabs: ReactNode }) {
                   <div className="r2-gem-section-head">
                     {group.label} <span className="dim num">{group.list.length}</span>
                   </div>
-                  <div className="gem-bag r2-gem-grid">
+                  <div className="gem-bag r2-gem-grid wt-tile-grid">
                     {group.list.map((g) => {
                       const def = supportGemDef(g.supportId);
                       const keys = fitKeys(g.supportId);
                       return (
                         <Tooltip key={g.uid} content={<SupportTip supportId={g.supportId} />}>
                           <button
-                            className={`gem-card ${pickedSupport === g.uid ? 'selected' : ''} ${keys.length ? '' : 'nofit'}`}
+                            className={`gem-card wt-tile ${pickedSupport === g.uid ? 'selected' : ''} ${keys.length ? '' : 'nofit'}`}
+                            style={attrStyle(def.attr)}
                             onClick={() => (setPickedGem(null), setPickedSupport(pickedSupport === g.uid ? null : g.uid))}
                           >
-                            <GemIcon def={def} size={28} support />
+                            <span className="wt-tile-socket">
+                              <GemIcon def={def} size={28} support />
+                            </span>
                             <span className="r2-gem-text">
                               <b>{def.name}</b>
                               {def.signatureFor ? <span className="dim small">Signature · {activeGemDef(def.signatureFor).name}</span> : null}
@@ -935,12 +1149,21 @@ function SkillGemsBody({ tabs }: { tabs: ReactNode }) {
           </>
         )}
       </div>
+      <SkillInspector
+        s={s}
+        pickedGem={pickedGem}
+        pickedSupport={pickedSupport}
+        inspectSlot={inspectSlot}
+        onOpen={setOpenSlot}
+        onPlaced={clear}
+      />
+      </div>
     </div>
   );
 }
 
 /** The Skills screen: your gems and skill bar, and the Collection of hidden skilling finds. */
-export function SkillGemsPage() {
+export function SkillGemsPage({ go }: { go: (p: Page) => void }) {
   const [tab, setTab] = useState<'gems' | 'collection'>('gems');
   const tabs = (
     <Tabs
@@ -949,10 +1172,10 @@ export function SkillGemsPage() {
       onChange={setTab}
     />
   );
-  if (tab === 'gems') return <SkillGemsBody tabs={tabs} />;
+  if (tab === 'gems') return <SkillGemsBody tabs={tabs} go={go} />;
   return (
-    <div className="page">
-      <PageHeader title="Skills">Hidden finds from every skilling zone.</PageHeader>
+    <div className="page war-table-page">
+      <WarTableBanner subtitle="Hidden finds from every skilling zone, racked like trophies." />
       {tabs}
       <CollectionPanel />
     </div>

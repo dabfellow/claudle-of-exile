@@ -1,0 +1,513 @@
+/*
+ * Skills page as "The War Table": an illustrated banner (Kivshenko's council of war) with the loadout tray docked
+ * on the right, engraved skill pedestals with PoE-style linked sockets, and a gem bag + inspector workbench.
+ * Attribute tint for any element comes from --wt-attr (crimson Str, emerald Dex, cobalt Int), set inline.
+ * Uses the shared .station-hero chrome (station-hero.css) for frame, rivets and shading.
+ */
+.page.war-table-page {
+  --wt-brass: #c9a063;
+  --wt-brass-hi: #f1d49a;
+  --wt-brass-lo: #5e4424;
+  --wt-slate: #16181d;
+  --wt-slate-2: #1d2027;
+  --wt-ink: #f3e4c8;
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  gap: 12px;
+}
+
+/* ---------- banner ---------- */
+.page.war-table-page .wt-hero.station-hero {
+  --station-art: url('../../../public/assets/stations/war-table-kivshenko-fili.webp');
+  --station-art-position: center 58%;
+  --station-shade:
+    radial-gradient(22% 70% at 50% 52%, #ffc8702a, transparent 72%),
+    linear-gradient(90deg, #0d0a08f2 3%, #120d0acc 26%, #1a120c33 46%, #1a120c22 56%, #110c09c4 72%, #0c0907f4);
+  --station-rim: var(--wt-brass);
+  --station-ink: var(--wt-ink);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "emblem title dock";
+  align-items: center;
+  gap: 12px 18px;
+  min-height: 170px;
+  margin: 0;
+  padding: 16px 22px;
+  /* .card would otherwise paint over the station art */
+  border: 1px solid var(--wt-brass-lo);
+  border-radius: 6px;
+  background:
+    var(--station-shade),
+    var(--station-art) var(--station-art-position) / cover no-repeat,
+    #15110e;
+}
+
+.wt-crest-emblem {
+  grid-area: emblem;
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 40%, #2a2018, #0b0907 75%) padding-box,
+    linear-gradient(160deg, var(--wt-brass-hi), var(--wt-brass) 40%, var(--wt-brass-lo) 75%, var(--wt-brass)) border-box;
+  box-shadow: 0 0 18px #000a, inset 0 2px 8px #000c;
+}
+
+/* three gems set in a triangle, each with its own glow */
+.wt-crest-gem {
+  position: absolute;
+  width: 18px;
+  height: 22px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: radial-gradient(circle at 35% 30%, #fff8 0 12%, var(--c) 45%, color-mix(in srgb, var(--c) 45%, #000) 100%);
+  filter: drop-shadow(0 0 6px var(--c));
+  animation: wt-gem-pulse 3.2s ease-in-out infinite;
+}
+.wt-crest-gem.str { --c: #ef4444; left: 21px; top: 8px; }
+.wt-crest-gem.dex { --c: #10b981; left: 9px; top: 31px; animation-delay: -1s; }
+.wt-crest-gem.int { --c: #3b82f6; left: 33px; top: 31px; animation-delay: -2s; }
+
+@keyframes wt-gem-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px var(--c)); }
+  50% { filter: drop-shadow(0 0 9px var(--c)); }
+}
+
+.wt-hero-text { grid-area: title; min-width: 0; }
+.wt-hero-text h1 {
+  margin: 0;
+  color: var(--wt-ink);
+  font-size: 1.7rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px #000;
+}
+.wt-hero-text h1 small {
+  display: block;
+  margin-top: 2px;
+  color: var(--wt-brass-hi);
+  font-size: .72rem;
+  letter-spacing: .28em;
+}
+.wt-hero-text p {
+  max-width: 46ch;
+  margin: 8px 0 0;
+  color: #e7d6b8;
+  font-size: var(--fs-sm);
+  text-shadow: 0 1px 4px #000;
+}
+
+.wt-hero-dock { grid-area: dock; min-width: 0; }
+
+/* loadout tray: a dark slate box framed in brass */
+.wt-tray {
+  display: grid;
+  gap: 7px;
+  width: 330px;
+  max-width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--wt-brass-lo);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #1b1d22ee, #0f1013f2);
+  box-shadow: inset 0 0 0 1px #000, inset 0 1px 0 1px #ffffff0d, 0 4px 14px #000a;
+}
+.wt-tray-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--wt-brass-hi);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.wt-tray-manage {
+  padding: 1px 8px;
+  border: 1px solid #ffffff1f;
+  border-radius: 99px;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--fs-2xs);
+  letter-spacing: .04em;
+  text-transform: none;
+  cursor: pointer;
+}
+.wt-tray-manage:hover, .wt-tray-manage.active { border-color: var(--wt-brass); color: var(--wt-brass-hi); }
+.wt-tray-pills { display: flex; flex-wrap: wrap; gap: 5px; max-height: 58px; overflow-y: auto; }
+.wt-tray-empty { color: var(--dim); font-size: var(--fs-xs); }
+.wt-tray-pill {
+  max-width: 140px;
+  overflow: hidden;
+  padding: 3px 10px;
+  border: 1px solid #ffffff1c;
+  border-radius: 99px;
+  background: #23262d;
+  color: var(--text);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.wt-tray-pill:hover { border-color: var(--wt-brass); }
+.wt-tray-pill.active {
+  border-color: var(--wt-brass);
+  background: linear-gradient(180deg, #4a3a22, #2b2214);
+  color: var(--wt-brass-hi);
+  cursor: default;
+  box-shadow: 0 0 8px #c9a06340;
+}
+.wt-tray-save { display: flex; gap: 6px; }
+.wt-tray-save .input { flex: 1; min-width: 0; }
+
+/* ---------- skill bar ---------- */
+.wt-bar-card .card-title { gap: 8px; }
+.wt-rules-note { margin: -4px 0 10px; }
+
+.war-table-page .wt-bar { gap: 10px; }
+
+.war-table-page .skill-btn.wt-pedestal {
+  --wt-attr: #6b6f7a;
+  justify-content: flex-start;
+  gap: 4px;
+  min-height: 210px;
+  padding: 26px 8px 9px;
+  border: 1px solid #2c3038;
+  border-top: 3px solid var(--wt-attr);
+  border-radius: 6px 6px 8px 8px;
+  background:
+    radial-gradient(70% 45% at 50% 22%, color-mix(in srgb, var(--wt-attr) 24%, transparent), transparent 70%),
+    repeating-linear-gradient(135deg, #ffffff04 0 2px, transparent 2px 6px),
+    linear-gradient(180deg, var(--wt-slate-2), #101216);
+  box-shadow:
+    inset 0 0 0 1px #00000080,
+    inset 0 -10px 18px #0007,
+    0 4px 10px #0008;
+}
+.war-table-page .skill-btn.wt-pedestal.filled:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--wt-attr) 55%, #2c3038);
+  border-top-color: var(--wt-attr);
+  box-shadow:
+    inset 0 0 0 1px #00000080,
+    inset 0 -10px 18px #0007,
+    0 0 14px color-mix(in srgb, var(--wt-attr) 35%, transparent);
+}
+.war-table-page .skill-btn.wt-pedestal.empty {
+  justify-content: center;
+  border-style: dashed;
+  border-top-width: 1px;
+  border-color: #3a3e47;
+  background: repeating-linear-gradient(135deg, #ffffff05 0 2px, transparent 2px 7px), #121418;
+}
+.war-table-page .skill-btn.wt-pedestal.target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 14px #d1ad7240;
+}
+
+.wt-empty-well {
+  width: 46px;
+  height: 46px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #0a0b0d, #1b1e24 75%);
+  box-shadow: inset 0 3px 8px #000, 0 0 0 2px #2b2f37;
+}
+
+/* gold corner crest with the cast-order rank */
+.wt-crest {
+  position: absolute;
+  top: -1px;
+  right: 6px;
+  padding: 3px 6px 6px;
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
+  background: linear-gradient(180deg, var(--wt-brass-hi), var(--wt-brass) 55%, var(--wt-brass-lo));
+  color: #2a1c0b;
+  font-size: var(--fs-2xs);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.wt-gem-well {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 2px solid color-mix(in srgb, var(--wt-attr) 70%, #000);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--wt-attr) 22%, #15171b), #08090b 78%);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--wt-attr) 40%, transparent), inset 0 2px 8px #000c;
+}
+.war-table-page .wt-pedestal .skill-name { color: var(--wt-ink); font-weight: 700; text-align: center; }
+.war-table-page .wt-pedestal .gem-icon, .wt-inspector .gem-icon, .wt-tile .gem-icon { image-rendering: pixelated; }
+
+/* linked support sockets */
+.wt-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  margin: 3px 0 1px;
+}
+.wt-links.none { font-size: var(--fs-2xs); }
+.wt-link-cell { display: flex; align-items: center; }
+.wt-pedestal .wt-links { flex-wrap: wrap; row-gap: 4px; max-width: 100%; }
+.wt-link-bar {
+  width: 8px;
+  height: 5px;
+  margin: 0 -1px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #8a6a3c, #4a361c);
+  box-shadow: inset 0 1px 0 #ffffff22;
+}
+.wt-link-bar.lit {
+  background: linear-gradient(180deg, var(--wt-brass-hi), var(--wt-brass) 60%, var(--wt-brass-lo));
+  box-shadow: 0 0 6px #f1d49a99;
+}
+.wt-socket {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+.wt-socket.wt-socket-open {
+  background: radial-gradient(circle at 50% 35%, #050506, #1a1c21 80%);
+  box-shadow: inset 0 2px 5px #000, 0 0 0 2px #5a4426;
+}
+.wt-socket.wt-socket-filled {
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--wt-attr) 30%, #111), #08090b 80%);
+  box-shadow: 0 0 0 2px var(--wt-brass), 0 0 8px color-mix(in srgb, var(--wt-attr) 55%, transparent);
+}
+
+/* trigger rule pill */
+.wt-rule-pill {
+  display: block;
+  max-width: 100%;
+  margin-top: auto;
+  padding: 3px 9px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #0c0d10;
+  box-shadow: inset 0 1px 3px #000, 0 1px 0 #ffffff0d;
+  color: #b9c0cc;
+  font-size: var(--fs-2xs);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wt-rule-pill.locked { color: var(--life-2); }
+.wt-inspector .wt-rule-pill { margin-top: 0; text-align: left; white-space: normal; }
+
+/* cast-order timeline */
+.wt-timeline {
+  margin-top: 12px;
+  padding: 7px 12px;
+  border: 1px solid #2a2d34;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #0f1013, #15171c 50%, #0f1013);
+  gap: 4px 6px;
+}
+.wt-timeline-label {
+  margin-right: 6px;
+  color: var(--wt-brass-hi);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.wt-timeline-step { display: inline-flex; align-items: center; gap: 6px; }
+.wt-timeline-arrow { color: var(--wt-brass); }
+.wt-timeline-node {
+  padding: 2px 9px 2px 3px;
+  border: 1px solid color-mix(in srgb, var(--wt-attr) 45%, #2a2d34);
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--wt-attr) 10%, #121317);
+  color: var(--text);
+}
+.wt-timeline-node b {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 3px;
+  border-radius: 50%;
+  background: var(--wt-attr);
+  color: #fff;
+  font-size: var(--fs-2xs);
+}
+
+/* ---------- workbench: gem bag + inspector ---------- */
+.wt-workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 12px;
+  align-items: start;
+}
+/* four across at full width, fewer when the side panels squeeze the page */
+.app .war-table-page .wt-tile-grid { grid-template-columns: repeat(auto-fill, minmax(max(200px, calc((100% - 21px) / 4)), 1fr)); gap: 7px; }
+.war-table-page .wt-tile .r2-fit-keys {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  gap: 2px;
+}
+.war-table-page .wt-tile .r2-fit-keys .r2-key { min-width: 14px; height: 14px; font-size: 9px; }
+.war-table-page .wt-tile .r2-gem-text { padding-right: 28px; }
+.war-table-page .gem-card.wt-tile {
+  --wt-attr: #6b6f7a;
+  position: relative;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid color-mix(in srgb, var(--wt-attr) 30%, #2a2d34);
+  border-left: 3px solid var(--wt-attr);
+  background: linear-gradient(180deg, #181a1f, #111216);
+}
+.war-table-page .gem-card.wt-tile:hover { border-color: color-mix(in srgb, var(--wt-attr) 65%, #2a2d34); }
+.war-table-page .gem-card.wt-tile.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 12px #d1ad7233;
+}
+.wt-tile-socket {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--wt-attr) 22%, #15171b), #08090b 78%);
+  box-shadow: inset 0 2px 5px #000, 0 0 0 1px color-mix(in srgb, var(--wt-attr) 45%, #000);
+}
+.wt-tile .r2-gem-text { min-width: 0; }
+.wt-tile .r2-gem-text b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wt-lv {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  color: var(--wt-brass-hi);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+}
+
+.wt-inspector {
+  position: sticky;
+  top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 2px solid var(--wt-brass-lo);
+}
+/* the tooltip body, laid flat in the panel */
+.wt-inspector .tip {
+  position: static;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.wt-insp-actions { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.wt-insp-actions .wt-links { justify-content: flex-start; }
+.wt-insp-label {
+  color: var(--wt-brass-hi);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.wt-insp-empty { padding: 8px 0; }
+.wt-key-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+.wt-key-btn {
+  position: relative;
+  padding: 7px 0;
+  border: 1px solid #3a3e47;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #23262d, #16181c);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
+.wt-key-btn:hover:not(:disabled) { border-color: var(--wt-brass); color: var(--wt-brass-hi); }
+.wt-key-btn:disabled { opacity: .45; cursor: not-allowed; }
+.wt-key-dot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--wt-brass);
+}
+.wt-link-targets { display: flex; flex-wrap: wrap; gap: 5px; }
+
+/* ---------- Collection tab: brass-and-leather racks ---------- */
+.war-table-page .collection-card { border-top: 2px solid var(--wt-brass-lo); }
+.war-table-page .collection-group h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #5e442466;
+  color: var(--wt-ink);
+}
+.war-table-page .collection-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.war-table-page .collection-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #3b2a1a;
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(176deg, #ffffff05 0 1px, transparent 1px 5px),
+    linear-gradient(180deg, #2a1d14, #1a120c);
+  box-shadow: inset 0 0 0 1px #00000070, 0 2px 6px #0007;
+}
+.war-table-page .collection-item.found {
+  border-color: var(--wt-brass);
+  box-shadow: inset 0 0 0 1px #00000070, 0 0 10px #c9a06340;
+}
+.war-table-page .collection-item.found b { color: var(--wt-brass-hi); }
+.war-table-page .collection-item.unfound { color: #7b6b5b; }
+.collection-mount {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 50% 40%, #2b2118, #0c0907 80%) padding-box,
+    linear-gradient(160deg, #6a5132, #3a2a17 60%, #6a5132) border-box;
+  box-shadow: inset 0 2px 6px #000c;
+  image-rendering: pixelated;
+}
+.war-table-page .collection-item.found .collection-mount {
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--skill, #c9a063) 25%, #2b2118), #0c0907 80%) padding-box,
+    linear-gradient(160deg, var(--wt-brass-hi), var(--wt-brass) 45%, var(--wt-brass-lo)) border-box;
+}
+/* an engraved silhouette: the icon pressed dark into the mount */
+.war-table-page .collection-item.unfound .collection-mount > * { opacity: .85; filter: drop-shadow(0 1px 0 #ffffff1a); }
+.collection-text { min-width: 0; }
+
+/* ---------- narrow screens ---------- */
+@media (max-width: 1100px) {
+  .wt-workbench { grid-template-columns: minmax(0, 1fr); }
+  .wt-inspector { position: static; }
+  .war-table-page .wt-bar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .page.war-table-page .wt-hero.station-hero {
+    --station-shade: linear-gradient(90deg, #0d0a08f0, #120d0ad0 60%, #120d0ab8);
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "emblem title" "dock dock";
+  }
+  .wt-tray { width: 100%; }
+}
+@media (max-width: 600px) {
+  .app .war-table-page .wt-tile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .war-table-page .wt-tile .r2-gem-text { padding-right: 0; }
+  .war-table-page .wt-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
