@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'The Town is now The Exile’s Bazaar: a painted stall and keeper for each shop, your gold and the restock in a purse tray on the banner, wares on one counter, each glowing by rarity, gem cards coloured by attribute with a NEW badge, and a Sell tab with an Appraisal Ledger that totals your pick before you sell.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.6.15',
+    date: '26 Nov 2026',
+    title: 'The Exile’s Bazaar',
+    items: [
+  'The Town is now The Exile’s Bazaar: a painted stall and keeper for each shop, your gold and the restock in a purse tray on the banner, wares on one counter, each glowing by rarity, gem cards coloured by attribute with a NEW badge, and a Sell tab with an Appraisal Ledger that totals your pick before you sell.',
+    ],
+  },
   {
     version: '0.6.14',
     date: '26 Nov 2026',
