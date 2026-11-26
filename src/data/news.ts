@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Skills is now The War Table: an illustrated banner with your loadouts docked in it, skill pedestals that show their linked support sockets and cast rank at a glance, a gem bag beside a live Inspector with one-click Equip and Link, and the Collection on brass-and-leather racks.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.6.14',
+    date: '26 Nov 2026',
+    title: 'The War Table',
+    items: [
+  'Skills is now The War Table: an illustrated banner with your loadouts docked in it, skill pedestals that show their linked support sockets and cast rank at a glance, a gem bag beside a live Inspector with one-click Equip and Link, and the Collection on brass-and-leather racks.',
+    ],
+  },
   {
     version: '0.6.13',
     date: '26 Nov 2026',
