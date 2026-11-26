@@ -1,21 +1,48 @@
-.delve-view { display: grid; gap: 14px; min-width: 0; }
+/*
+ * The Delve: Mining's shaft, active vein, crawler console and mine upgrades.
+ * Iron rims and copper glow; the banner art lives in mining-station.css.
+ */
+.delve-view {
+  --delve-iron: #7f858c;
+  --delve-iron-dark: #3d4045;
+  --delve-copper: #d97736;
+  --delve-ink: #f6e6cf;
+  --delve-stone: #15110e;
+  --delve-art: url('../../assets/zones/delve-mine.webp');
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.delve-view > .tabs {
+  margin: 0;
+  padding: 5px 8px 0;
+  border: 1px solid var(--delve-iron-dark);
+  border-radius: 6px;
+  background: linear-gradient(#1f1a16f0, #13100df5);
+  box-shadow: inset 0 1px 0 #ffffff0d;
+}
+.delve-view > .tabs .tab.active { color: #ffd9b0; border-color: var(--delve-copper); }
 
 .delve-layout {
   display: grid;
-  grid-template-columns: minmax(240px, .72fr) minmax(0, 1.35fr);
+  grid-template-columns: 340px minmax(0, 1fr);
   grid-template-areas: "map work";
   align-items: start;
   gap: 14px;
 }
 
-.delve-map, .delve-worksite, .delve-supply-strip {
+/* Iron-rimmed panels shared by the shaft, worksite and upgrade cards. */
+.delve-map, .delve-worksite {
   min-width: 0;
-  border: 1px solid #514338;
-  border-radius: 9px;
-  background: #1a1715;
+  overflow: hidden;
+  border: 1px solid var(--delve-iron);
+  border-radius: 8px;
+  background: linear-gradient(160deg, #1d1814, #110e0b);
+  box-shadow: inset 0 0 0 2px #0b0908, inset 0 0 0 3px #ffffff0a, 0 5px 16px #0806054d;
 }
 
-.delve-supply-strip, .delve-resource, .delve-upgrade-heading,
+.delve-resource, .delve-upgrade-heading,
 .delve-upgrade-row, .delve-brace-heading, .delve-replay-heading, .delve-focus-hint,
 .delve-elevator, .delve-elevator form {
   display: flex;
@@ -24,174 +51,310 @@
   gap: 8px;
 }
 
-.delve-supply-strip { padding: 9px 12px; gap: 9px 16px; }
-.delve-resource { color: #d8c7b6; }
-.delve-resource > strong { color: #f8e3c4; }
-.delve-resource > :first-child { color: #c9ac89; }
-
-.delve-map { grid-area: map; overflow: hidden; }
-.delve-map-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 6px 12px; flex-wrap: wrap; padding: 12px 14px; }
-.delve-map-heading h2 { margin: 0; font-size: 1.25rem; }
+/* ---------- The Delve (left column) ---------- */
+.delve-map { grid-area: map; }
+.delve-map-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px 12px;
+  flex-wrap: wrap;
+  padding: 13px 14px 10px;
+  border-bottom: 1px solid #2c241e;
+  background: linear-gradient(#241d18, #17130f);
+}
+.delve-map-heading h2 { margin: 0; color: var(--delve-ink); font: 500 1.3rem/1.1 Georgia, serif; text-shadow: 0 2px 4px #000; }
 .delve-map-heading small { color: #cdb9a5; }
 .delve-filter {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 0 14px 12px;
+  padding: 9px 14px;
   color: #d8c7b6;
   font-size: .86em;
+  background: #120f0c;
 }
 .delve-filter select {
   flex: 1 1 120px;
   min-width: 0;
   padding: 6px 8px;
-  border: 1px solid var(--line-2);
-  border-radius: 4px;
-  background: var(--bg-2);
+  border: 1px solid #50463d;
+  border-radius: 3px;
+  background: #1b1612;
   color: var(--text);
   font: inherit;
 }
+
+/* One continuous shaft: rock strata rows over the mine picture, a copper rail down the left. */
 .delve-shaft {
   position: relative;
   display: grid;
   align-content: start;
-  gap: 10px;
-  padding: 16px 12px 22px;
+  gap: 0;
+  padding: 0;
   isolation: isolate;
+  border-block: 1px solid #2c241e;
   background:
-    linear-gradient(180deg, #120e0a80, #120e0a24 45%, #120e0ab8),
-    url('../../assets/zones/delve-mine.webp') center 53% / cover,
-    #211913;
+    linear-gradient(90deg, #0c0907d9, #120d0a99 55%, #0c0907d0),
+    var(--delve-art, url('../../assets/zones/delve-mine.webp')) center 60% / cover,
+    #1a1410;
 }
-.delve-map .delve-shaft { min-height: 285px; }
-.delve-map .delve-shaft.filtered { min-height: 0; max-height: 345px; overflow-y: auto; }
-.delve-filter-empty { margin: 0; padding: 9px; background: #1c1815e6; color: #e5d3bf; border-radius: 4px; }
+.delve-map .delve-shaft { min-height: 280px; }
+.delve-map .delve-shaft.filtered { min-height: 0; max-height: 345px; overflow-y: auto; scrollbar-color: #7a5a40 #15110e; }
+.delve-filter-empty { margin: 0; padding: 12px 12px 12px 32px; color: #e5d3bf; background: #120e0bd9; }
 .delve-shaft::before {
   position: absolute;
-  z-index: -1;
+  z-index: 1;
+  top: 0;
+  bottom: 0;
+  left: 15px;
+  width: 3px;
   content: '';
-  inset: 0 auto 0 24px;
-  width: 12px;
-  border-inline: 2px solid #987350b0;
-  background: repeating-linear-gradient(0deg, transparent 0 10px, #9d79579c 10px 12px);
-  box-shadow: 0 0 12px #000c;
+  pointer-events: none;
+  background: linear-gradient(#f4aa68, var(--delve-copper, #d97736) 45%, #9c4e1c);
+  box-shadow: 0 0 9px #d97736a8, 0 0 2px #ffd2a0;
 }
 
 .delve-layer {
-  --layer-line: color-mix(in srgb, var(--stratum), #362b21 52%);
+  --layer-line: color-mix(in srgb, var(--stratum), #000 55%);
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 42px;
-  padding: 7px 9px;
-  border: 1px solid var(--layer-line);
-  border-inline-start: 4px solid var(--layer-line);
-  border-radius: 5px;
+  min-height: 46px;
+  margin: 0;
+  padding: 8px 10px 8px 32px;
+  border: 0;
+  border-bottom: 1px solid #00000099;
+  border-left: 3px solid transparent;
+  border-radius: 0;
   background:
-    linear-gradient(98deg, #1a1310 12%, color-mix(in srgb, var(--stratum) 18%, #181310f5)),
-    repeating-linear-gradient(-7deg, #211911 0 5px, #352719 5px 8px);
+    linear-gradient(90deg, color-mix(in srgb, var(--stratum) 20%, #17110dd9), #120e0bb3 72%, #0e0b09c4),
+    repeating-linear-gradient(-6deg, #ffffff06 0 2px, transparent 2px 8px);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--stratum) 22%, transparent);
   color: #faead7;
   text-align: start;
   font: inherit;
   line-height: 1.15;
 }
-.delve-layer:not(:disabled):is(button):hover, .delve-layer.selected {
-  border-color: var(--stratum);
-  background: linear-gradient(95deg, #322319, color-mix(in srgb, var(--stratum) 31%, #211810));
+/* A rivet on the rail for each depth. */
+.delve-layer::before {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 9px;
+  width: 9px;
+  height: 9px;
+  margin-top: -4.5px;
+  border: 2px solid #b8652b;
+  border-radius: 50%;
+  background: #24180f;
+  content: '';
 }
 .delve-layer:not(:disabled):is(button) { cursor: pointer; }
-.delve-layer.lantern, .delve-layer.motherlode { box-shadow: 0 0 15px #f6b6584a; }
-.delve-layer.unreached {
-  color: #c6b9ac;
-  border-style: dashed;
-  background: #1c1815e6;
+.delve-layer:not(:disabled):is(button):hover {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--stratum) 30%, #21170fe0), #18120ec4 75%);
 }
-.delve-depth { white-space: nowrap; color: #efcba5; font-size: .81rem; }
-.delve-layer-name { overflow-wrap: anywhere; font-weight: 650; }
-.delve-marks { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; }
-.delve-mark { color: var(--delve-tone, #ebc38d); display: inline-flex; align-items: center; }
-.delve-lantern-dot { width: 8px; height: 8px; border-radius: 50%; background: #f9d186; box-shadow: 0 0 9px #f7b763; }
+.delve-layer:focus-visible { outline: 2px solid #f1c582; outline-offset: -2px; }
+.delve-layer.selected {
+  border-left-color: var(--delve-copper, #d97736);
+  background: linear-gradient(90deg, color-mix(in srgb, #d97736 28%, #1d130cee), color-mix(in srgb, var(--stratum) 16%, #18120ed0) 78%);
+  box-shadow: inset 8px 0 14px -8px #f19a55, 0 0 14px #d9773633;
+}
+.delve-layer.selected::before { border-color: #ffe0b4; background: #f7b468; box-shadow: 0 0 8px #f0a050; }
+.delve-layer.lantern::before { border-color: #ffe2b0; background: #ffd27e; box-shadow: 0 0 10px #ffbf62; }
+.delve-layer.motherlode { box-shadow: inset 0 0 18px #f4cf7033; }
+.delve-layer.unreached {
+  color: #a99b8d;
+  background: repeating-linear-gradient(135deg, #0d0a08e0 0 6px, #15100ce0 6px 12px);
+}
+.delve-layer.unreached::before { border-color: #5b5046; border-style: dashed; background: #0d0a08; }
+.delve-depth { white-space: nowrap; color: #efcba5; font-size: .78rem; font-variant-numeric: tabular-nums; }
+.delve-layer-name { overflow-wrap: anywhere; font-weight: 650; text-shadow: 0 1px 3px #000; }
+.delve-marks { display: flex; align-items: center; justify-content: end; flex-wrap: wrap; gap: 3px; }
 
-.delve-elevator { padding: 10px 12px; }
+/* Crisp square badges for traits and installations. */
+.delve-mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 1px solid color-mix(in srgb, var(--delve-tone, #ebc38d) 65%, #000);
+  border-radius: 2px;
+  background: #0e0b09ee;
+  box-shadow: inset 0 0 0 1px #0000008c;
+  color: var(--delve-tone, #ebc38d);
+}
+.delve-mark svg { width: 14px; height: 14px; }
+.delve-lantern-dot { width: 8px; height: 8px; margin-inline: 4px; border-radius: 50%; background: #f9d186; box-shadow: 0 0 9px #f7b763; }
+
+.delve-elevator { padding: 10px 12px; background: #120f0c; }
 .delve-elevator form { flex: 1 0 116px; }
 .delve-elevator input {
   width: 0;
   min-width: 0;
   flex: 1 1 55px;
   padding: 7px 8px;
-  border: 1px solid var(--line-2);
-  border-radius: 4px;
-  background: var(--bg-2);
+  border: 1px solid #50463d;
+  border-radius: 3px;
+  background: #1b1612;
   color: var(--text);
   font: inherit;
 }
 
-.delve-worksite { grid-area: work; overflow: hidden; }
+/* ---------- Active vein and crawler console (right column) ---------- */
+.delve-worksite { grid-area: work; }
 .delve-vein {
   display: flex;
   align-items: end;
   justify-content: space-between;
   gap: 14px;
-  min-height: 120px;
-  padding: 17px 21px;
-  border-bottom: 1px solid color-mix(in srgb, var(--stratum), #362b21 50%);
+  min-height: 138px;
+  padding: 18px 22px;
+  border-bottom: 1px solid color-mix(in srgb, var(--stratum), #000 45%);
   background:
-    linear-gradient(90deg, #17100de8 15%, #1a131080 74%, #1a1310b8),
-    radial-gradient(ellipse at 85% 90%, color-mix(in srgb, var(--stratum) 57%, transparent), transparent 58%),
-    url('../../assets/zones/delve-mine.webp') center 49% / cover,
+    linear-gradient(90deg, #120c09eb 12%, #1a131066 60%, #120c09b0),
+    radial-gradient(ellipse at 86% 70%, color-mix(in srgb, var(--stratum) 50%, transparent), transparent 55%),
+    var(--delve-art, url('../../assets/zones/delve-mine.webp')) center 34% / cover,
     #281d17;
 }
-.delve-vein .mat-art { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 0 12px var(--stratum)); }
-.delve-vein h2 { margin: 2px 0 0; color: #fff0dd; font: 600 clamp(1.9rem, 4vw, 3rem)/1 Georgia, serif; }
-.delve-vein-depth { color: #f4d3b0; font-weight: 650; }
+.delve-vein h2 { margin: 2px 0 0; color: #fff0dd; font: 600 clamp(1.9rem, 4vw, 3rem)/1 Georgia, serif; text-shadow: 0 2px 8px #000; }
+.delve-vein-depth { color: #f4d3b0; font-weight: 650; text-shadow: 0 1px 3px #000; }
+
+/* The ore sits in a riveted iron socket. */
+.delve-ore-socket {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 88px;
+  height: 88px;
+  border: 2px solid var(--delve-iron, #7f858c);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 9px 9px, #c3c8cd 0 2px, #2a2b2d 2.5px, transparent 3.5px),
+    radial-gradient(circle at calc(100% - 9px) 9px, #c3c8cd 0 2px, #2a2b2d 2.5px, transparent 3.5px),
+    radial-gradient(circle at 9px calc(100% - 9px), #c3c8cd 0 2px, #2a2b2d 2.5px, transparent 3.5px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #c3c8cd 0 2px, #2a2b2d 2.5px, transparent 3.5px),
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--stratum) 34%, #241d18), #0a0807 72%);
+  box-shadow: inset 0 3px 12px #000e, 0 0 0 3px #15110e, 0 0 0 4px var(--delve-iron-dark, #3d4045), 0 0 24px color-mix(in srgb, var(--stratum) 45%, transparent);
+}
+.delve-ore-socket .mat-art { width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 4px 5px #000) drop-shadow(0 0 10px var(--stratum)); }
+
 .delve-operations, .delve-activity, .delve-mastery, .delve-upgrades, .delve-upgrade,
 .delve-next-pick, .delve-replay { display: grid; min-width: 0; gap: 8px; }
-.delve-operations { padding: 13px; gap: 12px; }
+.delve-operations { padding: 14px; gap: 12px; }
 .delve-operations p, .delve-upgrade p, .delve-replay :is(h3, p) { margin: 0; }
 .delve-choices, .delve-brace-buttons { display: grid; gap: 8px; }
 .delve-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .delve-choice { display: grid; gap: 5px; align-content: start; }
-.delve-choice .btn { justify-content: start; padding: 9px; min-height: 44px; white-space: normal; text-align: start; }
+.delve-choice .btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  justify-content: start;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 5px;
+  white-space: normal;
+  text-align: start;
+  font-weight: 650;
+}
 .delve-choice :is(.btn, small), .delve-brace-heading strong, .delve-mastery strong,
 .delve-brace-buttons .btn { display: flex; align-items: center; gap: 6px; }
 .delve-choice :is(.btn, small) > :first-child, .delve-brace-buttons .btn > :first-child { flex-shrink: 0; }
 .delve-choice small { color: #cbb8a5; }
-.delve-choice .delve-work-button { background: #42291d; border-color: #9a6747; color: #ffe4c8; }
-.delve-choice .delve-push-button { background: #19302f; border-color: #537b76; color: #d1f5eb; }
-.delve-choice .delve-push-button span { font-size: 1.3em; }
+.delve-choice .delve-work-button {
+  border-color: #b57345;
+  background: linear-gradient(#4f2f1e, #36200f);
+  box-shadow: inset 0 1px 0 #ffffff1a, inset 0 0 0 1px #1d0f07;
+  color: #ffe4c8;
+}
+.delve-choice .delve-push-button {
+  border-color: #5f8a84;
+  background: linear-gradient(#1f3a38, #142726);
+  box-shadow: inset 0 1px 0 #ffffff14, inset 0 0 0 1px #08120f;
+  color: #d1f5eb;
+}
+.delve-choice .delve-push-button > span[aria-hidden] { font-size: 1.3em; }
 .delve-choice .btn:hover:not(:disabled) { filter: brightness(1.18); }
-.delve-choice .btn:disabled { opacity: .65; }
-.delve-activity, .delve-mastery { padding: 8px 0; border-top: 1px solid #4b3d31; }
+.delve-choice .btn:disabled { opacity: .62; }
+.delve-choice .btn:disabled:has(.delve-button-fill) { opacity: 1; cursor: default; }
+/* The running swing or descent fills its own button. */
+.delve-button-fill {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  transform-origin: left center;
+  background: linear-gradient(90deg, #d9773640, #f0a0608a);
+  box-shadow: inset 0 -2px 0 #f4ab66;
+  pointer-events: none;
+}
+.delve-push-button .delve-button-fill { background: linear-gradient(90deg, #4fb1a33a, #6fd3c47a); box-shadow: inset 0 -2px 0 #85dccc; }
+
+/* Progress and Focus share one console so the eye stays in one place. */
+.delve-console {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #5c6066;
+  border-radius: 6px;
+  background: linear-gradient(#1b1612, #110e0b);
+  box-shadow: inset 0 0 0 2px #0b0908, inset 0 1px 0 #ffffff12;
+}
+.delve-console .delve-activity { padding: 10px 12px 4px; }
+.delve-console .delve-activity strong { color: var(--delve-ink); }
+.delve-console .delve-brace { border: 0; border-top: 1px solid #3a302a; border-radius: 0; background: #16120f; }
+.delve-console .delve-brace[data-tone] {
+  background: color-mix(in srgb, var(--delve-tone) 9%, #16120f);
+  box-shadow: inset 3px 0 0 var(--delve-tone);
+}
 .delve-gas-status { display: flex; align-items: center; gap: 6px; color: #c9e0a3; }
 .delve-upgrade-heading > strong { display: inline-flex; align-items: center; gap: 6px; }
-.delve-mastery { color: #b6d5a6; }
+
+/* Layer Mastery: one milestone track. */
+.delve-mastery { padding: 10px 12px; border: 1px solid #3f352c; border-radius: 6px; background: #14100d; color: #b6d5a6; }
 .delve-mastery > small, .delve-focus-hint { color: #d0beaa; font-size: .83em; }
-.delve-mastery-rewards {
+.delve-mastery-track {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 5px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.delve-mastery-rewards li {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 5px;
-  border: 1px solid #4b3d31;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 2px 0;
+  padding: 10px 3px 8px;
+  border: 1px solid #3f352c;
   border-radius: 5px;
-  color: #dfccba;
-  font-size: .83em;
-  line-height: 1.25;
+  background: #0f0c0a;
+  list-style: none;
 }
-.delve-mastery-rewards li[data-reached="true"] { border-color: #62734e; }
-.delve-mastery-level { flex-shrink: 0; color: #c1a98e; }
-.delve-mastery-rewards li[data-reached="true"] .delve-mastery-level { color: #b6d5a6; font-weight: 700; }
-.delve-mastery-rewards small { display: block; color: #c1a98e; }
+.delve-mastery-track li { position: relative; display: grid; justify-items: center; align-content: start; gap: 6px; padding: 0 3px; text-align: center; }
+.delve-mastery-track li + li::before { position: absolute; top: 16px; left: -50%; width: 100%; height: 2px; background: #5a4a3c; content: ''; }
+.delve-mastery-track li[data-reached="true"] + li[data-reached="true"]::before { background: #a5c992; box-shadow: 0 0 6px #a5c99266; }
+.delve-mastery-level {
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #8b7356;
+  border-radius: 50%;
+  background: #241c16;
+  box-shadow: inset 0 0 0 2px #120e0b;
+  color: #d9c3a6;
+  font-size: .8rem;
+}
+.delve-mastery-track li[data-reached="true"] .delve-mastery-level {
+  border-color: #a5c992;
+  background: #2c4527;
+  box-shadow: inset 0 0 0 2px #17231a, 0 0 10px #a5c99255;
+  color: #e6ffd9;
+  font-weight: 700;
+}
+.delve-mastery-track li > span { color: #d0beaa; font-size: .74rem; line-height: 1.2; overflow-wrap: anywhere; }
+.delve-mastery-track li[data-reached="true"] > span { color: #c4e3b4; }
+.delve-mastery-track small { display: block; margin-top: 2px; color: #a8957f; font-size: .92em; }
+
 .delve-yield { min-height: 27px; }
 .delve-yield-popup { display: flex; flex-wrap: wrap; gap: 4px 6px; animation: delve-yield-in .18s ease-out both; }
 .delve-yield-item {
@@ -200,7 +363,7 @@
   gap: 4px;
   padding: 3px 7px;
   border: 1px solid #6a553c;
-  border-radius: 5px;
+  border-radius: 4px;
   background: #2a2118;
   color: #f9e5cb;
   font-size: .85em;
@@ -212,16 +375,18 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.delve-view [data-tone="cave-in"], .delve-view [data-tone="unstable"] { --delve-tone: #f0ad83; }
-.delve-view [data-tone="flood"], .delve-view [data-tone="flooded"] { --delve-tone: #8bccf4; }
-.delve-view [data-tone="gas"] { --delve-tone: #b7dc88; }
-.delve-view [data-tone="rich"], .delve-view [data-tone="motherlode"] { --delve-tone: #f4cf70; }
-.delve-view [data-tone="crystal"] { --delve-tone: #e0b6f7; }
-.delve-view [data-tone="fossil"] { --delve-tone: #dbbe9c; }
+:is(.delve-view, .delve-replay) [data-tone="cave-in"], :is(.delve-view, .delve-replay) [data-tone="unstable"] { --delve-tone: #f0ad83; }
+:is(.delve-view, .delve-replay) [data-tone="flood"], :is(.delve-view, .delve-replay) [data-tone="flooded"] { --delve-tone: #8bccf4; }
+:is(.delve-view, .delve-replay) [data-tone="gas"] { --delve-tone: #b7dc88; }
+:is(.delve-view, .delve-replay) [data-tone="rich"], :is(.delve-view, .delve-replay) [data-tone="motherlode"] { --delve-tone: #f4cf70; }
+:is(.delve-view, .delve-replay) [data-tone="crystal"] { --delve-tone: #e0b6f7; }
+:is(.delve-view, .delve-replay) [data-tone="fossil"] { --delve-tone: #dbbe9c; }
+
+/* Focus strip */
 .delve-brace {
   display: grid;
   gap: 7px;
-  padding: 10px;
+  padding: 10px 12px;
   border: 1px solid var(--delve-tone, #6e583f);
   border-radius: 6px;
   background: #261e17;
@@ -231,7 +396,7 @@
 .delve-speed, .delve-brace-result.double, .delve-brace-result.hit { color: #f5d18b; }
 .delve-brace-result.weak, .delve-brace-result.miss, .delve-choice .delve-short, .delve-short { color: #f0ac9a; }
 .delve-focus-hint, .delve-upgrade-heading, .delve-upgrade-row { justify-content: space-between; }
-.delve-warning { display: grid; gap: 7px; min-height: 77px; padding-top: 7px; border-top: 1px solid #634b36; color: var(--delve-tone, #d7c4af); }
+.delve-warning { display: grid; gap: 7px; min-height: 77px; padding-top: 7px; border-top: 1px solid #3a302a; color: var(--delve-tone, #d7c4af); }
 .delve-warning-timer { min-height: 8px; }
 .delve-brace-buttons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .delve-brace-buttons .btn {
@@ -239,23 +404,117 @@
   min-height: 42px;
   padding-inline: 4px;
   border-color: color-mix(in srgb, var(--delve-tone) 45%, #2c221a);
+  border-radius: 4px;
   color: var(--delve-tone);
-  background: #201a16;
+  background: linear-gradient(#211b16, #17130f);
 }
 .delve-brace-buttons .btn[data-match="true"] {
   border-color: var(--delve-tone);
   background: color-mix(in srgb, var(--delve-tone) 22%, #211a15);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--delve-tone) 35%, transparent);
 }
 
-.delve-upgrades { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.delve-upgrades > :is(:first-child, .card-title) { grid-column: 1 / -1; }
-.delve-upgrade, .delve-pick-item { padding: 9px; border: 1px solid #4b4235; border-radius: 5px; background: #231e17; }
-.delve-upgrade.locked, .delve-pick-item.locked { border-style: dashed; }
-.delve-next-pick { padding-top: 6px; border-top: 1px solid #4b4235; }
-.delve-pick-toggle { justify-self: start; }
-.delve-traits, .delve-costs, .delve-pick-list { padding: 0; margin: 0; list-style: none; }
+.delve-traits, .delve-costs, .delve-pick-list, .delve-pick-pips { padding: 0; margin: 0; list-style: none; }
 .delve-traits, .delve-costs, .delve-pick-list { display: grid; gap: 5px; }
-.delve-traits li, .delve-costs li { display: flex; align-items: center; gap: 5px; font-size: .88em; }
+.delve-traits li, .delve-costs li { display: flex; align-items: center; gap: 7px; font-size: .88em; }
+
+/* ---------- Mine Upgrades ---------- */
+.delve-upgrades { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.delve-upgrades > :is(.delve-pick-forge, .card-title) { grid-column: 1 / -1; }
+.delve-installations-heading { margin: 4px 0 0; }
+.delve-upgrade, .delve-pick-item {
+  padding: 12px;
+  border: 1px solid #5c6066;
+  border-radius: 6px;
+  background: linear-gradient(160deg, #1f1a15, #14110e);
+  box-shadow: inset 0 0 0 2px #0b0908, inset 0 1px 0 #ffffff0f;
+}
+.delve-pick-item { padding: 8px 10px; }
+.delve-upgrade.locked, .delve-pick-item.locked { border-style: dashed; border-color: #4d4842; }
+.delve-next-pick { padding-top: 8px; border-top: 1px solid #3a302a; }
+.delve-pick-toggle { justify-self: start; }
+
+/* Prospector's Pick on an anvil pedestal by the forge. */
+.delve-pick-forge {
+  grid-template-columns: 168px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 16px;
+  padding: 0;
+  overflow: hidden;
+  border-color: var(--delve-iron, #7f858c);
+}
+.delve-pick-pedestal {
+  position: relative;
+  display: grid;
+  place-items: end center;
+  min-height: 170px;
+  padding-bottom: 34px;
+  border-right: 1px solid #3a302a;
+  background:
+    linear-gradient(180deg, transparent 72%, #2a2520 72%, #1a1613 82%, #0f0c0a),
+    radial-gradient(ellipse at 50% 70%, #ff8a3a55, #c2501a26 38%, transparent 66%),
+    linear-gradient(#17110d, #0d0a08);
+}
+.delve-pick-pedestal::after {
+  position: absolute;
+  bottom: 18%;
+  left: 24%;
+  right: 24%;
+  height: 2px;
+  background: #e8803a;
+  box-shadow: 0 0 10px #ff9a4a;
+  content: '';
+  opacity: .55;
+}
+.delve-pick-pedestal img { display: block; width: 96px; height: 96px; filter: drop-shadow(0 6px 4px #000c) drop-shadow(0 0 12px #f08a4140); }
+.delve-pick-body { display: grid; align-content: start; gap: 8px; min-width: 0; padding: 12px 14px 12px 0; }
+.delve-pick-body > .delve-upgrade-heading strong { color: var(--delve-ink); font-size: 1.05rem; }
+.delve-pick-pips { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+.delve-pick-pips li {
+  height: 9px;
+  border: 1px solid #4c4640;
+  border-radius: 2px;
+  background: #0f0c0a;
+  box-shadow: inset 0 1px 2px #000;
+}
+.delve-pick-pips li[data-state="owned"] { border-color: #a9874f; background: linear-gradient(#e7bf72, #a77a38); }
+.delve-pick-pips li[data-state="current"] { border-color: #ffe0a0; background: linear-gradient(#ffd58a, #e39a45); box-shadow: 0 0 8px #f5b45e; }
+
+/* Installations: a big iron emblem per hazard and socketed costs. */
+.delve-installation-head { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 11px; }
+.delve-installation-head > strong { color: var(--delve-ink); font-size: 1rem; }
+.delve-installation-head > :last-child:not(strong) { grid-column: 2; justify-self: start; max-width: 100%; min-width: 0; white-space: normal; height: auto; line-height: 1.3; }
+.delve-installation-emblem {
+  display: grid;
+  grid-row: span 2;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 2px solid var(--delve-iron, #7f858c);
+  border-radius: 8px;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--delve-tone) 26%, #201a15), #0b0908 74%);
+  box-shadow: inset 0 2px 8px #000d, 0 0 0 2px #15110e, 0 0 14px color-mix(in srgb, var(--delve-tone) 22%, transparent);
+  color: var(--delve-tone);
+}
+.delve-installation.locked .delve-installation-emblem { filter: grayscale(.6) brightness(.8); }
+.delve-installation > p { min-height: 2.6em; }
+.delve-upgrade-row { align-items: end; }
+.delve-cost-socket {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #6c7076;
+  border-radius: 50%;
+  background: radial-gradient(circle, #251d17, #0b0908 75%);
+  box-shadow: inset 0 2px 5px #000c;
+}
+.delve-cost-socket .mat-art { width: 22px; height: 22px; object-fit: contain; }
+.delve-costs li.delve-short .delve-cost-socket { border-color: #8a4a3e; }
+.delve-cost-text { min-width: 0; line-height: 1.25; }
+
+/* ---------- Activity feed, replay and landmark (shown outside the page too) ---------- */
 .delve-feed strong { color: #e8cbaa; }
 .delve-feed summary { cursor: pointer; }
 .delve-feed summary > span, .delve-feed > span { display: block; margin-top: 3px; }
@@ -265,7 +524,7 @@
 
 .delve-replay { border: 1px solid #64513c; border-radius: 6px; padding: 9px; margin-block: 8px; }
 .delve-replay-heading h3 { flex: 1 1 120px; }
-.delve-replay-frame { animation: delve-reveal .25s ease-out both; }
+.delve-replay-frame { overflow: hidden; border-radius: 4px; animation: delve-reveal .25s ease-out both; }
 @keyframes delve-reveal {
   from { opacity: .75; transform: translateY(9px); }
   to { opacity: 1; transform: translateY(0); }
@@ -278,12 +537,24 @@
   border-color: #bd8f58;
 }
 
-@media (max-width: 850px) {
-  .delve-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "work" "map"; }
-  .delve-map .delve-shaft { min-height: 150px; }
+/* ---------- Narrow screens: shaft first, capped, then the controls ---------- */
+@media (max-width: 900px) {
+  .delve-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: "map" "work"; }
+  .delve-map .delve-shaft, .delve-map .delve-shaft.filtered { min-height: 0; max-height: 280px; overflow-y: auto; }
   .delve-upgrades { grid-template-columns: minmax(0, 1fr); }
 }
-@media (max-width: 480px) {
-  .delve-operations { padding: 9px; }
+@media (max-width: 560px) {
+  .delve-operations { padding: 10px; }
+  .delve-vein { min-height: 112px; padding: 14px; }
+  .delve-ore-socket { width: 70px; height: 70px; }
+  .delve-ore-socket .mat-art { width: 46px; height: 46px; }
+  .delve-choices { gap: 6px; }
+  .delve-choice .btn { padding: 9px; }
   .delve-elevator .btn { min-height: 40px; }
+  .delve-mastery-track li > span { font-size: .66rem; }
+  .delve-mastery-track li + li::before { top: 14px; }
+  .delve-mastery-level { width: 30px; height: 30px; }
+  .delve-pick-forge { grid-template-columns: 104px minmax(0, 1fr); gap: 10px; }
+  .delve-pick-pedestal { min-height: 130px; padding-bottom: 26px; }
+  .delve-pick-pedestal img { width: 64px; height: 64px; }
 }

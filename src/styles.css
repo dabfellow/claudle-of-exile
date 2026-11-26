@@ -1446,6 +1446,47 @@ h3 {
 .toast.bad { border-color: color-mix(in srgb, var(--danger) 70%, transparent); color: var(--bad); }
 .toast.good { border-color: color-mix(in srgb, var(--success) 70%, transparent); color: var(--good); }
 
+/* Phones and small tablets: a short stack above the fixed 40px xp bar, so the
+   illustrated station header at the top of a skill page stays visible.
+   `html body` outranks the top-of-screen rule in round2-session1.css. */
+@media (max-width: 860px) {
+  html body .toasts {
+    top: auto;
+    bottom: calc(46px + env(safe-area-inset-bottom, 0px));
+    left: auto;
+    right: 8px;
+    width: auto;
+    max-width: min(340px, calc(100vw - 16px));
+    max-height: 76px; /* two compact toasts */
+    overflow: hidden;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+  html body .toasts > .toast {
+    max-width: 100%;
+    padding: 5px 8px 5px 10px;
+    font-size: var(--fs-xs);
+    line-height: 1.25;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+  }
+  html body .toasts > .toast:nth-last-child(n + 3) { display: none; }
+  html body .toasts .toast-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 560px) {
+  html body .toasts {
+    left: 8px;
+    max-width: none;
+    align-items: stretch;
+  }
+  html body .toasts > .toast { justify-content: space-between; }
+}
+
 /* modal */
 .modal-backdrop {
   position: fixed;

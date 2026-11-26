@@ -1,0 +1,119 @@
+/*
+ * Illustrated banners for Foraging (moonlit wildwood edge) and the Greenhouse
+ * (sun-dappled glasshouse). Both build on station-hero.css; this file only sets
+ * their art, shade, rims and socket dressing.
+ *
+ * Both pages carry `.profession-harvesting`, so the Greenhouse header adds
+ * `.greenhouse-hero` and the Foraging rules skip it.
+ *
+ * Art: each banner's picture lives in one variable, --station-art. To swap in
+ * dedicated banner art later, point it at e.g.
+ *   url('../../../public/assets/stations/foraging-banner.webp')
+ *   url('../../../public/assets/stations/greenhouse-banner.webp')
+ */
+
+/* Shared layout. The higher specificity beats the generic profession header
+   (`html .profession-page .profession-header`), which would otherwise turn the
+   banner back into a plain flex row. */
+html .profession-page.profession-harvesting .profession-header.station-hero {
+  display: grid;
+  gap: 10px 16px;
+  min-height: 180px;
+  padding: 18px 23px;
+  background: var(--station-shade), var(--station-art, none) var(--station-art-pos, center) / cover no-repeat, var(--station-base, #11160f);
+}
+
+/* ---------- Foraging: moonlit wildwood edge, lantern light ---------- */
+
+html .profession-page.profession-harvesting .profession-header.station-hero:not(.greenhouse-hero) {
+  --station-art: url('../../assets/zones/gegx-forest-night.webp');
+  --station-art-pos: center 62%;
+  --station-base: #0c1210;
+  --station-rim: #86965a;
+  --station-ink: #eef2d6;
+  --station-shade:
+    radial-gradient(22% 60% at 90% 78%, #ffb4571c, transparent 70%),
+    linear-gradient(90deg, #060a0af2 3%, #08100ec8 27%, #0a120f3a 50%, #0a110f8f 72%, #060a09f0);
+}
+
+.profession-harvesting .station-hero:not(.greenhouse-hero) .profession-header-icon {
+  filter: drop-shadow(0 0 6px #b4d28a66);
+}
+
+.profession-harvesting .station-hero:not(.greenhouse-hero) .station-dock li {
+  border-color: #6f7f4c;
+  background: linear-gradient(#141b14f2, #0b100cf4);
+  box-shadow: inset 0 0 0 2px #121a12, inset 0 1px 0 #a6b97a33, 0 3px 9px #04070590;
+  color: #cfd9b4;
+}
+
+/* Botanical socket: a mossy bowl ringed with leaf-green, lit warm from below like the lanterns. */
+.profession-harvesting .station-hero:not(.greenhouse-hero) .station-socket {
+  border-color: #5d6f3f;
+  background:
+    radial-gradient(circle at 50% 78%, #ffbf6a26, transparent 58%),
+    radial-gradient(circle, #1f2b1b, #090d09 76%);
+  box-shadow: inset 0 2px 6px #000c, 0 0 0 2px #1a2416, 0 0 0 3px #6f8a4a55;
+}
+
+/* ---------- Greenhouse: sun-dappled Victorian glasshouse ---------- */
+
+html .profession-page.profession-harvesting .profession-header.greenhouse-hero {
+  --station-art: url('../../../public/assets/stations/greenhouse-blechen-palmhouse.webp');
+  --station-art-pos: center 40%;
+  --station-base: #10150e;
+  --station-rim: #b8954a;
+  --station-ink: #fff0cc;
+  --station-shade:
+    radial-gradient(45% 95% at 68% -12%, #ffe7a02a, transparent 70%),
+    linear-gradient(90deg, #0a0e09f2 3%, #0f150dc4 29%, #11170e30 54%, #0f140c99 74%, #0a0d08f0);
+}
+
+.profession-harvesting .greenhouse-hero .xp .dim { text-shadow: 0 1px 4px #000; }
+
+.profession-harvesting .greenhouse-hero .station-dock li {
+  border-color: #a5843f;
+  background: linear-gradient(#1b1f16f2, #10130df4);
+  box-shadow: inset 0 0 0 2px #171a12, inset 0 1px 0 #f4d58a33, 0 3px 9px #06070490;
+  color: #e8d9b2;
+}
+
+/* Brass-rimmed glass socket: a pale pane with a highlight across the top-left. */
+.profession-harvesting .greenhouse-hero .station-socket {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #b8954a;
+  background:
+    radial-gradient(circle at 34% 28%, #f2fff433, transparent 42%),
+    radial-gradient(circle, #24342a, #0b110d 78%);
+  box-shadow: inset 0 2px 6px #000b, inset 0 0 0 1px #f8e2a455, 0 0 0 1px #3b2d12;
+}
+
+.profession-harvesting .greenhouse-hero .station-socket::after {
+  content: '';
+  position: absolute;
+  inset: 3px 50% 50% 4px;
+  border-radius: 50% 0 0 0;
+  border-top: 1px solid #ffffff38;
+  border-left: 1px solid #ffffff22;
+  pointer-events: none;
+}
+
+/* ---------- Sockets shared by both ---------- */
+
+.profession-harvesting .station-hero .station-socket img.mat-art {
+  width: 30px;
+  height: 30px;
+}
+
+@media (max-width: 900px) {
+  html .profession-page.profession-harvesting .profession-header.station-hero {
+    min-height: 0;
+    padding: 14px;
+    gap: 10px 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  .profession-harvesting .station-hero .station-socket img.mat-art { width: 23px; height: 23px; }
+}

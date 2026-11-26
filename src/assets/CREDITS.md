@@ -20,6 +20,10 @@ Files are named after their pack: `codespree-`, `sn-`, `craftpix-`, `freesample-
 - **sn-\*.png**: Fantasy Pixel Icons, Skills (v002) and Elements (v004) free tiers, attributed to SanguineNite. No licence file in the download; check before release.
 - **zones/gegx-\*.webp, scenes/gegx-\*.webp**: Painterly Backgrounds free sample by GegX (gegx.itch.io), AI-generated and hand-curated, resized to 1600px webp. Free for commercial and non-commercial projects; may not be redistributed as an asset pack or used to train image models.
 
+## Illustrated stations
+
+- `public/assets/stations/`: Erik Bodom's sawmill painting and Carl Blechen's palm house (public domain), two Poly Haven textures (CC0), and eight game-icons.net icons by Lorc and Delapouite (CC BY 3.0). Each file is listed in [the station credits](../../public/assets/stations/CREDITS.md).
+
 ## Cartography station
 
 - `public/assets/cartography/cartography-bench-bg.webp` and its `folio-texture.webp` detail were made with the built-in ImageGen tool for Path of Idle. [Banner prompt](../../public/assets/cartography/ART.md).

@@ -15,3 +15,159 @@
 .campaign-journal-record li { margin: 12px 0; }
 .campaign-journal-record li p { color: var(--muted); line-height: 1.5; margin: 4px 0; max-width: 80ch; }
 @media (max-width: 520px) { .campaign-journal-actions { align-items: stretch; flex-direction: column; } }
+
+/* ---------- Quests page: "Hideout Chronicle & Bounty Board" (scoped to .chronicle-page, so the World Map journal is unchanged) ---------- */
+.page.chronicle-page { width: 100%; max-width: 1280px; gap: 16px; }
+.chronicle-page .chronicle { display: grid; gap: 16px; margin: 0; }
+.chronicle .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.chronicle-banner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 132px;
+  padding: 20px 24px;
+  border: 1px solid #4a4335;
+  border-radius: 6px;
+  background:
+    linear-gradient(100deg, rgba(14, 15, 17, 0.94) 10%, rgba(18, 18, 20, 0.72) 55%, rgba(14, 15, 17, 0.9)),
+    url('../../assets/scenes/gegx-tavern-night.webp') center 40% / cover,
+    #15171a;
+  box-shadow: inset 0 0 0 3px #0f1012, inset 0 0 0 4px rgba(180, 148, 92, 0.2), 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+.chronicle-banner-emblem {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  color: #d8b46c;
+  border: 1px solid #62553b;
+  background: rgba(18, 20, 20, 0.75);
+}
+.chronicle-banner-text { flex: 1; min-width: 0; }
+.chronicle-banner-text h2 { margin: 4px 0 10px; font: 600 26px/1.15 var(--font-display, Georgia, serif); color: #efe3c6; text-shadow: 0 2px 6px #000; }
+.chronicle-kicker, .chronicle-plaque-kicker, .chronicle-section-title {
+  display: block;
+  font: 600 10px/1.3 var(--font-display, Georgia, serif);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.chronicle-kicker { color: #b3aa96; }
+.chronicle-banner-progress { display: flex; align-items: center; gap: 10px; max-width: 360px; font-size: 11px; color: #cfc3a8; }
+.chronicle-banner-progress .bar { flex: 1; }
+
+/* coloured wax seals: red while active, green when done, grey while sealed */
+.chronicle-seal { position: relative; display: grid; place-items: center; flex: none; width: 84px; height: 84px; transform: rotate(-6deg); }
+.chronicle-seal-wax {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 35% 30%, var(--seal-hi), var(--seal) 60%, var(--seal-lo));
+  -webkit-mask: url('../../../public/assets/cartography/wax-seal.png') center / contain no-repeat;
+  mask: url('../../../public/assets/cartography/wax-seal.png') center / contain no-repeat;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .6));
+}
+.chronicle-seal-label { position: relative; color: #f6e4c5; font: 700 10px/1 Georgia, serif; letter-spacing: .1em; text-transform: uppercase; text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+.chronicle-seal.active { --seal: #8e2f28; --seal-hi: #c4513f; --seal-lo: #561a16; }
+.chronicle-seal.completed { --seal: #3f6b45; --seal-hi: #6f9e6c; --seal-lo: #22402a; }
+.chronicle-seal.sealed { --seal: #4f5157; --seal-hi: #7b7e85; --seal-lo: #2c2e33; }
+
+.chronicle-board { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 1fr); gap: 20px; align-items: start; }
+
+/* the active quest: a parchment plaque */
+.chronicle-plaque {
+  position: relative;
+  min-width: 0;
+  padding: 26px 26px 22px;
+  border: 1px solid #a48c62;
+  border-radius: 5px;
+  color: #342d24;
+  background:
+    radial-gradient(ellipse at 15% 20%, #f2e5c940, transparent 65%),
+    radial-gradient(ellipse at 95% 80%, #8a6e411a, transparent 60%),
+    linear-gradient(105deg, #c9b58f, #dfcfac 45%, #d1bf9b);
+  box-shadow: inset 0 0 0 4px #dfcfaa, inset 0 0 0 5px #9c82565c, 2px 3px 0 #756345, 4px 5px 0 #352f26;
+}
+.chronicle-plaque h3 { margin: 6px 0 12px; color: #422a25; font: bold 24px/1.15 Georgia, serif; }
+.chronicle-plaque-kicker { color: #66553b; }
+.chronicle-dialogue { margin: 0; color: #4c3f2c; font-style: italic; line-height: 1.65; max-width: 72ch; }
+.chronicle-dialogue strong { font-style: normal; color: #3d2b1c; }
+.chronicle-objective { margin-top: 16px; padding: 12px 0; border-block: 1px solid #8d785b70; }
+.chronicle-objective p { margin: 6px 0 0; font-weight: 600; color: #2f261c; }
+.chronicle-plaque .chronicle-section-title { color: #4d3e2b; }
+
+.chronicle-rewards { padding: 12px 0 14px; border-bottom: 1px solid #8d785b70; }
+.chronicle-sockets { display: flex; flex-wrap: wrap; gap: 12px 16px; margin-top: 10px; }
+.chronicle-socket { display: grid; justify-items: center; gap: 5px; width: 76px; text-align: center; }
+.chronicle-socket-gem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  color: #d8b46c;
+  border: 1px solid #6e552f;
+  background: radial-gradient(circle at 50% 40%, #2a2620, #0f0e0c 72%);
+  box-shadow: inset 0 0 0 3px #1a1612, inset 0 0 10px #000, 0 0 0 2px #b59a68, 0 2px 4px rgba(53, 47, 38, .5);
+}
+.chronicle-socket-gem b { position: absolute; right: -4px; bottom: -3px; min-width: 18px; padding: 1px 4px; border-radius: 999px; background: #3b2e1b; border: 1px solid #c9a56a; color: #f2dfb3; font-size: 10px; line-height: 1.3; }
+.chronicle-socket-name { font-size: 10px; line-height: 1.25; color: #4c3f2c; overflow-wrap: anywhere; }
+
+.chronicle-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.chronicle-actions .btn { white-space: normal; }
+.chronicle-plaque .chronicle-act { min-height: 40px; padding-inline: 18px; border: 1px solid #672f2b; background: linear-gradient(#713f39, #512c29); color: #ecdcba; box-shadow: inset 0 0 0 2px #bd9c6526; font-family: Georgia, serif; letter-spacing: .05em; }
+.chronicle-plaque .chronicle-act:hover:not(:disabled) { background: #804b40; border-color: #946942; }
+.chronicle-plaque .chronicle-act:disabled { opacity: .5; cursor: not-allowed; }
+.chronicle-plaque .chronicle-map { display: inline-flex; align-items: center; gap: 6px; background: #e3d3b0; color: #3f3122; border: 1px solid #9c8256; box-shadow: none; }
+.chronicle-plaque .chronicle-map:hover:not(:disabled) { background: #eee1c3; border-color: #6e552f; }
+.chronicle-plaque .chronicle-map:disabled { opacity: .45; cursor: not-allowed; }
+.chronicle-hint { margin: 10px 0 0; font-size: 12px; color: #65553d; }
+.chronicle-actions .chronicle-hint { margin: 0; }
+
+/* the chapter checklist: a dark slate bounty board */
+.chronicle-slate {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #3b3d39;
+  border-radius: 5px;
+  background: linear-gradient(140deg, #1c2021, #15191b);
+  box-shadow: inset 0 0 0 3px #111416, 0 4px 14px rgba(0, 0, 0, .3);
+}
+.chronicle-slate > .chronicle-section-title { padding-bottom: 10px; border-bottom: 1px solid #49473d; color: #c7bfad; }
+.chronicle-steps { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.chronicle-steps li { position: relative; display: grid; grid-template-columns: 26px minmax(0, 1fr); align-items: start; gap: 10px; padding: 9px 10px; border: 1px solid #333a3b; border-radius: 5px; background: #1c2124; color: #ddd5c5; }
+.chronicle-steps li.current { border-color: #bc9b57; background: linear-gradient(100deg, #343025, #222625); box-shadow: inset 3px 0 #bc9b57; }
+.chronicle-steps li.upcoming { border-style: dashed; background: transparent; color: #8f9294; }
+.chronicle-step-mark { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #4b4f52; background: #121517; font: 700 12px/1 Georgia, serif; }
+.chronicle-steps li.complete .chronicle-step-mark { color: #cce6c5; border-color: #6a9660; background: #29402a; }
+.chronicle-steps li.current .chronicle-step-mark { color: #2a1c06; border-color: #f0cf86; background: #d4a347; }
+.chronicle-step-text { display: grid; gap: 2px; min-width: 0; font-size: 13px; }
+.chronicle-step-text b { font: 600 13px/1.3 Georgia, serif; }
+.chronicle-steps li.complete .chronicle-step-text b { color: #b9c6b3; }
+.chronicle-step-text small { font-size: 11px; color: #a6a39a; line-height: 1.4; }
+
+.chronicle-page .chronicle-record { margin-top: 0; padding-top: 12px; border-top-color: #49473d; }
+.chronicle-page .chronicle-record summary { color: #c7bfad; font-family: Georgia, serif; }
+.chronicle-page .chronicle-record ol { max-height: 280px; overflow-y: auto; margin: 8px 0 0; padding-right: 6px; }
+.chronicle-page .chronicle-record li p { color: #a6a39a; }
+
+@container (max-width: 860px) {
+  .chronicle-board { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .chronicle-board { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .chronicle-banner { flex-wrap: wrap; padding: 16px; gap: 12px; }
+  .chronicle-banner-emblem { width: 44px; height: 44px; }
+  .chronicle-banner-text { flex-basis: calc(100% - 140px); }
+  .chronicle-banner-text h2 { font-size: 21px; }
+  .chronicle-seal { width: 64px; height: 64px; }
+  .chronicle-plaque { padding: 22px 16px 18px; }
+  .chronicle-plaque h3 { font-size: 21px; }
+  .chronicle-actions { align-items: stretch; flex-direction: column; }
+}

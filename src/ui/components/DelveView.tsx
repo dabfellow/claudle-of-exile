@@ -20,8 +20,11 @@ import type { GameEvent, GameState } from '../../engine/types';
 import { game, useGame, useGameEvent } from '../../game';
 import { Badge, fmt, fmtTime, GameIcon, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
 import { Icon } from './Icon';
+import { StationGlyph, type StationGlyphName } from './StationDock';
 import { HelpTip, LockedBadge } from './SkillHelp';
+import anvilSprite from '../../assets/smelting/anvil.png';
 import './delve.css';
+import './mining-station.css';
 
 type DelveTab = 'shaft' | 'upgrades';
 
@@ -47,11 +50,13 @@ function Costs({ s, cost }: { s: GameState; cost: Record<string, number> }) {
         const owned = recipeMaterialCount(s.storage.bank, id);
         return (
           <li key={id} className={owned < quantity ? 'delve-short' : undefined}>
-            <MatIcon id={id} />{' '}
-            <span className="num">
-              {fmt(quantity)} {materialDef(id).name}
-            </span>{' '}
-            <span className="muted small num">({fmt(owned)} owned)</span>
+            <span className="delve-cost-socket"><MatIcon id={id} size={20} /></span>
+            <span className="delve-cost-text">
+              <span className="num">
+                {fmt(quantity)} {materialDef(id).name}
+              </span>{' '}
+              <span className="muted small num">({fmt(owned)} owned)</span>
+            </span>
           </li>
         );
       })}
@@ -134,8 +139,12 @@ function TraitIcon({ trait }: { trait: (typeof DELVE_TRAITS)[number] }) {
   );
 }
 
+const INSTALLATION_ICON: Record<DelveHazard, string> = { 'cave-in': 'support', flood: 'drop', gas: 'wind' };
+/** Larger emblems on the installation cards: rock bolts, a pump and a ventilation fan. */
+const INSTALLATION_GLYPH: Record<DelveHazard, StationGlyphName> = { 'cave-in': 'rock-bolt', flood: 'pump', gas: 'vent-fan' };
+
 function HazardIcon({ hazard }: { hazard: DelveHazard }) {
-  return <Icon name={{ 'cave-in': 'support', flood: 'drop', gas: 'wind' }[hazard]} />;
+  return <Icon name={INSTALLATION_ICON[hazard]} />;
 }
 
 const HAZARD_NAME: Record<DelveHazard, string> = { 'cave-in': 'Cave-in', flood: 'Flood', gas: 'Gas leak' };
@@ -195,11 +204,12 @@ function Installation({ s, hazard, layer }: { s: GameState; hazard: DelveHazard;
   const target = s.delve.layers[layer];
   const masteryLocked = !here && !!target && target.mastery < def.mastery;
   return (
-    <div className={`delve-upgrade ${masteryLocked || !target ? 'locked' : ''}`}>
-      <div className="delve-upgrade-heading">
-        <strong>
-          <HazardIcon hazard={hazard} /> {def.name}
-        </strong>
+    <div className={`delve-upgrade delve-installation ${masteryLocked || !target ? 'locked' : ''}`} data-tone={hazard}>
+      <div className="delve-installation-head">
+        <span className="delve-installation-emblem" aria-hidden="true">
+          <StationGlyph name={INSTALLATION_GLYPH[hazard]} size={32} />
+        </span>
+        <strong>{def.name}</strong>
         {here ? (
           <Badge tone="success">Tier {here.tier}/4</Badge>
         ) : masteryLocked ? (
@@ -232,23 +242,6 @@ function Installation({ s, hazard, layer }: { s: GameState; hazard: DelveHazard;
   );
 }
 
-function SupplyStrip({ s }: { s: GameState }) {
-  const rubble = s.storage.bank.rubble ?? 0;
-  const supports = s.storage.bank.mine_support ?? 0;
-  return (
-    <div className="delve-supply-strip" aria-label="Mine supplies">
-      <span className="delve-resource" title="Collect it while mining and spend it to dig deeper">
-        <GameIcon name="rock" /> Rubble <strong className="num">{fmt(rubble)}</strong>
-      </span>
-      {supports > 0 && (
-        <span className="delve-resource" title="Existing supports are spent before rubble">
-          <Icon name="support" /> Supports <strong className="num">{fmt(supports)}</strong>
-        </span>
-      )}
-    </div>
-  );
-}
-
 function DelveUpgrades({ s, layer, chooseDepth }: { s: GameState; layer: number; chooseDepth: () => void }) {
   const delve = s.delve;
   const [showAllPicks, setShowAllPicks] = useState(false);
@@ -258,7 +251,11 @@ function DelveUpgrades({ s, layer, chooseDepth }: { s: GameState; layer: number;
 
   return (
     <section className="delve-upgrades" aria-label="Mine upgrades">
-      <div className="delve-upgrade">
+      <div className="delve-upgrade delve-pick-forge">
+        <div className="delve-pick-pedestal" aria-hidden="true">
+          <img className="station-pixel" src={anvilSprite} alt="" width={96} height={96} draggable={false} />
+        </div>
+        <div className="delve-pick-body">
         <div className="delve-upgrade-heading">
           <strong>
             <HelpTip
@@ -269,6 +266,12 @@ function DelveUpgrades({ s, layer, chooseDepth }: { s: GameState; layer: number;
           <Badge tone="gold">Tier {delve.pickTier + 1}/{DELVE_PICKS.length}</Badge>
         </div>
         <p className="muted small">{pick.perk}</p>
+        <ol className="delve-pick-pips" aria-label={`Pick tier ${delve.pickTier + 1} of ${DELVE_PICKS.length}`}>
+          {DELVE_PICKS.map((tier, idx) => (
+            <li key={tier.name} title={`${tier.name} · Layer ${tier.layer}`}
+              data-state={idx < delve.pickTier ? 'owned' : idx === delve.pickTier ? 'current' : 'locked'} />
+          ))}
+        </ol>
         {next && (
           <div className="delve-next-pick">
             <div className="delve-upgrade-heading">
@@ -327,9 +330,10 @@ function DelveUpgrades({ s, layer, chooseDepth }: { s: GameState; layer: number;
             })}
           </ul>
         )}
+        </div>
       </div>
 
-      <div className="card-title delve-upgrade-heading">
+      <div className="card-title delve-upgrade-heading delve-installations-heading">
         <HelpTip
           label={`Installations at depth ${fmt(layer)}`}
           tip="Permanent stations built at a layer that eliminate one hazard type across a 50+ layer span below it."
@@ -341,6 +345,12 @@ function DelveUpgrades({ s, layer, chooseDepth }: { s: GameState; layer: number;
       ))}
     </section>
   );
+}
+
+/** Progress of the running swing or descent, drawn inside its button. */
+function ButtonFill({ value }: { value: number }) {
+  return <span className="delve-button-fill" aria-hidden="true"
+    style={{ transform: `scaleX(${Math.max(0, Math.min(1, value))})` }} />;
 }
 
 function MinePayout() {
@@ -498,13 +508,13 @@ export function DelveView() {
   const workingHere = !pushing && current?.delveLayer === layer;
   const floodedUntil = delve.layers[layer]?.floodedUntil ?? 0;
   const flooded = floodedUntil > s.clock && !installationCovers(delve, 'flood', layer);
+  const buttonFill = current ? current.progress / interval : 0;
 
   return (
     <section className="delve-view">
       <Tabs tabs={tabs} value={tab} onChange={setTab} />
       {tab === 'shaft' && (
         <>
-          <SupplyStrip s={s} />
           <div className="delve-layout">
             <section className="delve-worksite" style={{ '--stratum': band.color } as CSSProperties}>
               <div className="delve-vein">
@@ -512,7 +522,7 @@ export function DelveView() {
                   <div className="delve-vein-depth num">Depth {fmt(layer)}</div>
                   <h2>{layer === WORLDROOT_DEPTH ? 'Worldroot Chamber' : band.name}</h2>
                 </div>
-                <MatIcon id={band.ore} size={52} />
+                <span className="delve-ore-socket"><MatIcon id={band.ore} size={52} /></span>
               </div>
               <div className="delve-operations">
                 <div className="delve-choices">
@@ -520,6 +530,7 @@ export function DelveView() {
                     <button className="btn delve-work-button" type="button" onClick={() => work('work')}
                       disabled={workingHere}>
                       <Icon name="mining" size={22} /> {workingHere ? 'Mining here' : `Mine ${band.name}`}
+                      {workingHere && <ButtonFill value={buttonFill} />}
                     </button>
                     <small>
                       <GameIcon name="rock" size={13} /> {DELVE_RUBBLE_PER_WORK.min + bonusRubble}–{DELVE_RUBBLE_PER_WORK.max + bonusRubble} rubble per swing
@@ -529,6 +540,7 @@ export function DelveView() {
                     <button className="btn delve-push-button" type="button" onClick={() => work('push')}
                       disabled={!!pushBlocker || pushing}>
                       <span aria-hidden="true">↓</span> {pushing ? `Descending to Depth ${fmt(nextLayer)}` : `Dig to Depth ${fmt(nextLayer)}`}
+                      {pushing && <ButtonFill value={buttonFill} />}
                     </button>
                     <small className={pushBlocker ? 'delve-short' : undefined}>
                       <Icon name={pushBlocker ? 'lock' : pushRubble ? 'rock' : 'support'} size={13} />
@@ -538,6 +550,7 @@ export function DelveView() {
                     {nextTraits && <small>{nextTraits.length ? nextTraits.join(' · ') : 'Plain rock ahead'}</small>}
                   </div>
                 </div>
+                <div className="delve-console">
                 {current && (
                   <div className="delve-activity">
                     <div className="delve-upgrade-heading">
@@ -561,6 +574,8 @@ export function DelveView() {
                     <MinePayout />
                   </div>
                 )}
+                <BraceCard s={s} />
+                </div>
                 <div className="delve-mastery">
                   <div className="delve-upgrade-heading">
                     <strong><Icon name="equipment" /> Layer Mastery</strong>
@@ -568,14 +583,14 @@ export function DelveView() {
                   </div>
                   <ProgressBar value={(mastery - 1) / (DELVE_MASTERY_MAX - 1)} color="#a5c992" />
                   <small>+1 level per swing at this depth</small>
-                  <ul className="delve-mastery-rewards" aria-label="Layer Mastery rewards">
+                  <ol className="delve-mastery-track" aria-label="Layer Mastery rewards">
                     {LAYER_MASTERY_REWARDS.map(({ level, name, detail }) => (
                       <li key={level} data-reached={mastery >= level}>
-                        <span className="delve-mastery-level num">Lv {level}</span>
+                        <b className="delve-mastery-level num">{level}</b>
                         <span>{name}{detail && <small>{detail}</small>}</span>
                       </li>
                     ))}
-                  </ul>
+                  </ol>
                   <small>Lv {DELVE_MASTERY_MAX} · +{DELVE_MASTERY_ORE_BONUS * 100}% ore on average · No new hazards</small>
                 </div>
                 {traits.length > 0 && (
@@ -619,7 +634,6 @@ export function DelveView() {
               )}
             </section>
           </div>
-          <BraceCard s={s} />
         </>
       )}
 

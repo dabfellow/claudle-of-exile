@@ -1,6 +1,6 @@
 # Roadmap and decisions
 
-Last updated 2026-11-25. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
+Last updated 2026-11-26. Current implementation: [GAME.md](GAME.md). Engineering and verification: [DEVELOPMENT.md](DEVELOPMENT.md). Historical releases: `src/data/news.ts` and git history.
 
 ## Next steps
 
@@ -744,6 +744,14 @@ The implementation passes the full 1,261-test suite and production typecheck. No
 The consolidated batch specification is retained below as a proposal. Its initial 1.3× attribute wording is superseded by the 0.4.1 attribute rebalance (demanding gems use 1.15×); use code for actual requirements. Its suggested `'maps'` gating/API names are design intent, not existing API contracts. Definitions that conflict with current data require review rather than silently changing gameplay.
 
 ## Other open items
+
+- [ ] Illustrated station overhaul for the remaining plain-box screens, to match Gemcutting and Cartography. Shared banner pieces in `StationDock.tsx` and `station-hero.css`.
+  - Mining: shaft banner with an ore dock, continuous Delve shaft, Focus moved under the mining bar, a Layer Mastery milestone track, illustrated Mine Upgrades.
+  - Sawmilling: banner with a log dock, and a two-column Sawbench (recipe index plus a log-to-plank carriage) in place of the 12-box grid.
+  - Foraging and Greenhouse: illustrated banners with docks; beds, minigame and tabs unchanged.
+  - Guild Stash (item grid plus inspector), Quests (chronicle plaques), Achievements (Hall of Deeds).
+  - Free art in `public/assets/stations/` (credits in its CREDITS.md): Bodom sawmill and Blechen palm-house banners, plank and rusted-iron textures, eight game-icons.net icons. Mining and Foraging keep their existing banner art; the free paintings tried there didn't read at banner height.
+  - Built 2026-11-26; build and tests pass and every page was looked at in game. Not committed yet.
 
 - [x] Redesign the Cartography station and its four tabs — done 2026-11-25.
 

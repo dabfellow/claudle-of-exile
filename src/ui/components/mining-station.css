@@ -1,0 +1,73 @@
+/*
+ * Mining banner, "The Surveyor's Claim": a lantern-lit shaft with timber and cart rails,
+ * built on the shared station banner (station-hero.css).
+ * Swap the picture by changing --mining-station-art only, e.g.
+ * url('../../../public/assets/stations/mining-shaft.webp').
+ */
+.profession-page.profession-mining {
+  --mining-station-art: url('../../assets/zones/delve-mine.webp');
+  /* rusted iron wells for the dock sockets (Poly Haven, CC0) */
+  --station-socket-bg: radial-gradient(circle at 50% 35%, #2a211acc, #0c0907f2 75%), url('../../../public/assets/stations/tex-rusty-iron.webp') center / 120px;
+}
+
+html .profession-page.profession-mining .profession-header.station-hero {
+  --station-art: var(--mining-station-art);
+  --station-rim: #858b92;
+  --station-ink: #f7e7d0;
+  --station-shade:
+    radial-gradient(ellipse at 56% 42%, #ffb35a2e, transparent 34%),
+    linear-gradient(90deg, #0a0807f2 4%, #120d0ab8 30%, #0e0a0826 54%, #120d0ab8 74%, #0a0807f4);
+  display: grid;
+  gap: 10px 16px;
+  padding: 18px 23px;
+  border: 1px solid #6b7077;
+  background:
+    var(--station-shade),
+    var(--station-art) center 30% / cover,
+    #15110e;
+  box-shadow:
+    inset 0 0 0 3px #0e0c0bd0,
+    inset 0 0 0 4px #9aa0a748,
+    inset 0 -30px 40px -20px #000c,
+    0 6px 22px #08060950;
+}
+
+/* Iron emblem plate for the pick icon. */
+.profession-mining .station-hero .profession-header-icon {
+  width: 56px;
+  height: 56px;
+  border: 2px solid #8b9198;
+  border-radius: 8px;
+  color: #f0a060;
+  background:
+    radial-gradient(circle at 7px 7px, #c6cbd0 0 1.6px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 7px) 7px, #c6cbd0 0 1.6px, transparent 2.4px),
+    radial-gradient(circle at 7px calc(100% - 7px), #c6cbd0 0 1.6px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 7px) calc(100% - 7px), #c6cbd0 0 1.6px, transparent 2.4px),
+    radial-gradient(circle, #3b2414, #120d0a 75%);
+  box-shadow: 0 0 18px #d9773655, inset 0 0 0 2px #120d0a;
+}
+.profession-mining .station-hero .profession-header-text p { color: #e3b583; }
+.profession-mining .station-hero .xp-meta { color: #dccab6; }
+
+/* Iron sockets with riveted stone inside. */
+.profession-mining .station-hero .station-dock li {
+  border-color: #7b8188;
+  background: linear-gradient(#1a1714f4, #0e0c0af6);
+  box-shadow: inset 0 0 0 2px #15120f, inset 0 1px 0 #ffffff14, 0 3px 8px #0b080690;
+}
+.profession-mining .station-hero .station-socket {
+  border: 2px solid #6f757c;
+  background: var(--station-socket-bg);
+  box-shadow: inset 0 2px 7px #000d, 0 0 0 1px #0c0a09;
+  color: #d8c3a8;
+}
+.profession-mining .station-hero .station-socket .mat-art { width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 2px 3px #000b); }
+
+@media (max-width: 900px) {
+  html .profession-page.profession-mining .profession-header.station-hero { padding: 14px; }
+}
+@media (max-width: 560px) {
+  .profession-mining .station-hero .station-socket .mat-art { width: 22px; height: 22px; }
+  .profession-mining .station-hero .profession-header-icon { width: 46px; height: 46px; }
+}

@@ -9,6 +9,8 @@ import { isClassic } from '../../engine/challenge';
 import type { GameState } from '../../engine/types';
 import { useGame } from '../../game';
 import { Badge, fmt, GameIcon, MatIcon, PageHeader, ProgressBar, Tabs, Tooltip } from '../components/common';
+import { StationGlyph } from '../components/StationDock';
+import './hall-of-deeds.css';
 
 const CATEGORIES = Object.keys(CATEGORY_NAMES) as AchievementCategory[];
 type Show = 'all' | 'todo' | 'done';
@@ -23,7 +25,7 @@ function Medallion({ pct, done }: { pct: number; done: boolean }) {
           <circle cx="25" cy="25" r="23" fill="none" stroke="var(--accent)" strokeWidth="2" strokeDasharray={`${c * pct} ${c}`} strokeLinecap="round" />
         </svg>
       )}
-      <GameIcon name={done ? 'trophy' : 'target'} size={20} />
+      {done ? <StationGlyph name="trophy" size={22} /> : <GameIcon name="target" size={20} />}
     </span>
   );
 }
@@ -84,24 +86,21 @@ function AchievementCard({ s, a }: { s: GameState; a: AchievementDef }) {
   const p = achievementProgress(s, a.id);
   const pct = Math.min(1, p.value / p.target);
   return (
-    <div className={`card achievement ${p.done ? 'done' : ''}`}>
+    <div className={`card achievement deed ${p.done ? 'done' : 'todo'}`}>
       <Medallion pct={pct} done={p.done} />
-      <div className="row" style={{ alignItems: 'flex-start' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="achievement-name">{a.name}</div>
-          <div className="achievement-desc">{a.desc}</div>
-        </div>
-        {p.done && <Badge tone="gold">Complete</Badge>}
-      </div>
-      {!p.done && (
-        <div className="achievement-progress num">
-          <ProgressBar value={pct} />
-          <span>
+      <div className="deed-head">
+        <div className="achievement-name">{a.name}</div>
+        {p.done ? (
+          <Badge tone="gold">Complete</Badge>
+        ) : (
+          <span className="deed-count num">
             {fmt(p.value)} / {fmt(p.target)}
           </span>
-        </div>
-      )}
+        )}
+      </div>
+      <div className="achievement-desc">{a.desc}</div>
       <Rewards a={a} />
+      {!p.done && <ProgressBar value={pct} className="deed-progress" />}
     </div>
   );
 }
@@ -118,7 +117,9 @@ function EarnedBonuses({ s }: { s: GameState }) {
   const uniques = ACHIEVEMENTS.filter((a) => a.unique && s.achievements.includes(a.id)).map((a) => a.unique!);
   return (
     <div className="card ach-bonuses">
-      <div className="section-label">Your achievement bonuses</div>
+      <div className="section-label">
+        <GameIcon name="trophy" size={14} /> Your achievement bonuses
+      </div>
       {lines.length || uniques.length ? (
         <div className="achievement-rewards">
           {lines.map((t) => (
@@ -144,8 +145,9 @@ export function AchievementsPage() {
   const done = inPlay.filter((a) => s.achievements.includes(a.id)).length;
   const wanted = (a: AchievementDef) => show === 'all' || (show === 'done') === s.achievements.includes(a.id);
   return (
-    <div className="page">
+    <div className="page hall-of-deeds">
       <PageHeader
+        kicker="Hall of Deeds"
         title="Achievements"
         actions={
           <Badge tone={done === inPlay.length ? 'gold' : 'neutral'}>

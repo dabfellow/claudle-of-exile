@@ -1,0 +1,299 @@
+/*
+ * Sawmilling: The Sawmill as an illustrated station (mirrors Cartography's list + worktop layout).
+ * Banner art lives in one variable, --sawmill-banner, so a painted mill under public/assets/stations/ can replace it.
+ * --sawmill-props are the pixel-art mill props drawn over the banner's open middle; set it to none with final art.
+ */
+.page.profession-page.profession-sawmilling {
+  --sawmill-banner: url('../../../public/assets/stations/sawmill-bodom-falls.webp');
+  --sawmill-props: none;
+  --sawmill-planks: url('../../../public/assets/stations/tex-planks.webp');
+  --saw-gold: #d9b071;
+  --saw-gold-hi: #f6d79a;
+  --saw-line: #7a5533;
+  --saw-text: #e6d2b3;
+  --saw-grain: repeating-linear-gradient(176deg, #ffffff07 0 1px, transparent 1px 6px, #00000014 6px 7px, transparent 7px 13px);
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  gap: 12px;
+}
+
+/* ---- banner (shared .station-hero chrome; these win over the generic profession header) ---- */
+.profession-page.profession-sawmilling .profession-header.station-hero {
+  --station-art: var(--sawmill-banner);
+  --station-shade: linear-gradient(90deg, #0f0905f2 4%, #160d07c4 30%, #1a0e0630 52%, #140b06c2 76%, #0d0805f4),
+    linear-gradient(#2a150633, #1a0c0480);
+  --station-rim: #b8874e;
+  --station-ink: #ffe6bd;
+  display: grid;
+  gap: 10px 16px;
+  padding: 18px 23px;
+  border-color: #a77c49;
+  border-radius: 5px;
+  background: var(--station-shade), var(--station-art) center 44% / cover, #1a120c;
+  box-shadow: inset 0 0 0 3px #1b0f07d0, inset 0 0 0 4px #c5965a5c, inset 0 -3px #d8a8604d, 0 6px 18px #0009;
+}
+.profession-sawmilling .profession-header.station-hero::before {
+  content: '';
+  position: absolute;
+  left: 40%;
+  right: 33%;
+  bottom: 10px;
+  height: 96px;
+  background: var(--sawmill-props);
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 5px #000a) sepia(.15);
+  pointer-events: none;
+}
+.profession-sawmilling .station-hero .profession-header-icon {
+  width: 58px;
+  height: 58px;
+  border: 1px solid #c39457;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #5b3a1f, #1d120a 72%);
+  box-shadow: inset 0 0 0 3px #2b1a0d, inset 0 0 0 4px #e0b16d55, 0 3px 9px #000a;
+}
+.profession-sawmilling .station-hero .profession-header-text p { color: var(--saw-gold); }
+.profession-sawmilling .station-hero .level-num { color: var(--saw-gold-hi); }
+.profession-sawmilling .station-hero .xp .bar-fill { background: linear-gradient(90deg, #7d5630, #e2b16a) !important; }
+.profession-sawmilling .station-hero .xp-meta { color: #dcc4a0; }
+.profession-sawmilling .station-dock li {
+  border-color: #b88a52;
+  background: var(--saw-grain), linear-gradient(#3a2414f0, #1b110af4);
+  box-shadow: inset 0 0 0 2px #24150b, inset 0 0 0 3px #e0b56f30, 0 3px 8px #0b0806a0;
+}
+.profession-sawmilling .station-dock .station-socket {
+  border-radius: 6px;
+  border-color: #d2a364;
+  background: radial-gradient(circle at 50% 30%, #4e3119, #140c06 75%);
+}
+.profession-sawmilling .station-dock img { image-rendering: pixelated; }
+
+/* ---- station body ---- */
+.sawmill-station { display: grid; gap: 14px; min-width: 0; }
+.sawmill-split { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 14px; align-items: start; }
+.sawmill-panel {
+  min-width: 0;
+  padding: clamp(13px, 2cqi, 20px);
+  border: 1px solid var(--saw-line);
+  border-radius: 4px;
+  background: var(--saw-grain), linear-gradient(145deg, #2c1d12, #18110c 70%);
+  box-shadow: inset 0 0 0 3px #120c088f, inset 0 0 0 4px #d6a76524, 0 4px 13px #08060470;
+  color: var(--saw-text);
+}
+.sawmill-panel h2,
+.sawmill-carriage-head h3 { margin: 0; font-family: var(--font-display, Georgia, serif); font-weight: 600; color: #f2d7a6; }
+.sawmill-panel h2 { margin-bottom: 11px; padding-bottom: 8px; border-bottom: 1px solid #b0875666; font-size: 19px; }
+
+/* Timber & Cut Index */
+.sawmill-index { display: grid; gap: 9px; }
+.sawmill-index h2 { margin-bottom: 0; }
+.sawmill-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.sawmill-pill {
+  padding: 4px 11px;
+  border: 1px solid #6e4f33;
+  border-radius: 999px;
+  background: #22170f;
+  color: #cdb08a;
+  font: 12px var(--font-display, Georgia, serif);
+  cursor: pointer;
+}
+.sawmill-pill:hover { border-color: #b98a53; color: #f0d6ab; }
+.sawmill-pill[aria-pressed='true'] { border-color: var(--saw-gold); background: linear-gradient(#6d4826, #45291499); color: #ffe7bd; box-shadow: inset 0 1px #ffd99a40; }
+.sawmill-show-locked { display: flex; gap: 6px; align-items: center; font-size: 12px; color: #d8c2a0; }
+.sawmill-rows { display: grid; gap: 6px; max-height: 640px; overflow-y: auto; padding-right: 2px; }
+.sawmill-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  min-height: 50px;
+  padding: 5px 10px 5px 9px;
+  border: 1px solid #5f442c;
+  border-left: 3px solid var(--saw-tier, #b89a72);
+  border-radius: 2px 5px 5px 2px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--saw-tier, #b89a72) 14%, #2b1d13e6), #1f160fe8),
+    var(--sawmill-planks, none) center / 320px auto,
+    #1f160f;
+  box-shadow: 0 2px 2px #09060377;
+  color: #f1e0c3;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.sawmill-row:hover { border-color: #a37647; border-left-color: var(--saw-tier); }
+.sawmill-row[aria-pressed='true'] {
+  border-color: var(--saw-gold);
+  border-left-color: var(--saw-tier);
+  background: var(--saw-grain), linear-gradient(90deg, color-mix(in srgb, var(--saw-tier, #b89a72) 30%, #4b2f19), #2d1e12);
+  box-shadow: inset 0 0 0 1px #ffd89a2e, 0 0 10px #d9a2552e;
+}
+.sawmill-row.locked { color: #b6a28c; }
+.sawmill-row.locked .sawmill-row-icon img { filter: grayscale(.7) brightness(.75); }
+.sawmill-row-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  height: 36px;
+  border: 1px solid #8a6540;
+  border-radius: 4px;
+  background: radial-gradient(circle at 50% 35%, #3f2816, #120b06 80%);
+}
+.sawmill-row-icon img { image-rendering: pixelated; }
+.sawmill-row-text { min-width: 0; }
+.sawmill-row-text strong, .sawmill-row-text small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sawmill-row-text strong { font: 600 14px var(--font-display, Georgia, serif); }
+.sawmill-row-text small { margin-top: 2px; font-size: 11px; color: #c9b291; }
+.sawmill-running { margin-left: auto; flex: 0 0 auto; font-size: 10px; color: var(--saw-gold-hi); text-transform: uppercase; letter-spacing: .08em; }
+
+/* The Sawbench Carriage */
+.sawmill-carriage {
+  display: grid;
+  gap: 10px;
+  background: var(--saw-grain),
+    radial-gradient(ellipse at 50% 46%, color-mix(in srgb, var(--saw-tier, #b89a72) 16%, transparent), transparent 62%),
+    linear-gradient(125deg, #2d1d11, #1a120c 55%, #22170e);
+  border-color: #8f673d;
+}
+.sawmill-carriage h2 { margin-bottom: 2px; }
+.sawmill-carriage-head { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 9px; }
+.sawmill-carriage-head h3 { font-size: clamp(18px, 2.3cqi, 26px); line-height: 1.2; }
+.sawmill-wood-tag {
+  padding: 1px 8px;
+  border: 1px solid var(--saw-tier);
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--saw-tier) 70%, #fff);
+  font-size: 11px;
+}
+.sawmill-description { margin: 0; font-size: 12px; line-height: 1.5; color: #dcc6a6; }
+
+.sawmill-process {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(120px, 180px) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 170px;
+  padding: 12px;
+  border: 1px solid #6b4b2e;
+  border-radius: 4px;
+  background: linear-gradient(#00000038, #00000059), var(--saw-grain), linear-gradient(#4a2f1a, #2b1b0f);
+  box-shadow: inset 0 2px 10px #000a, inset 0 0 0 1px #e3b26d22;
+}
+.sawmill-inputs { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.sawmill-inputs li,
+.sawmill-output { display: grid; justify-items: center; align-content: start; gap: 3px; min-width: 0; width: 88px; max-width: 100%; text-align: center; font-size: 11px; line-height: 1.2; }
+.sawmill-output { justify-self: center; width: 110px; }
+.sawmill-socket {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  aspect-ratio: 1;
+  border: 1px solid #c09056;
+  border-radius: 6px;
+  background: radial-gradient(ellipse at 50% 15%, #5a3a20, #1b120b 64%, #0f0a06);
+  box-shadow: inset 0 0 0 2px #2c1b0e, inset 0 0 0 3px #e7b8704a, 0 3px 6px #000a;
+}
+.sawmill-socket img { image-rendering: pixelated; filter: drop-shadow(0 2px 2px #000a); }
+.sawmill-socket-out { width: 84px; border-color: var(--saw-gold); box-shadow: inset 0 0 0 2px #2c1b0e, inset 0 0 0 3px #ffd79655, 0 0 16px color-mix(in srgb, var(--saw-tier) 35%, transparent), 0 3px 8px #000b; }
+.sawmill-socket b { position: absolute; right: 4px; bottom: 1px; color: #ffefcf; font-size: 12px; text-shadow: 1px 1px #000, -1px 1px #000, 0 -1px #000; }
+.sawmill-socket-name { color: #ecd8b8; }
+.sawmill-quantity { color: #c8d7a8; white-space: nowrap; }
+.sawmill-inputs .short .sawmill-socket { border-color: #a66955; }
+.sawmill-inputs .short .sawmill-quantity { color: #f5a38c; }
+.sawmill-arrow { color: #e5ba7b; font-size: 22px; text-shadow: 0 0 10px #f8c0725e; }
+
+.sawmill-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 2px solid #8d6438;
+  border-radius: 6px;
+  background: radial-gradient(circle, #ffcf8a1c, transparent 60%), linear-gradient(#24170e, #140d08);
+  box-shadow: inset 0 0 0 3px #1b1009, inset 0 0 0 4px #d9a86140, 0 3px 10px #000b;
+}
+.sawmill-blade {
+  width: 70%;
+  aspect-ratio: 1;
+  /* game-icons.net circular saw blade (Lorc, CC BY 3.0), filled with brushed steel */
+  background: radial-gradient(circle at 38% 32%, #f4f6f7, #b5bcc1 45%, #737b81 80%);
+  -webkit-mask: url('../../../public/assets/stations/icon-buzzsaw.svg') center / contain no-repeat;
+  mask: url('../../../public/assets/stations/icon-buzzsaw.svg') center / contain no-repeat;
+  filter: drop-shadow(0 2px 3px #000c);
+}
+.sawmill-rail {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 12%;
+  height: 8px;
+  border-radius: 2px;
+  background: linear-gradient(#c79a5c, #6d4826);
+  box-shadow: 0 2px 3px #000a;
+}
+.sawmill-carriage.running .sawmill-blade { animation: sawmill-spin .7s linear infinite; }
+.sawmill-carriage.running .sawmill-stage { border-color: var(--saw-gold); box-shadow: inset 0 0 0 3px #1b1009, inset 0 0 18px #ffb6553a, 0 0 14px #ffb2553a; }
+.sawmill-carriage.locked .sawmill-blade { filter: grayscale(1) brightness(.6); }
+@keyframes sawmill-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .sawmill-carriage.running .sawmill-blade { animation: none; } }
+
+.sawmill-mastery { padding: 6px 10px; border: 1px solid #5d432b; border-radius: 4px; background: #150e09b0; }
+.sawmill-readout { display: flex; flex-wrap: wrap; gap: 4px 9px; font-size: 12px; color: #c8ae8a; }
+.sawmill-readout b { color: #f4dcb2; font-weight: 600; }
+
+.sawmill-saw-control { position: relative; isolation: isolate; }
+.sawmill-station .btn.sawmill-saw-button {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #e0b46f;
+  border-radius: 4px;
+  background: var(--saw-grain), linear-gradient(180deg, #9b6a3a, #5d3c21 52%, #7c522d);
+  box-shadow: inset 0 0 0 2px #2a170850, inset 0 1px #ffe0a855, 0 2px 6px #0009;
+  color: #fff1d5;
+  font: 600 16px var(--font-display, Georgia, serif);
+  letter-spacing: .03em;
+  text-shadow: 0 1px 3px #2d1706;
+}
+.sawmill-station .btn.sawmill-saw-button:hover:not(:disabled) { background: var(--saw-grain), linear-gradient(180deg, #b8844d, #74502e 52%, #946336); }
+.sawmill-station .btn.sawmill-saw-button.active { background: var(--saw-grain), linear-gradient(180deg, #5f4128, #3a2616 52%, #4c321d); }
+.sawmill-station .btn.sawmill-saw-button:disabled { opacity: .65; cursor: not-allowed; }
+.sawmill-saw-button > span { position: relative; z-index: 2; }
+.sawmill-saw-control .sawmill-saw-progress { position: absolute; inset: 2px; height: auto; z-index: 1; border: 0; border-radius: 3px; background: transparent; opacity: .7; pointer-events: none; }
+.sawmill-saw-control .sawmill-saw-progress .bar-fill { background: linear-gradient(90deg, #a06a36, #f0bd6c) !important; }
+.sawmill-return { justify-self: center; }
+
+@media (max-width: 1100px) {
+  .profession-sawmilling .profession-header.station-hero::before { display: none; }
+}
+@media (max-width: 900px) {
+  .profession-page.profession-sawmilling .profession-header.station-hero { padding: 14px; }
+}
+
+@container (max-width: 860px) {
+  .sawmill-split { grid-template-columns: minmax(250px, 300px) minmax(0, 1fr); }
+  .sawmill-process { grid-template-columns: minmax(0, 1fr) auto minmax(90px, 130px) auto minmax(0, 1fr); gap: 6px; padding: 9px; }
+  .sawmill-inputs li { width: 72px; }
+  .sawmill-output { width: 92px; }
+}
+
+@container (max-width: 640px) {
+  .sawmill-split { grid-template-columns: minmax(0, 1fr); }
+  .sawmill-rows { max-height: 280px; }
+  .sawmill-process { grid-template-columns: minmax(0, 1fr) auto 84px auto minmax(0, 1fr); min-height: 0; }
+  .sawmill-socket { width: 46px; }
+  .sawmill-socket-out { width: 60px; }
+  .sawmill-inputs { gap: 6px; }
+  .sawmill-inputs li { width: 60px; font-size: 10px; }
+  .sawmill-output { width: 70px; font-size: 10px; }
+  .sawmill-arrow { font-size: 16px; }
+}
+
+@media (max-width: 640px) {
+  .sawmill-split { grid-template-columns: minmax(0, 1fr); }
+  .sawmill-rows { max-height: 280px; }
+}

@@ -10,7 +10,12 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Mining has an illustrated mine-shaft banner with your Rubble and ores docked in it, one continuous Delve shaft, Focus right under the mining bar, and a Layer Mastery milestone track.',
+  'Sawmilling is now a two-column Sawbench: pick a cut from the timber index and saw it on the log carriage.',
+  'Foraging and the Greenhouse have illustrated banners showing your herbs, beds, ready seeds and pressed strains.',
+  'The Guild Stash is a dense item grid with an inspector, Quests read as chronicle plaques, and Achievements became the Hall of Deeds.',
+];
 
 export const NEWS: NewsEntry[] = [
   {

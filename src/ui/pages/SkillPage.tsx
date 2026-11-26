@@ -28,6 +28,10 @@ import { maxLevelOf, progressOf, xpToReach } from '../../engine/xp';
 import { game, useGame, useGameEvent } from '../../game';
 import { Art, Badge, fmt, GameIcon, MatIcon, ProgressBar } from '../components/common';
 import { ExpeditionBoard } from '../components/ExpeditionBoard';
+import { MiningHeroDock } from '../components/MiningHero';
+import { SawmillHeroDock } from '../components/SawmillHero';
+import { ForagingHeroDock } from '../components/ForagingHero';
+import '../components/station-hero.css';
 import { HeistBoard } from '../components/HeistBoard';
 import { MapCaseBoard } from '../components/MapCaseBoard';
 import { Observatory } from '../components/StarChart';
@@ -434,6 +438,9 @@ function MapInput({ s, a }: { s: GameState; a: SkillAction }) {
 }
 
 /** The XP header every skilling page shares. */
+/** Skills whose header uses the shared illustrated station banner (station-hero.css). */
+const STATION_HERO_SKILLS = new Set<SkillId>(['mining', 'sawmilling', 'harvesting']);
+
 function SkillHeader({ skill }: { skill: SkillId }) {
   const s = useGame();
   const def = SKILLS[skill];
@@ -443,7 +450,7 @@ function SkillHeader({ skill }: { skill: SkillId }) {
   const maxed = level >= maxLevelOf(skill);
   const rate = game.xpPerHour(skill);
   return (
-    <div className={`card profession-header ${skill === 'gemcutting' ? 'lapidary-hero' : ''}`} style={{ ['--skill' as string]: def.color }}>
+    <div className={`card profession-header ${skill === 'gemcutting' ? 'lapidary-hero' : ''} ${STATION_HERO_SKILLS.has(skill) ? 'station-hero' : ''}`} style={{ ['--skill' as string]: def.color }}>
       <div className="profession-header-icon">
         <GameIcon name={skill} size={32} color={def.color} />
       </div>
@@ -471,6 +478,9 @@ function SkillHeader({ skill }: { skill: SkillId }) {
       </div>
       {skill === 'cartography' && <CartographyStocks s={s} />}
       {skill === 'gemcutting' && <LapidaryMaterials s={s} />}
+      {skill === 'mining' && <MiningHeroDock s={s} />}
+      {skill === 'sawmilling' && <SawmillHeroDock s={s} />}
+      {skill === 'harvesting' && <ForagingHeroDock s={s} />}
     </div>
   );
 }
