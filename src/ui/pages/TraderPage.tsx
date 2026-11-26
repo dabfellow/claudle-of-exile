@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { activeGemDef, gemReqLevel, supportGemDef, type GemAttr } from '../../data/gems';
 import { supportReason } from '../../engine/gems';
 import { GemFilters, GemKindChips, kindMatches, nameHas, type GemKind } from '../components/GemFilters';
@@ -6,10 +6,12 @@ import { currencyDef, MATERIALS } from '../../data/materials';
 import { characterLevel } from '../../engine/character';
 import { flaskName, flaskValue, sellFlasks } from '../../engine/flasks';
 import { buyGem, buyOffer, gemShopOffers, nextGemShopArea, offerName, rerollCost, rerollVendor, sellItems, sellMaterial, stationLevel } from '../../engine/hideout';
-import { itemName, sellValue } from '../../engine/items';
+import { allMods, describeMod, itemName, sellValue } from '../../engine/items';
 import { defaultSlot, equipReason } from '../../engine/equipment';
 import type { EquipSlot, GameState, Item, Rarity, ShopId, VendorOffer } from '../../engine/types';
 import '../round2-session3.css';
+import '../components/station-hero.css';
+import './bazaar.css';
 import { baseDef } from '../../data/bases';
 import { game, useGame } from '../../game';
 import { Art, EmptyState, fmt, fmtTime, GameIcon, MatIcon, PixelArt, Tabs, Tooltip } from '../components/common';
@@ -19,13 +21,39 @@ import { ItemTiles } from '../components/Inventory';
 import { bagFull, stashedItems } from '../../engine/storage';
 import { ItemIcon, ItemTip } from '../components/ItemView';
 
+/** Stall paintings and keeper portraits in public/assets/town (credited in its CREDITS.md). */
+const townArt = import.meta.glob<string>('../../../public/assets/town/*.{png,webp}', { eager: true, import: 'default', query: '?url&no-inline' });
+const town = (file: string) => townArt[`../../../public/assets/town/${file}`];
+
+/** Who stands behind each stall of the Bazaar, and the painting behind them. */
+interface Stall {
+  keeper: string;
+  blurb: string;
+  portrait: string;
+  art: string;
+  /** background-position of the stall painting */
+  artPos: string;
+}
+
+/** The Sell tab's stall: any shop buys, but the Pawn Counter does the weighing. */
+const PAWN: Stall = {
+  keeper: 'The Pawn Counter',
+  blurb: 'Any shop will buy gear, flasks and materials.',
+  portrait: 'keeper-pawn.png',
+  art: 'stall-pawn.webp',
+  artPos: 'center 55%',
+};
+
 /** The three Town shops: who runs each one and how its wares are shelved. */
-const SHOPS: { id: ShopId; name: string; keeper: string; blurb: string; portrait?: string; icon: string; shelves: { label: string; match: (o: VendorOffer) => boolean }[] }[] = [
+const SHOPS: (Stall & { id: ShopId; name: string; icon: string; shelves: { label: string; match: (o: VendorOffer) => boolean }[] })[] = [
   {
     id: 'magic',
     name: 'Magic shop',
     keeper: 'Ilsa the Curio-seller',
     blurb: 'Wands, staves, sceptres and jewellery, flasks and orbs.',
+    portrait: 'keeper-ilsa.png',
+    art: 'stall-curio.webp',
+    artPos: 'center 40%',
     icon: 'gems',
     shelves: [
       { label: 'Wands, staves & sceptres', match: (o) => !!o.item && baseDef(o.item.baseId).slot === 'weapon' },
@@ -39,7 +67,9 @@ const SHOPS: { id: ShopId; name: string; keeper: string; blurb: string; portrait
     name: 'Weapon & Armour shop',
     keeper: 'Varro the Armourer',
     blurb: 'Blades, bows, maces and shields; helmets, body armour, gloves and boots.',
-    portrait: 'portraits/trader.png',
+    portrait: 'keeper-varro.png',
+    art: 'stall-armoury.webp',
+    artPos: 'center 60%',
     icon: 'equipment',
     shelves: [
       { label: 'Weapons', match: (o) => !!o.item && baseDef(o.item.baseId).slot === 'weapon' },
@@ -52,6 +82,9 @@ const SHOPS: { id: ShopId; name: string; keeper: string; blurb: string; portrait
     name: 'Gem shop',
     keeper: 'The Gemwright',
     blurb: 'Every skill and support gem from the zones you’ve opened, and it never sells out. Each new zone brings a few more. Completing the campaign adds the Maps gems.',
+    portrait: 'keeper-gemwright.png',
+    art: 'stall-gemwright.webp',
+    artPos: 'center 45%',
     icon: 'gemcutting',
     shelves: [
       { label: 'Skill gems', match: (o) => o.kind === 'gem' },
@@ -86,6 +119,59 @@ const KIND_LABEL: Record<VendorOffer['kind'], string> = {
   gem: 'Skill gem',
   support: 'Support gem',
 };
+
+/** The short category badge in the corner of each pedestal. */
+const BADGE: Record<string, string> = {
+  weapon: 'Weapon',
+  offhand: 'Off hand',
+  helmet: 'Helmet',
+  body: 'Body',
+  gloves: 'Gloves',
+  boots: 'Boots',
+  belt: 'Belt',
+  amulet: 'Amulet',
+  ring: 'Ring',
+};
+function offerBadge(o: VendorOffer): string {
+  if (o.item) {
+    try {
+      return BADGE[baseDef(o.item.baseId).slot] ?? 'Gear';
+    } catch {
+      return 'Gear';
+    }
+  }
+  if (o.flask) return 'Flask';
+  if (o.gemId) return 'Skill';
+  if (o.supportId) return 'Support';
+  return 'Orb';
+}
+
+/** A gem's attribute (Str, Dex or Int), which colours its card. */
+function offerAttr(o: VendorOffer): GemAttr | null {
+  if (o.gemId) return activeGemDef(o.gemId).attr;
+  if (o.supportId) return supportGemDef(o.supportId).attr;
+  return null;
+}
+
+/** How many of this gem you already own, in the bag or socketed on your bar. */
+function gemOwnedCount(s: GameState, o: VendorOffer): number {
+  if (o.gemId) return s.storage.gems.filter((g) => g.gemId === o.gemId).length + s.skillBar.filter((g) => g?.gemId === o.gemId).length;
+  return s.storage.supportGems.filter((g) => g.supportId === o.supportId).length + s.skillBar.reduce((a, g) => a + (g?.supports.filter((x) => x?.supportId === o.supportId).length ?? 0), 0);
+}
+
+/** The first couple of modifiers on a shop item, so a pedestal says what it does at a glance. */
+function ModSummary({ item }: { item: Item }) {
+  const mods = allMods(item);
+  if (!mods.length) return null;
+  return (
+    <span className="bz-mods">
+      {mods.slice(0, 2).map((m, i) => (
+        <span key={i}>{describeMod(m)}</span>
+      ))}
+      {mods.length > 2 && <span className="dim">+{mods.length - 2} more</span>}
+    </span>
+  );
+}
 
 function OfferIcon({ o }: { o: VendorOffer }) {
   if (o.item)
@@ -160,52 +246,57 @@ function WornNow({ s, item }: { s: GameState; item: Item }) {
 
 /** For a gem: how many you already have, and for a support, which skills on your bar it would fit. */
 function GemOwned({ s, o }: { s: GameState; o: VendorOffer }) {
-  if (o.gemId) {
-    const n = s.storage.gems.filter((g) => g.gemId === o.gemId).length + s.skillBar.filter((g) => g?.gemId === o.gemId).length;
-    return <span className="r2-offer-worn">{n ? `You have ${n}` : <span className="r2-offer-good">New to you</span>}</span>;
-  }
-  const n = s.storage.supportGems.filter((g) => g.supportId === o.supportId).length + s.skillBar.reduce((a, g) => a + (g?.supports.filter((x) => x?.supportId === o.supportId).length ?? 0), 0);
+  const n = gemOwnedCount(s, o);
+  if (o.gemId) return n ? <span className="r2-offer-worn">You have {n}</span> : null;
   const fits = s.skillBar.flatMap((b, i) => (b && !supportReason(b, o.supportId!) ? [i] : []));
   return (
     <span className="r2-offer-worn">
-      {n ? `You have ${n}` : 'New to you'} · {fits.length ? `fits ${fits.map((i) => activeGemDef(s.skillBar[i]!.gemId).name).join(', ')}` : 'fits nothing on your bar'}
+      {n ? `You have ${n} · ` : ''}
+      {fits.length ? `fits ${fits.map((i) => activeGemDef(s.skillBar[i]!.gemId).name).join(', ')}` : 'fits nothing on your bar'}
     </span>
   );
 }
 
+/** One pedestal on the counter: badge, socketed sprite, name, a short summary, and the gold price button. */
 function OfferCard({ s, o, gold }: { s: GameState; o: VendorOffer; gold: number }) {
   const afford = gold >= o.price;
   const full = o.kind === 'item' && bagFull(s);
   const gem = o.gemId ?? o.supportId;
   const needLevel = gem && gemReqLevel(gem) > characterLevel(s) ? gemReqLevel(gem) : 0;
+  const attr = offerAttr(o);
+  const isNew = !!gem && gemOwnedCount(s, o) === 0;
+  const ok = afford && !full && !needLevel;
   return (
     <Tooltip content={offerTip(s, o)}>
-      <div className={`offer-card ${rarityClass(o)} ${afford ? '' : 'poor'}`}>
-        <div className="offer-art">
+      <div className={`bz-card ${rarityClass(o)} ${attr ? `attr-${attr}` : ''} ${afford ? '' : 'poor'}`}>
+        <span className="bz-badge">{offerBadge(o)}</span>
+        {isNew && <span className="bz-new">NEW</span>}
+        <div className="bz-socket">
           <OfferIcon o={o} />
         </div>
-        <div className="offer-text">
+        <div className="bz-text">
           <b className={nameClass(o)}>{offerName(o)}</b>
           <span className="offer-kind">
             {o.item ? `${o.item.rarity[0].toUpperCase()}${o.item.rarity.slice(1)} ${slotLabel(o.item)} · item level ${o.item.ilvl}` : KIND_LABEL[o.kind]}
           </span>
+          {o.item && <ModSummary item={o.item} />}
           {o.item && <WornNow s={s} item={o.item} />}
           {gem && <GemOwned s={s} o={o} />}
         </div>
-        <span className="r2-offer-price">
-          <span className={`price-tag ${afford ? '' : 'short'}`}>
-            <MatIcon id="gold" size={14} /> {fmt(o.price)}
-          </span>
+        <div className="bz-buy">
           {!afford && <span className="r2-offer-short">{fmt(o.price - gold)} short</span>}
-        </span>
-        <button
-          className={`btn sm ${afford && !full && !needLevel ? 'primary' : ''}`}
-          disabled={!afford || full || !!needLevel}
-          title={needLevel ? `Needs character level ${needLevel}` : full ? 'Inventory full' : afford ? '' : 'Not enough gold'}
-          onClick={() => game.act((st, ctx) => (gem ? buyGem(st, ctx, gem) : buyOffer(st, ctx, o.id)))}
-        >
-          {needLevel ? `Level ${needLevel}` : full ? 'Bag full' : afford ? 'Buy' : 'Too costly'}
-        </button>
+          <button
+            className={`bz-price ${ok ? 'ready' : ''}`}
+            disabled={!ok}
+            title={needLevel ? `Needs character level ${needLevel}` : full ? 'Inventory full' : afford ? '' : 'Not enough gold'}
+            onClick={() => game.act((st, ctx) => (gem ? buyGem(st, ctx, gem) : buyOffer(st, ctx, o.id)))}
+          >
+            <span className="bz-price-gold">
+              <MatIcon id="gold" size={14} /> <span className="num">{fmt(o.price)}</span>
+            </span>
+            <span className="bz-price-label">{needLevel ? `Level ${needLevel}` : full ? 'Bag full' : afford ? 'Buy' : 'Too costly'}</span>
+          </button>
+        </div>
       </div>
     </Tooltip>
   );
@@ -218,62 +309,25 @@ function shopWares(s: GameState, shop: ShopId): VendorOffer[] {
 
 function ShopTab({ s, shop }: { s: GameState; shop: (typeof SHOPS)[number] }) {
   const gold = s.storage.bank.gold ?? 0;
-  const cost = rerollCost(s);
   const wares = shopWares(s, shop.id);
-  const next = shop.id === 'gems' ? nextGemShopArea(s) : null;
+  if (wares.length === 0)
+    return (
+      <div className="card">
+        <EmptyState icon={<PixelArt name="stall" alt="" scale={2} />} title="Sold out">
+          “Come back when the tide brings more.”
+        </EmptyState>
+      </div>
+    );
+  if (shop.id === 'gems') return <GemStall s={s} wares={wares} gold={gold} />;
+  // one counter, shelf by shelf in order (weapons, then jewellery, flasks, orbs…)
+  const shelved = shop.shelves.flatMap((shelf) => wares.filter(shelf.match));
+  const goods = [...shelved, ...wares.filter((o) => !shelved.includes(o))];
   return (
-    <>
-      {shop.id === 'gems' ? (
-        <div className="shop-bar">
-          <span className="muted small">
-            {next ? (
-              <>
-                <b className="num">{next.count}</b> more gem{next.count === 1 ? '' : 's'} arrive when {next.zone.name} opens
-              </>
-            ) : (
-              'Every gem from the open acts is on the shelf.'
-            )}
-          </span>
-        </div>
-      ) : (
-        <div className="shop-bar">
-          <span className="muted small">
-            New stock in <b className="num">{fmtTime(Math.max(0, s.vendor.refreshAt - s.clock))}</b>
-          </span>
-          <span className="spacer" />
-          <button className="btn sm" disabled={gold < cost} onClick={() => game.act((st, ctx) => rerollVendor(st, ctx))}>
-            <GameIcon name="clock" size={12} /> Restock gear shops · {fmt(cost)} gold
-          </button>
-          {(s.vendor.rerolls ?? 0) > 0 && <span className="dim small">Price doubles each restock until the next free one</span>}
-        </div>
-      )}
-      {wares.length === 0 ? (
-        <div className="card">
-          <EmptyState icon={<PixelArt name="stall" alt="" scale={2} />} title="Sold out">
-            “Come back when the tide brings more.”
-          </EmptyState>
-        </div>
-      ) : shop.id === 'gems' ? (
-        <GemStall s={s} wares={wares} gold={gold} />
-      ) : (
-        <div className="stall">
-          {shop.shelves.map((shelf) => {
-            const goods = wares.filter(shelf.match);
-            if (!goods.length) return null;
-            return (
-              <section key={shelf.label} className="shelf">
-                <div className="shelf-label">{shelf.label}</div>
-                <div className="shelf-goods">
-                  {goods.map((o) => (
-                    <OfferCard key={o.id} s={s} o={o} gold={gold} />
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-        </div>
-      )}
-    </>
+    <div className="bz-counter">
+      {goods.map((o) => (
+        <OfferCard key={o.id} s={s} o={o} gold={gold} />
+      ))}
+    </div>
   );
 }
 
@@ -294,8 +348,18 @@ function GemStall({ s, wares, gold }: { s: GameState; wares: VendorOffer[]; gold
     const def = supportGemDef(o.supportId!);
     return (!attr || def.attr === attr) && (!fits || fitsBar(o.supportId!)) && nameHas(def.name, search);
   });
+  const next = nextGemShopArea(s);
   return (
-    <div className="card">
+    <div className="card bz-gem-stall">
+      <div className="bz-gem-arrivals muted small">
+        {next ? (
+          <>
+            <b className="num">{next.count}</b> more gem{next.count === 1 ? '' : 's'} arrive when {next.zone.name} opens
+          </>
+        ) : (
+          'Every gem from the open acts is on the shelf.'
+        )}
+      </div>
       <Tabs
         value={tab}
         onChange={setTab}
@@ -318,7 +382,7 @@ function GemStall({ s, wares, gold }: { s: GameState; wares: VendorOffer[]; gold
       {shelf.length === 0 && <div className="dim small">None in stock right now.</div>}
       {shelf.length > 0 && goods.length === 0 && <div className="dim small">No gems match these filters.</div>}
       {goods.length > 0 && (
-        <div className="shelf-goods">
+        <div className="bz-counter bz-gem-counter">
           {goods.map((o) => (
             <OfferCard key={o.id} s={s} o={o} gold={gold} />
           ))}
@@ -339,13 +403,27 @@ function SellTab({ s }: { s: GameState }) {
     else n.add(uid);
     apply(n);
   };
-  const pickedGold = pool.filter((i) => picked.has(i.uid)).reduce((a, i) => a + sellValue(i), 0);
-  const flaskGold = s.storage.flaskStash.filter((f) => flasks.has(f.uid)).reduce((a, f) => a + flaskValue(f), 0);
+  const pickedItems = pool.filter((i) => picked.has(i.uid));
+  const pickedFlasks = s.storage.flaskStash.filter((f) => flasks.has(f.uid));
+  const pickedGold = pickedItems.reduce((a, i) => a + sellValue(i), 0);
+  const flaskGold = pickedFlasks.reduce((a, f) => a + flaskValue(f), 0);
   const byRarity = (r: Rarity) => pool.filter((i) => i.rarity === r);
   const mats = MATERIALS.filter((m) => m.kind !== 'gold' && (s.storage.bank[m.id] ?? 0) > 0);
+  const count = pickedItems.length + pickedFlasks.length;
+  const sell = () => {
+    const items = pickedItems.map((i) => i.uid);
+    const fl = pickedFlasks.map((f) => f.uid);
+    game.act((st, ctx) => {
+      if (items.length) sellItems(st, ctx, items);
+      if (fl.length) sellFlasks(st, ctx, fl);
+    });
+    setPicked(new Set());
+    setFlasks(new Set());
+  };
 
   return (
-    <>
+    <div className="bz-sell">
+      <div className="bz-sell-main">
       <div className="card">
         <div className="card-title">
           Items
@@ -377,16 +455,6 @@ function SellTab({ s }: { s: GameState }) {
               Clear
             </button>
           )}
-          <button
-            className="btn sm primary"
-            disabled={!picked.size}
-            onClick={() => {
-              game.act((st, ctx) => sellItems(st, ctx, [...picked]));
-              setPicked(new Set());
-            }}
-          >
-            Sell {picked.size} for {fmt(pickedGold)} gold
-          </button>
         </div>
         {pool.length === 0 ? (
           <EmptyState small title="Nothing to sell">
@@ -405,16 +473,11 @@ function SellTab({ s }: { s: GameState }) {
           <div className="card-title">
             Spare flasks
             <span className="grow" />
-            <button
-              className="btn sm primary"
-              disabled={!flasks.size}
-              onClick={() => {
-                game.act((st, ctx) => sellFlasks(st, ctx, [...flasks]));
-                setFlasks(new Set());
-              }}
-            >
-              Sell {flasks.size} for {fmt(flaskGold)} gold
-            </button>
+            {flasks.size > 0 && (
+              <button className="btn sm ghost" onClick={() => setFlasks(new Set())}>
+                Clear
+              </button>
+            )}
           </div>
           <div className="gem-bag">
             {s.storage.flaskStash.map((f) => (
@@ -462,39 +525,106 @@ function SellTab({ s }: { s: GameState }) {
           ))}
         </div>
       </div>
-    </>
+      </div>
+
+      <aside className="card bz-ledger">
+        <div className="bz-ledger-head">
+          <span>Appraisal Ledger</span>
+          {count > 0 && (
+            <button
+              className="btn sm ghost"
+              onClick={() => {
+                setPicked(new Set());
+                setFlasks(new Set());
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        {count === 0 ? (
+          <div className="bz-ledger-empty dim small">Pick items and flasks on the left. The Pawn Counter weighs them up here.</div>
+        ) : (
+          <ul className="bz-ledger-lines">
+            {pickedItems.map((i) => (
+              <li key={`i${i.uid}`}>
+                <span className={`rarity-${i.rarity}`}>{itemName(i)}</span>
+                <span className="num">{fmt(sellValue(i))}</span>
+              </li>
+            ))}
+            {pickedFlasks.map((f) => (
+              <li key={`f${f.uid}`}>
+                <span className={f.rarity === 'magic' ? 'magic-text' : ''}>{flaskName(f)}</span>
+                <span className="num">{fmt(flaskValue(f))}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="bz-ledger-total">
+          <span>
+            {count} piece{count === 1 ? '' : 's'}
+          </span>
+          <span className="gold-amount">
+            <MatIcon id="gold" size={20} /> {fmt(pickedGold + flaskGold)}
+          </span>
+        </div>
+        <button className="bz-sell-btn" disabled={!count} onClick={sell}>
+          Sell Items
+        </button>
+      </aside>
+    </div>
   );
 }
 
-/** The Town: three shops and a place to sell, with one shared restock timer (the Town Market station speeds it up). */
+/** The banner over every stall: awning, keeper, and the purse tray with gold and the gear shops' restock. */
+function StallBanner({ s, stall, title, gemTab }: { s: GameState; stall: Stall; title: string; gemTab: boolean }) {
+  const gold = s.storage.bank.gold ?? 0;
+  const cost = rerollCost(s);
+  const lvl = stationLevel(s, 'vendor');
+  const style = { '--bz-stall': `url(${town(stall.art)})`, '--bz-stall-pos': stall.artPos } as CSSProperties;
+  return (
+    <header className="card bz-hero station-hero" style={style}>
+      <div className="bz-keeper">
+        <img className="bz-portrait" src={town(stall.portrait)} alt={stall.keeper} width={92} height={92} draggable={false} />
+      </div>
+      <div className="bz-hero-text">
+        <span className="bz-kicker">The Exile’s Bazaar · Market level {lvl}</span>
+        <h1>{title}</h1>
+        <p>
+          <b>{stall.keeper}.</b> {stall.blurb}
+        </p>
+      </div>
+      <div className="bz-purse">
+        <div className="bz-purse-gold">
+          <span className="label">Your gold</span>
+          <span className="gold-amount">
+            <MatIcon id="gold" size={22} /> {fmt(gold)}
+          </span>
+        </div>
+        <div className={`bz-purse-timer ${gemTab ? 'dim' : ''}`} title={gemTab ? 'The Gem shop never sells out; this is the gear shops’ restock' : undefined}>
+          <GameIcon name="clock" size={12} /> New stock in <b className="num">{fmtTime(Math.max(0, s.vendor.refreshAt - s.clock))}</b>
+        </div>
+        <button
+          className="btn sm bz-restock"
+          disabled={gold < cost}
+          title={(s.vendor.rerolls ?? 0) > 0 ? 'Price doubles each restock until the next free one' : undefined}
+          onClick={() => game.act((st, ctx) => rerollVendor(st, ctx))}
+        >
+          Restock gear shops · {fmt(cost)} gold
+        </button>
+      </div>
+    </header>
+  );
+}
+
+/** The Town as The Exile's Bazaar: three shops and a place to sell, with one shared restock timer (the Town Market station speeds it up). */
 export function TraderPage() {
   const s = useGame();
   const [tab, setTab] = useState<ShopId | 'sell'>('magic');
-  const lvl = stationLevel(s, 'vendor');
   const shop = SHOPS.find((x) => x.id === tab);
   return (
-    <div className="page r2-shop">
-      <div className="card npc-panel shopfront">
-        <div className="awning" aria-hidden />
-        <div className="npc-portrait">
-          {shop?.portrait ? (
-            <Art src={shop.portrait} alt={shop.keeper} className="portrait-img" fallback={<GameIcon name={shop.icon} size={56} color="var(--accent-2)" />} />
-          ) : (
-            <GameIcon name={shop?.icon ?? 'vendor'} size={56} color="var(--accent-2)" />
-          )}
-        </div>
-        <div className="npc-text">
-          <span className="page-kicker">Town · Market level {lvl}</span>
-          <h1>{shop ? shop.name : 'Sell your wares'}</h1>
-          <div className="muted small">{shop ? `${shop.keeper}. ${shop.blurb}` : 'Any shop will buy gear, flasks and materials.'}</div>
-        </div>
-        <div className="npc-aside">
-          <span className="label">Your gold</span>
-          <span className="gold-amount">
-            <MatIcon id="gold" size={22} /> {fmt(s.storage.bank.gold ?? 0)}
-          </span>
-        </div>
-      </div>
+    <div className="page bazaar-page">
+      <StallBanner s={s} stall={shop ?? PAWN} title={shop ? shop.name : 'Sell your wares'} gemTab={tab === 'gems'} />
       <Tabs
         value={tab}
         onChange={setTab}
