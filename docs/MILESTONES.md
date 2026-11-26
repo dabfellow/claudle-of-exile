@@ -745,6 +745,11 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Other open items
 
+- [x] Station overhaul, round two: Woodcrafting, Sawmilling, Smelting and Astrology brought up to Alchemy/Cartography quality — done 2026-11-26, not yet shipped.
+  - Woodcrafting: Carver's Workshop banner and dock, carving-bench stage, socketed inputs, brass draw-weight slider.
+  - Sawmilling: warmer lantern-lit banner, wood-species row accents, metal buzzsaw carriage with log → plank sockets.
+  - Smelting: foundry banner with five-ore dock, ore selector strip replacing the Quick Smelt grid, furnace-first layout.
+  - Astrology: observatory banner with Stardust/Gilded/Fallen dock, starfield constellation headers and research tracks on cards.
 - [x] Illustrated station overhaul for the remaining plain-box screens, to match Gemcutting and Cartography — done 2026-11-26, live in 0.6.12. Shared banner pieces in `StationDock.tsx` and `station-hero.css`.
   - Mining: shaft banner with an ore dock, continuous Delve shaft, Focus moved under the mining bar, a Layer Mastery milestone track, illustrated Mine Upgrades.
   - Sawmilling: banner with a log dock, and a two-column Sawbench (recipe index plus a log-to-plank carriage) in place of the 12-box grid.
@@ -1049,6 +1054,8 @@ The consolidated batch specification is retained below as a proposal. Its initia
 
 ## Ideas / later
 
+- The title-screen news list logs a React duplicate-key warning for version 0.2.4 (two entries share it). Harmless, but noisy in the console. Noticed 2026-11-26.
+- Dead styles left behind by the station round two: `furnace-quick*` in `furnace.css` (shared with Forging) and `.star-card-head` in `star-chart.css`. Noticed 2026-11-26.
 - Oak-tier gear starts at level 10 but oak planks and parts need Sawmilling 15, so levels 10–14 can't make their tier yet (was the same with Woodcrafting before the split). Noticed 2026-11-24.
 
 - Give Masterworks distinct visuals across professions in a dedicated design pass (requested 2026-11-22). Largely covered by the Masterworks page (2026-11-25); masterwork items still borrow existing item art.

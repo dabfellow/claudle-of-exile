@@ -26,6 +26,14 @@ type Filter = (typeof FILTERS)[number]['id'];
 
 const groupOf = (a: SkillAction) => GROUPS.find((g) => g.test(a));
 const tierStyle = (a: SkillAction) => ({ '--saw-tier': woodDef(a.woodcutting?.wood ?? 'ash').color }) as CSSProperties;
+/** Wood-species accent on the left edge of each index row, keyed by the recipe's wood (heartwood refines into Ancient). */
+const SPECIES_ACCENT: Record<string, string> = {
+  ash: '#d6cbb8', oak: '#b47b44', yew: '#a84a3e', ironwood: '#64748b', ancient: '#d4a347', spirit: '#2dd4bf',
+};
+const rowStyle = (a: SkillAction) => {
+  const wood = a.woodcutting?.wood ?? 'ash';
+  return { ...tierStyle(a), '--saw-species': SPECIES_ACCENT[wood] ?? woodDef(wood).color } as CSSProperties;
+};
 
 /** The Sawbench Carriage: the selected recipe's log → blade → output, its mastery and the Saw button. */
 function SawCarriage({ a, onShowRunning }: { a: SkillAction; onShowRunning?: () => void }) {
@@ -58,7 +66,7 @@ function SawCarriage({ a, onShowRunning }: { a: SkillAction; onShowRunning?: () 
             const owned = recipeMaterialCount(s.storage.bank, id);
             return (
               <li key={id} className={owned < need ? 'short' : ''}>
-                <span className="sawmill-socket"><MatIcon id={id} size={30} /></span>
+                <span className="sawmill-socket station-pixel"><MatIcon id={id} size={30} /></span>
                 <span className="sawmill-socket-name">{materialDef(id).name}</span>
                 <span className="sawmill-quantity num" title="Owned / required">{fmt(owned)} / {fmt(need)}</span>
               </li>
@@ -67,12 +75,17 @@ function SawCarriage({ a, onShowRunning }: { a: SkillAction; onShowRunning?: () 
         </ul>
         <span className="sawmill-arrow" aria-hidden="true">➔</span>
         <div className="sawmill-stage" aria-hidden="true">
-          <span className="sawmill-blade" />
+          <span className="sawmill-blade-wrap">
+            <span className="sawmill-blade" />
+            <span className="sawmill-blade-hub" />
+          </span>
+          <span className="sawmill-log"><span className="sawmill-log-bark" /><span className="sawmill-log-cut" /></span>
+          <span className="sawmill-bed" />
           <span className="sawmill-rail" />
         </div>
         <span className="sawmill-arrow" aria-hidden="true">➔</span>
         <div className="sawmill-output">
-          <span className="sawmill-socket sawmill-socket-out"><MatIcon id={outputId} size={44} /><b className="num">×{fmt(outputQty)}</b></span>
+          <span className="sawmill-socket sawmill-socket-out station-pixel"><MatIcon id={outputId} size={44} /><b className="num">×{fmt(outputQty)}</b></span>
           <span className="sawmill-socket-name">{materialDef(outputId).name}</span>
           <span className="sawmill-quantity num">Owned {fmt(recipeMaterialCount(s.storage.bank, outputId))}</span>
         </div>
@@ -162,7 +175,7 @@ export function Sawmill() {
               const out = outputOf(a);
               const locked = a.level > level;
               return (
-                <button key={a.id} type="button" className={`sawmill-row ${locked ? 'locked' : ''}`} style={tierStyle(a)}
+                <button key={a.id} type="button" className={`sawmill-row ${locked ? 'locked' : ''}`} style={rowStyle(a)}
                   aria-pressed={selected?.id === a.id} onClick={() => select(a.id)}>
                   <span className="sawmill-row-icon"><MatIcon id={out} size={26} /></span>
                   <span className="sawmill-row-text">

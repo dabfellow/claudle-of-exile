@@ -22,6 +22,7 @@ import { fmt, MatIcon, ProgressBar, Tabs, type TabDef } from './common';
 import { HelpTip, LockedBadge, SkillIntro } from './SkillHelp';
 import { MasteryProgress } from './MasteryProgress';
 import './furnace.css';
+import './smelting-station.css';
 
 type FurnaceTab = 'furnace' | 'recipes' | 'supplies' | 'parts' | 'alloys';
 const BAND_CENTRE = 0.57;
@@ -249,51 +250,67 @@ function RecipeRow({ s, d, a, children, onStart, lockedLevel }: {
   );
 }
 
-function QuickSmeltGrid({ s, d, level, go }: { s: GameState; d: Derived; level: number; go: (tab: FurnaceTab) => void }) {
+/**
+ * Ore Selector Strip: one horizontal row of ores at the top of the Furnace tab (mirrors Foraging's Wild Grounds strip).
+ * Same bar list, stock readout and Smelt handler as the old Quick Smelt cards; scrolls sideways on phones.
+ */
+function OreSelectorStrip({ s, d, level, go, running }: {
+  s: GameState; d: Derived; level: number; go: (tab: FurnaceTab) => void; running?: SkillAction;
+}) {
   const quickBars = actionsFor('smelting').filter((a) => !a.batchOf && !!smeltMetal(a.id) && a.level <= level);
+  const runningBase = running ? running.batchOf ?? running.id : undefined;
   return (
-    <div className="furnace-quick">
-      <div className="row">
-        <b>Quick Smelt</b>
-        <span className="spacer" />
+    <section className="smelt-ore-select" aria-label="Ore selector">
+      <div className="smelt-strip-head">
+        <span><b>Ore Selector</b> <span className="muted small">· pick an ore to smelt into bars</span></span>
         <button className="btn sm ghost" onClick={() => go('recipes')}>All recipes</button>
       </div>
-      <div className="furnace-quick-grid">
+      <nav className="smelt-ore-strip" aria-label="Ores to smelt">
         {quickBars.map((a) => {
           const output = Object.keys(a.outputs ?? {})[0];
           const cost = smeltingCost(s, a, a.inputs ?? {});
           const blocker = actionBlocker(s, a);
           const interval = actionIntervalMs(s, a, d);
+          const metal = smeltMetal(a.id);
+          const active = runningBase === a.id;
+          const short = Object.entries(cost).some(([oreId, qty]) => recipeStock(s.storage.bank, oreId) < qty);
           return (
-            <div className="furnace-quick-card" key={a.id} data-tut={`action-${a.id}`}>
-              <div className="row furnace-quick-head">
-                {output && <MatIcon id={output} size={20} />}
-                <div className="furnace-quick-meta">
-                  <b>{smeltMetal(a.id)?.name ?? a.name} Bar</b>
-                  <span className="dim small num">Lv {a.level} · {(interval / 1000).toFixed(1)}s · {furnaceBatchSize(s, a)} bar{furnaceBatchSize(s, a) === 1 ? '' : 's'}</span>
-                </div>
+            <div
+              className={`smelt-ore-pill${active ? ' active' : ''}${short ? ' short' : ''}`}
+              key={a.id}
+              data-tut={running ? undefined : `action-${a.id}`}
+              style={metal ? { ['--ore-color' as string]: metal.color } : undefined}
+            >
+              <div className="smelt-ore-pill-head">
+                <span className="smelt-ore-socket station-pixel">{output && <MatIcon id={output} size={22} />}</span>
+                <span className="smelt-ore-pill-text">
+                  <b>{metal?.name ?? a.name} Bar</b>
+                  <small className="num">Lv {a.level} · {(interval / 1000).toFixed(1)}s · {furnaceBatchSize(s, a)} bar{furnaceBatchSize(s, a) === 1 ? '' : 's'}</small>
+                </span>
               </div>
-              <div className="furnace-quick-ore">
+              <div className="smelt-ore-stock station-pixel">
                 {Object.entries(cost).map(([oreId, qty]) => {
                   const have = recipeStock(s.storage.bank, oreId);
                   return (
-                    <span key={oreId} className={`small num ${have < qty ? 'bad' : 'muted'}`}>
+                    <span key={oreId} className={`small num ${have < qty ? 'bad' : 'muted'}`} title={materialDef(oreId).name}>
                       <MatIcon id={oreId} size={13} /> {fmt(have)}/{fmt(qty)} {materialDef(oreId).name}
                     </span>
                   );
                 })}
               </div>
-              <button
-                className="btn sm primary"
-                disabled={!!blocker}
-                title={blocker ?? `Smelt ${a.name}`}
-                onClick={() => game.act((state, ctx) => { startSkillAction(state, ctx, a.id); })}
-              >Smelt</button>
+              {active ? <span className="smelt-ore-live" role="status">In the crucible</span> : (
+                <button
+                  className="btn sm primary"
+                  disabled={!!blocker}
+                  title={blocker ?? `Smelt ${a.name}`}
+                  onClick={() => game.act((state, ctx) => { startSkillAction(state, ctx, a.id); })}
+                >Smelt</button>
+              )}
             </div>
           );
         })}
-      </div>
-    </div>
+      </nav>
+    </section>
   );
 }
 
@@ -314,8 +331,10 @@ function FurnaceStation({ s, d, recipe, level, go }: { s: GameState; d: Derived;
       <SkillIntro step="Start here: Pick an ore below to smelt bars">
         Smelt ores into bars for Forging &amp; Mining picks; later add Fuel &amp; Flux to roll purer bars.
       </SkillIntro>
-      <section className={`furnace-hearth${recipe ? ' furnace-lit' : ''}`} aria-label="Furnace">
+      <OreSelectorStrip s={s} d={d} level={level} go={go} running={recipe} />
+      <section className={`furnace-hearth smelt-crucible${recipe ? ' furnace-lit' : ''}`} aria-label="Furnace">
         <div className="furnace-hearth-art">
+          <span className="smelt-crucible-plate" aria-hidden="true">The Crucible</span>
           <div className="furnace-arch" aria-hidden="true">
             <div className="furnace-mouth">
               <div className="furnace-glow" />
@@ -329,7 +348,7 @@ function FurnaceStation({ s, d, recipe, level, go }: { s: GameState; d: Derived;
           <div className="furnace-hearth-status">
             {recipe
               ? <>{output && <MatIcon id={output} size={18} />} <b>{recipe.name}</b></>
-              : <span className="muted">The furnace is cold. Pick an ore below to light it.</span>}
+              : <span className="muted">The furnace is cold. Pick an ore above to light it.</span>}
           </div>
         </div>
         <aside className="furnace-hearth-panel" aria-label="Heat and Purity">
@@ -371,25 +390,25 @@ function FurnaceStation({ s, d, recipe, level, go }: { s: GameState; d: Derived;
           )}
           {score >= 8 && <p className="small muted">Living Metal has a 1 in 2,000 chance each batch.</p>}
         </aside>
+        {recipe && (
+          <div className={`smelt-forge-row${metal ? ' furnace-station' : ''}`}>
+            {metal && (
+              <section className="card furnace-bellows-card">
+                <BellowsGame key={`${recipe.id}-${s.smelting.parts.bellows}`} metal={metal.id} tier={s.smelting.parts.bellows} onSwing={(result) => {
+                  game.act((state) => {
+                    if (state.action?.kind === 'skill' && state.action.actionId === recipe.id) minigameSwing(state, result);
+                  });
+                }} />
+                <div className="row furnace-focus">
+                  <span>Focus</span>
+                  <ProgressBar value={focusOf(s)} className="grow" />
+                  <span className="num">+{Math.round((focusMult(s, 'smelting') - 1) * 100)}% speed</span>              </div>
+              </section>
+            )}
+            <RecipeRow s={s} d={d} a={recipe} />
+          </div>
+        )}
       </section>
-      {recipe ? (
-        <div className={metal ? 'furnace-station' : undefined}>
-          <RecipeRow s={s} d={d} a={recipe} />
-          {metal && (
-            <section className="card furnace-bellows-card">
-              <BellowsGame key={`${recipe.id}-${s.smelting.parts.bellows}`} metal={metal.id} tier={s.smelting.parts.bellows} onSwing={(result) => {
-                game.act((state) => {
-                  if (state.action?.kind === 'skill' && state.action.actionId === recipe.id) minigameSwing(state, result);
-                });
-              }} />
-              <div className="row furnace-focus">
-                <span>Focus</span>
-                <ProgressBar value={focusOf(s)} className="grow" />
-                <span className="num">+{Math.round((focusMult(s, 'smelting') - 1) * 100)}% speed</span>              </div>
-            </section>
-          )}
-        </div>
-      ) : <section className="card furnace-quick-card-wrap"><QuickSmeltGrid s={s} d={d} level={level} go={go} /></section>}
     </div>
   );
 }

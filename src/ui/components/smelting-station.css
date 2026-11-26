@@ -1,0 +1,285 @@
+/*
+ * Smelting: "The Crucible" as an illustrated station.
+ * Banner: a glowing foundry (Menzel's Iron Rolling Mill) on the shared station banner
+ * (station-hero.css), iron rim, five ore sockets on the right.
+ * Furnace tab: Ore Selector Strip on top, then the stone furnace arch with Heat & Purity,
+ * with the bellows ("Keep the heat") across the hearth while a bar is smelting.
+ * Everything here is scoped under .profession-smelting because furnace.css is shared with Forging.
+ * Swap the banner picture by changing --smelt-banner only.
+ */
+.profession-page.profession-smelting {
+  --smelt-banner: url('../../../public/assets/stations/foundry-menzel-rolling-mill.webp');
+  --smelt-iron: #858b92;
+  --smelt-iron-hi: #c3c8cd;
+  --smelt-iron-lo: #4a4e54;
+  --smelt-ember: #ff9a45;
+  --smelt-molten: #ffcf7a;
+  /* rusted iron wells for the dock sockets (Poly Haven, CC0) */
+  --station-socket-bg: radial-gradient(circle at 50% 35%, #3a2416cc, #0c0907f2 75%), url('../../../public/assets/stations/tex-rusty-iron.webp') center / 120px;
+}
+
+/* ---------- banner ---------- */
+html .profession-page.profession-smelting .profession-header.station-hero {
+  --station-art: var(--smelt-banner);
+  --station-art-position: center 58%;
+  --station-rim: var(--smelt-iron);
+  --station-ink: #fbe9d0;
+  --station-shade:
+    radial-gradient(ellipse 30% 70% at 55% 62%, #ff9a4530, transparent 70%),
+    linear-gradient(90deg, #0b0807f4 4%, #140c08bd 30%, #1a0d0626 52%, #140c08c4 72%, #0b0807f5);
+  --station-shade-mobile: linear-gradient(90deg, #0b0807ee, #120a07b8 70%, #120a0788);
+  border-color: var(--smelt-iron-lo);
+  box-shadow:
+    inset 0 0 0 3px #0e0c0bd0,
+    inset 0 0 0 4px #9aa0a748,
+    inset 0 -34px 44px -22px #2a0f04cc,
+    0 6px 22px #08060950;
+}
+
+/* The molten glow breathing in the middle of the painting, under the title and dock. */
+.profession-smelting .profession-header.station-hero::before {
+  content: '';
+  position: absolute;
+  left: 38%;
+  right: 30%;
+  top: 35%;
+  bottom: -10%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 60%, #ffb35a55, #ff6a1f22 45%, transparent 72%);
+  mix-blend-mode: screen;
+  animation: smelt-glow 4.5s ease-in-out infinite alternate;
+}
+@keyframes smelt-glow {
+  from { opacity: .55; }
+  to { opacity: 1; }
+}
+
+/* Iron emblem plate, rivets in the corners, a coal glow behind the icon. */
+.profession-smelting .station-hero .profession-header-icon {
+  width: 56px;
+  height: 56px;
+  border: 2px solid #8b9198;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 7px 7px, #c6cbd0 0 1.6px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 7px) 7px, #c6cbd0 0 1.6px, transparent 2.4px),
+    radial-gradient(circle at 7px calc(100% - 7px), #c6cbd0 0 1.6px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 7px) calc(100% - 7px), #c6cbd0 0 1.6px, transparent 2.4px),
+    radial-gradient(circle at 50% 62%, #5a2510, #120d0a 75%);
+  box-shadow: 0 0 20px #ff7a2a50, inset 0 0 0 2px #120d0a;
+}
+.profession-smelting .station-hero .profession-header-text p { color: #f0b47a; }
+.profession-smelting .station-hero .xp-meta { color: #dccab6; }
+
+/* Five iron ore sockets in one row. */
+.profession-smelting .station-hero .station-dock.smelt-dock li {
+  border-color: #7b8188;
+  background: linear-gradient(#1a1714f4, #0e0c0af6);
+  box-shadow: inset 0 0 0 2px #15120f, inset 0 1px 0 #ffffff14, 0 3px 8px #0b080690;
+}
+.profession-smelting .station-hero .station-dock.smelt-dock li:hover { border-color: var(--smelt-iron-hi); }
+.profession-smelting .station-hero .smelt-dock .station-socket {
+  border: 2px solid #6f757c;
+  background: var(--station-socket-bg);
+  box-shadow: inset 0 2px 7px #000d, 0 0 0 1px #0c0a09, 0 0 10px #ff7a2a1f;
+}
+.profession-smelting .smelt-dock-ore { display: contents; }
+.profession-smelting .station-hero .smelt-dock .mat-art {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 3px #000b);
+}
+
+/* ---------- Ore Selector Strip (mirrors Foraging's Wild Grounds strip) ---------- */
+.profession-smelting .smelt-ore-select { display: grid; gap: 8px; min-width: 0; }
+.profession-smelting .smelt-strip-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.profession-smelting .smelt-ore-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(172px, 1fr);
+  gap: 8px;
+  min-width: 0;
+  padding: 2px 2px 6px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: #5a4a3e transparent;
+}
+.profession-smelting .smelt-ore-pill {
+  --_ore: var(--ore-color, #c8743f);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 10px 9px;
+  border: 1px solid #4a4541;
+  border-radius: 6px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--_ore) 9%, transparent), transparent 55%),
+    linear-gradient(#1b1714, #120f0d);
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--_ore) 55%, #2a2420);
+  scroll-snap-align: start;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.profession-smelting .smelt-ore-pill:hover { border-color: color-mix(in srgb, var(--_ore) 60%, #6d6660); }
+.profession-smelting .smelt-ore-pill.active {
+  border-color: var(--smelt-ember);
+  background:
+    radial-gradient(ellipse at 50% 120%, #ff8a3a2e, transparent 70%),
+    linear-gradient(#22170f, #140d09);
+  box-shadow: inset 0 -2px 0 var(--smelt-ember), 0 0 14px #ff7a2a33;
+}
+.profession-smelting .smelt-ore-pill.short:not(.active) .smelt-ore-socket { filter: grayscale(.5) brightness(.85); }
+.profession-smelting .smelt-ore-pill-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.profession-smelting .smelt-ore-socket {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid #6f757c;
+  border-radius: 50%;
+  background: var(--station-socket-bg, #120d0a);
+  box-shadow: inset 0 2px 6px #000d, 0 0 0 1px #0c0a09;
+}
+.profession-smelting .smelt-ore-socket .mat-art { width: 24px; height: 24px; object-fit: contain; filter: drop-shadow(0 1px 2px #000b); }
+.profession-smelting .smelt-ore-pill-text { display: grid; min-width: 0; line-height: 1.25; }
+.profession-smelting .smelt-ore-pill-text b { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profession-smelting .smelt-ore-pill-text small { font-size: 11px; color: var(--muted); }
+.profession-smelting .smelt-ore-stock { display: flex; flex-wrap: wrap; gap: 2px 8px; }
+.profession-smelting .smelt-ore-stock > span { display: inline-flex; align-items: center; gap: 4px; }
+.profession-smelting .smelt-ore-pill > .btn { align-self: stretch; margin-top: auto; }
+.profession-smelting .smelt-ore-live {
+  margin-top: auto;
+  padding: 4px 0;
+  border-radius: 4px;
+  background: #ff8a3a1c;
+  color: var(--smelt-molten);
+  font-size: .8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ---------- The Crucible: stone hearth with the furnace arch ---------- */
+.profession-smelting .furnace-hearth.smelt-crucible {
+  grid-template-columns: minmax(0, 1fr) minmax(270px, 340px);
+  gap: 16px 18px;
+  min-height: 360px;
+  padding: 18px;
+  border: 1px solid var(--smelt-iron-lo);
+  box-shadow: inset 0 0 0 2px #0d0907c9, inset 0 0 0 3px #9aa0a730, inset 0 -40px 60px -30px #000c;
+}
+.profession-smelting .smelt-crucible .furnace-hearth-art { justify-content: flex-start; padding-top: 2px; }
+.profession-smelting .smelt-crucible-plate {
+  padding: 3px 14px;
+  border: 1px solid #6f757c;
+  border-radius: 3px;
+  background: linear-gradient(#26221fe8, #141110f0);
+  box-shadow: inset 0 1px 0 #ffffff14, 0 2px 6px #000a;
+  color: #e6d2b8;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.profession-smelting .smelt-crucible .furnace-arch {
+  width: min(100%, 440px);
+  padding: 18px 18px 0;
+  border-radius: 220px 220px 4px 4px;
+  box-shadow: 0 0 0 2px #0a0605, 0 0 0 4px #5a5f6555, 0 10px 30px #000b, inset 0 2px 0 #ffffff14;
+}
+.profession-smelting .smelt-crucible .furnace-mouth {
+  height: 250px;
+  border-radius: 202px 202px 0 0;
+}
+.profession-smelting .smelt-crucible .furnace-flame.f1 { width: 168px; height: 168px; }
+.profession-smelting .smelt-crucible .furnace-flame.f2,
+.profession-smelting .smelt-crucible .furnace-flame.f3 { width: 112px; height: 112px; }
+.profession-smelting .smelt-crucible .furnace-flame.f4 { width: 92px; height: 92px; }
+.profession-smelting .smelt-crucible.furnace-lit .furnace-arch {
+  box-shadow: 0 0 0 2px #0a0605, 0 0 0 4px #8a5a3a66, 0 0 46px #ff7a2a40, 0 10px 30px #000b, inset 0 2px 0 #ffffff14;
+}
+.profession-smelting .smelt-crucible .furnace-hearth-status { font-size: .95rem; }
+.profession-smelting .furnace-view img.mat-art { image-rendering: pixelated; }
+
+/* Heat & Purity: an iron-framed plate beside the arch. */
+.profession-smelting .smelt-crucible .furnace-hearth-panel {
+  align-self: start;
+  border-color: #6f757c;
+  background: linear-gradient(#171310f0, #0f0b09f2);
+  box-shadow: inset 0 0 0 2px #0c0908, inset 0 1px 0 2px #ffffff0d, 0 6px 20px #0009;
+}
+
+/* Bellows + current batch, across the foot of the hearth while smelting. */
+.profession-smelting .smelt-forge-row {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.profession-smelting .smelt-forge-row.furnace-station { grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr); }
+.profession-smelting .smelt-forge-row > .card {
+  border-color: #6f757c;
+  background: linear-gradient(#18130ff2, #0f0b09f4);
+  box-shadow: inset 0 0 0 2px #0c0908, 0 6px 18px #0009;
+}
+.profession-smelting .smelt-forge-row .furnace-bellows-card {
+  padding: 14px 16px;
+  border-color: #9a6a42;
+  box-shadow: inset 0 0 0 2px #0c0908, 0 0 22px #ff7a2a22, 0 6px 18px #0009;
+}
+.profession-smelting .smelt-forge-row .furnace-bellows > .row:first-child b { font-size: 1.05rem; letter-spacing: .02em; }
+.profession-smelting .smelt-forge-row .furnace-heat { height: 36px; border-color: #8a6a4e; box-shadow: inset 0 2px 6px #000a; }
+.profession-smelting .smelt-forge-row .furnace-needle { inset-block: -6px; width: 4px; }
+.profession-smelting .smelt-forge-row .furnace-pump { min-height: 52px; min-width: 156px; font-size: 1rem; }
+
+/* ---------- stacking ---------- */
+@media (max-width: 900px) {
+  html .profession-page.profession-smelting .profession-header.station-hero { padding: 14px; }
+  .profession-smelting .profession-header.station-hero::before { left: 30%; right: 10%; }
+  .profession-smelting .smelt-forge-row.furnace-station { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 660px) {
+  .profession-smelting .furnace-hearth.smelt-crucible { grid-template-columns: minmax(0, 1fr); padding: 12px; min-height: 0; }
+  .profession-smelting .smelt-crucible .furnace-mouth { height: 190px; }
+  .profession-smelting .smelt-crucible .furnace-flame.f1 { width: 132px; height: 132px; }
+  .profession-smelting .smelt-crucible .furnace-flame.f2,
+  .profession-smelting .smelt-crucible .furnace-flame.f3 { width: 92px; height: 92px; }
+  .profession-smelting .smelt-crucible .furnace-flame.f4 { width: 76px; height: 76px; }
+  .profession-smelting .smelt-ore-strip { grid-auto-columns: minmax(158px, 72%); }
+}
+
+/* Phones: keep all five ore sockets in one compact row instead of the shared two-column list. */
+@media (max-width: 560px) {
+  .profession-smelting .station-hero .station-dock.smelt-dock { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .profession-smelting .station-hero .station-dock.smelt-dock li {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 2px;
+    padding: 5px 2px 4px;
+    text-align: center;
+  }
+  .profession-smelting .station-hero .smelt-dock .station-socket { grid-row: auto; width: 32px; height: 32px; }
+  .profession-smelting .station-hero .smelt-dock .mat-art { width: 22px; height: 22px; }
+  .profession-smelting .station-hero .smelt-dock .station-dock-label { font-size: .62rem; }
+  .profession-smelting .station-hero .smelt-dock b { font-size: .82rem; }
+  .profession-smelting .station-hero .profession-header-icon { width: 46px; height: 46px; }
+  .profession-smelting .smelt-forge-row .furnace-pump { flex: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profession-smelting .profession-header.station-hero::before { animation: none; }
+  .profession-smelting .smelt-ore-pill { transition: none; }
+}

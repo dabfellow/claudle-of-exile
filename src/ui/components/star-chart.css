@@ -16,23 +16,6 @@
   margin-top: 10px;
 }
 
-.star-region {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px;
-  background: linear-gradient(155deg, #181d2c, var(--panel));
-}
-
-.star-region.running {
-  border-color: var(--cst);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--cst) 30%, transparent);
-}
-
-.star-region.locked .astro-plate {
-  opacity: 0.66;
-}
-
 .star-region.locked {
   align-self: start;
 }
@@ -50,8 +33,7 @@
   align-items: center;
 }
 
-.star-night-sky,
-.astro-plate {
+.star-night-sky {
   display: block;
   width: 100%;
   border: 1px solid #4b5876;
@@ -83,55 +65,7 @@
   color: #ffdf9d;
 }
 
-.astro-plate {
-  color: var(--cst);
-  height: 120px;
-  background-color: #10192c;
-}
-
-.astro-plate.deep {
-  border-color: color-mix(in srgb, var(--cst), #253149);
-}
-
-.astro-undiscovered {
-  fill: #141e33;
-  stroke: #adb9d1;
-  stroke-width: .3;
-}
-
-.astro-research-progress {
-  display: grid;
-  gap: 4px;
-  font-size: .85em;
-}
-
-.astro-discoveries {
-  display: grid;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  font-size: .84em;
-}
-
-.astro-discoveries li,
-.astro-region-footer {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 4px 9px;
-  padding: 5px 0;
-  border-top: 1px solid var(--line-2);
-}
-
-.astro-found {
-  color: #f4dfb4;
-}
-
-.astro-region-footer {
-  margin-top: auto;
-  padding-bottom: 0;
-}
+/* Sky-region research cards (starfield header, research track) are styled in astrology-station.css. */
 
 .star-line {
   stroke-width: 0.5;

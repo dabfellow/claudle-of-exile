@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   BINARY_PARTNER, chartLayout, fallenKind, GILDED_STARDUST, MAX_GILDED_RANK, MAX_RANK, rankXp, REGIONS, regionDef, researchNeeded, skillLabel, STARDUST, starDef, STARS,
   type SkyRegion, type StarDef, type StarFamily,
@@ -15,6 +15,7 @@ import { game, useGame } from '../../game';
 import { EmptyState, fmt, GameIcon, MatIcon, ProgressBar } from './common';
 import { LockedBadge, SkillIntro } from './SkillHelp';
 import './star-chart.css';
+import './astrology-station.css';
 
 const num = (v: number) => Number(v.toFixed(2));
 const familyLabel: Record<StarFamily, string> = {
@@ -270,34 +271,150 @@ function RunButton({ actionId, label }: { actionId: string; label: string }) {
   );
 }
 
-const regionPlots: Record<string, [number, number][]> = {
-  lantern: [[24, 33], [45, 17], [64, 28], [84, 13]],
-  sower: [[22, 15], [39, 31], [61, 35], [82, 23]],
-  buried_king: [[19, 31], [37, 13], [57, 32], [80, 17]],
-  anvil: [[23, 17], [76, 17], [61, 36], [43, 36]],
-  alembic: [[28, 15], [43, 21], [58, 35], [80, 25]],
-  scribe: [[18, 34], [38, 23], [61, 26], [81, 12]],
-  wanderer: [[19, 26], [49, 12], [80, 23], [53, 37]],
-};
+// ---------- sky-region starfield header ----------
 
-function RegionPlate({ region, discovered, locked }: { region: SkyRegion; discovered: boolean[]; locked: boolean }) {
-  const points = regionPlots[region.id] ?? [[50, 25]];
+/** A small seeded random stream, so each region's constellation is different but never moves between renders. */
+function seededRandom(seed: string): () => number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619);
+  let t = h >>> 0;
+  return () => {
+    t = (t + 0x6d2b79f5) >>> 0;
+    let x = Math.imul(t ^ (t >>> 15), 1 | t);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const FIELD_W = 260;
+const FIELD_H = 90;
+
+interface RegionSky {
+  nodes: [number, number][];
+  lines: [number, number][];
+  field: [number, number, number][];
+}
+
+const skyCache = new Map<string, RegionSky>();
+
+/** Node positions, lines and background field stars for a region's 90px header, derived from its id. */
+function regionSky(r: SkyRegion): RegionSky {
+  const cached = skyCache.get(r.id);
+  if (cached) return cached;
+  const rand = seededRandom(r.id);
+  const n = r.stars.length;
+  let nodes: [number, number][];
+  let lines: [number, number][] = [];
+  if (n <= 1) {
+    nodes = [[FIELD_W / 2 + (rand() - 0.5) * 50, 52 + (rand() - 0.5) * 10]];
+  } else {
+    // one star per column, jittered, kept clear of the title strip along the top
+    const span = (FIELD_W - 60) / (n - 1);
+    nodes = Array.from({ length: n }, (_, i) => [
+      Math.round(30 + i * span + (rand() - 0.5) * span * 0.45),
+      Math.round(34 + rand() * 42),
+    ] as [number, number]);
+    // neighbouring stars mustn't sit at the same height, or the figure reads as a flat line
+    for (let i = 1; i < n; i++) {
+      if (Math.abs(nodes[i][1] - nodes[i - 1][1]) < 10) nodes[i][1] = nodes[i - 1][1] > 55 ? nodes[i - 1][1] - 16 : nodes[i - 1][1] + 16;
+    }
+    lines = nodes.slice(1).map((_, i) => [i, i + 1] as [number, number]);
+    // a closing or crossing line on some regions, for variety
+    const extra = rand();
+    if (n >= 4 && extra < 0.35) lines.push([0, 2]);
+    else if (n >= 4 && extra < 0.7) lines.push([1, 3]);
+  }
+  const field = Array.from({ length: 14 }, () => [
+    Math.round(rand() * FIELD_W * 10) / 10,
+    Math.round(rand() * FIELD_H * 10) / 10,
+    Math.round((0.35 + rand() * 0.75) * 100) / 100,
+  ] as [number, number, number]);
+  const sky = { nodes, lines, field };
+  skyCache.set(r.id, sky);
+  return sky;
+}
+
+/** What each star node says on hover: name, effect, and found or how much research it needs. */
+function nodeTitle(r: SkyRegion, i: number, found: boolean, locked: boolean): string {
+  const star = starDef(r.stars[i])!;
+  const state = found ? 'Found' : `${fmt(researchNeeded(r, i))} research${locked ? ` · needs Astrology level ${r.level}` : ''}`;
+  return `${star.name} · ${state}\n${star.desc}`;
+}
+
+function RegionSkyHeader({ r, discovered, nextIdx, locked, children }: {
+  r: SkyRegion; discovered: boolean[]; nextIdx: number; locked: boolean; children: ReactNode;
+}) {
+  const sky = regionSky(r);
   return (
-    <svg className={`astro-plate ${region.deep ? 'deep' : ''}`} viewBox="0 0 100 50" aria-hidden="true">
-      <g className="astro-chart-grid">
-        <circle cx="50" cy="25" r="21" />
-        <circle cx="50" cy="25" r="16" />
-        <path d="M5 25H95 M50 2V48 M15 10L85 40 M85 10L15 40" />
-      </g>
-      {points.slice(1).map(([x, y], i) => (
-        <line key={i} x1={points[i][0]} y1={points[i][1]} x2={x} y2={y} className={`star-line ${discovered[i] && discovered[i + 1] ? 'active' : 'possible'}`} />
-      ))}
-      {points.map(([x, y], i) => (
-        <g key={i} transform={`translate(${x} ${y})`}>
-          {discovered[i] ? <StarGlyph /> : <circle r={locked ? 1 : 1.55} className="astro-undiscovered" />}
+    <div className={`astro-sky ${r.deep ? 'deep' : ''}`}>
+      <svg className="astro-sky-svg" viewBox={`0 0 ${FIELD_W} ${FIELD_H}`} preserveAspectRatio="xMidYMid meet" role="img"
+        aria-label={`${r.name}: ${discovered.filter(Boolean).length} of ${r.stars.length} stars discovered`}>
+        <g className="astro-sky-field" aria-hidden="true">
+          {sky.field.map(([x, y, rad], i) => <circle key={i} cx={x} cy={y} r={rad} />)}
         </g>
-      ))}
-    </svg>
+        {r.deep && <ellipse className="astro-sky-nebula" cx={sky.nodes[0][0]} cy={sky.nodes[0][1]} rx="62" ry="26" aria-hidden="true" />}
+        {sky.lines.map(([a, b]) => {
+          const lit = discovered[a] && discovered[b];
+          return <line key={`${a}-${b}`} x1={sky.nodes[a][0]} y1={sky.nodes[a][1]} x2={sky.nodes[b][0]} y2={sky.nodes[b][1]}
+            className={`astro-sky-line ${lit ? 'lit' : ''}`} />;
+        })}
+        {sky.nodes.map(([x, y], i) => {
+          const found = discovered[i];
+          const isNext = !locked && i === nextIdx;
+          return (
+            <g key={i} transform={`translate(${x} ${y})`} className={`astro-sky-node ${found ? 'found' : ''} ${isNext ? 'next' : ''}`}>
+              <title>{nodeTitle(r, i, found, locked)}</title>
+              <circle r="9" className="astro-sky-hit" />
+              {found ? (
+                <>
+                  <circle r={r.deep ? 11 : 7} className="astro-sky-halo" />
+                  <g transform={`scale(${r.deep ? 2.6 : 1.85})`}><StarGlyph /></g>
+                </>
+              ) : (
+                <>
+                  {isNext && <circle r="5.2" className="astro-sky-ring" />}
+                  <circle r={locked ? 1.4 : r.deep ? 3 : 2.3} className="astro-sky-dormant" />
+                </>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      <div className="astro-sky-title">{children}</div>
+    </div>
+  );
+}
+
+/** Compact research track: one node per star threshold (25, 100, 250, 500; or a deep-sky wonder's 1000). */
+function ResearchTrack({ r, points, discovered }: { r: SkyRegion; points: number; discovered: boolean[] }) {
+  const marks = r.stars.map((_, i) => researchNeeded(r, i));
+  const n = marks.length;
+  // nodes sit at equal steps; the fill runs linearly between thresholds
+  let fill = 0;
+  for (let i = 0; i < n; i++) {
+    const lo = i === 0 ? 0 : marks[i - 1];
+    if (points >= marks[i]) { fill = (i + 1) / n; continue; }
+    fill = (i + Math.max(0, (points - lo) / (marks[i] - lo))) / n;
+    break;
+  }
+  const top = marks[n - 1];
+  return (
+    <div className="astro-track" role="progressbar" aria-valuemin={0} aria-valuemax={top} aria-valuenow={Math.min(points, top)}
+      aria-label={`${r.name} research`}>
+      <div className="astro-track-rail" aria-hidden="true">
+        <span className="astro-track-fill" style={{ width: `${Math.min(1, fill) * 100}%` }} />
+      </div>
+      <ol className="astro-track-nodes">
+        {marks.map((m, i) => (
+          <li key={i} style={{ left: `${((i + 1) / n) * 100}%` }}
+            className={discovered[i] ? 'found' : discovered.indexOf(false) === i ? 'next' : ''}
+            title={`${starDef(r.stars[i])!.name}: ${discovered[i] ? 'found' : `${fmt(m)} research`}`}>
+            <span className="astro-track-dot" aria-hidden="true" />
+            <span className="astro-track-num num">{fmt(m)}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -312,30 +429,26 @@ function RegionCard({ s, r }: { s: GameState; r: SkyRegion }) {
   const nextIdx = discovered.indexOf(false);
   const next = nextIdx >= 0 ? researchNeeded(r, nextIdx) : null;
   const running = s.action?.kind === 'skill' && s.action.actionId === id;
+  const foundNames = r.stars.filter((_, i) => discovered[i]).map((x) => starDef(x)!.name);
   return (
     <div className={`card star-region ${locked ? 'locked' : ''} ${running ? 'running' : ''}`} style={{ ['--cst' as string]: r.color }}>
-      <div className="star-card-head">
+      <RegionSkyHeader r={r} discovered={discovered} nextIdx={nextIdx} locked={locked}>
         <b>{r.name}</b>
         {locked
           ? <LockedBadge level={r.level} reason={`Requires Astrology level ${r.level}`} />
-          : <span className="dim num">{r.deep ? 'Deep sky' : `${unlockedInRegion(s, r.id)}/${r.stars.length} stars`}</span>}
-      </div>
-      <RegionPlate region={r} discovered={discovered} locked={locked} />
+          : <span className="num astro-sky-count">{r.deep ? 'Deep sky' : `${unlockedInRegion(s, r.id)}/${r.stars.length} stars`}</span>}
+      </RegionSkyHeader>
       <p className="muted star-lore">{r.lore}</p>
       {!locked && (
         <>
           <div className="astro-research-progress">
-            <span>{next ? `Next discovery: ${starDef(r.stars[nextIdx])!.name}` : 'All stars discovered'}</span>
-            <ProgressBar value={next ? Math.min(1, points / next) : 1} color={r.color} label={next ? `${fmt(points)} / ${fmt(next)} research` : `${fmt(points)} research`} />
+            <div className="astro-research-next">
+              <span>{next ? <>Next: <b>{starDef(r.stars[nextIdx])!.name}</b></> : 'All stars discovered'}</span>
+              <span className="dim num">{next ? `${fmt(points)} / ${fmt(next)} research` : `${fmt(points)} research`}</span>
+            </div>
+            <ResearchTrack r={r} points={points} discovered={discovered} />
+            {foundNames.length > 0 && <span className="astro-found-line"><span aria-hidden="true">✦</span> Found: {foundNames.join(' · ')}</span>}
           </div>
-          <ul className="astro-discoveries" aria-label="Stars in this region">
-            {r.stars.map((x, i) => (
-              <li key={x}>
-                <span className={discovered[i] ? 'astro-found' : 'dim'}><span aria-hidden="true">{discovered[i] ? '✦' : '◇'}</span> {starDef(x)!.name}</span>
-                <span className="dim">{discovered[i] ? 'Found' : `${fmt(researchNeeded(r, i))} research`}</span>
-              </li>
-            ))}
-          </ul>
           <div className="astro-region-footer">
             <span className="dim num small">{(actionIntervalMs(s, a, d) / 1000).toFixed(1)}s · {r.dust} Stardust · {a.xp} XP</span>
             <RunButton actionId={id} label="Research" />

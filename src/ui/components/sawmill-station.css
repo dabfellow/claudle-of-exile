@@ -1,10 +1,12 @@
 /*
  * Sawmilling: The Sawmill as an illustrated station (mirrors Cartography's list + worktop layout).
- * Banner art lives in one variable, --sawmill-banner, so a painted mill under public/assets/stations/ can replace it.
+ * Banner: "Timber Mill & Waterwheel", Hobbema's watermill under a warm lantern-lit shade.
+ * The art lives in one variable, --sawmill-banner (and its framing in --sawmill-banner-pos).
  * --sawmill-props are the pixel-art mill props drawn over the banner's open middle; set it to none with final art.
  */
 .page.profession-page.profession-sawmilling {
-  --sawmill-banner: url('../../../public/assets/stations/sawmill-bodom-falls.webp');
+  --sawmill-banner: url('../../../public/assets/stations/sawmill-hobbema-watermill.webp');
+  --sawmill-banner-pos: center 68%;
   --sawmill-props: none;
   --sawmill-planks: url('../../../public/assets/stations/tex-planks.webp');
   --saw-gold: #d9b071;
@@ -21,17 +23,26 @@
 /* ---- banner (shared .station-hero chrome; these win over the generic profession header) ---- */
 .profession-page.profession-sawmilling .profession-header.station-hero {
   --station-art: var(--sawmill-banner);
-  --station-shade: linear-gradient(90deg, #0f0905f2 4%, #160d07c4 30%, #1a0e0630 52%, #140b06c2 76%, #0d0805f4),
-    linear-gradient(#2a150633, #1a0c0480);
-  --station-rim: #b8874e;
-  --station-ink: #ffe6bd;
+  /* Warm and lantern-lit: amber pools over the mill and wheel, a light umber wash elsewhere,
+     only enough dark at the edges to keep the title and the docked logs readable. */
+  --station-shade:
+    radial-gradient(16% 70% at 64% 62%, #ffc06a3d, transparent 72%),
+    radial-gradient(10% 46% at 88% 34%, #ffb3542e, transparent 75%),
+    linear-gradient(90deg, #22120ad6 3%, #2d180b8f 25%, #3a1f0b1a 44%, #3a1f0b0d 60%, #2a160a80 76%, #1f1109c4),
+    linear-gradient(#ffd28e12, #3a1a0633);
+  --station-shade-mobile:
+    radial-gradient(40% 80% at 70% 60%, #ffbe6630, transparent 72%),
+    linear-gradient(90deg, #22120ae0, #2d180bb3 60%, #2d180b8c);
+  --station-rim: #c4965c;
+  --station-ink: #fff0d4;
+  --station-socket-bg: radial-gradient(circle at 50% 30%, #6b4626, #2a180c 72%);
   display: grid;
   gap: 10px 16px;
   padding: 18px 23px;
-  border-color: #a77c49;
+  border-color: #b48553;
   border-radius: 5px;
-  background: var(--station-shade), var(--station-art) center 44% / cover, #1a120c;
-  box-shadow: inset 0 0 0 3px #1b0f07d0, inset 0 0 0 4px #c5965a5c, inset 0 -3px #d8a8604d, 0 6px 18px #0009;
+  background: var(--station-shade), var(--station-art) var(--sawmill-banner-pos) / cover, #2a1a0f;
+  box-shadow: inset 0 0 0 3px #1b0f07b0, inset 0 0 0 4px #d6a66a66, inset 0 -3px #e3b06a55, 0 6px 18px #0008;
 }
 .profession-sawmilling .profession-header.station-hero::before {
   content: '';
@@ -58,14 +69,17 @@
 .profession-sawmilling .station-hero .xp .bar-fill { background: linear-gradient(90deg, #7d5630, #e2b16a) !important; }
 .profession-sawmilling .station-hero .xp-meta { color: #dcc4a0; }
 .profession-sawmilling .station-dock li {
-  border-color: #b88a52;
-  background: var(--saw-grain), linear-gradient(#3a2414f0, #1b110af4);
-  box-shadow: inset 0 0 0 2px #24150b, inset 0 0 0 3px #e0b56f30, 0 3px 8px #0b0806a0;
+  border-color: #c99a5e;
+  background: var(--saw-grain), linear-gradient(#4a2e18e6, #26170cee);
+  box-shadow: inset 0 0 0 2px #2a180b, inset 0 1px 0 2px #ffd59330, 0 0 14px #ffb2552a, 0 3px 8px #0b0806a0;
+  color: #f0dcb9;
 }
+.profession-sawmilling .station-dock li:hover { border-color: #f0c584; }
 .profession-sawmilling .station-dock .station-socket {
   border-radius: 6px;
-  border-color: #d2a364;
-  background: radial-gradient(circle at 50% 30%, #4e3119, #140c06 75%);
+  border-color: #e2b272;
+  background: radial-gradient(circle at 50% 30%, #7a5130, #2e1b0d 74%);
+  box-shadow: inset 0 2px 6px #000b, inset 0 0 0 1px #ffd69a3a, 0 0 10px #ffb35a33;
 }
 .profession-sawmilling .station-dock img { image-rendering: pixelated; }
 
@@ -103,15 +117,16 @@
 .sawmill-show-locked { display: flex; gap: 6px; align-items: center; font-size: 12px; color: #d8c2a0; }
 .sawmill-rows { display: grid; gap: 6px; max-height: 640px; overflow-y: auto; padding-right: 2px; }
 .sawmill-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 9px;
   width: 100%;
   min-width: 0;
   min-height: 50px;
-  padding: 5px 10px 5px 9px;
+  padding: 5px 10px 5px 12px;
   border: 1px solid #5f442c;
-  border-left: 3px solid var(--saw-tier, #b89a72);
+  border-left: 4px solid var(--saw-species, var(--saw-tier, #b89a72));
   border-radius: 2px 5px 5px 2px;
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--saw-tier, #b89a72) 14%, #2b1d13e6), #1f160fe8),
@@ -123,14 +138,23 @@
   text-align: left;
   cursor: pointer;
 }
-.sawmill-row:hover { border-color: #a37647; border-left-color: var(--saw-tier); }
+.sawmill-row:hover { border-color: #a37647; border-left-color: var(--saw-species, var(--saw-tier)); }
 .sawmill-row[aria-pressed='true'] {
   border-color: var(--saw-gold);
-  border-left-color: var(--saw-tier);
+  border-left-color: var(--saw-species, var(--saw-tier));
   background: var(--saw-grain), linear-gradient(90deg, color-mix(in srgb, var(--saw-tier, #b89a72) 30%, #4b2f19), #2d1e12);
   box-shadow: inset 0 0 0 1px #ffd89a2e, 0 0 10px #d9a2552e;
 }
-.sawmill-row.locked { color: #b6a28c; }
+/* a soft glow off the species edge so the colour reads on dark timber */
+.sawmill-row::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 14px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--saw-species, transparent) 22%, transparent), transparent);
+  pointer-events: none;
+}
+.sawmill-row.locked { color: #b6a28c; border-left-color: color-mix(in srgb, var(--saw-species, #b89a72) 55%, #2a1d13); }
 .sawmill-row.locked .sawmill-row-icon img { filter: grayscale(.7) brightness(.75); }
 .sawmill-row-icon {
   display: grid;
@@ -185,19 +209,27 @@
 .sawmill-inputs li,
 .sawmill-output { display: grid; justify-items: center; align-content: start; gap: 3px; min-width: 0; width: 88px; max-width: 100%; text-align: center; font-size: 11px; line-height: 1.2; }
 .sawmill-output { justify-self: center; width: 110px; }
+/* Crisp square item sockets (Cartography-style): hard 1px frame, dark bevel, a thin lit inner line. */
 .sawmill-socket {
   position: relative;
   display: grid;
   place-items: center;
   width: 58px;
   aspect-ratio: 1;
-  border: 1px solid #c09056;
-  border-radius: 6px;
-  background: radial-gradient(ellipse at 50% 15%, #5a3a20, #1b120b 64%, #0f0a06);
-  box-shadow: inset 0 0 0 2px #2c1b0e, inset 0 0 0 3px #e7b8704a, 0 3px 6px #000a;
+  border: 1px solid #c79a5e;
+  border-radius: 3px;
+  background:
+    linear-gradient(#ffe2a80f, transparent 45%),
+    radial-gradient(ellipse at 50% 0%, #5e4026, #1d140d 62%, #110b07);
+  box-shadow: inset 0 0 0 2px #24170c, inset 0 0 0 3px #e7b8704d, inset 0 -6px 10px #0008, 0 2px 0 #0a0603, 0 3px 7px #000a;
 }
 .sawmill-socket img { image-rendering: pixelated; filter: drop-shadow(0 2px 2px #000a); }
-.sawmill-socket-out { width: 84px; border-color: var(--saw-gold); box-shadow: inset 0 0 0 2px #2c1b0e, inset 0 0 0 3px #ffd79655, 0 0 16px color-mix(in srgb, var(--saw-tier) 35%, transparent), 0 3px 8px #000b; }
+.sawmill-socket-out {
+  width: 84px;
+  border-color: var(--saw-gold-hi);
+  box-shadow: inset 0 0 0 2px #24170c, inset 0 0 0 3px #ffd7966b, inset 0 -8px 12px #0008, 0 2px 0 #0a0603,
+    0 0 16px color-mix(in srgb, var(--saw-tier) 38%, transparent), 0 3px 8px #000b;
+}
 .sawmill-socket b { position: absolute; right: 4px; bottom: 1px; color: #ffefcf; font-size: 12px; text-shadow: 1px 1px #000, -1px 1px #000, 0 -1px #000; }
 .sawmill-socket-name { color: #ecd8b8; }
 .sawmill-quantity { color: #c8d7a8; white-space: nowrap; }
@@ -205,40 +237,149 @@
 .sawmill-inputs .short .sawmill-quantity { color: #f5a38c; }
 .sawmill-arrow { color: #e5ba7b; font-size: 22px; text-shadow: 0 0 10px #f8c0725e; }
 
+/*
+ * Buzzsaw & timber carriage: a brushed-steel blade (game-icons.net Circular Sawblade, Lorc, CC BY 3.0,
+ * used as a mask and filled with conic "brushed" steel) rising through a log on a planked carriage that runs on iron rails.
+ * The log's bark and sawn face take the recipe's wood colour (--saw-tier).
+ */
 .sawmill-stage {
   position: relative;
-  display: grid;
-  place-items: center;
+  overflow: hidden;
   aspect-ratio: 1;
-  border: 2px solid #8d6438;
-  border-radius: 6px;
-  background: radial-gradient(circle, #ffcf8a1c, transparent 60%), linear-gradient(#24170e, #140d08);
-  box-shadow: inset 0 0 0 3px #1b1009, inset 0 0 0 4px #d9a86140, 0 3px 10px #000b;
+  border: 1px solid #a57846;
+  border-radius: 3px;
+  background:
+    radial-gradient(60% 50% at 50% 34%, #ffc8783a, transparent 70%),
+    linear-gradient(#2c1d12, #170f09 70%);
+  box-shadow: inset 0 0 0 2px #1b1009, inset 0 0 0 3px #e0ae6a45, 0 2px 0 #0a0603, 0 3px 10px #000b;
+}
+.sawmill-blade-wrap {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  width: 68%;
+  aspect-ratio: 1;
+  translate: -50% 0;
+  z-index: 1;
+  filter: drop-shadow(0 3px 3px #000c) drop-shadow(0 0 1px #000);
 }
 .sawmill-blade {
-  width: 70%;
-  aspect-ratio: 1;
-  /* game-icons.net circular saw blade (Lorc, CC BY 3.0), filled with brushed steel */
-  background: radial-gradient(circle at 38% 32%, #f4f6f7, #b5bcc1 45%, #737b81 80%);
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle, transparent 38%, #0000002e 62%, transparent 64%),
+    conic-gradient(from 15deg, #7d868d, #f1f4f6 9%, #8e979e 20%, #5a6268 31%, #cfd6da 43%, #6b737a 55%, #eef2f4 66%, #848d94 78%, #4f565c 88%, #b7bfc4 96%, #7d868d);
   -webkit-mask: url('../../../public/assets/stations/icon-buzzsaw.svg') center / contain no-repeat;
   mask: url('../../../public/assets/stations/icon-buzzsaw.svg') center / contain no-repeat;
-  filter: drop-shadow(0 2px 3px #000c);
+}
+.sawmill-blade-hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #1a1d20 0 14%, transparent 16%),
+    radial-gradient(circle at 36% 30%, #fff8e6, #d8a95e 30%, #8a5a26 68%, #4b2f12);
+  box-shadow: 0 0 0 1px #2a1a0b, inset 0 -2px 3px #0007;
+}
+.sawmill-log {
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  top: 56%;
+  height: 19%;
+  z-index: 2;
+  display: flex;
+  filter: drop-shadow(0 3px 2px #000a);
+}
+/* uncut log: bark in the wood's colour, lit from above */
+.sawmill-log-bark {
+  flex: 1 1 52%;
+  background:
+    repeating-linear-gradient(90deg, #00000026 0 2px, transparent 2px 7px),
+    linear-gradient(#ffe7b833, transparent 40%, #0000005c),
+    color-mix(in srgb, var(--saw-tier, #b89a72) 62%, #2b1a0e);
+}
+/* sawn face: pale plank with grain, past a dark kerf where the blade bites */
+.sawmill-log-cut {
+  flex: 1 1 48%;
+  border-left: 2px solid #120a05;
+  background:
+    repeating-linear-gradient(178deg, #ffffff12 0 1px, transparent 1px 4px, #0000001c 4px 5px, transparent 5px 8px),
+    linear-gradient(#fff1d044, transparent 55%, #0000003a),
+    color-mix(in srgb, var(--saw-tier, #b89a72) 55%, #f3dcb2);
+}
+.sawmill-bed {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 75%;
+  bottom: 9%;
+  z-index: 3;
+  border-top: 1px solid #e0b06c88;
+  background:
+    linear-gradient(#0000, #0000006b),
+    var(--sawmill-planks, none) center / 160px auto,
+    #5b3b20;
+  box-shadow: inset 0 1px #ffe0a833, 0 2px 3px #000a;
+}
+/* blade slot in the bed */
+.sawmill-bed::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 8%;
+  height: 46%;
+  translate: -50% 0;
+  border-radius: 0 0 2px 2px;
+  background: #0b0704;
+  box-shadow: inset 0 1px 2px #000;
 }
 .sawmill-rail {
   position: absolute;
-  left: 6%;
-  right: 6%;
-  bottom: 12%;
-  height: 8px;
-  border-radius: 2px;
-  background: linear-gradient(#c79a5c, #6d4826);
-  box-shadow: 0 2px 3px #000a;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 9%;
+  z-index: 3;
+  /* a steel rail on top, dark timber sleepers below it */
+  background:
+    linear-gradient(#d9dfe3, #8b949b 50%, #3e454a) top / 100% 45% no-repeat,
+    repeating-linear-gradient(90deg, #4a301a 0 9px, #140c07 9px 16px);
+  box-shadow: 0 -1px #000a;
 }
 .sawmill-carriage.running .sawmill-blade { animation: sawmill-spin .7s linear infinite; }
-.sawmill-carriage.running .sawmill-stage { border-color: var(--saw-gold); box-shadow: inset 0 0 0 3px #1b1009, inset 0 0 18px #ffb6553a, 0 0 14px #ffb2553a; }
-.sawmill-carriage.locked .sawmill-blade { filter: grayscale(1) brightness(.6); }
+.sawmill-carriage.running .sawmill-stage {
+  border-color: var(--saw-gold);
+  box-shadow: inset 0 0 0 2px #1b1009, inset 0 0 22px #ffb6554a, 0 2px 0 #0a0603, 0 0 14px #ffb2553a;
+}
+/* sawdust puff at the kerf while cutting */
+.sawmill-carriage.running .sawmill-log::after {
+  content: '';
+  position: absolute;
+  left: 52%;
+  top: -40%;
+  width: 22%;
+  height: 80%;
+  background: radial-gradient(circle at 20% 70%, #f5d9a5cc 0 1.5px, transparent 2px), radial-gradient(circle at 60% 40%, #e9c78ccc 0 1px, transparent 1.6px),
+    radial-gradient(circle at 85% 80%, #f5d9a5aa 0 1.4px, transparent 2px), radial-gradient(circle at 40% 20%, #f0cf96aa 0 1px, transparent 1.5px);
+  animation: sawmill-dust .45s steps(3) infinite;
+  pointer-events: none;
+}
+.sawmill-log > span:first-child { border-radius: 40% 0 0 40% / 50% 0 0 50%; }
+.sawmill-log > span:last-child { border-radius: 0 6% 6% 0 / 0 12% 12% 0; }
+.sawmill-carriage.locked .sawmill-blade-wrap,
+.sawmill-carriage.locked .sawmill-log { filter: grayscale(1) brightness(.6); }
 @keyframes sawmill-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .sawmill-carriage.running .sawmill-blade { animation: none; } }
+@keyframes sawmill-dust { 50% { translate: 3px -3px; opacity: .6; } }
+@media (prefers-reduced-motion: reduce) {
+  .sawmill-carriage.running .sawmill-blade,
+  .sawmill-carriage.running .sawmill-log::after { animation: none; }
+}
 
 .sawmill-mastery { padding: 6px 10px; border: 1px solid #5d432b; border-radius: 4px; background: #150e09b0; }
 .sawmill-readout { display: flex; flex-wrap: wrap; gap: 4px 9px; font-size: 12px; color: #c8ae8a; }
@@ -271,7 +412,10 @@
   .profession-sawmilling .profession-header.station-hero::before { display: none; }
 }
 @media (max-width: 900px) {
-  .profession-page.profession-sawmilling .profession-header.station-hero { padding: 14px; }
+  .profession-page.profession-sawmilling .profession-header.station-hero {
+    padding: 14px;
+    background: var(--station-shade-mobile), var(--station-art) var(--sawmill-banner-pos) / cover, #2a1a0f;
+  }
 }
 
 @container (max-width: 860px) {

@@ -31,6 +31,9 @@ import { ExpeditionBoard } from '../components/ExpeditionBoard';
 import { MiningHeroDock } from '../components/MiningHero';
 import { SawmillHeroDock } from '../components/SawmillHero';
 import { ForagingHeroDock } from '../components/ForagingHero';
+import { WoodcraftingHeroDock } from '../components/WoodcraftingHero';
+import { SmeltingHeroDock } from '../components/SmeltingHero';
+import { AstrologyHeroDock } from '../components/AstrologyHero';
 import '../components/station-hero.css';
 import { HeistBoard } from '../components/HeistBoard';
 import { MapCaseBoard } from '../components/MapCaseBoard';
@@ -439,7 +442,7 @@ function MapInput({ s, a }: { s: GameState; a: SkillAction }) {
 
 /** The XP header every skilling page shares. */
 /** Skills whose header uses the shared illustrated station banner (station-hero.css). */
-const STATION_HERO_SKILLS = new Set<SkillId>(['mining', 'sawmilling', 'harvesting']);
+const STATION_HERO_SKILLS = new Set<SkillId>(['mining', 'sawmilling', 'harvesting', 'woodcrafting', 'smelting', 'astrology']);
 
 function SkillHeader({ skill }: { skill: SkillId }) {
   const s = useGame();
@@ -481,6 +484,9 @@ function SkillHeader({ skill }: { skill: SkillId }) {
       {skill === 'mining' && <MiningHeroDock s={s} />}
       {skill === 'sawmilling' && <SawmillHeroDock s={s} />}
       {skill === 'harvesting' && <ForagingHeroDock s={s} />}
+      {skill === 'woodcrafting' && <WoodcraftingHeroDock s={s} />}
+      {skill === 'smelting' && <SmeltingHeroDock s={s} />}
+      {skill === 'astrology' && <AstrologyHeroDock s={s} />}
     </div>
   );
 }

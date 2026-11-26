@@ -1,0 +1,383 @@
+/*
+ * Woodcrafting, "The Carver's Bench": an illustrated fletcher's workshop banner (shared station-hero.css),
+ * a carving bench stage with a ruler, square input sockets and brass-and-timber dials.
+ * Everything is scoped to .profession-woodcrafting: wood-bench.css is shared with the Sawmill and Tailoring.
+ * Swap the banner picture by changing --woodcraft-banner only.
+ */
+.page.profession-page.profession-woodcrafting {
+  --woodcraft-banner: url('../../../public/assets/stations/woodcraft-arrow-maker.webp');
+  --woodcraft-planks: url('../../../public/assets/stations/tex-planks.webp');
+  --woodcraft-line: #7b5232;
+  --woodcraft-brass: #d9ac63;
+  --woodcraft-brass-hi: #f6d99c;
+  --woodcraft-ink: #ead3b2;
+  --woodcraft-grain: repeating-linear-gradient(178deg, #ffffff06 0 1px, transparent 1px 6px, #00000014 6px 7px, transparent 7px 12px);
+}
+
+/* ---------- banner ---------- */
+html .profession-page.profession-woodcrafting .profession-header.station-hero {
+  --station-art: var(--woodcraft-banner);
+  --station-rim: #b07a45;
+  --station-ink: #ffe5bd;
+  --station-shade:
+    radial-gradient(ellipse at 42% 40%, #ffb35a1f, transparent 36%),
+    linear-gradient(90deg, #0f0905f4 3%, #140c07cc 22%, #1a0e0624 38%, #1a0e0614 56%, #130b06c4 73%, #0d0805f6);
+  display: grid;
+  gap: 10px 16px;
+  padding: 18px 23px;
+  border: 1px solid #9c6c3e;
+  border-radius: 5px;
+  background: var(--station-shade), var(--station-art) center 32% / cover no-repeat, #1a120c;
+  box-shadow:
+    inset 0 0 0 3px #1b0f07d4,
+    inset 0 0 0 4px #c8945a50,
+    inset 0 -3px #d8a8604a,
+    inset 0 -34px 40px -22px #000c,
+    0 6px 18px #0009;
+}
+
+/* Timber plaque for the bow emblem. */
+html .profession-woodcrafting .station-hero .profession-header-icon {
+  width: 56px;
+  height: 56px;
+  border: 1px solid #c39457;
+  border-radius: 5px;
+  color: var(--woodcraft-brass);
+  background: radial-gradient(circle at 50% 38%, #5b3a1fcc, #1d120af2 74%), var(--woodcraft-planks) center / 110px;
+  box-shadow: inset 0 0 0 3px #2b1a0d, inset 0 0 0 4px #e0b16d4a, 0 3px 9px #000a;
+}
+.profession-woodcrafting .station-hero .profession-header-text h1 { color: #ffe5bd; }
+.profession-woodcrafting .station-hero .profession-header-text p { color: var(--woodcraft-brass); }
+.profession-woodcrafting .station-hero .level-num { color: var(--woodcraft-brass-hi); }
+.profession-woodcrafting .station-hero .xp .bar-fill { background: linear-gradient(90deg, #7d5630, #e2b16a) !important; }
+.profession-woodcrafting .station-hero .xp-meta { color: #dcc4a0; }
+
+/* Timber-framed square sockets, planks showing through the well. */
+.profession-woodcrafting .station-hero .station-dock li {
+  border-color: #b08350;
+  background: var(--woodcraft-grain), linear-gradient(#3a2414f0, #1b110af4);
+  box-shadow: inset 0 0 0 2px #24150b, inset 0 0 0 3px #e0b56f2c, 0 3px 8px #0b0806a0;
+}
+.profession-woodcrafting .station-hero .station-dock li:hover { border-color: #e2b06e; }
+.profession-woodcrafting .station-hero .station-socket {
+  border: 2px solid #c99a5e;
+  border-radius: 5px;
+  background: radial-gradient(circle at 50% 32%, #4e3119d0, #140c06f4 74%), var(--woodcraft-planks) center / 90px;
+  box-shadow: inset 0 2px 7px #000d, 0 0 0 1px #120b06;
+}
+.woodcraft-dock-sprite { display: grid; place-items: center; }
+
+@media (max-width: 900px) {
+  html .profession-page.profession-woodcrafting .profession-header.station-hero {
+    padding: 14px;
+    background:
+      linear-gradient(90deg, #0d0805ee, #140c07bb 62%, #140c0790),
+      var(--station-art) 38% 30% / cover no-repeat,
+      #1a120c;
+  }
+}
+@media (max-width: 560px) {
+  html .profession-woodcrafting .station-hero .profession-header-icon { width: 46px; height: 46px; }
+}
+
+/* ---------- carving bench stage (top of the right panel) ---------- */
+.profession-woodcrafting .woodcraft-stage {
+  display: grid;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--woodcraft-line);
+  border-radius: 6px;
+  background: #1c130c;
+  box-shadow: 0 4px 0 #2e1c10, 0 8px 18px #0007;
+}
+
+.profession-woodcrafting .woodcraft-stage-bench {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 8px;
+  min-height: 168px;
+  padding: 16px 12px 10px;
+  background:
+    radial-gradient(ellipse at 50% 46%, #ffcf8a2e, transparent 58%),
+    linear-gradient(#1a0f0870, #0d0804b0),
+    var(--woodcraft-planks) center / 260px,
+    #3a2616;
+  box-shadow: inset 0 0 26px #000b;
+}
+
+/* Curled shavings scattered on the bench top. */
+.profession-woodcrafting .woodcraft-stage-bench::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  --_curl: radial-gradient(circle, transparent 3px, #e3b77a 3.5px 5px, transparent 5.5px);
+  --_curl-dim: radial-gradient(circle, transparent 2px, #b8864c 2.5px 3.6px, transparent 4px);
+  background:
+    var(--_curl) 14% 82% / 14px 14px no-repeat,
+    var(--_curl-dim) 22% 90% / 10px 10px no-repeat,
+    var(--_curl) 78% 86% / 13px 13px no-repeat,
+    var(--_curl-dim) 86% 74% / 9px 9px no-repeat,
+    var(--_curl-dim) 70% 20% / 9px 9px no-repeat,
+    var(--_curl) 26% 18% / 12px 12px no-repeat,
+    linear-gradient(32deg, transparent 46%, #d8a86a88 47% 50%, transparent 51%) 64% 88% / 26px 10px no-repeat,
+    linear-gradient(-24deg, transparent 46%, #d8a86a77 47% 50%, transparent 51%) 34% 92% / 22px 9px no-repeat;
+  opacity: .85;
+}
+
+/* Iron clamps either side of the piece. */
+.profession-woodcrafting .woodcraft-stage-clamp {
+  justify-self: center;
+  width: 12px;
+  height: 74px;
+  border: 1px solid #0d0a08;
+  border-radius: 2px;
+  background:
+    radial-gradient(circle, #c7ccd1 0 2px, #6b7076 2.5px 3.5px, transparent 4px) center 8px / 8px 8px no-repeat,
+    radial-gradient(circle, #c7ccd1 0 2px, #6b7076 2.5px 3.5px, transparent 4px) center calc(100% - 8px) / 8px 8px no-repeat,
+    linear-gradient(90deg, #2c2c2e, #6d7278 45%, #3a3b3e);
+  box-shadow: 0 3px 5px #000b;
+}
+
+.profession-woodcrafting .woodcraft-stage-piece {
+  display: grid;
+  place-items: center;
+  min-height: 128px;
+}
+.profession-woodcrafting .woodcraft-stage-piece img,
+.profession-woodcrafting .woodcraft-stage-piece .woodcraft-stage-mat {
+  image-rendering: pixelated;
+  filter: drop-shadow(0 7px 4px #000b) drop-shadow(0 0 14px #ffc47a2e);
+}
+.profession-woodcrafting .woodcraft-stage-piece img { width: 112px; height: 112px; object-fit: contain; }
+.profession-woodcrafting .woodcraft-stage-mat { display: grid; place-items: center; }
+.profession-woodcrafting .woodcraft-stage-mat img { width: 76px; height: 76px; }
+.profession-woodcrafting .woodcraft-stage.carving .woodcraft-stage-piece { animation: woodcraft-carve 1.6s ease-in-out infinite; }
+
+@keyframes woodcraft-carve {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50% { transform: rotate(1.5deg) translateY(-2px); }
+}
+
+/* Boxwood rule with inch and quarter marks. */
+.profession-woodcrafting .woodcraft-stage-ruler {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 24px;
+  padding: 0 10px 2px;
+  border-block: 1px solid #5b3a1d;
+  color: #3a2410;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  background:
+    linear-gradient(90deg, #2d1c0e 1px, transparent 1px) 10px 0 / calc((100% - 20px) / 12) 10px repeat-x,
+    linear-gradient(90deg, #2d1c0eaa 1px, transparent 1px) 10px 0 / calc((100% - 20px) / 48) 5px repeat-x,
+    linear-gradient(#e6c991, #c9a467);
+  box-shadow: inset 0 1px #fff3d066, inset 0 -2px 3px #6b45201f;
+}
+.profession-woodcrafting .woodcraft-stage-ruler span { display: flex; justify-content: center; width: 0; }
+
+.profession-woodcrafting .woodcraft-stage-plate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  padding: 9px 12px 10px;
+  background: var(--woodcraft-grain), linear-gradient(#2a1b10, #1b120b);
+  color: #c8af96;
+  font-size: .8rem;
+}
+.profession-woodcrafting .woodcraft-stage-plate strong {
+  flex-basis: 100%;
+  color: #f4d8aa;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  text-shadow: 0 1px 3px #000;
+}
+
+/* ---------- bench layout: recipe list on the left, bench + work order on the right (as Tailoring) ---------- */
+.profession-woodcrafting .wood-bench-layout {
+  grid-template-columns: minmax(240px, .85fr) minmax(0, 1.25fr);
+  align-items: start;
+}
+.profession-woodcrafting .wood-piece { position: sticky; top: 12px; }
+.profession-woodcrafting .wood-piece h2 { font-size: 1.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profession-woodcrafting .wood-piece .wood-bench-picker {
+  grid-template-columns: minmax(0, 1fr);
+  max-height: min(62vh, 560px);
+}
+.profession-woodcrafting .wood-filter-row label.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.profession-woodcrafting .woodcraft-order { gap: 12px; }
+.profession-woodcrafting .woodcraft-order > .btn.primary { width: 100%; }
+@media (max-width: 720px) {
+  .profession-woodcrafting .wood-bench-layout { grid-template-columns: minmax(0, 1fr); }
+  .profession-woodcrafting .wood-piece { position: static; }
+  .profession-woodcrafting .wood-piece .wood-bench-picker { max-height: 260px; }
+}
+
+/* ---------- input sockets (Cartography's Drafting Table style) ---------- */
+.profession-woodcrafting .woodcraft-sockets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.profession-woodcrafting .woodcraft-sockets li {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 3px;
+  width: 78px;
+  max-width: 100%;
+  min-width: 0;
+  color: var(--woodcraft-ink);
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+}
+.profession-woodcrafting .woodcraft-socket {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  aspect-ratio: 1;
+  border: 1px solid #a87a4a;
+  border-radius: 3px;
+  background: radial-gradient(ellipse at 50% 0%, #5a3d22, #1d130b 62%, #120c07);
+  box-shadow: inset 0 0 0 2px #2e1f13, inset 0 0 0 3px #8d683848, 0 2px 5px #0008;
+}
+.profession-woodcrafting .woodcraft-socket img { width: 34px; height: 34px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 2px 2px #0008); }
+.profession-woodcrafting .woodcraft-socket-name {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.profession-woodcrafting .woodcraft-socket-count { color: #cbd9ad; white-space: nowrap; }
+.profession-woodcrafting .woodcraft-sockets .short .woodcraft-socket { border-color: #a66955; box-shadow: inset 0 0 0 2px #2e1613, inset 0 0 0 3px #c0614a40, 0 2px 5px #0008; }
+.profession-woodcrafting .woodcraft-sockets .short .woodcraft-socket-count { color: #f5a38c; font-weight: 700; }
+
+/* ---------- dials: brass knob on a timber groove ---------- */
+.profession-woodcrafting .woodcraft-dial {
+  display: grid;
+  gap: 7px;
+  padding: 10px 12px 9px;
+  border: 1px solid #6d4a2c;
+  border-radius: 6px;
+  background: var(--woodcraft-grain), linear-gradient(#2c1d12, #1d140d);
+  box-shadow: inset 0 1px #ffd59a14, 0 2px 0 #120b06;
+}
+.profession-woodcrafting .woodcraft-dial-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.profession-woodcrafting .woodcraft-dial-head > b { color: #f1d0a2; font-family: var(--font-display); letter-spacing: .02em; }
+.profession-woodcrafting .woodcraft-dial-value {
+  padding: 1px 9px;
+  border: 1px solid #5a3d22;
+  border-radius: 3px;
+  background: #3a2716;
+  color: #cdb28d;
+  font-weight: 700;
+}
+.profession-woodcrafting .woodcraft-dial-value.set {
+  border-color: #f1cf8f;
+  background: linear-gradient(#ecc884, #b98a45);
+  color: #2a1709;
+  box-shadow: 0 0 8px #e3b36b44;
+}
+
+.profession-woodcrafting .woodcraft-dial-rail { position: relative; display: block; padding-bottom: 9px; }
+.profession-woodcrafting .woodcraft-dial input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 24px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.profession-woodcrafting .woodcraft-dial input[type='range']::-webkit-slider-runnable-track {
+  height: 10px;
+  border: 1px solid #4b321e;
+  border-radius: 5px;
+  background:
+    linear-gradient(90deg, transparent var(--dial-lo, 50%), #e0a95acc var(--dial-lo, 50%) var(--dial-hi, 50%), transparent var(--dial-hi, 50%)),
+    linear-gradient(#120b06, #2b1b10);
+  box-shadow: inset 0 2px 3px #000c, 0 1px #ffd59a22;
+}
+.profession-woodcrafting .woodcraft-dial input[type='range']::-moz-range-track {
+  height: 8px;
+  border: 1px solid #4b321e;
+  border-radius: 5px;
+  background:
+    linear-gradient(90deg, transparent var(--dial-lo, 50%), #e0a95acc var(--dial-lo, 50%) var(--dial-hi, 50%), transparent var(--dial-hi, 50%)),
+    linear-gradient(#120b06, #2b1b10);
+  box-shadow: inset 0 2px 3px #000c, 0 1px #ffd59a22;
+}
+.profession-woodcrafting .woodcraft-dial input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -7px;
+  border: 1px solid #3a2410;
+  border-radius: 50%;
+  background:
+    linear-gradient(#4a2e12, #4a2e12) center / 10px 2px no-repeat,
+    radial-gradient(circle at 38% 32%, #fff1c9, #e2b467 30%, #9c6c2c 66%, #5b3b17);
+  box-shadow: 0 2px 4px #000b, inset 0 -2px 2px #0005;
+  transition: transform .12s;
+}
+.profession-woodcrafting .woodcraft-dial input[type='range']::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #3a2410;
+  border-radius: 50%;
+  background:
+    linear-gradient(#4a2e12, #4a2e12) center / 10px 2px no-repeat,
+    radial-gradient(circle at 38% 32%, #fff1c9, #e2b467 30%, #9c6c2c 66%, #5b3b17);
+  box-shadow: 0 2px 4px #000b, inset 0 -2px 2px #0005;
+}
+.profession-woodcrafting .woodcraft-dial input[type='range']:hover::-webkit-slider-thumb,
+.profession-woodcrafting .woodcraft-dial input[type='range']:active::-webkit-slider-thumb { transform: scale(1.1); }
+.profession-woodcrafting .woodcraft-dial input[type='range']:focus-visible { outline: none; }
+.profession-woodcrafting .woodcraft-dial input[type='range']:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px #f3c67f99, 0 2px 4px #000b; }
+.profession-woodcrafting .woodcraft-dial input[type='range']:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px #f3c67f99, 0 2px 4px #000b; }
+
+/* Notches under the groove, one per dial step; the centre notch is brass. */
+.profession-woodcrafting .woodcraft-dial-ticks {
+  position: absolute;
+  inset: auto 11px 0;
+  display: flex;
+  justify-content: space-between;
+  height: 8px;
+  pointer-events: none;
+}
+.profession-woodcrafting .woodcraft-dial-ticks i { width: 1px; height: 5px; background: #a07a4c88; }
+.profession-woodcrafting .woodcraft-dial-ticks i.mid { width: 2px; height: 8px; background: var(--woodcraft-brass); }
+
+.profession-woodcrafting .woodcraft-dial-sides { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.profession-woodcrafting .woodcraft-dial-side { display: grid; justify-items: start; gap: 1px; min-width: 0; }
+.profession-woodcrafting .woodcraft-dial-side.right { justify-items: end; text-align: right; }
+.profession-woodcrafting .woodcraft-dial-side b { color: #8d7a66; font-size: 1.05rem; font-weight: 800; line-height: 1.1; }
+.profession-woodcrafting .woodcraft-dial-side span { color: #c8af96; font-size: .78rem; }
+.profession-woodcrafting .woodcraft-dial-side.up b { color: #a9e0a0; text-shadow: 0 0 8px #7fd07a40; }
+.profession-woodcrafting .woodcraft-dial-side.down b { color: #f19a86; }
+.profession-woodcrafting .woodcraft-dial-side.up span,
+.profession-woodcrafting .woodcraft-dial-side.down span { color: var(--woodcraft-ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .profession-woodcrafting .woodcraft-stage.carving .woodcraft-stage-piece { animation: none; }
+  .profession-woodcrafting .woodcraft-dial input[type='range']::-webkit-slider-thumb { transition: none; }
+}

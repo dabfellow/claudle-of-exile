@@ -22,6 +22,7 @@ import { MasteryProgress } from './MasteryProgress';
 import { Icon } from './Icon';
 import { EquipmentBasePreview } from './ItemView';
 import './wood-bench.css';
+import './woodcrafting-station.css';
 
 const allFamilies = Object.keys(WOOD_FAMILIES) as WoodFamily[];
 const recipesFor = (skill: TunedSkill) => actionsFor(skill).filter((a) => !a.purpose && !a.woodcutting && (!a.baseId || obtainable(baseDef(a.baseId))));
@@ -78,8 +79,56 @@ export function Costs({ s, inputs }: { s: GameState; inputs: Record<string, numb
   );
 }
 
-export function Dials({ s, recipe, dials, living, item, change }: {
+/** Square item sockets for a recipe's inputs at the Carver's Bench (Cartography's Drafting Table style). */
+function WoodcraftSockets({ s, inputs }: { s: GameState; inputs: Record<string, number> }) {
+  return (
+    <ul className="woodcraft-sockets" aria-label="Materials needed">
+      {Object.entries(inputs).map(([id, need]) => {
+        const have = recipeMaterialCount(s.storage.bank, id);
+        const name = materialDef(id).name;
+        return (
+          <li key={id} className={have < need ? 'short' : undefined} title={`${name}: ${fmt(have)} owned, ${fmt(need)} needed`}>
+            <span className="woodcraft-socket station-pixel"><MatIcon id={id} size={30} /></span>
+            <span className="woodcraft-socket-name">{name}</span>
+            <span className="woodcraft-socket-count num">{fmt(have)} / {fmt(need)}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** The carving bench stage at the top of the right panel: the selected piece clamped on the bench above a ruler. */
+function WoodcraftStage({ s, selection, carving }: { s: GameState; selection: SkillAction; carving: boolean }) {
+  const base = selection.baseId ? baseDef(selection.baseId) : undefined;
+  const output = Object.keys(selection.protectedOutputs ?? selection.outputs ?? {})[0];
+  return (
+    <section className={`woodcraft-stage ${carving ? 'carving' : ''}`} aria-label="Carving bench">
+      <div className="woodcraft-stage-bench">
+        <span className="woodcraft-stage-clamp" aria-hidden="true" />
+        <div className="woodcraft-stage-piece">
+          {base
+            ? <Art src={`items/${base.id}`} alt={base.name} size={112} className="station-pixel" fallback={<Icon name={base.slot} size={56} />} />
+            : output && <span className="station-pixel woodcraft-stage-mat"><MatIcon id={output} size={72} /></span>}
+        </div>
+        <span className="woodcraft-stage-clamp" aria-hidden="true" />
+      </div>
+      <div className="woodcraft-stage-ruler" aria-hidden="true">
+        {Array.from({ length: 13 }, (_, inch) => <span key={inch}>{inch}</span>)}
+      </div>
+      <div className="woodcraft-stage-plate">
+        <strong>{base?.name ?? selection.name}</strong>
+        <span className="num">{base ? `${slotLabel(selection)} · Item level ${smithIlvl(s, resinBonus(s))}` : 'Frame'} · Lv {selection.level}</span>
+        {carving && <Badge tone="gold" live>Carving</Badge>}
+      </div>
+    </section>
+  );
+}
+
+export function Dials({ s, recipe, dials, living, item, change, carve = false }: {
   s: GameState; recipe: SkillAction; dials: number[]; living: boolean; item?: Item; change: (dials: number[]) => void;
+  /** Woodcrafting's brass-and-timber slider, with each side's live stat change in bold. Tailoring leaves it off. */
+  carve?: boolean;
 }) {
   const family = woodFamily(recipe.baseId!);
   const values = recipeDials(s, recipe, dials, living);
@@ -97,15 +146,46 @@ export function Dials({ s, recipe, dials, living, item, change }: {
       {woodDialIndices(recipe, living).map((index) => {
         const dial = WOOD_FAMILIES[family].dials[index];
         const max = woodDialRange(s, family, index);
-        return (
+        const input = (
+          <input aria-label={dial.name} type="range" min={-max} max={max} value={values[index]} onChange={(e) => {
+            const next = [...values];
+            next[index] = Number(e.target.value);
+            change(next);
+          }} />
+        );
+        if (!carve) return (
           <label key={dial.name} className="wood-dial">
             <span><b>{dial.name}</b><span className="num">{values[index] === 0 ? 'Neutral' : values[index]}</span></span>
-            <input aria-label={dial.name} type="range" min={-max} max={max} value={values[index]} onChange={(e) => {
-              const next = [...values];
-              next[index] = Number(e.target.value);
-              change(next);
-            }} />
+            {input}
             <span className="muted small"><span>{dial.sides[0].label}</span><span>{dial.sides[1].label}</span></span>
+          </label>
+        );
+        // this dial's own share of the implicits, so each side can show its live change
+        const own = woodImplicits({ baseId: recipe.baseId!, dials: values.map((v, i) => (i === index ? v : 0)), balanced: item?.balanced });
+        const position = max ? ((values[index] + max) / (2 * max)) * 100 : 50;
+        return (
+          <label key={dial.name} className="wood-dial woodcraft-dial">
+            <span className="woodcraft-dial-head">
+              <b>{dial.name}</b>
+              <span className={`woodcraft-dial-value num ${values[index] ? 'set' : ''}`}>{values[index] === 0 ? 'Neutral' : `${values[index] > 0 ? '+' : ''}${values[index]}`}</span>
+            </span>
+            <span className="woodcraft-dial-rail" style={{ ['--dial-lo' as string]: `${Math.min(50, position)}%`, ['--dial-hi' as string]: `${Math.max(50, position)}%` }}>
+              {input}
+              <span className="woodcraft-dial-ticks" aria-hidden="true">
+                {Array.from({ length: 2 * max + 1 }, (_, notch) => <i key={notch} className={notch === max ? 'mid' : undefined} />)}
+              </span>
+            </span>
+            <span className="woodcraft-dial-sides">
+              {dial.sides.map((side, sideIndex) => {
+                const value = own.find((implicit) => implicit.stat === side.stat)?.value ?? 0;
+                return (
+                  <span key={side.label} className={`woodcraft-dial-side ${value > 0 ? 'up' : value < 0 ? 'down' : ''} ${sideIndex ? 'right' : ''}`}>
+                    <b className="num">{value > 0 ? '+' : value < 0 ? '−' : '±'}{Math.abs(value)}%</b>
+                    <span>{side.label}</span>
+                  </span>
+                );
+              })}
+            </span>
           </label>
         );
       })}
@@ -166,7 +246,7 @@ function Retune({ s, item, notify }: { s: GameState; item: Item; notify: (messag
   return <details className="card wood-card">
     <summary>{itemName(item)} · Growth {item.living?.growth}/10</summary>
     {item.corrupted ? <p className="bad small">Corrupted. Growth and tuning are sealed.</p> : <>
-      <Dials s={s} recipe={actionDef(`smith_${item.baseId}`)} dials={dials} living item={item} change={setDials} />
+      <Dials s={s} recipe={actionDef(`smith_${item.baseId}`)} dials={dials} living item={item} change={setDials} carve />
       <button className="btn sm" onClick={() => notify(game.act((st) => retuneLivingWood(st, item.uid, dials)) ?? 'Living piece retuned')}>Retune and halve growth</button>
     </>}
   </details>;
@@ -343,18 +423,14 @@ export function WoodBench({ skill, catalysts }: { skill: TunedSkill; catalysts: 
                   </div>
                 ))}
               </div>
+            </section>
 
-              {base && (
-                <div className="wood-piece-art">
-                  <Art src={`items/${base.id}`} alt="" size={80} fallback={<Icon name={base.slot} size={40} />} />
-                  <strong>{base.name}</strong>
-                  <span className="muted small">Item level {smithIlvl(s, resinBonus(s))}</span>
-                </div>
-              )}
-
+            <div className="wood-bench-side">
+              <WoodcraftStage s={s} selection={selection} carving={running?.actionId === selection.id} />
+              <section className="card wood-card woodcraft-order" aria-label={`${base?.name ?? selection.name} work order`}>
               {base && <>
                 <EquipmentBasePreview base={base} />
-                <Dials s={s} recipe={selection} dials={dials} living={!!living} change={setManual} />
+                <Dials s={s} recipe={selection} dials={dials} living={!!living} change={setManual} carve={skill === 'woodcrafting'} />
 
                 <div className="wood-tuning-bar">
                   {familyTunings.length > 0 ? (
@@ -429,24 +505,22 @@ export function WoodBench({ skill, catalysts }: { skill: TunedSkill; catalysts: 
                 <UseBarGrade />
               </>}
 
-              <Costs s={s} inputs={inputs} />
+              {skill === 'woodcrafting' ? <WoodcraftSockets s={s} inputs={inputs} /> : <Costs s={s} inputs={inputs} />}
               <MasteryProgress s={s} mastery={selection.mastery} />
               <p className="small muted">{fmtTime(actionIntervalMs(s, selection, d))} · {selection.xp} XP</p>
               <button className="btn primary" disabled={!!reason} onClick={() => {
                 setNotice(game.act((st, ctx) => startWoodcraft(st, ctx, selection, { dials: manual ?? undefined, living })) ?? '');
               }}>{reason ?? text.start}</button>
-            </section>
-
-            <div className="wood-bench-side">
+              </section>
               {running && runningRecipe && <section className="card wood-card">
                 <b>{runningRecipe.name}</b>
                 <ProgressBar value={running.progress / actionIntervalMs(s, runningRecipe, d)} />
                 <button className="btn sm" onClick={() => game.act(stopAction)}>{text.stop}</button>
               </section>}
               <SkillMinigame skill={skill} showBlank />
-              {catalysts}
             </div>
           </div>
+          {catalysts}
         </div>
       )}
 

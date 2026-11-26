@@ -18,7 +18,7 @@ export interface StationDockItem {
 const glyphs = import.meta.glob<string>('../../../public/assets/stations/icon-*.svg', { eager: true, import: 'default', query: '?url&no-inline' });
 
 /** Names of the game-icons.net glyphs in public/assets/stations (credited in its CREDITS.md). */
-export type StationGlyphName = 'buzzsaw' | 'greenhouse' | 'herbs' | 'pump' | 'rock-bolt' | 'seed' | 'trophy' | 'vent-fan';
+export type StationGlyphName = 'buzzsaw' | 'greenhouse' | 'herbs' | 'pump' | 'rock-bolt' | 'seed' | 'trophy' | 'vent-fan' | (string & {});
 
 /** A station icon drawn in the current text colour, so each page can tint it (iron, brass, gold…). */
 export function StationGlyph({ name, size = 24, className }: { name: StationGlyphName; size?: number; className?: string }) {

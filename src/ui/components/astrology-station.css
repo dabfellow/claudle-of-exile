@@ -1,0 +1,257 @@
+/*
+ * Astrology: The Observatory as an illustrated station, on the shared banner (station-hero.css).
+ * Banner art: Carl Spitzweg's "The Astronomer (Stargazer)", washed in moonlit indigo by --station-shade.
+ * The sky-region research cards (starfield header + research track) are styled further down.
+ */
+.page.profession-page.profession-astrology {
+  --astro-banner: url('../../../public/assets/stations/observatory-spitzweg-stargazer.webp');
+  --astro-brass: #c9a25c;
+  --astro-brass-hi: #f1d79a;
+  --astro-indigo: #141838;
+  --astro-ink: #eef0ff;
+  /* a sparse field of stars painted over the art's dark top-left, kept quiet */
+  --astro-stars:
+    radial-gradient(circle at 22px 18px, #e9eeffd0 .7px, transparent 1.5px) 0 0 / 97px 61px,
+    radial-gradient(circle at 61px 40px, #fff3d6a8 .6px, transparent 1.4px) 0 0 / 131px 83px,
+    radial-gradient(circle at 9px 30px, #c9d4ff8c .5px, transparent 1.2px) 0 0 / 53px 47px;
+}
+
+/* ---------- banner ---------- */
+html .profession-page.profession-astrology .profession-header.station-hero {
+  --station-art: var(--astro-banner);
+  --station-rim: #b8924f;
+  --station-ink: #f4ecda;
+  --station-socket-bg: radial-gradient(circle at 50% 35%, #2a2f5c, #0b0d22 75%);
+  --station-shade:
+    linear-gradient(90deg, #080a1ef2 3%, #0d1030cc 28%, #1a1d5240 50%, #0f1236c4 74%, #080a1ef4),
+    linear-gradient(#232a7a59, #0b0d2a8c);
+  --station-shade-mobile:
+    linear-gradient(90deg, #080a1ef0, #0d1030c4 68%, #12154080),
+    linear-gradient(#232a7a59, #0b0d2a8c);
+  border-color: #8e7040;
+  background:
+    var(--astro-stars),
+    var(--station-shade),
+    var(--station-art) center 42% / cover no-repeat,
+    var(--astro-indigo);
+  box-shadow:
+    inset 0 0 0 3px #090b1fd6,
+    inset 0 0 0 4px #c9a25c66,
+    inset 0 -2px 0 4px #f1d79a1c,
+    0 6px 22px #04051290;
+}
+
+/* Brass astrolabe ring behind the emblem. */
+.profession-astrology .station-hero .profession-header-icon {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 38%, #343a7a, #0c0e26 76%) padding-box,
+    conic-gradient(from 200deg, #f1d79a, #9c7a3e 25%, #5e4622 45%, #c9a25c 65%, #f1d79a 85%, #9c7a3e) border-box;
+  box-shadow: 0 0 18px #6f7cff2e, inset 0 2px 6px #000c;
+}
+.profession-astrology .station-hero .profession-header-text p { color: #d8c08a; }
+.profession-astrology .station-hero .level-num { color: var(--astro-brass-hi); }
+.profession-astrology .station-hero .xp .bar-fill { background: linear-gradient(90deg, #6b5cc4, #a9b8ff 70%, #f1d79a) !important; }
+.profession-astrology .station-hero .xp-meta { color: #cfd1ea; }
+
+/* Celestial brass sockets: indigo wells, a faint orbit ring inside the brass. */
+.profession-astrology .station-dock li {
+  border-color: #9e7d45;
+  background:
+    radial-gradient(ellipse at 50% 0%, #6f7cff1f, transparent 70%),
+    linear-gradient(#171a3af2, #0b0c20f4);
+  box-shadow: inset 0 0 0 2px #0d0f26, inset 0 1px 0 2px #f1d79a1f, 0 3px 8px #04051290;
+  color: #d9d3ee;
+}
+.profession-astrology .station-dock li:hover { border-color: var(--astro-brass-hi); }
+.profession-astrology .station-dock .station-socket {
+  position: relative;
+  box-shadow: inset 0 0 0 4px #0b0d22, inset 0 0 0 5px #c9a25c40, inset 0 2px 8px #000d, 0 0 10px #8c9bff26;
+}
+/* Material sprites are pixel art; keep them crisp when upscaled. */
+.profession-astrology .station-dock img.mat-art,
+.profession-astrology .station-dock .station-pixel {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.astro-fallen-glyph {
+  display: block;
+  width: 26px;
+  height: 26px;
+  /* game-icons.net "Falling star" (Delapouite, CC BY 3.0), filled with a warm meteor glow */
+  background: linear-gradient(225deg, #fff6dc, #f1d79a 40%, #e08a4a 85%);
+  -webkit-mask: url('../../../public/assets/stations/astro-falling-star.svg') center / contain no-repeat;
+  mask: url('../../../public/assets/stations/astro-falling-star.svg') center / contain no-repeat;
+  filter: drop-shadow(0 0 3px #ffb46a66);
+}
+
+@media (max-width: 900px) {
+  html .profession-page.profession-astrology .profession-header.station-hero {
+    background:
+      var(--astro-stars),
+      var(--station-shade-mobile),
+      var(--station-art) center 40% / cover no-repeat,
+      var(--astro-indigo);
+  }
+}
+
+/* ---------- sky-region research cards ---------- */
+.profession-astrology .star-region,
+.star-region {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  padding: 0 12px 12px;
+  border-color: color-mix(in srgb, var(--cst) 22%, #2e3550);
+  background: linear-gradient(175deg, #151a2e, var(--panel) 70%);
+}
+.star-region.running {
+  border-color: var(--cst);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--cst) 28%, transparent);
+}
+
+/* 90px illustrated starfield header, full-bleed across the top of the card */
+.astro-sky {
+  position: relative;
+  height: 90px;
+  margin: 0 -12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--cst) 30%, #2b3252);
+  background:
+    radial-gradient(circle at 19px 23px, #d9e7ff70 .6px, transparent 1.35px) 0 0 / 53px 43px,
+    radial-gradient(circle at 14px 9px, #eedab560 .6px, transparent 1.25px) 0 0 / 81px 73px,
+    radial-gradient(ellipse at 70% 120%, color-mix(in srgb, var(--cst) 18%, transparent), transparent 62%),
+    radial-gradient(ellipse at 25% 0%, #2b2f6a, transparent 70%),
+    linear-gradient(170deg, #111538, #090b1f 80%);
+  color: var(--cst);
+}
+.astro-sky.deep {
+  background:
+    radial-gradient(circle at 19px 23px, #d9e7ff60 .6px, transparent 1.35px) 0 0 / 53px 43px,
+    radial-gradient(ellipse at 50% 58%, color-mix(in srgb, var(--cst) 22%, transparent), transparent 55%),
+    linear-gradient(170deg, #0d0f2a, #05060f 80%);
+}
+.astro-sky-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+.astro-sky-title {
+  position: absolute;
+  inset: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2px 8px;
+  padding: 6px 10px 12px;
+  background: linear-gradient(#070918d9, #07091880 60%, transparent);
+  pointer-events: none;
+}
+.astro-sky-title b { color: #f1ecff; font-size: .95em; text-shadow: 0 1px 4px #000; }
+.astro-sky-title .badge,
+.astro-sky-title [title] { pointer-events: auto; }
+.astro-sky-count { color: color-mix(in srgb, var(--cst) 55%, #cfd3ea); font-size: .82em; text-shadow: 0 1px 3px #000; }
+
+.astro-sky-field circle { fill: #e6ebff; opacity: .55; }
+.astro-sky-nebula { fill: var(--cst); opacity: .1; filter: blur(8px); }
+
+.astro-sky-line {
+  stroke: #8f97c8;
+  stroke-width: .9;
+  stroke-dasharray: 2.5 3;
+  opacity: .4;
+}
+.astro-sky-line.lit {
+  stroke: var(--cst);
+  stroke-width: 1.1;
+  stroke-dasharray: none;
+  opacity: .85;
+  filter: drop-shadow(0 0 1.5px var(--cst));
+}
+
+.astro-sky-hit { fill: transparent; }
+.astro-sky-dormant { fill: #121736; stroke: #9da6cc; stroke-width: .7; }
+.astro-sky-node.next .astro-sky-dormant { stroke: var(--cst); fill: color-mix(in srgb, var(--cst) 25%, #121736); }
+.astro-sky-ring { fill: none; stroke: var(--cst); stroke-width: .7; stroke-dasharray: 1.6 1.6; opacity: .75; }
+.astro-sky-halo { fill: var(--cst); opacity: .22; filter: blur(3px); }
+.astro-sky-node.found .astro-glow { opacity: .45; }
+.star-region.locked .astro-sky-svg { opacity: .55; }
+.star-region.locked .astro-sky-dormant { stroke: #6f7698; }
+
+.star-region.running .astro-sky-node.next .astro-sky-ring { animation: astro-sky-pulse 2.4s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+.star-region.running .astro-sky-halo { animation: astro-sky-twinkle 3.2s ease-in-out infinite; }
+@keyframes astro-sky-pulse { 50% { opacity: .25; transform: scale(1.35); } }
+@keyframes astro-sky-twinkle { 50% { opacity: .38; } }
+@media (prefers-reduced-motion: reduce) {
+  .star-region.running .astro-sky-node.next .astro-sky-ring,
+  .star-region.running .astro-sky-halo { animation: none; }
+}
+
+.astro-research-progress { display: grid; gap: 6px; font-size: .85em; }
+.astro-research-next { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; }
+.astro-research-next b { color: color-mix(in srgb, var(--cst) 45%, #f3ecdc); font-weight: 600; }
+.astro-found-line { color: #e9dcb8; font-size: .92em; }
+.astro-found-line > span { color: var(--cst); }
+
+/* Compact research track: rail with one node per star threshold */
+.astro-track { position: relative; height: 32px; margin: 0 8px 0 4px; }
+.astro-track-rail {
+  position: absolute;
+  top: 7px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: #23294a;
+  box-shadow: inset 0 1px 1px #0008;
+}
+.astro-track-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--cst) 45%, #2a2f5c), var(--cst));
+  box-shadow: 0 0 6px color-mix(in srgb, var(--cst) 45%, transparent);
+  transition: width .4s ease;
+}
+.astro-track-nodes { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; }
+.astro-track-nodes li {
+  position: absolute;
+  top: 0;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  transform: translateX(-50%);
+}
+.astro-track-dot {
+  width: 12px;
+  height: 12px;
+  margin-top: 3px;
+  border: 1.5px solid #6c7398;
+  border-radius: 2px;
+  background: #12162e;
+  transform: rotate(45deg) scale(.85);
+}
+.astro-track-nodes li.next .astro-track-dot { border-color: var(--cst); background: color-mix(in srgb, var(--cst) 18%, #12162e); }
+.astro-track-nodes li.found .astro-track-dot {
+  border-color: color-mix(in srgb, var(--cst) 60%, #fff);
+  background: var(--cst);
+  box-shadow: 0 0 7px var(--cst);
+}
+.astro-track-num { color: #9aa1c0; font-size: .78em; line-height: 1; }
+.astro-track-nodes li.found .astro-track-num { color: color-mix(in srgb, var(--cst) 55%, #eee); }
+.astro-track-nodes li.next .astro-track-num { color: #e3e6f5; }
+
+.astro-region-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px 9px;
+  margin-top: auto;
+  padding-top: 7px;
+  border-top: 1px solid var(--line-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .astro-track-fill { transition: none; }
+}

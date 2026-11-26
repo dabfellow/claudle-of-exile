@@ -10,7 +10,12 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [];
+export const UPCOMING: string[] = [
+  'Woodcrafting has an illustrated Carver\'s Workshop banner with your planks and weapon parts docked in it, a carving bench that shows the piece you\'re making, item sockets for inputs, and brass draw-weight sliders that show stat changes as you move them.',
+  'Sawmilling has a warmer, lantern-lit watermill banner, wood-coloured edges on each recipe, and a steel buzzsaw carriage with log and plank sockets.',
+  'Smelting has a foundry banner with your five ores docked in it, an Ore Selector strip in place of the Quick Smelt grid, and a bigger Crucible and bellows bar.',
+  'Astrology has an observatory banner with your Stardust, Gilded Stars and Fallen Stars docked in it, and each Research card now shows its constellation, lighting up as you find stars, with a progress track to the next one.',
+];
 
 export const NEWS: NewsEntry[] = [
   {
