@@ -17,7 +17,9 @@ import { LockedBadge, SkillIntro } from './SkillHelp';
 import { MasteryProgress, MasteryTip } from './MasteryProgress';
 import { LiftGameIdle } from './minigames';
 import { SkillMinigame } from './SkillMinigame';
+import { StationDock, type StationDockItem } from './StationDock';
 import './thieving-ledger.css';
+import './skill-station-banners.css';
 
 const MARKS = actionsFor('thieving');
 const THIEVING_KEEPSAKES = COLLECTIBLES.filter((c) => c.skill === 'thieving');
@@ -63,30 +65,49 @@ export function ThievingHeader() {
     game.act((st) => { text = st.heist.notice; delete st.heist.notice; });
     if (text) game.pushToast(text, 'good');
   }, [notice]);
-  return <header className="card thief-header">
-    <div className="thief-header-main">
-      <span className="thief-emblem"><GameIcon name="thieving" size={28} color="var(--gold)" /></span>
-      <div className="thief-heading"><h1>Thieving</h1><span>The Underworld Ledger</span></div>
-      <div className="thief-xp">
-        <div className="row"><span>Level <b className="num">{level}</b> / {maxLevelOf('thieving')}</span><span className="spacer" /><span className="num small">{fmt(xp)} XP</span></div>
-        <ProgressBar value={maxed ? 1 : progressOf('thieving', xp)} color="var(--gold)" smooth />
-        <div className="row small"><span>{maxed ? 'Max level' : `${fmt(xpToReach('thieving', level + 1) - xp)} to level ${level + 1}`}</span><span className="spacer" /><span className="num">{fmt(rate)} XP/h</span></div>
+  const gold = s.storage.bank.gold ?? 0;
+  const ink = 'var(--station-ink)';
+  const dock: StationDockItem[] = [
+    {
+      key: 'job', icon: <GameIcon name="target" size={24} color={ink} />, label: planned ? planned.name : 'Heist',
+      value: planned ? `${prepKindsHeld(s, planned.id)}/${prepBoard(planned.id).min}` : 'None', dim: !planned,
+      title: planned ? `${planned.name}: ${prepKindsHeld(s, planned.id)} of the ${prepBoard(planned.id).min} kinds of prep it needs` : 'No heist planned · pick one on Heist Operations',
+    },
+    {
+      key: 'crew', icon: <GameIcon name="skull" size={24} color={ink} />, label: unlockedCount >= 3 ? 'Crew' : 'Recruits',
+      value: unlockedCount >= 3 ? `${crewCount}/${crewSlots(s)}` : `${unlockedCount}/3`, dim: unlockedCount === 0,
+      title: unlockedCount >= 3 ? `${crewCount} of ${crewSlots(s)} crew slots filled` : `${unlockedCount} of 3 rogues recruited`,
+    },
+    {
+      key: 'keepsakes', icon: <GameIcon name="trophy" size={24} color={ink} />, label: 'Keepsakes',
+      value: `${keepsakeFound}/${THIEVING_KEEPSAKES.length}`, dim: keepsakeFound === 0,
+      title: `${keepsakeFound} of ${THIEVING_KEEPSAKES.length} thieving keepsakes found`,
+    },
+    {
+      key: 'gold', icon: <GameIcon name="purse" size={24} color={ink} />, label: 'Gold', value: gold,
+      title: `${gold.toLocaleString()} gold in the purse`,
+    },
+  ];
+  return <header className="card profession-header station-hero thief-hero">
+    <div className="profession-header-icon"><GameIcon name="thieving" size={32} color="var(--gold)" /></div>
+    <div className="profession-header-text" style={{ minWidth: 0 }}>
+      <h1>Thieving</h1>
+      <p>The Underworld Ledger</p>
+    </div>
+    <div className="xp">
+      <div className="row">
+        <span className="level-num"><small>Level</small>{level}</span>
+        <span className="spacer" />
+        {rate > 0 && <Badge tone="success">{fmt(rate)} XP/h</Badge>}
+      </div>
+      <ProgressBar value={maxed ? 1 : progressOf('thieving', xp)} color="var(--gold)" size="md" smooth />
+      <div className="xp-meta num">
+        <span>{fmt(xp)} XP total</span>
+        <span className="spacer" />
+        <span>{maxed ? 'Max level' : `${fmt(xpToReach('thieving', level + 1) - xp)} XP to level ${level + 1}`}</span>
       </div>
     </div>
-    <div className="thief-status-strip">
-      <span className="thief-status-chip">
-        <span className="thief-status-label">Job</span>
-        <b className="num">{planned ? `${planned.name} · ${prepKindsHeld(s, planned.id)}/${prepBoard(planned.id).min} prep` : 'No heist planned'}</b>
-      </span>
-      <span className="thief-status-chip">
-        <span className="thief-status-label">{unlockedCount >= 3 ? 'Crew' : 'Recruits'}</span>
-        <b className="num">{unlockedCount >= 3 ? `${crewCount}/${crewSlots(s)}` : `${unlockedCount}/3`}</b>
-      </span>
-      <span className="thief-status-chip">
-        <span className="thief-status-label">Keepsakes</span>
-        <b className="num">{keepsakeFound}/{THIEVING_KEEPSAKES.length}</b>
-      </span>
-    </div>
+    <StationDock label="The ledger" items={dock} className="skill-station-dock" />
   </header>;
 }
 

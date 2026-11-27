@@ -1,0 +1,109 @@
+/*
+ * Illustrated banners for Woodcutting, Thieving, Archaeology, Forging, Tailoring and Alchemy.
+ * Each builds on the shared station-hero.css chrome; this file only sets the painting,
+ * the rim metal, the ink colour and the shading for each one. Art is credited in
+ * public/assets/stations/CREDITS.md.
+ */
+
+/* Shared: enough specificity to beat .card and the plain profession header. */
+html .profession-page.profession-woodcutting .profession-header.station-hero,
+html .profession-page.profession-smithing .profession-header.station-hero,
+html .profession-page.profession-tailoring .profession-header.station-hero,
+html .profession-page.profession-alchemy .profession-header.station-hero,
+html .profession-page.profession-archaeology .profession-header.station-hero,
+html .thieving-page .profession-header.station-hero.thief-hero {
+  --station-shade: linear-gradient(90deg, #0b0806f2 3%, #110c08c8 24%, #140e0a30 42%, #140e0a26 58%, #110c08c8 76%, #0b0806f4);
+  background:
+    var(--station-shade),
+    var(--station-art) var(--station-art-position, center) / cover no-repeat,
+    #15110e;
+  border-radius: 6px;
+}
+
+.skill-station-dock .game-icon { filter: drop-shadow(0 2px 3px #000b); }
+.skill-station-dock .station-pixel { display: grid; place-items: center; }
+
+/* ---------- Woodcutting: The Forester's Tally (felled oaks at Cadzow) ---------- */
+.profession-page.profession-woodcutting {
+  --station-art: url('../../../public/assets/stations/woodcutting-bough-cadzow.webp');
+  --station-art-position: center 55%;
+  --station-rim: #8f7a45;
+  --station-ink: #f1e6c4;
+}
+.profession-woodcutting .station-hero .level-num { color: #d9c27e; }
+.profession-woodcutting .station-hero .xp .bar-fill { background: linear-gradient(90deg, #5d7a34, #c6b25e) !important; }
+
+/* ---------- Forging: The Ironwright's Forge (Wright's iron forge) ---------- */
+.profession-page.profession-smithing {
+  --station-art: url('../../../public/assets/stations/forging-wright-iron-forge.webp');
+  --station-art-position: center 60%;
+  --station-rim: #8a8f98;
+  --station-ink: #fbe3c0;
+}
+html .profession-page.profession-smithing .profession-header.station-hero {
+  --station-shade:
+    radial-gradient(ellipse at 52% 70%, #ff9a3a22, transparent 40%),
+    linear-gradient(90deg, #080606f4 3%, #0d0907c4 24%, #120b0618 44%, #120b0618 58%, #0d0907c8 76%, #080606f6);
+}
+.profession-smithing .station-hero .level-num { color: #f2b46e; }
+.profession-smithing .station-hero .xp .bar-fill { background: linear-gradient(90deg, #8a3d16, #f6a04a 70%, #ffe1a6) !important; }
+
+/* ---------- Tailoring: The Tailor's Table (Brekelenkam's workshop) ---------- */
+.profession-page.profession-tailoring {
+  --station-art: url('../../../public/assets/stations/tailoring-brekelenkam-workshop.webp');
+  --station-art-position: center 50%;
+  --station-rim: #a3815a;
+  --station-ink: #f4e8d4;
+}
+.profession-tailoring .station-hero .level-num { color: #e6c79a; }
+.profession-tailoring .station-hero .xp .bar-fill { background: linear-gradient(90deg, #7a4f8a, #d8a6c8 70%, #f3e2c4) !important; }
+
+/* ---------- Alchemy: The Apothecary's Book (Teniers' alchemist) ---------- */
+.profession-page.profession-alchemy {
+  --station-art: url('../../../public/assets/stations/alchemy-teniers-alchemist.webp');
+  --station-art-position: center 45%;
+  --station-rim: #b08a4a;
+  --station-ink: #f5e6c6;
+}
+.profession-alchemy .station-hero .level-num { color: #e9c77c; }
+.profession-alchemy .station-hero .xp .bar-fill { background: linear-gradient(90deg, #3f7a5a, #8fd0a0 65%, #f0d890) !important; }
+
+/* ---------- Archaeology: The Excavator's Fieldbook (Hubert Robert's ruins) ---------- */
+.profession-page.profession-archaeology {
+  --station-art: url('../../../public/assets/stations/archaeology-robert-ruins.webp');
+  --station-art-position: center 50%;
+  --station-rim: #9c8a6a;
+  --station-ink: #efe4cc;
+}
+.profession-archaeology .station-hero .level-num { color: #dcc596; }
+.profession-archaeology .station-hero .xp .bar-fill { background: linear-gradient(90deg, #6a5a3c, #cdb27a 70%, #7fd6c2) !important; }
+
+/* ---------- Thieving: The Underworld Ledger (Caravaggio's cardsharps) ---------- */
+.thieving-page {
+  --station-art: url('../../../public/assets/stations/thieving-caravaggio-cardsharps.webp');
+  --station-art-position: center 30%;
+  --station-rim: #b39350;
+  --station-ink: #f3e3bf;
+}
+html .thieving-page .profession-header.station-hero.thief-hero {
+  --station-shade:
+    linear-gradient(90deg, #080706f6 3%, #0d0b09d0 26%, #120f0b48 44%, #120f0b40 58%, #0d0b09d2 76%, #080706f6),
+    linear-gradient(#0000, #0006);
+}
+.thief-hero .level-num { color: var(--gold); }
+
+@media (max-width: 900px) {
+  html .profession-page.profession-woodcutting .profession-header.station-hero,
+  html .profession-page.profession-smithing .profession-header.station-hero,
+  html .profession-page.profession-tailoring .profession-header.station-hero,
+  html .profession-page.profession-alchemy .profession-header.station-hero,
+  html .profession-page.profession-archaeology .profession-header.station-hero,
+  html .thieving-page .profession-header.station-hero.thief-hero {
+    --station-shade: linear-gradient(90deg, #0b0806ee, #0d0a08bb 65%, #0d0a0890);
+  }
+}
+
+/* Five sockets (Alchemy) fit one row on desktop; the shared rules wrap them on phones. */
+@media (min-width: 901px) {
+  .station-dock.skill-station-dock-wide { grid-template-columns: repeat(5, minmax(58px, 1fr)); }
+}
