@@ -7,6 +7,7 @@ import { App } from './ui/App';
 import { startMusic } from './ui/music';
 import './styles.css';
 import './ui/theme-frames.css';
+import './ui/landing.css';
 
 const initialSearch = location.search;
 void initErrorReporting();
