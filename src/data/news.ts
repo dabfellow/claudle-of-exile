@@ -10,11 +10,17 @@ export interface NewsEntry {
  * Changes made since the last release, one plain line each for players. Not shown in game.
  * Each change that players will notice adds a line here. A release moves them into a new NEWS entry and empties this.
  */
-export const UPCOMING: string[] = [
-  'Woodcutting, Thieving, Archaeology, Forging, Tailoring and Alchemy now open with a painted banner, like the other stations, with your key stock docked on the right: logs, bars, fibre and cloth, herbs and Arcane Dust, inscriptions and Ancient Data, and your heist, crew and gold.',
-];
+export const UPCOMING: string[] = [];
 
 export const NEWS: NewsEntry[] = [
+  {
+    version: '0.6.17',
+    date: '27 Nov 2026',
+    title: 'Painted stations',
+    items: [
+      'Woodcutting, Thieving, Archaeology, Forging, Tailoring and Alchemy now open with a painted banner, like the other stations, with your key stock docked on the right: logs, bars, fibre and cloth, herbs and Arcane Dust, inscriptions and Ancient Data, and your heist, crew and gold.',
+    ],
+  },
   {
     version: '0.6.16',
     date: '26 Nov 2026',
